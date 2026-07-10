@@ -1,0 +1,363 @@
+{
+  "customers": [
+    {
+      "id": "C-1001",
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "phone": "305-555-0101",
+      "plan": "12 Months",
+      "status": "Active",
+      "expiry": "2027-01-15"
+    },
+    {
+      "id": "C-1002",
+      "name": "Jane Smith",
+      "email": "jane.smith@example.com",
+      "phone": "305-555-0102",
+      "plan": "6 Months",
+      "status": "Active",
+      "expiry": "2026-11-02"
+    },
+    {
+      "id": "C-1003",
+      "name": "Mike Johnson",
+      "email": "mike.j@example.com",
+      "phone": "305-555-0103",
+      "plan": "1 Month",
+      "status": "Expired",
+      "expiry": "2026-06-20"
+    },
+    {
+      "id": "C-1004",
+      "name": "Carla Reyes",
+      "email": "carla.reyes@example.com",
+      "phone": "305-555-0104",
+      "plan": "12 Months",
+      "status": "Active",
+      "expiry": "2027-03-10"
+    },
+    {
+      "id": "C-1005",
+      "name": "David Lin",
+      "email": "david.lin@example.com",
+      "phone": "305-555-0105",
+      "plan": "3 Months",
+      "status": "Suspended",
+      "expiry": "2026-08-01"
+    }
+  ],
+  "devices": [
+    {
+      "deviceName": "Living Room TV",
+      "customer": "John Doe",
+      "type": "Android TV",
+      "status": "Online",
+      "activated": "2026-05-01",
+      "lastSeen": "2 min ago",
+      "limit": 1,
+      "blocked": false,
+      "deviceId": "DVC-A1B2C3"
+    },
+    {
+      "deviceName": "Bedroom Firestick",
+      "customer": "Jane Smith",
+      "type": "Fire TV",
+      "status": "Offline",
+      "activated": "2026-05-22",
+      "lastSeen": "3 hours ago",
+      "limit": 1,
+      "blocked": false,
+      "deviceId": "DVC-D4E5F6"
+    },
+    {
+      "deviceName": "Office Box",
+      "customer": "Mike Johnson",
+      "type": "Google TV",
+      "status": "Offline",
+      "activated": "2026-04-18",
+      "lastSeen": "2 days ago",
+      "limit": 1,
+      "blocked": true,
+      "deviceId": "DVC-G7H8I9"
+    },
+    {
+      "deviceName": "Main TV",
+      "customer": "Carla Reyes",
+      "type": "Android TV",
+      "status": "Online",
+      "activated": "2026-03-10",
+      "lastSeen": "Just now",
+      "limit": 2,
+      "blocked": false,
+      "deviceId": "DVC-J1K2L3"
+    },
+    {
+      "deviceName": "Bedroom TV",
+      "customer": "Carla Reyes",
+      "type": "Fire TV",
+      "status": "Online",
+      "activated": "2026-04-02",
+      "lastSeen": "10 min ago",
+      "limit": 2,
+      "blocked": false,
+      "deviceId": "DVC-M4N5O6"
+    }
+  ],
+  "activationCodes": [
+    {
+      "code": "BT-10293841",
+      "status": "Used",
+      "assignedTo": "John Doe",
+      "created": "2026-05-01"
+    },
+    {
+      "code": "BT-58201933",
+      "status": "Unused",
+      "assignedTo": "-",
+      "created": "2026-06-10"
+    },
+    {
+      "code": "BT-77102844",
+      "status": "Used",
+      "assignedTo": "Jane Smith",
+      "created": "2026-05-22"
+    },
+    {
+      "code": "BT-40912765",
+      "status": "Revoked",
+      "assignedTo": "Mike Johnson",
+      "created": "2026-04-18"
+    },
+    {
+      "code": "BT-99123456",
+      "status": "Unused",
+      "assignedTo": "-",
+      "created": "2026-07-01"
+    }
+  ],
+  "channelProfiles": [
+    {
+      "name": "50 Channels Starter",
+      "channels": 50,
+      "customers": 540,
+      "tags": "General"
+    },
+    {
+      "name": "Sports Plus",
+      "channels": 45,
+      "customers": 340,
+      "tags": "Sports"
+    },
+    {
+      "name": "Haiti Bundle",
+      "channels": 32,
+      "customers": 268,
+      "tags": "Haiti"
+    },
+    {
+      "name": "USA Bundle",
+      "channels": 110,
+      "customers": 812,
+      "tags": "USA"
+    }
+  ],
+  "channels": [
+    {
+      "order": 1,
+      "name": "News One",
+      "category": "News",
+      "country": "USA",
+      "enabled": true,
+      "streamUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    {
+      "order": 2,
+      "name": "Sports Max",
+      "category": "Sports",
+      "country": "USA",
+      "enabled": true,
+      "streamUrl": ""
+    },
+    {
+      "order": 3,
+      "name": "Cinema Plus",
+      "category": "Movies",
+      "country": "USA",
+      "enabled": true,
+      "streamUrl": ""
+    },
+    {
+      "order": 4,
+      "name": "Télé Haiti",
+      "category": "News",
+      "country": "Haiti",
+      "enabled": true,
+      "streamUrl": ""
+    }
+  ],
+  "banners": [
+    {
+      "type": "Banner",
+      "content": "Internet Ultra Fast Banner",
+      "status": "Active"
+    },
+    {
+      "type": "Banner",
+      "content": "Promo 6 Months",
+      "status": "Active"
+    },
+    {
+      "type": "Ticker",
+      "content": "Welcome to BenTech TV Stick",
+      "status": "Active"
+    }
+  ],
+  "popups": [
+    {
+      "title": "Summer Promo",
+      "active": "Yes",
+      "start": "2026-06-01",
+      "end": "2026-08-31"
+    }
+  ],
+  "tickers": [
+    {
+      "message": "Welcome to BenTech TV Stick",
+      "status": "Active"
+    },
+    {
+      "message": "Special IPTV offers available",
+      "status": "Active"
+    }
+  ],
+  "adminUsers": [
+    {
+      "name": "Admin",
+      "email": "admin@bentechtvstick.net",
+      "role": "Super Administrator",
+      "status": "Active"
+    }
+  ],
+  "auditLogs": [
+    {
+      "user": "Admin",
+      "action": "System initialized",
+      "date": "2026-07-05 09:00",
+      "ip": "127.0.0.1"
+    }
+  ],
+  "settings": {
+    "siteName": "BenTech TV Stick",
+    "website": "https://www.bentechtvstick.net",
+    "supportPhone": "305-555-1234",
+    "supportEmail": "support@bentechtvstick.net",
+    "maintenanceMode": false,
+    "maintenanceMessage": "We're performing scheduled maintenance. We'll be back shortly."
+  },
+  "countries": [
+    {
+      "name": "United States",
+      "channels": 210,
+      "regions": "North America"
+    },
+    {
+      "name": "Canada",
+      "channels": 85,
+      "regions": "North America"
+    },
+    {
+      "name": "United Kingdom",
+      "channels": 96,
+      "regions": "Europe"
+    },
+    {
+      "name": "Haiti",
+      "channels": 22,
+      "regions": "Caribbean"
+    }
+  ],
+  "regions": [
+    {
+      "name": "North America",
+      "countries": 3,
+      "channels": 340
+    },
+    {
+      "name": "Europe",
+      "countries": 12,
+      "channels": 512
+    },
+    {
+      "name": "Caribbean",
+      "countries": 8,
+      "channels": 96
+    }
+  ],
+  "categories": [
+    {
+      "name": "News",
+      "channels": 84
+    },
+    {
+      "name": "Sports",
+      "channels": 62
+    },
+    {
+      "name": "Movies",
+      "channels": 118
+    },
+    {
+      "name": "Kids",
+      "channels": 40
+    }
+  ],
+  "languages": [
+    {
+      "name": "English",
+      "code": "en",
+      "status": "Active"
+    },
+    {
+      "name": "French",
+      "code": "fr",
+      "status": "Active"
+    },
+    {
+      "name": "Haitian Creole",
+      "code": "ht",
+      "status": "Active"
+    }
+  ],
+  "liveEvents": [
+    {
+      "title": "Copa America Final",
+      "channel": "Sports Max",
+      "category": "Sports",
+      "start": "2026-07-12T19:00",
+      "end": "2026-07-12T21:30",
+      "status": "Upcoming",
+      "featured": true,
+      "streamUrl": ""
+    },
+    {
+      "title": "Boxing: Title Fight Night",
+      "channel": "Sports Max",
+      "category": "Sports",
+      "start": "2026-07-08T20:00",
+      "end": "2026-07-08T23:00",
+      "status": "Upcoming",
+      "featured": false,
+      "streamUrl": ""
+    },
+    {
+      "title": "Breaking News Special",
+      "channel": "News One",
+      "category": "News",
+      "start": "2026-07-06T18:00",
+      "end": "2026-07-06T19:00",
+      "status": "Live",
+      "featured": true,
+      "streamUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    }
+  ]
+}
