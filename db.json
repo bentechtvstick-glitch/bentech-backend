@@ -359,5 +359,263 @@
       "featured": true,
       "streamUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
     }
+  ],
+  "programs": [
+    {
+      "id": "p1",
+      "channel": "News One",
+      "title": "Morning Bulletin",
+      "category": "News",
+      "start": "2026-07-10T00:00",
+      "end": "2026-07-10T03:00"
+    },
+    {
+      "id": "p2",
+      "channel": "News One",
+      "title": "World Report",
+      "category": "News",
+      "start": "2026-07-10T03:00",
+      "end": "2026-07-10T06:00"
+    },
+    {
+      "id": "p3",
+      "channel": "News One",
+      "title": "Business Hour",
+      "category": "News",
+      "start": "2026-07-10T06:00",
+      "end": "2026-07-10T09:00"
+    },
+    {
+      "id": "p4",
+      "channel": "News One",
+      "title": "Evening News",
+      "category": "News",
+      "start": "2026-07-10T09:00",
+      "end": "2026-07-10T12:00"
+    },
+    {
+      "id": "p5",
+      "channel": "News One",
+      "title": "Late Night Wrap-up",
+      "category": "News",
+      "start": "2026-07-10T12:00",
+      "end": "2026-07-10T15:00"
+    },
+    {
+      "id": "p6",
+      "channel": "News One",
+      "title": "Morning Bulletin 6",
+      "category": "News",
+      "start": "2026-07-10T15:00",
+      "end": "2026-07-10T18:00"
+    },
+    {
+      "id": "p7",
+      "channel": "News One",
+      "title": "World Report 7",
+      "category": "News",
+      "start": "2026-07-10T18:00",
+      "end": "2026-07-10T21:00"
+    },
+    {
+      "id": "p8",
+      "channel": "News One",
+      "title": "Business Hour 8",
+      "category": "News",
+      "start": "2026-07-10T21:00",
+      "end": "2026-07-11T00:00"
+    },
+    {
+      "id": "p9",
+      "channel": "Sports Max",
+      "title": "Match Replay",
+      "category": "Sports",
+      "start": "2026-07-10T00:00",
+      "end": "2026-07-10T03:00"
+    },
+    {
+      "id": "p10",
+      "channel": "Sports Max",
+      "title": "Sports Center",
+      "category": "Sports",
+      "start": "2026-07-10T03:00",
+      "end": "2026-07-10T06:00"
+    },
+    {
+      "id": "p11",
+      "channel": "Sports Max",
+      "title": "Live: Championship",
+      "category": "Sports",
+      "start": "2026-07-10T06:00",
+      "end": "2026-07-10T09:00"
+    },
+    {
+      "id": "p12",
+      "channel": "Sports Max",
+      "title": "Post-Game Analysis",
+      "category": "Sports",
+      "start": "2026-07-10T09:00",
+      "end": "2026-07-10T12:00"
+    },
+    {
+      "id": "p13",
+      "channel": "Sports Max",
+      "title": "Highlights Show",
+      "category": "Sports",
+      "start": "2026-07-10T12:00",
+      "end": "2026-07-10T15:00"
+    },
+    {
+      "id": "p14",
+      "channel": "Sports Max",
+      "title": "Match Replay 6",
+      "category": "Sports",
+      "start": "2026-07-10T15:00",
+      "end": "2026-07-10T18:00"
+    },
+    {
+      "id": "p15",
+      "channel": "Sports Max",
+      "title": "Sports Center 7",
+      "category": "Sports",
+      "start": "2026-07-10T18:00",
+      "end": "2026-07-10T21:00"
+    },
+    {
+      "id": "p16",
+      "channel": "Sports Max",
+      "title": "Live: Championship 8",
+      "category": "Sports",
+      "start": "2026-07-10T21:00",
+      "end": "2026-07-11T00:00"
+    },
+    {
+      "id": "p17",
+      "channel": "Cinema Plus",
+      "title": "Feature Presentation",
+      "category": "Movies",
+      "start": "2026-07-10T00:00",
+      "end": "2026-07-10T03:00"
+    },
+    {
+      "id": "p18",
+      "channel": "Cinema Plus",
+      "title": "Action Hour",
+      "category": "Movies",
+      "start": "2026-07-10T03:00",
+      "end": "2026-07-10T06:00"
+    },
+    {
+      "id": "p19",
+      "channel": "Cinema Plus",
+      "title": "Classic Cinema",
+      "category": "Movies",
+      "start": "2026-07-10T06:00",
+      "end": "2026-07-10T09:00"
+    },
+    {
+      "id": "p20",
+      "channel": "Cinema Plus",
+      "title": "Premiere Night",
+      "category": "Movies",
+      "start": "2026-07-10T09:00",
+      "end": "2026-07-10T12:00"
+    },
+    {
+      "id": "p21",
+      "channel": "Cinema Plus",
+      "title": "Late Movie",
+      "category": "Movies",
+      "start": "2026-07-10T12:00",
+      "end": "2026-07-10T15:00"
+    },
+    {
+      "id": "p22",
+      "channel": "Cinema Plus",
+      "title": "Feature Presentation 6",
+      "category": "Movies",
+      "start": "2026-07-10T15:00",
+      "end": "2026-07-10T18:00"
+    },
+    {
+      "id": "p23",
+      "channel": "Cinema Plus",
+      "title": "Action Hour 7",
+      "category": "Movies",
+      "start": "2026-07-10T18:00",
+      "end": "2026-07-10T21:00"
+    },
+    {
+      "id": "p24",
+      "channel": "Cinema Plus",
+      "title": "Classic Cinema 8",
+      "category": "Movies",
+      "start": "2026-07-10T21:00",
+      "end": "2026-07-11T00:00"
+    },
+    {
+      "id": "p25",
+      "channel": "Télé Haiti",
+      "title": "Morning Bulletin",
+      "category": "News",
+      "start": "2026-07-10T00:00",
+      "end": "2026-07-10T03:00"
+    },
+    {
+      "id": "p26",
+      "channel": "Télé Haiti",
+      "title": "World Report",
+      "category": "News",
+      "start": "2026-07-10T03:00",
+      "end": "2026-07-10T06:00"
+    },
+    {
+      "id": "p27",
+      "channel": "Télé Haiti",
+      "title": "Business Hour",
+      "category": "News",
+      "start": "2026-07-10T06:00",
+      "end": "2026-07-10T09:00"
+    },
+    {
+      "id": "p28",
+      "channel": "Télé Haiti",
+      "title": "Evening News",
+      "category": "News",
+      "start": "2026-07-10T09:00",
+      "end": "2026-07-10T12:00"
+    },
+    {
+      "id": "p29",
+      "channel": "Télé Haiti",
+      "title": "Late Night Wrap-up",
+      "category": "News",
+      "start": "2026-07-10T12:00",
+      "end": "2026-07-10T15:00"
+    },
+    {
+      "id": "p30",
+      "channel": "Télé Haiti",
+      "title": "Morning Bulletin 6",
+      "category": "News",
+      "start": "2026-07-10T15:00",
+      "end": "2026-07-10T18:00"
+    },
+    {
+      "id": "p31",
+      "channel": "Télé Haiti",
+      "title": "World Report 7",
+      "category": "News",
+      "start": "2026-07-10T18:00",
+      "end": "2026-07-10T21:00"
+    },
+    {
+      "id": "p32",
+      "channel": "Télé Haiti",
+      "title": "Business Hour 8",
+      "category": "News",
+      "start": "2026-07-10T21:00",
+      "end": "2026-07-11T00:00"
+    }
   ]
 }
