@@ -61,6 +61,7 @@ mountCollection("devices", "devices", "deviceId");
 mountCollection("activation-codes", "activationCodes", "code");
 mountCollection("channel-profiles", "channelProfiles", "name");
 mountCollection("channels", "channels", "name");
+mountCollection("programs", "programs", "id");
 mountCollection("banners", "banners", "content");
 mountCollection("popups", "popups", "title");
 mountCollection("tickers", "tickers", "message");
