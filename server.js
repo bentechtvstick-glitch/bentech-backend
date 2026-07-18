@@ -83,5 +83,30 @@ app.put("/api/settings", async (req, res) => {
 
 app.get("/api/health", (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
+app.get("/", (req, res) => {
+  res.json({
+    ok: true,
+    app: "BenTech Backend",
+    version: "1.0.0",
+    status: "Running"
+  });
+});
+
+app.get("/api/version", (req, res) => {
+  res.json({
+    app: "BenTech TV",
+    version: "1.0.0"
+  });
+});
+
+app.get("/api/dashboard", (req, res) => {
+  res.json({
+    customers: db.data.customers.length,
+    devices: db.data.devices.length,
+    activationCodes: db.data.activationCodes.length,
+    channels: db.data.channels.length
+  });
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`BenTech backend running on port ${PORT}`));
