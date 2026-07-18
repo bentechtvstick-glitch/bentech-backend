@@ -19,8 +19,7 @@ app.post("/api/auth/login", (req, res) => {
   }
   res.status(401).json({ ok: false, error: "Invalid credentials" });
 });
-
-app.post("/api/auth/activate", (req, res) => {
+app.post("/api/auth/activate", async (req, res) => {
 const { code, deviceId } = req.body || {};
  const full = "BT-" + String(code || "").trim();
   const entry = db.data.activationCodes.find((c) => c.code === full);
@@ -38,9 +37,13 @@ return res.json({
     deviceId,
     status: "Active"
 });
+});
  
 // Generic collection helper — mounts GET/POST/PUT/DELETE for a named array in db.json
 function mountCollection(path, key, idField = "id") {
+ if (!db.data[key]) {
+  db.data[key] = [];
+}
   app.get(`/api/${path}`, (req, res) => res.json(db.data[key] || []));
 
   app.post(`/api/${path}`, async (req, res) => {
