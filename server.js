@@ -21,14 +21,24 @@ app.post("/api/auth/login", (req, res) => {
 });
 
 app.post("/api/auth/activate", (req, res) => {
-  const { code } = req.body || {};
-  const full = "BT-" + String(code || "").trim();
+const { code, deviceId } = req.body || {};
+ const full = "BT-" + String(code || "").trim();
   const entry = db.data.activationCodes.find((c) => c.code === full);
   if (!entry) return res.status(404).json({ ok: false, error: "Code not found" });
   if (entry.status !== "Unused") return res.status(400).json({ ok: false, error: `Code is ${entry.status.toLowerCase()}` });
-  res.json({ ok: true, code: full });
-});
+  entry.status = "Active";
+entry.deviceId = deviceId;
+entry.activatedAt = new Date().toISOString();
 
+await db.write();
+
+return res.json({
+    ok: true,
+    code: full,
+    deviceId,
+    status: "Active"
+});
+ 
 // Generic collection helper — mounts GET/POST/PUT/DELETE for a named array in db.json
 function mountCollection(path, key, idField = "id") {
   app.get(`/api/${path}`, (req, res) => res.json(db.data[key] || []));
