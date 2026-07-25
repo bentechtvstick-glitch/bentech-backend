@@ -3,8 +3,11 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import { JSONFilePreset } from "lowdb/node";
 import { nanoid } from "nanoid";
+import fs from "fs";
 
-const db = await JSONFilePreset("./db.json", {});
+const dbPath = process.env.NODE_ENV === "production" ? "/data/db.json" : "./db.json";
+if (!fs.existsSync(dbPath)) fs.copyFileSync("./db.json", dbPath);
+const db = await JSONFilePreset(dbPath, {});
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -209,5 +212,5 @@ app.use((err, req, res, _next) => {
   });
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`BenTech backend running on port ${PORT}`));
