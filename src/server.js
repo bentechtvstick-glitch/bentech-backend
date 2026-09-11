@@ -162,6 +162,7 @@ mountCollection("regions", "regions", "name");
 mountCollection("categories", "categories", "name");
 mountCollection("languages", "languages", "name");
 mountCollection("live-events", "liveEvents", "title");
+mountCollection("subscriptions", "subscriptions", "id");
 
 app.get("/api/audit-logs", (req, res) => res.json(db.data.auditLogs || []));
 
