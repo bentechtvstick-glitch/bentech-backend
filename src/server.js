@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import { JSONFilePreset } from "lowdb/node";
@@ -14,10 +14,7 @@ import {
   refundActiveCode,
 } from "./goldenott.js";
 
-const DB_PATH =
-  process.env.NODE_ENV === "production"
-    ? "/data/db.json"
-    : "./db.json";
+const DB_PATH = "./db.json";
 
 const db = await JSONFilePreset(DB_PATH, {});
 const app = express();
@@ -557,3 +554,4 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`BenTech backend running on port ${PORT}`);
 });
+
