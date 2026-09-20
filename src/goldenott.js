@@ -1,8 +1,4 @@
-<<<<<<< ours
 ﻿const BASE_URL =
-=======
-const BASE_URL =
->>>>>>> theirs
   process.env.GOLDENOTT_BASE_URL || "https://goldenott.net";
 
 const API_KEY = process.env.GOLDENOTT_API_KEY || "";
@@ -84,7 +80,6 @@ export async function getActiveCode(codeId) {
   );
 }
 
-<<<<<<< ours
 export async function getActivatedCodes() {
   return goldenRequest("/active-codes/activated");
 }
@@ -93,8 +88,6 @@ export async function getInactiveCodes() {
   return goldenRequest("/active-codes?per_page=100&page=1");
 }
 
-=======
->>>>>>> theirs
 export async function extendActiveCode(codeId, package_id) {
   return goldenRequest(
     `/active-codes/${encodeURIComponent(codeId)}/extend`,
@@ -115,11 +108,3 @@ export async function refundActiveCode(codeId) {
     }
   );
 }
-<<<<<<< ours
-=======
-
-
-export async function getActivatedCodes() {
-  return goldenRequest("/active-codes/activated");
-}
->>>>>>> theirs

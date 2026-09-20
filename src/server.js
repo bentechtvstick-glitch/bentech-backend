@@ -3,16 +3,7 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import { JSONFilePreset } from "lowdb/node";
 import { nanoid } from "nanoid";
-import {
-  getPackages,
-  createActiveCode,
-  getActiveCode,
-  extendActiveCode,
-  refundActiveCode,
-  getActivatedCodes,
-} from "./goldenott.js";
 
-<<<<<<< ours
 import {
   getPackages,
   createActiveCode,
@@ -25,9 +16,6 @@ import {
 
 const DB_PATH = "./db.json";
 
-=======
-const DB_PATH = process.env.NODE_ENV === "production" ? "/data/db.json" : "./db.json";
->>>>>>> theirs
 const db = await JSONFilePreset(DB_PATH, {});
 const app = express();
 
@@ -113,7 +101,6 @@ app.post("/api/auth/login", (req, res) => {
   });
 });
 
-<<<<<<< ours
 // -----------------------------
 // GoldenOTT packages
 // -----------------------------
@@ -140,200 +127,25 @@ app.post("/api/goldenott/active-codes", async (req, res) => {
     res.status(error.status || 500).json({
       ok: false,
       error: error.message,
-=======
-app.post("/api/auth/activate", async (req, res) => {
-  try {
-    const { code, deviceId } = req.body || {};
-
-    if (!code || typeof code !== "string" || !code.trim()) {
-      return res.status(400).json({
-        ok: false,
-        error: "code is required",
-      });
-    }
-
-    if (!deviceId || typeof deviceId !== "string" || !deviceId.trim()) {
-      return res.status(400).json({
-        ok: false,
-        error: "deviceId is required",
-      });
-    }
-
-    const customerCode = code.trim();
-
-    // Find the customer's code directly in GoldenOTT.
-    const activated = await getActivatedCodes();
-    const list = activated?.data || activated?.data?.data || [];
-
-    const golden = list.find(
-      (item) => String(item.code || "").trim() === customerCode
-    );
-
-    if (!golden) {
-      return res.status(404).json({
-        ok: false,
-        error: "Activation code not found",
-      });
-    }
-
-    const codeId = golden.id;
-    const goldenStatus = String(golden.status || "").toLowerCase();
-
-    if (["refunded", "expired", "revoked", "disabled"].includes(goldenStatus)) {
-      return res.status(400).json({
-        ok: false,
-        error: `GoldenOTT code is ${goldenStatus}`,
-      });
-    }
-
-    const packageName = golden.package?.name || "";
-    const packageId = golden.package?.id || null;
-
-    // Get package details so BenTech knows GoldenOTT's connection limit.
-    const packagesResponse = await getPackages();
-    const packages = packagesResponse?.packages?.data || [];
-    const packageInfo = packages.find(
-      (pkg) => Number(pkg.id) === Number(packageId)
-    );
-
-    const maxConnections = Number(packageInfo?.max_connections) || 1;
-
-    if (!db.data.devices) db.data.devices = [];
-    if (!db.data.activationCodes) db.data.activationCodes = [];
-
-    const devices = db.data.devices;
-
-    const sameSubscription = devices.filter(
-      (d) =>
-        String(d.goldenottCodeId || "") === String(codeId) &&
-        d.blocked !== true
-    );
-
-    const existingDevice = sameSubscription.find(
-      (d) => String(d.deviceId) === deviceId.trim()
-    );
-
-    // BenTech device limit. If no custom limit exists, use GoldenOTT's limit.
-    const localCode = db.data.activationCodes.find(
-      (x) =>
-        String(x.code || "") === customerCode ||
-        String(x.goldenottCode || "") === customerCode
-    );
-
-    const devicesAllowed =
-      Number(localCode?.devicesAllowed) ||
-      Number(localCode?.limit) ||
-      maxConnections;
-
-    if (!existingDevice && sameSubscription.length >= devicesAllowed) {
-      return res.status(409).json({
-        ok: false,
-        error: "Device limit reached",
-        devicesAllowed,
-        devicesUsed: sameSubscription.length,
-        maxConnections,
-      });
-    }
-
-    const now = new Date().toISOString();
-
-    if (existingDevice) {
-      existingDevice.status = "Online";
-      existingDevice.lastSeen = now;
-    } else {
-      devices.push({
-        deviceId: deviceId.trim(),
-        goldenottCodeId: codeId,
-        goldenottCode: customerCode,
-        customerId: localCode?.customerId || null,
-        subscriptionId: localCode?.subscriptionId || null,
-        customer: localCode?.customer || null,
-        deviceName: "BenTech TV Stick",
-        type: "Android TV",
-        status: "Online",
-        blocked: false,
-        activatedAt: now,
-        lastSeen: now,
-      });
-    }
-
-    if (localCode) {
-      localCode.status = "Active";
-      localCode.goldenottCodeId = codeId;
-      localCode.goldenottCode = customerCode;
-      localCode.packageId = packageId;
-      localCode.packageName = packageName;
-      localCode.maxConnections = maxConnections;
-      localCode.devicesAllowed = devicesAllowed;
-      localCode.devicesUsed =
-        sameSubscription.length + (existingDevice ? 0 : 1);
-      localCode.activatedAt = localCode.activatedAt || now;
-    }
-
-    await db.write();
-
-    auditLog(
-      "activate",
-      `GoldenOTT code ${customerCode} activated for device ${deviceId.trim()}`
-    );
-
-    return res.json({
-      ok: true,
-      code: customerCode,
-      goldenottCodeId: codeId,
-      deviceId: deviceId.trim(),
-      status: "Active",
-      packageId,
-      packageName,
-      devicesAllowed,
-      devicesUsed: sameSubscription.length + (existingDevice ? 0 : 1),
-      maxConnections,
-      credentials: {
-        username: golden.username || customerCode,
-        password: golden.password || null,
-      },
-    });
-  } catch (error) {
-    console.error("Activation error:", error);
-
-    return res.status(error.status || 500).json({
-      ok: false,
-      error: error.message || "Activation failed",
-      details: error.data || null,
->>>>>>> theirs
     });
   }
 });
 
-<<<<<<< ours
 // -----------------------------
 // GoldenOTT activated codes
 // -----------------------------
-=======
-// ---------- GoldenOTT integration ----------
-
->>>>>>> theirs
 app.get("/api/goldenott/active-codes/activated", async (req, res) => {
   try {
     const data = await getActivatedCodes();
     res.json(data);
   } catch (error) {
-<<<<<<< ours
     res.status(error.status || 500).json({
       ok: false,
       error: error.message,
-=======
-    console.error("GoldenOTT activated codes error:", error);
-    res.status(error.status || 500).json({
-      ok: false,
-      error: error.message,
-      details: error.data || null,
->>>>>>> theirs
     });
   }
 });
 
-<<<<<<< ours
 // -----------------------------
 // GoldenOTT single code
 // -----------------------------
@@ -448,190 +260,6 @@ app.post("/api/auth/activate", async (req, res) => {
           ""
         ).trim() === rawCode
     );
-=======
-app.get("/api/goldenott/packages", async (req, res) => {
-  try {
-    const isPaidTrial =
-      req.query.is_paid_trial === undefined
-        ? null
-        : req.query.is_paid_trial === "true";
-
-    const data = await getPackages({ isPaidTrial });
-    res.json(data);
-  } catch (error) {
-    console.error("GoldenOTT packages error:", error);
-    res.status(error.status || 500).json({
-      ok: false,
-      error: error.message,
-      details: error.data || null,
-    });
-  }
-});
-
-app.post("/api/goldenott/active-codes", async (req, res) => {
-  try {
-    const { package_id, template_id, is_adult, notes } = req.body || {};
-
-    if (!package_id || !template_id) {
-      return res.status(400).json({
-        ok: false,
-        error: "package_id and template_id are required",
-      });
-    }
-
-    const data = await createActiveCode({
-      package_id,
-      template_id,
-      is_adult,
-      notes,
-    });
-
-    res.status(201).json(data);
-  } catch (error) {
-    console.error("GoldenOTT create code error:", error);
-    res.status(error.status || 500).json({
-      ok: false,
-      error: error.message,
-      details: error.data || null,
-    });
-  }
-});
-
-app.get("/api/goldenott/active-codes/:codeId", async (req, res) => {
-  try {
-    const data = await getActiveCode(req.params.codeId);
-    res.json(data);
-  } catch (error) {
-    console.error("GoldenOTT code details error:", error);
-    res.status(error.status || 500).json({
-      ok: false,
-      error: error.message,
-      details: error.data || null,
-    });
-  }
-});
-
-app.post("/api/goldenott/active-codes/:codeId/extend", async (req, res) => {
-  try {
-    const { package_id } = req.body || {};
-
-    if (!package_id) {
-      return res.status(400).json({
-        ok: false,
-        error: "package_id is required",
-      });
-    }
-
-    const data = await extendActiveCode(
-      req.params.codeId,
-      package_id
-    );
-
-    res.json(data);
-  } catch (error) {
-    console.error("GoldenOTT extend error:", error);
-    res.status(error.status || 500).json({
-      ok: false,
-      error: error.message,
-      details: error.data || null,
-    });
-  }
-});
-
-app.post("/api/goldenott/active-codes/:codeId/refund", async (req, res) => {
-  try {
-    const data = await refundActiveCode(req.params.codeId);
-    res.json(data);
-  } catch (error) {
-    console.error("GoldenOTT refund error:", error);
-    res.status(error.status || 500).json({
-      ok: false,
-      error: error.message,
-      details: error.data || null,
-    });
-  }
-});
-
-// ---------- Free Test ----------
-app.post("/api/goldenott/free-test", async (req, res) => {
-  try {
-    const {
-      package_id,
-      template_id,
-      deviceId,
-      customerId = null,
-      customer = null,
-    } = req.body || {};
-
-    if (!package_id || !template_id) {
-      return res.status(400).json({
-        ok: false,
-        error: "package_id and template_id are required",
-      });
-    }
-
-    const result = await createActiveCode({
-      package_id,
-      template_id,
-      is_adult: false,
-      notes: "BenTech Free Test",
-    });
-
-    const data = result?.data || result;
-
-    const goldenottCodeId =
-      data?.id ||
-      data?.codeId ||
-      data?.code_id ||
-      null;
-
-    const goldenottCode =
-      data?.code ||
-      data?.customer_code ||
-      data?.username ||
-      null;
-
-    const test = {
-      id: `TEST-${Date.now()}`,
-      goldenottCodeId,
-      goldenottCode,
-      package_id: Number(package_id),
-      template_id: Number(template_id),
-      customerId,
-      customer,
-      deviceId: deviceId || null,
-      devicesAllowed: 1,
-      devicesUsed: deviceId ? 1 : 0,
-      status: "Free Test",
-      createdAt: new Date().toISOString(),
-    };
-
-    if (!db.data.activationCodes) db.data.activationCodes = [];
-    db.data.activationCodes.push(test);
-
-    await db.write();
-
-    auditLog(
-      "free-test",
-      `GoldenOTT free test created: ${goldenottCode || goldenottCodeId}`
-    );
-
-    res.status(201).json({
-      ok: true,
-      ...test,
-      goldenott: result,
-    });
-  } catch (error) {
-    console.error("GoldenOTT free test error:", error);
-
-    res.status(error.status || 500).json({
-      ok: false,
-      error: error.message || "Free test failed",
-      details: error.data || null,
-    });
-  }
-});
->>>>>>> theirs
 
     if (!match) {
       return res.status(404).json({
@@ -849,17 +477,13 @@ mountCollection("activation-codes", "activationCodes", "code");
 mountCollection("providers", "providers", "id");
 mountCollection("channel-profiles", "channelProfiles", "name");
 mountCollection("channels", "channels", "name");
-mountCollection("programs", "programs", "id");
+mountCollection("epg", "epg", "id");
 mountCollection("movies", "movies", "id");
 mountCollection("series", "series", "id");
 mountCollection("media-ads", "mediaAds", "id");
-
 mountCollection("banners", "banners", "content");
 mountCollection("popups", "popups", "title");
 mountCollection("tickers", "tickers", "message");
-mountCollection("chyrons", "chyrons", "id");
-mountCollection("announcements", "announcements", "id");
-mountCollection("weather", "weather", "id");
 mountCollection("admin-users", "adminUsers", "email");
 mountCollection("countries", "countries", "name");
 mountCollection("regions", "regions", "name");
@@ -929,22 +553,8 @@ app.use((err, req, res, _next) => {
 });
 
 const PORT = process.env.PORT || 4000;
-<<<<<<< ours
 
 app.listen(PORT, () => {
   console.log(`BenTech backend running on port ${PORT}`);
-=======
-app.listen(PORT, () => console.log(`BenTech backend running on port ${PORT}`));
-
-const GOLDENOTT_BASE_URL = process.env.GOLDENOTT_BASE_URL || "https://goldenott.net";
-const GOLDENOTT_API_KEY = process.env.GOLDENOTT_API_KEY || "";
-
-app.get("/api/goldenott/status", async (req, res) => {
-  res.json({
-    ok: true,
-    configured: Boolean(GOLDENOTT_API_KEY),
-    baseUrl: GOLDENOTT_BASE_URL
-  });
->>>>>>> theirs
 });
 
