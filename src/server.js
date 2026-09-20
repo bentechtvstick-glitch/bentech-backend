@@ -481,6 +481,7 @@ mountCollection("epg", "epg", "id");
 mountCollection("movies", "movies", "id");
 mountCollection("series", "series", "id");
 mountCollection("media-ads", "mediaAds", "id");
+mountCollection("chyrons", "chyrons", "id");
 mountCollection("banners", "banners", "content");
 mountCollection("popups", "popups", "title");
 mountCollection("tickers", "tickers", "message");
