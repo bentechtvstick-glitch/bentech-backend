@@ -388,6 +388,245 @@ app.post("/api/auth/activate", async (req, res) => {
 });
 
 // -----------------------------
+// Device Management API
+// -----------------------------
+
+function generateDeviceToken() {
+  return `dv_${nanoid(32)}`;
+}
+
+function findDevice(deviceId) {
+  if (!db.data.devices) {
+    db.data.devices = [];
+  }
+
+  return db.data.devices.find(
+    (device) => String(device.deviceId) === String(deviceId)
+  );
+}
+
+app.post("/api/devices/register", async (req, res) => {
+  try {
+    const { deviceId, macAddress = "", type = "Fire TV" } = req.body || {};
+
+    if (!deviceId) {
+      return res.status(400).json({
+        ok: false,
+        error: "deviceId is required",
+      });
+    }
+
+    if (!db.data.devices) {
+      db.data.devices = [];
+    }
+
+    let device = findDevice(deviceId);
+
+    if (!device) {
+      device = {
+        deviceId,
+        macAddress,
+        type,
+        status: "Inactive",
+        activated: false,
+        deviceToken: generateDeviceToken(),
+        playlist: null,
+        lastSeen: new Date().toISOString(),
+        limit: 1,
+      };
+
+      db.data.devices.push(device);
+    } else {
+      device.macAddress = macAddress || device.macAddress || "";
+      device.type = type || device.type || "Fire TV";
+      device.lastSeen = new Date().toISOString();
+
+      if (!device.deviceToken) {
+        device.deviceToken = generateDeviceToken();
+      }
+
+      if (device.limit == null) {
+        device.limit = 1;
+      }
+    }
+
+    await db.write();
+
+    auditLog(
+      "device_register",
+      `devices: ${device.deviceId}`,
+      req.user?.sub || "device"
+    );
+
+    res.json({
+      ok: true,
+      device,
+    });
+  } catch (error) {
+    console.error("Device registration error:", error);
+
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Device registration failed",
+    });
+  }
+});
+
+app.post("/api/devices/:deviceId/heartbeat", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    device.lastSeen = new Date().toISOString();
+
+    await db.write();
+
+    res.json({
+      ok: true,
+      deviceId: device.deviceId,
+      lastSeen: device.lastSeen,
+      status: device.status,
+      activated: device.activated,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Heartbeat failed",
+    });
+  }
+});
+
+app.post("/api/devices/:deviceId/activate", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    device.activated = true;
+    device.status = "Active";
+    device.lastSeen = new Date().toISOString();
+
+    await db.write();
+
+    auditLog(
+      "device_activate",
+      `devices: ${device.deviceId}`,
+      req.user?.sub || "admin"
+    );
+
+    res.json({
+      ok: true,
+      device,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Activation failed",
+    });
+  }
+});
+
+app.post("/api/devices/:deviceId/deactivate", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    device.activated = false;
+    device.status = "Inactive";
+    device.lastSeen = new Date().toISOString();
+
+    await db.write();
+
+    auditLog(
+      "device_deactivate",
+      `devices: ${device.deviceId}`,
+      req.user?.sub || "admin"
+    );
+
+    res.json({
+      ok: true,
+      device,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Deactivation failed",
+    });
+  }
+});
+
+app.post("/api/devices/:deviceId/playlists", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    const {
+      playlistName,
+      hostUrl,
+      userName,
+      password,
+    } = req.body || {};
+
+    if (!playlistName || !hostUrl || !userName || !password) {
+      return res.status(400).json({
+        ok: false,
+        error: "playlistName, hostUrl, userName and password are required",
+      });
+    }
+
+    device.playlist = {
+      playlistName,
+      hostUrl,
+      userName,
+      password,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await db.write();
+
+    auditLog(
+      "playlist_add",
+      `devices: ${device.deviceId}`,
+      req.user?.sub || "admin"
+    );
+
+    res.status(201).json({
+      ok: true,
+      deviceId: device.deviceId,
+      playlist: device.playlist,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Playlist save failed",
+    });
+  }
+});
+
+// -----------------------------
 // Generic collections
 // -----------------------------
 function mountCollection(path, key, idField = "id") {
@@ -484,7 +723,23 @@ mountCollection("media-ads", "mediaAds", "id");
 mountCollection("chyrons", "chyrons", "id");
 mountCollection("banners", "banners", "content");
 mountCollection("popups", "popups", "title");
-mountCollection("tickers", "tickers", "message");
+// Ensure existing ticker records have stable IDs before mounting the API.
+if (Array.isArray(db.data.tickers)) {
+  let tickerIdsAdded = false;
+
+  db.data.tickers.forEach((ticker) => {
+    if (!ticker.id) {
+      ticker.id = nanoid(8);
+      tickerIdsAdded = true;
+    }
+  });
+
+  if (tickerIdsAdded) {
+    await db.write();
+  }
+}
+
+mountCollection("tickers", "tickers", "id");
 mountCollection("admin-users", "adminUsers", "email");
 mountCollection("countries", "countries", "name");
 mountCollection("regions", "regions", "name");
