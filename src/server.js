@@ -391,6 +391,14 @@ app.post("/api/auth/activate", async (req, res) => {
 // Device Management API
 // -----------------------------
 
+function normalizeMacAddress(value = "") {
+  return String(value)
+    .toUpperCase()
+    .replace(/[^0-9A-F]/g, "")
+    .slice(0, 12)
+    .replace(/(.{2})(?=.)/g, "$1:");
+}
+
 function generateDeviceToken() {
   return `dv_${nanoid(32)}`;
 }
@@ -408,6 +416,7 @@ function findDevice(deviceId) {
 app.post("/api/devices/register", async (req, res) => {
   try {
     const { deviceId, macAddress = "", type = "Fire TV" } = req.body || {};
+    const normalizedMac = normalizeMacAddress(macAddress);
 
     if (!deviceId) {
       return res.status(400).json({
@@ -425,9 +434,10 @@ app.post("/api/devices/register", async (req, res) => {
     if (!device) {
       device = {
         deviceId,
-        macAddress,
+        macAddress: normalizedMac,
         type,
         status: "Inactive",
+        blocked: false,
         activated: false,
         deviceToken: generateDeviceToken(),
         playlist: null,
@@ -437,7 +447,7 @@ app.post("/api/devices/register", async (req, res) => {
 
       db.data.devices.push(device);
     } else {
-      device.macAddress = macAddress || device.macAddress || "";
+      device.macAddress = normalizedMac || device.macAddress || "";
       device.type = type || device.type || "Fire TV";
       device.lastSeen = new Date().toISOString();
 
@@ -468,6 +478,53 @@ app.post("/api/devices/register", async (req, res) => {
     res.status(500).json({
       ok: false,
       error: error.message || "Device registration failed",
+    });
+  }
+});
+
+
+app.get("/api/devices/by-mac", async (req, res) => {
+  try {
+    const macAddress = normalizeMacAddress(req.query.macAddress || "");
+
+    if (!macAddress) {
+      return res.status(400).json({
+        ok: false,
+        error: "macAddress is required",
+      });
+    }
+
+    const device = (db.data.devices || []).find(
+      (item) =>
+        String(item.macAddress || "").trim().toUpperCase() === macAddress
+    );
+
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "No device found for this MAC address",
+      });
+    }
+
+    res.json({
+      ok: true,
+      device: {
+        deviceId: device.deviceId,
+        macAddress: device.macAddress,
+        type: device.type || "Fire TV",
+        status: device.status || "Inactive",
+        activated: Boolean(device.activated),
+        lastSeen: device.lastSeen || null,
+        limit: device.limit ?? 1,
+        hasPlaylist: Boolean(device.playlist),
+      },
+    });
+  } catch (error) {
+    console.error("Find device by MAC error:", error);
+
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Device lookup failed",
     });
   }
 });
@@ -572,6 +629,118 @@ app.post("/api/devices/:deviceId/deactivate", async (req, res) => {
   }
 });
 
+
+app.post("/api/devices/:deviceId/block", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    device.blocked = true;
+    device.status = "Blocked";
+    device.lastSeen = new Date().toISOString();
+
+    await db.write();
+
+    auditLog(
+      "device_block",
+      `devices: ${device.deviceId}`,
+      req.user?.sub || "admin"
+    );
+
+    res.json({
+      ok: true,
+      device,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Block failed",
+    });
+  }
+});
+
+app.post("/api/devices/:deviceId/unblock", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    device.blocked = false;
+    device.status = device.activated ? "Active" : "Inactive";
+    device.lastSeen = new Date().toISOString();
+
+    await db.write();
+
+    auditLog(
+      "device_unblock",
+      `devices: ${device.deviceId}`,
+      req.user?.sub || "admin"
+    );
+
+    res.json({
+      ok: true,
+      device,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Unblock failed",
+    });
+  }
+});
+
+app.delete("/api/devices/:deviceId", async (req, res) => {
+  try {
+    const deviceId = String(req.params.deviceId);
+
+    if (!db.data.devices) {
+      db.data.devices = [];
+    }
+
+    const index = db.data.devices.findIndex(
+      (device) => String(device.deviceId) === deviceId
+    );
+
+    if (index === -1) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    const [deleted] = db.data.devices.splice(index, 1);
+
+    await db.write();
+
+    auditLog(
+      "device_delete",
+      `devices: ${deviceId}`,
+      req.user?.sub || "admin"
+    );
+
+    res.json({
+      ok: true,
+      device: deleted,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Device deletion failed",
+    });
+  }
+});
+
 app.post("/api/devices/:deviceId/playlists", async (req, res) => {
   try {
     const device = findDevice(req.params.deviceId);
@@ -622,6 +791,153 @@ app.post("/api/devices/:deviceId/playlists", async (req, res) => {
     res.status(500).json({
       ok: false,
       error: error.message || "Playlist save failed",
+    });
+  }
+});
+
+
+// -----------------------------
+// Provider Management API
+// -----------------------------
+
+function publicProvider(provider) {
+  if (!provider) return null;
+
+  return {
+    id: provider.id,
+    providerName: provider.providerName,
+    hostUrl: provider.hostUrl,
+    userName: provider.userName,
+    type: provider.type || "IPTV",
+    status: provider.status || "Active",
+    createdAt: provider.createdAt,
+    updatedAt: provider.updatedAt,
+  };
+}
+
+app.get("/api/providers", async (req, res) => {
+  try {
+    const providers = (db.data.providers || []).map(publicProvider);
+
+    res.json({
+      data: providers,
+      total: providers.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Failed to load providers",
+    });
+  }
+});
+
+app.post("/api/providers", async (req, res) => {
+  try {
+    const {
+      providerName,
+      hostUrl,
+      userName,
+      password,
+      type = "IPTV",
+      status = "Active",
+    } = req.body || {};
+
+    if (!providerName || !hostUrl || !userName || !password) {
+      return res.status(400).json({
+        ok: false,
+        error: "providerName, hostUrl, userName and password are required",
+      });
+    }
+
+    if (!db.data.providers) {
+      db.data.providers = [];
+    }
+
+    const now = new Date().toISOString();
+
+    const provider = {
+      id: `PRV-${nanoid(10)}`,
+      providerName,
+      hostUrl,
+      userName,
+      password,
+      type,
+      status,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    db.data.providers.push(provider);
+    await db.write();
+
+    res.status(201).json({
+      ok: true,
+      provider: publicProvider(provider),
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Provider creation failed",
+    });
+  }
+});
+
+app.post("/api/devices/:deviceId/provider", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    const { providerId } = req.body || {};
+
+    if (!providerId) {
+      return res.status(400).json({
+        ok: false,
+        error: "providerId is required",
+      });
+    }
+
+    const provider = (db.data.providers || []).find(
+      (item) => String(item.id) === String(providerId)
+    );
+
+    if (!provider) {
+      return res.status(404).json({
+        ok: false,
+        error: "Provider not found",
+      });
+    }
+
+    if (String(provider.status).toLowerCase() !== "active") {
+      return res.status(400).json({
+        ok: false,
+        error: "Provider is not active",
+      });
+    }
+
+    device.providerId = provider.id;
+    device.provider = {
+      id: provider.id,
+      providerName: provider.providerName,
+      type: provider.type || "IPTV",
+    };
+
+    await db.write();
+
+    res.status(200).json({
+      ok: true,
+      deviceId: device.deviceId,
+      provider: device.provider,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Provider assignment failed",
     });
   }
 });
