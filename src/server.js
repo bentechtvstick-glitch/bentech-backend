@@ -943,6 +943,251 @@ app.post("/api/devices/:deviceId/provider", async (req, res) => {
 });
 
 // -----------------------------
+// Xtream Provider Content API
+// -----------------------------
+
+function getDeviceProvider(device) {
+  if (!device?.providerId) return null;
+
+  return (db.data.providers || []).find(
+    (provider) => String(provider.id) === String(device.providerId)
+  );
+}
+
+function cleanProviderUrl(value = "") {
+  return String(value).trim().replace(/\/+$/, "");
+}
+
+async function xtreamRequest(provider, params = {}) {
+  const base = cleanProviderUrl(provider.hostUrl);
+
+  if (!base || !provider.userName || !provider.password) {
+    throw new Error("Provider credentials are incomplete");
+  }
+
+  const query = new URLSearchParams({
+    username: provider.userName,
+    password: provider.password,
+    ...params,
+  });
+
+  const response = await fetch(
+    `${base}/player_api.php?${query.toString()}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Provider returned HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+app.get("/api/devices/:deviceId/content", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    if (device.blocked === true) {
+      return res.status(403).json({
+        ok: false,
+        error: "Device is blocked",
+      });
+    }
+
+    const provider = getDeviceProvider(device);
+
+    if (!provider) {
+      return res.status(404).json({
+        ok: false,
+        error: "No provider assigned to this device",
+      });
+    }
+
+    if (String(provider.status).toLowerCase() !== "active") {
+      return res.status(400).json({
+        ok: false,
+        error: "Provider is not active",
+      });
+    }
+
+    const [
+      liveCategories,
+      liveStreams,
+      vodCategories,
+      vodStreams,
+      seriesCategories,
+      series,
+    ] = await Promise.all([
+      xtreamRequest(provider, {
+        action: "get_live_categories",
+      }),
+      xtreamRequest(provider, {
+        action: "get_live_streams",
+      }),
+      xtreamRequest(provider, {
+        action: "get_vod_categories",
+      }),
+      xtreamRequest(provider, {
+        action: "get_vod_streams",
+      }),
+      xtreamRequest(provider, {
+        action: "get_series_categories",
+      }),
+      xtreamRequest(provider, {
+        action: "get_series",
+      }),
+    ]);
+
+    res.json({
+      ok: true,
+      deviceId: device.deviceId,
+      provider: {
+        id: provider.id,
+        name: provider.providerName,
+      },
+      channels: Array.isArray(liveStreams) ? liveStreams : [],
+      channelCategories:
+        Array.isArray(liveCategories) ? liveCategories : [],
+      movies: Array.isArray(vodStreams) ? vodStreams : [],
+      movieCategories:
+        Array.isArray(vodCategories) ? vodCategories : [],
+      series: Array.isArray(series) ? series : [],
+      seriesCategories:
+        Array.isArray(seriesCategories) ? seriesCategories : [],
+    });
+
+  } catch (error) {
+    console.error("XTREAM CONTENT ERROR:", error);
+
+    res.status(502).json({
+      ok: false,
+      error: error.message || "Unable to load provider content",
+    });
+  }
+});
+
+app.get("/api/devices/:deviceId/channels", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    const provider = getDeviceProvider(device);
+    if (!provider) {
+      return res.status(404).json({
+        ok: false,
+        error: "No provider assigned to this device",
+      });
+    }
+
+    const channels = await xtreamRequest(provider, {
+      action: "get_live_streams",
+    });
+
+    res.json({
+      ok: true,
+      deviceId: device.deviceId,
+      data: Array.isArray(channels) ? channels : [],
+    });
+
+  } catch (error) {
+    console.error("XTREAM CHANNELS ERROR:", error);
+
+    res.status(502).json({
+      ok: false,
+      error: error.message || "Unable to load channels",
+    });
+  }
+});
+
+app.get("/api/devices/:deviceId/movies", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    const provider = getDeviceProvider(device);
+    if (!provider) {
+      return res.status(404).json({
+        ok: false,
+        error: "No provider assigned to this device",
+      });
+    }
+
+    const movies = await xtreamRequest(provider, {
+      action: "get_vod_streams",
+    });
+
+    res.json({
+      ok: true,
+      deviceId: device.deviceId,
+      data: Array.isArray(movies) ? movies : [],
+    });
+
+  } catch (error) {
+    console.error("XTREAM MOVIES ERROR:", error);
+
+    res.status(502).json({
+      ok: false,
+      error: error.message || "Unable to load movies",
+    });
+  }
+});
+
+app.get("/api/devices/:deviceId/series", async (req, res) => {
+  try {
+    const device = findDevice(req.params.deviceId);
+    if (!device) {
+      return res.status(404).json({
+        ok: false,
+        error: "Device not found",
+      });
+    }
+
+    const provider = getDeviceProvider(device);
+    if (!provider) {
+      return res.status(404).json({
+        ok: false,
+        error: "No provider assigned to this device",
+      });
+    }
+
+    const series = await xtreamRequest(provider, {
+      action: "get_series",
+    });
+
+    res.json({
+      ok: true,
+      deviceId: device.deviceId,
+      data: Array.isArray(series) ? series : [],
+    });
+
+  } catch (error) {
+    console.error("XTREAM SERIES ERROR:", error);
+
+    res.status(502).json({
+      ok: false,
+      error: error.message || "Unable to load series",
+    });
+  }
+});
+
+
+// -----------------------------
 // Generic collections
 // -----------------------------
 function mountCollection(path, key, idField = "id") {
