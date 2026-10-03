@@ -157,4 +157,4 @@ Bouton **📺 Customer TV** anlè panel la limen yon TV vityèl nan navigatè a 
 - San playlist: li montre ekran aktivasyon an ak MAC/Device Key li. Ajoute yon playlist sou MAC sa a.
 - Ak playlist: li chaje vre lis chanèl la (`GET /api/devices/:mac/xtream/live` — se sèvè a ki rele sèvè IPTV a), ak kategori, logo, CH+/CH−.
 - Li montre ticker, chyron, Grafik TV, koupi piblisite ak bumper, pop-up ak mesaj panel la voye.
-- Li **pa jwe videyo** chanèl yo (navigatè a pa ka li flux IPTV yo); se pou verifye sa panel la mete sou ekran an.
+- Li **jwe videyo** chanèl la lè founisè a bay li an HLS: sèvè a sèvi kòm relè (`/api/galaxy/devices/:mac/play/...`, admin sèlman) epi navigatè a li l ak hls.js. Videyo a pase pa sèvè Render la (bandwidth) e li pran yon koneksyon sou playlist la. Chanèl HEVC oswa san HLS pa jwe nan navigatè a.

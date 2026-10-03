@@ -912,6 +912,11 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Detache TV a (pou deplase l)": ["Detach the TV (to move it)", "Détacher la TV (pour la déplacer)", "Separar el TV (para moverlo)"],
     "Mete TV a sou bò dwat la": ["Dock the TV on the right side", "Ancrer la TV à droite", "Acoplar el TV a la derecha"],
     "Chwazi yon aparèy nan lis la an premye.": ["Select a device in the list first.", "Sélectionnez d'abord un appareil dans la liste.", "Seleccione primero un dispositivo de la lista."],
+    "Ap chaje videyo a…": ["Loading video…", "Chargement de la vidéo…", "Cargando video…"],
+    "Navigatè a pa ka li fòma videyo chanèl sa a (egz: HEVC). Li ap jwe sou Fire Stick la.": ["The browser cannot play this channel's video format (e.g. HEVC). It will play on the Fire Stick.", "Le navigateur ne peut pas lire le format vidéo de cette chaîne (ex. : HEVC). Elle sera lue sur le Fire Stick.", "El navegador no puede reproducir el formato de video de este canal (p. ej. HEVC). Se reproducirá en el Fire Stick."],
+    "Founisè a pa bay chanèl sa a an HLS, oswa li pa disponib kounye a.": ["The provider does not offer this channel in HLS, or it is unavailable right now.", "Le fournisseur ne propose pas cette chaîne en HLS, ou elle est indisponible pour le moment.", "El proveedor no ofrece este canal en HLS, o no está disponible ahora."],
+    "Videyo a pa ka jwe nan navigatè a. Eseye yon lòt chanèl.": ["The video cannot play in the browser. Try another channel.", "La vidéo ne peut pas être lue dans le navigateur. Essayez une autre chaîne.", "El video no puede reproducirse en el navegador. Pruebe otro canal."],
+    "Navigatè sa a pa ka jwe videyo an dirèk.": ["This browser cannot play live video.", "Ce navigateur ne peut pas lire la vidéo en direct.", "Este navegador no puede reproducir video en vivo."],
     "Pa gen spot piblisite aktif. Ajoute youn an premye.": ["No active ad spot. Add one first.", "Aucun spot actif. Ajoutez-en un d'abord.", "No hay spots activos. Añada uno primero."],
   };
   for (const [k, [en, fr, es]] of Object.entries(add)) { L.en[k] = en; L.fr[k] = fr; L.es[k] = es; }

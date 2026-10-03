@@ -2185,7 +2185,7 @@ $("#ttvBtn").addEventListener("click", () => ttv?.toggle());
 function startApp() {
   $("#loginView").hidden = true; $("#appView").hidden = false; stopTimers();
   if (window.GalaxyTestTv) { $("#ttvBtn").hidden = false; $("#ttvBtn").title = t("Limen oswa etenn yon TV tès ki konekte ak panel sa a");
-    if (!ttv) ttv = GalaxyTestTv.init({ API, t, esc, cyHtml, openDevice: (mac) => { openTab("dev"); loadDevices().then(() => selectDevice(mac, true)); } });
+    if (!ttv) ttv = GalaxyTestTv.init({ API, t, esc, cyHtml, getToken: () => token, openDevice: (mac) => { openTab("dev"); loadDevices().then(() => selectDevice(mac, true)); } });
     if (ttv.wasOn()) ttv.start(); }
   openTab(tab); loadLive(); loadDevices(); checkHealth();
   timers.push(setInterval(() => { if (!document.hidden) checkHealth(); }, 30000));

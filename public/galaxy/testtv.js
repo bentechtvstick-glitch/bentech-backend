@@ -28,6 +28,8 @@
 .ttv-list button img{width:46px;height:30px;object-fit:contain;flex:none}.ttv-list button i{font-style:normal;color:#00E5FF;min-width:44px;font-variant-numeric:tabular-nums}
 .ttv-list button span{overflow:hidden;text-overflow:ellipsis}.ttv-list .more{font-size:13px;color:#9AA3C7;padding:6px 2px;flex:none}
 .ttv-screen{cursor:pointer}
+.ttv-vid{background:#000}.ttv-vid video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.ttv-vmsg{inset:auto!important;left:50%!important;bottom:90px!important;transform:translateX(-50%);background:rgba(0,0,0,.78);border-radius:12px;padding:10px 20px;font-size:18px;text-align:center;max-width:760px}
 .ttv-ov,.ttv-gfx,.ttv-cy{pointer-events:none}.ttv-gfx,.ttv-cy{position:absolute;inset:0}
 .ttv [hidden]{display:none!important}
 .ttv-tk{position:absolute;left:0;right:0;bottom:0}
@@ -81,8 +83,8 @@
 
     const el = document.createElement("div"); el.className = "ttv"; el.hidden = true;
     el.innerHTML = `<div class="ttv-h"><b>📺 Customer TV</b><code></code><button type="button" data-a="dock"></button><button type="button" data-a="min" aria-label="${esc(t("Redui"))}" title="${esc(t("Redui"))}">—</button><button type="button" data-a="off" aria-label="${esc(t("Etenn TV tès la"))}" title="${esc(t("Etenn TV tès la"))}">✕</button></div>
-      <div class="ttv-screen"><div class="ttv-stage"><div class="ttv-bg"></div><div class="ttv-ov"><div class="ttv-gfx"></div><div class="ttv-cy"></div><div class="ttv-tk"></div></div><div class="ttv-info" hidden></div><div class="ttv-full" hidden></div><div class="ttv-list" hidden></div><div class="ttv-ad" hidden></div><div class="ttv-scr" hidden></div><div class="ttv-dlg" hidden></div><div class="ttv-toast" hidden></div></div></div>
-      <div class="ttv-f"><span></span><button class="btn small" type="button" data-a="copy"></button><button class="btn small" type="button" data-a="chdn" aria-label="CH−">CH−</button><button class="btn small" type="button" data-a="chup" aria-label="CH+">CH+</button><button class="btn small" type="button" data-a="list">☰</button><button class="btn small purple" type="button" data-a="dev"></button></div><div class="ttv-help"></div>`;
+      <div class="ttv-screen"><div class="ttv-stage"><div class="ttv-bg"></div><div class="ttv-vid" hidden></div><div class="ttv-vmsg" hidden></div><div class="ttv-ov"><div class="ttv-gfx"></div><div class="ttv-cy"></div><div class="ttv-tk"></div></div><div class="ttv-info" hidden></div><div class="ttv-full" hidden></div><div class="ttv-list" hidden></div><div class="ttv-ad" hidden></div><div class="ttv-scr" hidden></div><div class="ttv-dlg" hidden></div><div class="ttv-toast" hidden></div></div></div>
+      <div class="ttv-f"><span></span><button class="btn small" type="button" data-a="copy"></button><button class="btn small" type="button" data-a="chdn" aria-label="CH−">CH−</button><button class="btn small" type="button" data-a="chup" aria-label="CH+">CH+</button><button class="btn small" type="button" data-a="list">☰</button><button class="btn small" type="button" data-a="mute" aria-label="Son">🔊</button><button class="btn small purple" type="button" data-a="dev"></button></div><div class="ttv-help"></div>`;
     document.body.appendChild(el);
     const $ = (s) => el.querySelector(s), stage = $(".ttv-stage");
     const scale = () => { const w = $(".ttv-screen").clientWidth; if (w) stage.style.transform = `scale(${w / 960})`; };
@@ -119,7 +121,7 @@
           ? `<img src="logo.png" alt=""><h2>${esc(t(c.status === "blocked" ? "Aparèy sa a bloke" : c.status === "expired" ? "Abònman an ekspire" : "Mentenans"))}</h2><p>${esc(c.status === "maintenance" && c.statusMessage ? c.statusMessage : t("Kontakte founisè ou a."))}</p><p>MAC: ${esc(S.mac)}</p>`
           : `<img src="logo.png" alt=""><div class="ids"><div class="id"><small>MAC ADDRESS</small><b>${esc(S.mac)}</b></div><div class="id"><small>DEVICE KEY</small><b>${esc(S.key)}</b></div></div>
              <p class="big">${esc(T.err || t("Ap tann founisè a aktive aparèy la…"))}</p><p>${esc(T.err ? "" : t("Ajoute yon playlist sou MAC sa a nan paj Aparèy la."))}</p>`;
-        overlays(null); closeList(); $(".ttv-info").hidden = true; T.bgSig = null; $(".ttv-f span").textContent = T.err || t("TV tès la ap tann yon playlist.");
+        overlays(null); closeList(); stopVideo(); $(".ttv-info").hidden = true; T.bgSig = null; $(".ttv-f span").textContent = T.err || t("TV tès la ap tann yon playlist.");
       } else {
         scr.hidden = true;
         const ch = cur(), bgSig = ch ? ch.id + "|" + ch.name : "none|" + (T.chErr || "");
@@ -127,8 +129,9 @@
           ? `${ch.icon ? `<img src="${esc(ch.icon)}" alt="" onerror="this.remove()">` : ""}<b>${esc(ch.name.slice(0, 26))}</b><span>${esc(ch.num + " · " + (ch.categoryName || c.playlists[0].name || ""))}</span>`
           : `<b>Customer TV</b><span>${esc(T.chErr || c.playlists[0].name || "")} · ${esc(t(T.chErr ? "chanèl tès" : "Ap chaje chanèl yo…"))}</span>`; }
         overlays(T.brk ? null : c);
-        $(".ttv-f span").textContent = T.chs.length ? t("{0} chanèl · videyo a pa jwe nan TV tès la", T.chs.length) : t("Li montre sa panel la mete sou ekran an; li pa jwe vre chanèl yo.");
+        $(".ttv-f span").textContent = T.chs.length ? t("{0} chanèl", T.chs.length) : t("Li montre sa panel la mete sou ekran an; li pa jwe vre chanèl yo.");
       }
+      $('[data-a="mute"]').textContent = S.muted ? "🔇" : "🔊";
       $('[data-a="dev"]').textContent = t("Louvri nan Aparèy"); $('[data-a="copy"]').textContent = t("Kopye MAC");
       $(".ttv-help").innerHTML = `<h4>${esc(t("Kijan pou sèvi ak li"))}</h4><ol><li>${esc(t("Klike \"Louvri nan Aparèy\" pou jwenn TV sa a nan lis la."))}</li><li>${esc(t("Ajoute yon playlist sou MAC li, tankou pou yon vre kliyan."))}</li><li>${esc(t("Klike sou ekran an pou wè chanèl yo; sèvi ak CH− / CH+ pou chanje."))}</li><li>${esc(t("Chanje ticker, chyron, Grafik TV oswa piblisite: yo parèt isit la nan kèk segonn."))}</li></ol>`;
     }
@@ -165,6 +168,36 @@
       const stay = c.duration > 0 ? c.duration * 1000 : list.length > 1 ? 15000 : 0;
       if (stay) T.cy.timer = setTimeout(() => { box.innerHTML = ""; T.cy.i = (T.cy.i + 1) % list.length; T.cy.timer = setTimeout(() => { if (T.cy.sig === JSON.stringify(list)) cyShow(list, bottom); }, c.duration > 0 ? 20000 : 400); }, stay); }
 
+    // ------------------------------------------------------------ Videyo chanèl la (HLS, atravè relè sèvè a)
+    const HLS_SRC = "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js";
+    let hlsLoading = null;
+    const loadHls = () => window.Hls ? Promise.resolve(window.Hls) : (hlsLoading ||= new Promise((ok, no) => { const sc = document.createElement("script"); sc.src = HLS_SRC; sc.onload = () => ok(window.Hls); sc.onerror = () => { hlsLoading = null; no(new Error("hls")); }; document.head.appendChild(sc); }));
+    function vmsg(text) { const m = $(".ttv-vmsg"); m.textContent = text || ""; m.hidden = !text; }
+    function stopVideo() { if (T.hls) { try { T.hls.destroy(); } catch {} T.hls = null; } const box = $(".ttv-vid"); const v = box.querySelector("video"); if (v) { v.pause(); v.removeAttribute("src"); v.load(); } box.innerHTML = ""; box.hidden = true; vmsg(""); T.vidId = null; }
+    async function startVideo(ch) {
+      stopVideo(); if (!ch || !T.on || T.brk) return; T.vidId = ch.id;
+      const box = $(".ttv-vid"); box.innerHTML = "<video playsinline></video>"; const v = box.firstChild; v.muted = !!S.muted;
+      const token = D.getToken ? D.getToken() : "", url = `${API}/galaxy/devices/${M}/play/${ch.id}/index.m3u8`;
+      const fail = (why) => { if (T.vidId !== ch.id) return; box.hidden = true; vmsg(why); };
+      const go = () => { if (T.vidId !== ch.id) return; const pr = v.play(); if (pr && pr.catch) pr.catch(() => { v.muted = true; v.play().catch(() => {}); }); };
+      v.addEventListener("playing", () => { if (T.vidId === ch.id) { box.hidden = false; vmsg(""); } });
+      vmsg(t("Ap chaje videyo a…"));
+      let Hls = null; try { Hls = await loadHls(); } catch {}
+      if (T.vidId !== ch.id) return;
+      if (Hls && Hls.isSupported()) {
+        const h = new Hls({ maxBufferLength: 12, xhrSetup: (xhr) => { if (token) xhr.setRequestHeader("Authorization", "Bearer " + token); } }); T.hls = h;
+        h.on(Hls.Events.MANIFEST_PARSED, go);
+        h.on(Hls.Events.ERROR, (_e, d) => { if (!d || !d.fatal) return;
+          const code = d.response && d.response.code, codec = /codec|bufferAdd|incompatible/i.test(String(d.details || ""));
+          fail(codec ? t("Navigatè a pa ka li fòma videyo chanèl sa a (egz: HEVC). Li ap jwe sou Fire Stick la.") : code === 502 || code === 404 ? t("Founisè a pa bay chanèl sa a an HLS, oswa li pa disponib kounye a.") : t("Videyo a pa ka jwe nan navigatè a. Eseye yon lòt chanèl."));
+          try { h.destroy(); } catch {} if (T.hls === h) T.hls = null; });
+        h.loadSource(url); h.attachMedia(v);
+      } else if (v.canPlayType("application/vnd.apple.mpegurl")) { // Safari: HLS natif
+        v.addEventListener("error", () => fail(t("Videyo a pa ka jwe nan navigatè a. Eseye yon lòt chanèl.")));
+        v.src = url + (token ? "?t=" + encodeURIComponent(token) : ""); v.addEventListener("loadedmetadata", go);
+      } else fail(t("Navigatè sa a pa ka jwe videyo an dirèk."));
+    }
+
     // ------------------------------------------------------------ Chanèl playlist la (sèvè a chèche lis la pou nou)
     function applyFilters() {
       const c = T.cfg || {}, hid = new Set(c.hiddenChannels || []), hidC = new Set((c.hiddenCategories || []).map(String)), keep = cur()?.id;
@@ -186,6 +219,7 @@
       const info = $(".ttv-info"); info.innerHTML = `${ch.icon ? `<img src="${esc(ch.icon)}" alt="" onerror="this.remove()">` : ""}<div class="n">${ch.num}</div><div><div class="t">${esc(ch.name)}</div><div class="c">${esc(ch.categoryName || "")}</div></div>`;
       info.hidden = false; clearTimeout(T.infoT); T.infoT = setTimeout(() => (info.hidden = true), 4000);
       if (!quiet && T.cfg?.graphics?.ident?.onChannelChange) setTimeout(ident, 300);
+      startVideo(ch);
     }
     function openList() {
       if (!playing() || T.brk || !T.chs.length) return; T.listOpen = true; T.cat = T.cat && T.cats.some((c) => c.id === T.cat) ? T.cat : cur()?.categoryId || T.cats[0]?.id || "";
@@ -216,14 +250,14 @@
       if (!playing() || T.brk || !ads || !ads.length) return;
       const bm = T.cfg.graphics?.bumper, bum = (id) => ({ id, type: "bumper", durationSec: bm.durationSec });
       const q = [...(bm && (bm.inUrl || bm.inText) ? [bum("bumper-in")] : []), ...ads, ...(bm && (bm.outUrl || bm.outText) ? [bum("bumper-out")] : [])];
-      closeList(); $(".ttv-info").hidden = true;
+      closeList(); $(".ttv-info").hidden = true; stopVideo();
       T.brk = { q, i: -1, el: 0, skip: +skip || 0, bumper: bm, last: Date.now() }; T.lastBreak = Date.now(); $(".ttv-full").hidden = true; overlays(null); nextSpot(); report();
     }
     function nextSpot() {
       const b = T.brk; if (!b) return; const prev = b.q[b.i];
       if (prev && prev.type !== "bumper") dev("POST", `/${M}/ad-events`, { adId: prev.id, event: "complete" }).catch(() => {});
       b.i++; const a = b.q[b.i], box = $(".ttv-ad");
-      if (!a) { T.brk = null; T.lastBreak = Date.now(); box.hidden = true; box.innerHTML = ""; render(); report(); return; }
+      if (!a) { T.brk = null; T.lastBreak = Date.now(); box.hidden = true; box.innerHTML = ""; render(); report(); if (cur()) startVideo(cur()); return; }
       b.spotEl = 0; b.video = null; box.hidden = false;
       if (a.type === "bumper") { box.innerHTML = G ? G.bumperHtml(b.bumper, a.id === "bumper-out" ? "out" : "in") : ""; return; }
       dev("POST", `/${M}/ad-events`, { adId: a.id, event: "start" }).catch(() => {});
@@ -291,7 +325,7 @@
     }
     function stop() {
       T.on = false; S.on = false; save(S); el.hidden = true; document.body.classList.remove("ttv-dock"); btn()?.classList.remove("on");
-      T.timers.forEach(clearInterval); T.timers = []; clearTimeout(T.pollT); clearTimeout(T.cy.timer); T.abort?.abort(); T.brk = null; T.chKey = ""; T.all = []; T.chs = []; T.bgSig = null; closeList(); $(".ttv-ad").hidden = true; $(".ttv-ad").innerHTML = "";
+      T.timers.forEach(clearInterval); T.timers = []; clearTimeout(T.pollT); clearTimeout(T.cy.timer); T.abort?.abort(); stopVideo(); T.brk = null; T.chKey = ""; T.all = []; T.chs = []; T.bgSig = null; closeList(); $(".ttv-ad").hidden = true; $(".ttv-ad").innerHTML = "";
     }
     const btn = () => document.getElementById("ttvBtn");
     // Louvri = TV a pran bò dwat paj la; redui (—) = yon ti ba anba adwat, panel la reprann tout lajè a
@@ -318,6 +352,7 @@
       if (a === "off") stop(); if (a === "min") { S.min = !S.min; save(S); layout(); scale(); T.tkSig = null; }
       if (a === "dock") { S.float = !el.classList.contains("dock") ? false : true; if (S.float && S.x == null) { S.x = window.innerWidth - 500; S.y = 90; } save(S); layout(); T.tkSig = null; }
       if (a === "copy") { navigator.clipboard?.writeText(S.mac).then(() => toast(t("MAC kopye")), () => {}); }
+      if (a === "mute") { S.muted = !S.muted; save(S); const v = el.querySelector(".ttv-vid video"); if (v) v.muted = S.muted; e.target.closest("[data-a]").textContent = S.muted ? "🔇" : "🔊"; }
       if (a === "chup") play(T.idx + 1); if (a === "chdn") play(T.idx - 1); if (a === "list") (T.listOpen ? closeList() : openList());
       if (a === "dev") D.openDevice(S.mac); });
     return { start, stop, toggle: () => (T.on ? stop() : start()), isOn: () => T.on, wasOn: () => !!S.on, mac: S.mac };

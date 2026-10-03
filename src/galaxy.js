@@ -558,6 +558,95 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     }
   });
 
+  // =========================================================================
+  // Jwe yon chanèl nan "Customer TV" panel la (navigatè a)
+  // Yon navigatè pa ka li flux IPTV yo dirèkteman (http sou yon paj https, pa gen CORS).
+  // Sèvè a sèvi kòm relè: li chèche playlist HLS la ak moso videyo yo, epi li pase yo bay navigatè a.
+  // Sèlman pou admin ki konekte (JWT), e sèlman sou sèvè playlist aparèy la.
+  // =========================================================================
+  const playHosts = new Map(); // MAC → Set(host otorize pou relè a)
+  const PLAY_UA = { "User-Agent": "Mozilla/5.0 (Linux; Android 9; AFTKA) GalaxyTVStick/1.0", Accept: "*/*" };
+  const b64u = (v) => Buffer.from(v).toString("base64url");
+  const adminPlay = (req, res, next) => {
+    // hls.js voye JWT a nan header; Safari (HLS natif) pa kapab, kidonk nou aksepte ?t= tou
+    if (!req.headers.authorization && req.query.t) req.headers.authorization = "Bearer " + req.query.t;
+    authenticate(req, res, next);
+  };
+  const isPrivateHost = (h) => process.env.XTREAM_ALLOW_LOCAL !== "1" && /^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|::1|\[)/i.test(h);
+  const allowHost = (mac, url) => { const h = new URL(url).host; (playHosts.get(mac) || playHosts.set(mac, new Set()).get(mac)).add(h); };
+  const targetOf = (req, res, mac) => {
+    let url;
+    try { url = new URL(Buffer.from(String(req.query.u || ""), "base64url").toString()); } catch { res.status(400).json({ ok: false, error: "Lyen pa valid" }); return null; }
+    if (!/^https?:$/.test(url.protocol) || isPrivateHost(url.hostname) || !playHosts.get(mac)?.has(url.host)) { res.status(403).json({ ok: false, error: "Lyen sa a pa otorize" }); return null; }
+    return url;
+  };
+  /** Reekri yon playlist HLS pou tout lyen ladan l pase pa relè a. */
+  const rewriteM3u8 = (text, baseUrl, mac, t) => {
+    const prefix = `/api/galaxy/devices/${encodeURIComponent(mac)}/play`;
+    const tq = t ? `&t=${encodeURIComponent(t)}` : "";
+    const via = (uri, kind) => { const abs = new URL(uri, baseUrl).toString(); allowHost(mac, abs); return `${prefix}/${kind}?u=${b64u(abs)}${tq}`; };
+    return text.split(/\r?\n/).map((line) => {
+      const l = line.trim();
+      if (!l) return line;
+      if (l.startsWith("#")) return line.replace(/URI="([^"]+)"/g, (_, uri) => `URI="${via(uri, /\.m3u8(\?|$)/i.test(uri) ? "pl" : "seg")}"`);
+      return via(l, /\.m3u8(\?|$)/i.test(l) ? "pl" : "seg");
+    }).join("\n");
+  };
+  const sendPlaylist = async (res, url, mac, t) => {
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 15000);
+    try {
+      const r = await fetch(url, { signal: ctl.signal, redirect: "follow", headers: PLAY_UA });
+      if (!r.ok) return res.status(502).json({ ok: false, error: `Sèvè IPTV a reponn HTTP ${r.status} pou chanèl sa a.` });
+      const text = await r.text();
+      if (!text.includes("#EXTM3U")) return res.status(502).json({ ok: false, error: "Sèvè IPTV a pa bay chanèl sa a an HLS (.m3u8)." });
+      allowHost(mac, r.url || url);
+      res.setHeader("Content-Type", "application/vnd.apple.mpegurl");
+      res.setHeader("Cache-Control", "no-store");
+      res.end(rewriteM3u8(text, r.url || url, mac, t));
+    } catch (e) {
+      if (!res.headersSent) res.status(502).json({ ok: false, error: e.name === "AbortError" ? "Sèvè IPTV a pran twòp tan." : "Sèvè IPTV a pa reponn." });
+    } finally { clearTimeout(tm); }
+  };
+
+  app.get("/api/galaxy/devices/:mac/play/pl", adminPlay, async (req, res) => {
+    const mac = normMac(req.params.mac);
+    const url = targetOf(req, res, mac);
+    if (url) await sendPlaylist(res, url.toString(), mac, req.query.t);
+  });
+
+  app.get("/api/galaxy/devices/:mac/play/seg", adminPlay, async (req, res) => {
+    const mac = normMac(req.params.mac);
+    const url = targetOf(req, res, mac);
+    if (!url) return;
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 30000);
+    res.on?.("close", () => ctl.abort()); // navigatè a fèmen: kanpe telechajman an
+    try {
+      const r = await fetch(url, { signal: ctl.signal, redirect: "follow", headers: PLAY_UA });
+      if (!r.ok || !r.body) return res.status(502).json({ ok: false, error: `HTTP ${r.status}` });
+      res.setHeader("Content-Type", r.headers.get("content-type") || "video/mp2t");
+      res.setHeader("Cache-Control", "no-store");
+      const len = r.headers.get("content-length"); if (len) res.setHeader("Content-Length", len);
+      for await (const chunk of r.body) { if (res.write(chunk) === false) await new Promise((ok) => res.once?.("drain", ok) || ok()); }
+      res.end();
+    } catch {
+      if (!res.headersSent) res.status(502).json({ ok: false, error: "Sèvè IPTV a pa reponn." }); else res.end();
+    } finally { clearTimeout(tm); }
+  });
+
+  app.get("/api/galaxy/devices/:mac/play/:streamId/index.m3u8", adminPlay, async (req, res) => {
+    const device = loadDevice(req, res);
+    if (!device) return;
+    const pl = playlistsOf(device.mac)[0];
+    if (!pl) return res.status(404).json({ ok: false, error: "Pa gen playlist sou aparèy sa a" });
+    const id = String(req.params.streamId);
+    if (!/^\d+$/.test(id)) return res.status(400).json({ ok: false, error: "Chanèl pa valid" });
+    const base = normServer(pl.server);
+    let host; try { host = new URL(base).hostname; } catch { return res.status(400).json({ ok: false, error: "Adrès sèvè a pa valid." }); }
+    if (isPrivateHost(host)) return res.status(403).json({ ok: false, error: "Adrès sa a pa otorize." });
+    playHosts.set(device.mac, new Set()); // nouvo chanèl: rekòmanse lis host otorize yo
+    await sendPlaylist(res, `${base}/live/${encodeURIComponent(pl.username)}/${encodeURIComponent(pl.password)}/${id}.m3u8`, device.mac, req.query.t);
+  });
+
   /** Lis chanèl kliyan an ak eta hide/show chak grenn. */
   app.get("/api/galaxy/devices/:mac/channels", authenticate, (req, res) => {
     const device = loadDevice(req, res);
