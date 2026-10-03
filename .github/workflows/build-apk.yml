@@ -6,6 +6,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write # pou pibliye APK a nan "Releases"
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -45,3 +48,17 @@ jobs:
           name: GalaxyTvStick-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      # Lyen piblik ki pa janm chanje, pou telechaje APK a sou Fire Stick la (app "Downloader"):
+      # https://github.com/OWNER/REPO/releases/download/apk-latest/GalaxyTvStick.apk
+      - name: Publish APK to Releases
+        if: github.ref == 'refs/heads/android-app'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk GalaxyTvStick.apk
+          gh release delete apk-latest --yes --cleanup-tag || true
+          sleep 3
+          gh release create apk-latest GalaxyTvStick.apk --target "$GITHUB_SHA" --prerelease \
+            --title "Galaxy TV Stick APK (build $GITHUB_RUN_NUMBER)" \
+            --notes "APK tès Galaxy TV Stick, bati otomatikman. Vèsyon 1.0.$GITHUB_RUN_NUMBER."

@@ -11,8 +11,10 @@ android {
         applicationId = "com.galaxytvstick.app"
         minSdk = 22
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        // Chak bati sou GitHub gen yon nimewo pi wo, pou nouvo APK a ka enstale sou ansyen an
+        val build = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
+        versionCode = build
+        versionName = "1.0.$build"
 
         // Adrès backend panel la (bentech-backend)
         buildConfigField("String", "PANEL_URL", "\"https://bentech-backend.onrender.com/api\"")
@@ -24,7 +26,20 @@ android {
         buildConfigField("boolean", "ALLOW_MANUAL_LOGIN", "false")
     }
 
+    // Menm kle siyati pou tout bati yo (san sa, Fire Stick la refize mete yon nouvo vèsyon sou ansyen an)
+    signingConfigs {
+        create("galaxy") {
+            storeFile = rootProject.file("signing/galaxy.keystore")
+            storePassword = "galaxytv"
+            keyAlias = "galaxy"
+            keyPassword = "galaxytv"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("galaxy")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
