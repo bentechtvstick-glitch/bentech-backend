@@ -15,6 +15,12 @@ services:
         sync: false
       - key: ADMIN_PASS
         sync: false
+      # Galaxy TV Stick: sove db.json sou disk pèmanan an (mande yon plan peye ak disk)
+      - key: DB_FILE
+        value: /data/db.json
+      # Zòn lè panel la itilize pou lè Live Events ak Pop-up yo
+      - key: PANEL_TZ
+        value: America/New_York
     disk:
       name: data
       mountPath: /data

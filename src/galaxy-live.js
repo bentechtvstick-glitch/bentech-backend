@@ -7,6 +7,7 @@
 // - Tout sa rete an memwa: yo pa chaje db.json, epi yo pa gen enpòtans si sèvè a redemare.
 // ---------------------------------------------------------------------------
 import express from "express";
+import { deviceIndex, gzipStatic } from "./perf.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { normMac } from "./galaxy.js";
@@ -31,7 +32,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   const queues = new Map();   // MAC → [ kòmand ]
   const waiters = new Map();  // MAC → Set(fonksyon pou reponn long-poll la)
 
-  const findDevice = (mac) => (db.data.devices || []).find((d) => d.mac === mac || d.deviceId === mac);
+  const findDevice = deviceIndex(() => db.data.devices);
 
   /** Verifye MAC + Device Key app la voye. Retounen aparèy la oswa null (e li deja reponn). */
   const deviceFromApp = (req, res) => {
@@ -99,6 +100,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       resolution: String(b.resolution || ""),
       codec: String(b.codec || ""),
       buffering: !!b.buffering,
+      adBreak: !!b.adBreak,
       error: b.error ? String(b.error).slice(0, 200) : "",
       playlistName: String(b.playlistName || ""),
       appVersion: String(b.appVersion || device.appVersion || ""),
@@ -154,6 +156,8 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       model: d.model || "",
       blocked: !!d.blocked,
       online: isOnline(mac),
+      // Yon TV san playlist poko yon TV "an sèvis": panel la pa montre l Online/Offline
+      configured: (db.data.devicePlaylists?.[mac] || []).length > 0,
       live: live.get(mac) || null,
       pendingCommands: pendingFor(mac).length,
     };
@@ -162,9 +166,9 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   /** Tout TV Galaxy yo, sa ki online an premye, ak sa yo ap gade. */
   app.get("/api/galaxy/live", authenticate, (req, res) => {
     const list = (db.data.devices || []).filter((d) => d.mac).map(liveView);
-    list.sort((a, b) => (b.online - a.online) || ((b.live?.updatedAt || 0) - (a.live?.updatedAt || 0)));
+    list.sort((a, b) => ((b.online && b.configured) - (a.online && a.configured)) || ((b.live?.updatedAt || 0) - (a.live?.updatedAt || 0)));
     res.json({
-      online: list.filter((x) => x.online).length,
+      online: list.filter((x) => x.online && x.configured).length,
       watching: list.filter((x) => x.online && x.live?.channel && ["player", "vod", "catchup"].includes(x.live.screen)).length,
       devices: list,
     });
@@ -199,6 +203,59 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     res.status(201).json({ ok: true, command: cmd, delivered, online: isOnline(d.mac) });
   });
 
+  // ---- Koupi piblisite (tankou chèn TV) ----
+  const adIsOn = (a) => a && a.url && a.enabled !== false && ["active", "yes", "true", "on"].includes(String(a.status ?? "Active").toLowerCase());
+  const breakSpots = (ids) => (db.data.mediaAds || []).map((a, i) => [a, Number.isFinite(Number(a.order)) && a.order !== "" && a.order != null ? Number(a.order) : 1e6 + i])
+    .filter(([a]) => adIsOn(a) && a.placement === "break").sort((x, y) => x[1] - y[1]).map(([a]) => a)
+    .filter((a) => !ids?.length || ids.includes(String(a.id)))
+    .map((a) => ({ id: String(a.id), name: String(a.name || ""), url: a.url, durationSec: Number(a.durationSec) || 10,
+      type: a.type === "video" || /\.(mp4|m3u8|webm|mkv)(\?|$)/i.test(a.url) ? "video" : "image" }));
+
+  /**
+   * "▶ Pase piblisite kounye a": voye yon koupi piblisite bay yon TV (mac) oswa bay tout TV ki konekte.
+   * Body: { mac?: "AA:BB:…", adIds?: ["…"] }  (san adIds = tout spot aktif yo, nan lòd lis la)
+   */
+  app.post("/api/galaxy/adbreak", authenticate, (req, res) => {
+    const b = req.body || {};
+    const ads = breakSpots(Array.isArray(b.adIds) ? b.adIds.map(String) : null);
+    if (!ads.length) return res.status(400).json({ ok: false, error: "Pa gen spot piblisite aktif. Ajoute youn an premye." });
+    const s = db.data.settings || {};
+    const skipAfterSec = Math.min(120, Math.max(0, Number(s.adBreakSkipSec) || 0));
+    let targets;
+    if (b.mac) {
+      const d = findDevice(normMac(b.mac));
+      if (!d) return res.status(404).json({ ok: false, error: "Aparèy pa jwenn" });
+      targets = [d.mac];
+    } else {
+      targets = [...waiters.keys()].filter((m) => waiters.get(m)?.size);
+    }
+    let delivered = 0;
+    for (const mac of targets) {
+      const q = pendingFor(mac);
+      q.push({ id: Math.random().toString(36).slice(2, 10), type: "adbreak", ads, skipAfterSec, createdAt: Date.now() });
+      if (flush(mac)) delivered++;
+    }
+    auditLog("ad-break", `${ads.length} spot → ${b.mac ? targets[0] : `${targets.length} TV`}`, req.user?.sub || "admin");
+    res.status(201).json({ ok: true, spots: ads.length, targets: targets.length, delivered });
+  });
+
+  /** TV a di yon spot kòmanse / fini (pou konte konbyen fwa chak pub pase). */
+  let statsTimer = null;
+  app.post("/api/devices/:mac/ad-events", (req, res) => {
+    const device = deviceFromApp(req, res);
+    if (!device) return;
+    const id = String(req.body?.adId || "").slice(0, 80);
+    const ev = req.body?.event === "complete" ? "completes" : "starts";
+    if (id) {
+      const st = ((db.data.adStats ??= {})[id] ??= { starts: 0, completes: 0, lastAt: "" });
+      st[ev] = (st[ev] || 0) + 1; st.lastAt = new Date().toISOString();
+      if (!statsTimer) statsTimer = setTimeout(() => { statsTimer = null; db.write().catch(() => {}); }, 5000);
+    }
+    res.json({ ok: true });
+  });
+
+  app.get("/api/galaxy/ad-stats", authenticate, (req, res) => res.json(db.data.adStats || {}));
+
   /**
    * Panel la chanje yon bagay ki parèt sou TV yo (paramèt, ticker, chyron, banner…):
    * voye yon siyal "sync" an silans bay tout TV ki konekte, pou yo chèche nouvo konfig la touswit
@@ -222,7 +279,27 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   // =========================================================================
   const here = path.dirname(fileURLToPath(import.meta.url));
   const publicDir = path.join(here, "..", "public", "galaxy");
-  app.use("/galaxy", express.static(publicDir));
+  app.use(gzipStatic("/galaxy", publicDir)); // HTML/JS konprese + kenbe nan memwa
+  app.use("/galaxy", express.static(publicDir, { maxAge: "1h" }));
+
+  /** Sante sistèm nan: gwosè baz done a, memwa, vitès ekriti, konbyen eleman. */
+  app.get("/api/galaxy/system", authenticate, (req, res) => {
+    const d = db.data, mem = process.memoryUsage(), perf = db.perf || {};
+    const count = (v) => (Array.isArray(v) ? v.length : v && typeof v === "object" ? Object.keys(v).length : 0);
+    const channels = Object.values(d.channelLists || {}).reduce((n, l) => n + (Array.isArray(l) ? l.length : 0), 0)
+      + Object.values(d.deviceChannels || {}).reduce((n, l) => n + (Array.isArray(l) ? l.length : 0), 0);
+    let online = 0; for (const x of d.devices || []) if (x.mac && (d.devicePlaylists?.[x.mac] || []).length && isOnline(x.mac)) online++;
+    res.json({
+      uptimeSec: Math.round(process.uptime()), node: process.version,
+      memoryMb: Math.round(mem.rss / 1048576), heapMb: Math.round(mem.heapUsed / 1048576),
+      dbBytes: perf.lastBytes || 0, dbWriteMs: perf.lastMs || 0, dbWrites: perf.writes || 0, dbWriteErrors: perf.errors || 0, dbLastWriteAt: perf.lastAt || null, dbPending: !!perf.pending,
+      persistent: !!process.env.DB_FILE && process.env.DB_FILE !== "./db.json",
+      devices: count(d.devices), online, connected: [...waiters.values()].filter((s) => s.size).length,
+      playlists: Object.values(d.devicePlaylists || {}).reduce((n, l) => n + count(l), 0), channelLists: count(d.channelLists), channels,
+      customers: count(d.customers), auditLogs: count(d.auditLogs),
+      tv: ["tickers", "chyrons", "banners", "popups", "liveEvents", "mediaAds"].reduce((n, k) => n + count(d[k]), 0),
+    });
+  });
 
   return { broadcastSync };
 }

@@ -142,6 +142,9 @@ tr.sel td{background:rgba(53,88,246,.10)}
 .sw input:checked+i::after{left:19px;background:#fff}
 .sw input:focus-visible+i{outline:2px solid var(--accent2)}
 .empty{color:var(--faint);font-size:14px;padding:8px 0}
+td.up,input.up{text-transform:uppercase}input.up::placeholder{text-transform:none}
+.morebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0 2px;grid-column:1/-1}
+.sysbar{height:8px;border-radius:99px;background:var(--line2);overflow:hidden}.sysbar i{display:block;height:100%;border-radius:99px;background:#22c55e}.sysbar i.warn{background:#f59e0b}.sysbar i.bad{background:#ef4444}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#2a1420;border:1px solid #5b2536;border-radius:10px;padding:9px 12px;font-size:14px}
 .confirmrow td{background:#1d0f18;white-space:normal}
 
@@ -210,11 +213,11 @@ input[type=range]{accent-color:var(--blue2);width:100%}
 /* ---- Chyron / Lower third ---- */
 main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
 .cy-cols{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
-@container cypane (max-width:1020px){.cy-cols{grid-template-columns:minmax(0,1fr)}.cy-prevcard{position:static;order:-1}}
+@container cypane (max-width:1020px){.cy-cols{grid-template-columns:minmax(0,1fr)}.cy-prevcard{order:-1;z-index:5;box-shadow:0 10px 24px rgba(0,0,0,.35)}.cy-prevcard .cystage{max-width:calc(42vh * 16 / 9)}}
 .cy-form{container-type:inline-size;container-name:cyform}
 @container cyform (max-width:600px){.cy-lt{grid-template-columns:1fr}.posgrid{max-width:320px}}
 @container cyform (max-width:480px){.cy-form .row2,.cy-form .row3,.cy-form .swrow{grid-template-columns:1fr}.seg.full button{font-size:12px}}
-.cy-prevcard{position:sticky;top:84px}
+.cy-prevcard{position:sticky;top:84px;background:rgba(22,30,50,.45);background:color-mix(in srgb,var(--surface) 45%,transparent);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 .cy-form{gap:0;padding:0;overflow:hidden}
 .cysec{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
 .cysec-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -242,9 +245,39 @@ main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
 .swatch span{display:flex;flex-direction:column;min-width:0;font-size:13px}.swatch code{font-size:11px;color:var(--faint);text-transform:uppercase}
 .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.row3>*{min-width:0}
 @media (max-width:560px){.swrow,.row3{grid-template-columns:1fr}}
-.cystage{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;border:1px solid var(--line2);background:#000}
+.cystage{position:relative;width:100%;margin-inline:auto;aspect-ratio:16/9;border-radius:10px;overflow:hidden;border:1px solid var(--line2);background:#000}
 .cytv{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0;overflow:hidden;
   background:radial-gradient(ellipse at 70% 30%,rgba(255,190,110,.35),transparent 55%),linear-gradient(160deg,#16324f 0%,#3b2a5a 45%,#8a4a2c 80%,#c98a3a 100%)}
+/* Preview koupi piblisite */
+.brpv-ch{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#fff;text-align:center}
+.brpv-live{position:absolute;left:36px;top:28px;background:rgba(0,0,0,.55);border-radius:8px;padding:6px 14px;font-size:20px;font-weight:700;letter-spacing:.06em}
+.brpv-live i{display:inline-block;width:12px;height:12px;border-radius:50%;background:#ff3b30;margin-right:8px}
+.brpv-big{width:120px;height:120px;border-radius:50%;border:3px solid rgba(255,255,255,.85);background:rgba(0,0,0,.45);color:#fff;font-size:50px;cursor:pointer;display:grid;place-items:center;padding-left:8px}
+.brpv-big:hover{background:rgba(0,0,0,.7)}.brpv-big:focus-visible{outline:4px solid #00E5FF;outline-offset:4px}
+.brpv-cap{font-size:26px;font-weight:600;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.brpv-back{background:rgba(0,0,0,.7);border-radius:14px;padding:16px 28px;font-size:28px;font-weight:700}
+.brpv-ad{position:absolute;inset:0;background:#000;display:flex;align-items:center;justify-content:center;color:#e8e8f5}
+.brpv-ad video,.brpv-ad img.m{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.brpv-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:40px 80px}
+.brpv-ph .big{font-size:96px;line-height:1}.brpv-ph .n{font-size:38px;font-weight:800}.brpv-ph small{font-size:19px;opacity:.75;max-width:720px;line-height:1.4}
+.brpv-tag{position:absolute;right:36px;bottom:48px;background:rgba(0,0,0,.72);border-radius:14px;padding:14px 20px;display:flex;flex-direction:column;gap:3px;font-size:22px;color:#fff;white-space:pre-line;text-align:left}
+.brpv-tag b{color:#00E5FF;font-size:15px;letter-spacing:.1em}
+.brpv-bar{position:absolute;left:0;right:0;bottom:0;height:7px;background:rgba(255,255,255,.18)}.brpv-bar i{display:block;height:100%;width:0;background:#00E5FF}
+.brpv-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.brpv-head .label{margin-right:auto;font-size:16px;font-weight:700;color:var(--text);text-transform:none;letter-spacing:0}
+/* Grafik TV */
+main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:inline-size;container-name:gxpane}
+.tk-list .cols{grid-template-columns:minmax(0,1fr)}
+#tkPreview{position:absolute;left:0;right:0;bottom:0}#tkPreview .empty{color:#fff;text-align:center;padding:0 40px 230px;font-size:20px;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.gx-cols{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}
+.gx-list{display:flex;flex-direction:column;gap:14px;min-width:0}
+.gx-prevcard{position:sticky;top:84px;background:rgba(22,30,50,.45);background:color-mix(in srgb,var(--surface) 45%,transparent);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+@container gxpane (max-width:1020px){.gx-cols{grid-template-columns:minmax(0,1fr)}.gx-prevcard{order:-1;z-index:5;box-shadow:0 10px 24px rgba(0,0,0,.35)}.gx-prevcard .cystage{max-width:calc(42vh * 16 / 9)}}
+.gxhead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}.gxhead .grow{flex:1;min-width:180px}.gxhead b{font-size:15px}
+.gx-score{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,.9fr);gap:12px;align-items:end}
+.gx-step{display:flex;gap:6px;align-items:center}.gx-step input{text-align:center;min-width:0}.gx-step .btn{flex:none;width:36px;padding:0;font-size:18px}
+@container gxpane (max-width:520px){.gx-score{grid-template-columns:1fr}}
+#gxLayer,#gxFull{position:absolute;inset:0;pointer-events:none}
+.gxbox-off>:not(.gxhead){opacity:.55}
 .cysafe{position:absolute;inset:27px 48px;border:1px dashed rgba(255,255,255,.14);border-radius:4px;pointer-events:none}
 .cyfake-ticker{position:absolute;left:0;right:0;bottom:0;height:40px;background:rgba(0,0,0,.55)}
 /* Chyron an li menm (menm desen ak app TV a) */
@@ -380,6 +413,7 @@ main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
       <button class="tab navlink" role="tab" data-tab="ads" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg><span>Media Ads</span></button>
       <button class="tab navlink" role="tab" data-tab="tk" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h13"/><path d="M4 4v16"/></svg><span>Ticker</span></button>
       <button class="tab navlink" role="tab" data-tab="cy" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15h18M7 18h6"/></svg><span>Chyron / Lower Third</span></button>
+      <button class="tab navlink" role="tab" data-tab="gfx" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 8h3M6 8h4M6 16h5M16 14l2 2-2 2"/></svg><span>Grafik TV</span></button>
       <button class="tab navlink" role="tab" data-tab="bn" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 12h10"/></svg><span>Banners</span></button>
       <button class="tab navlink" role="tab" data-tab="pp" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="13" rx="2"/><path d="M9 21l3-4 3 4"/></svg><span>Pop-ups</span></button>
       <div class="navsep"></div>
@@ -501,6 +535,7 @@ main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
             <div class="kv"><span>Modèl</span><span id="dvModel"></span></div>
             <div class="kv"><span>Vèsyon app</span><span id="dvVersion"></span></div>
             <div class="field"><label for="dvName">Non aparèy la</label><input type="text" id="dvName"></div>
+            <div class="field"><label for="dvCity">Vil (pou meteyo sou TV sa a)</label><input type="text" id="dvCity" maxlength="30" placeholder="Egz: Miami"><span class="note" id="dvGeo"></span></div>
             <div class="row2"><div class="field"><label for="dvCustomer">Kliyan</label><select id="dvCustomer"></select></div>
               <div class="field"><label for="dvLimit">Limit</label><input type="number" min="1" id="dvLimit"></div></div>
             <div class="kv"><span>Bloke aparèy la</span><label class="sw"><input type="checkbox" id="dvBlocked" aria-label="Bloke aparèy la"><i></i></label></div>
@@ -529,6 +564,7 @@ main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
 
       <div class="card">
         <div class="cardhead"><div><h2>Jesyon aparèy</h2><p class="sub">Jere aparèy Galaxy TV Stick yo.</p></div><button class="btn big" id="devRefresh" type="button">Rafrechi</button></div>
+        <div class="inline" style="gap:10px;margin-bottom:10px"><input type="search" id="devFilter" placeholder="Chèche MAC, non, kliyan, playlist…" style="max-width:340px"><span class="note" id="devCount"></span></div>
         <div class="tbl" id="devTable"></div>
       </div>
     </main>
@@ -575,11 +611,116 @@ main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
       </div>
     </main>
 
+
+    <!-- Grafik TV: logo bug, watermark, scoreboard, meteyo, countdown, ident, bumper -->
+    <main data-pane="gfx" hidden>
+      <div class="pagehead"><div><h1>Grafik TV</h1><p>Abiyaj chèn nan sou ekran kliyan yo: logo, watermark, scoreboard, meteyo, countdown, ident ak bumper.</p></div><span class="msg" id="gxMsg"></span></div>
+      <div class="gx-cols">
+        <div class="gx-list">
+          <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="bug.on" id="g_bug_on"><i></i></label><div class="grow"><label for="g_bug_on"><b>Logo bug</b></label><p class="note" style="margin:2px 0 0">Ti logo chèn ou an nan yon kwen ekran an, toutan.</p></div></div>
+            <div class="field"><label for="g_bug_imageUrl">URL logo (PNG transparan)</label><input type="url" id="g_bug_imageUrl" data-g="bug.imageUrl" maxlength="500" placeholder="https://…/logo.png"></div>
+            <div class="row2"><div class="field"><label for="g_bug_text">Oswa tèks (si pa gen logo)</label><input type="text" id="g_bug_text" data-g="bug.text" maxlength="24" placeholder="GALAXY TV"></div><div class="field"><label for="g_bug_position">Pozisyon</label><select id="g_bug_position" data-g="bug.position"><option value="top-left">Anlè agoch</option><option value="top-center">Anlè nan mitan</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div></div>
+            <div class="row2"><div class="field"><label for="g_bug_size">Gwosè <b data-gv="bug.size"></b></label><input type="range" id="g_bug_size" data-g="bug.size" min="16" max="160" value="44"></div><div class="field"><label for="g_bug_opacity">Opasite % <b data-gv="bug.opacity"></b></label><input type="range" id="g_bug_opacity" data-g="bug.opacity" min="10" max="100" value="85"></div></div>
+          </div>
+          <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="watermark.on" id="g_watermark_on"><i></i></label><div class="grow"><label for="g_watermark_on"><b>Watermark</b></label><p class="note" style="margin:2px 0 0">Yon tèks pal sou imaj la (egz: MAC kliyan an) pou dekouraje moun k ap anrejistre oswa rediffize.</p></div></div>
+            <div class="field"><label for="g_watermark_text">Tèks</label><input type="text" id="g_watermark_text" data-g="watermark.text" maxlength="60" placeholder="{mac}"></div>
+            <div class="chips" id="gxWmTags"><button type="button" class="chip" data-ins="{mac}">MAC</button><button type="button" class="chip" data-ins="{customer}">Non kliyan</button><button type="button" class="chip" data-ins="{device}">Non aparèy</button></div>
+            <div class="row2"><div class="field"><label for="g_watermark_position">Pozisyon</label><select id="g_watermark_position" data-g="watermark.position"><option value="top-left">Anlè agoch</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-right">Anba adwat</option><option value="center">Nan mitan</option></select></div>
+              <div class="field"><label>&nbsp;</label><div class="inline"><label class="sw"><input type="checkbox" data-g="watermark.move" id="g_watermark_move"><i></i></label><label for="g_watermark_move">Chanje kwen chak 30 segonn</label></div></div></div>
+            <div class="row2"><div class="field"><label for="g_watermark_size">Gwosè <b data-gv="watermark.size"></b></label><input type="range" id="g_watermark_size" data-g="watermark.size" min="8" max="60" value="16"></div><div class="field"><label for="g_watermark_opacity">Opasite % <b data-gv="watermark.opacity"></b></label><input type="range" id="g_watermark_opacity" data-g="watermark.opacity" min="3" max="100" value="25"></div></div>
+          </div>
+          <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="scoreboard.on" id="g_scoreboard_on"><i></i></label><div class="grow"><label for="g_scoreboard_on"><b>Scoreboard</b></label><p class="note" style="margin:2px 0 0">Rezilta match la sou ekran an. Chanje chif yo pandan match la; TV yo mete yo ajou touswit.</p></div></div>
+            <div class="row2"><div class="field"><label for="g_scoreboard_league">Konpetisyon</label><input type="text" id="g_scoreboard_league" data-g="scoreboard.league" maxlength="30" placeholder="Egz: Kalifikasyon Mondyal"></div><div class="field"><label for="g_scoreboard_clock">Tan / peryòd</label><input type="text" id="g_scoreboard_clock" data-g="scoreboard.clock" maxlength="16" placeholder="67' · 2yèm mitan"></div></div>
+            <div class="gx-score"><div class="field"><label for="g_scoreboard_home">Ekip lakay</label><input type="text" id="g_scoreboard_home" data-g="scoreboard.home" maxlength="20" placeholder="HAI"></div>
+              <div class="field"><label for="g_scoreboard_homeScore">Gòl</label><div class="gx-step"><button type="button" class="btn small" data-step="scoreboard.homeScore|-1" aria-label="Retire 1">−</button><input type="text" inputmode="numeric" id="g_scoreboard_homeScore" data-g="scoreboard.homeScore" maxlength="4" value="0"><button type="button" class="btn small" data-step="scoreboard.homeScore|1" aria-label="Ajoute 1">+</button></div></div>
+              <label class="swatch"><input type="color" data-g="scoreboard.homeColor" value="#1d4ed8"><span><b>Koulè</b></span></label></div>
+            <div class="gx-score"><div class="field"><label for="g_scoreboard_away">Ekip vizitè</label><input type="text" id="g_scoreboard_away" data-g="scoreboard.away" maxlength="20" placeholder="JAM"></div>
+              <div class="field"><label for="g_scoreboard_awayScore">Gòl</label><div class="gx-step"><button type="button" class="btn small" data-step="scoreboard.awayScore|-1" aria-label="Retire 1">−</button><input type="text" inputmode="numeric" id="g_scoreboard_awayScore" data-g="scoreboard.awayScore" maxlength="4" value="0"><button type="button" class="btn small" data-step="scoreboard.awayScore|1" aria-label="Ajoute 1">+</button></div></div>
+              <label class="swatch"><input type="color" data-g="scoreboard.awayColor" value="#dc2626"><span><b>Koulè</b></span></label></div>
+            <div class="field"><label for="g_scoreboard_position">Pozisyon</label><select id="g_scoreboard_position" data-g="scoreboard.position"><option value="top-left">Anlè agoch</option><option value="top-center">Anlè nan mitan</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div>
+          </div>
+          <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="weather.on" id="g_weather_on"><i></i></label><div class="grow"><label for="g_weather_on"><b>Meteyo</b></label><p class="note" style="margin:2px 0 0">Tanperati ak tan an pou yon vil, mete ajou otomatikman.</p></div></div>
+            <div class="row2"><div class="field"><label for="g_weather_city">Vil</label><input type="text" id="g_weather_city" data-g="weather.city" maxlength="30" placeholder="Port-au-Prince"></div><div class="field"><label for="g_weather_unit">Inite</label><select id="g_weather_unit" data-g="weather.unit"><option value="C">°C</option><option value="F">°F</option></select></div></div>
+            <div class="field"><label for="g_weather_scope">Ki vil pou montre</label><select id="g_weather_scope" data-g="weather.scope"><option value="all">Menm vil la sou tout TV yo</option><option value="client">Kote chak kliyan ye (vil kliyan an, oswa adrès IP li)</option></select></div>
+            <p class="note" id="gxWxScopeNote" style="margin:0" hidden>Pou chak TV: vil ou mete sou aparèy la, sinon vil kliyan an, sinon vil adrès IP li bay la. Si pa gen youn, vil ki anlè a.</p>
+            <div class="inline"><label class="sw"><input type="checkbox" data-g="weather.auto" id="g_weather_auto" checked><i></i></label><label for="g_weather_auto">Otomatik (sèvè a chèche meteyo a chak 20 minit)</label><button class="btn small" type="button" id="gxWxTest" style="margin-left:auto">Teste vil la</button></div>
+            <div class="msg" id="gxWxMsg"></div>
+            <div class="row2"><div class="field"><label for="g_weather_temp">Tanperati alamen (si otomatik etenn)</label><input type="number" id="g_weather_temp" data-g="weather.temp" min="-60" max="140" value="30"></div><div class="field"><label for="g_weather_icon">Ikòn alamen</label><select id="g_weather_icon" data-g="weather.icon"><option>☀️</option><option>🌤️</option><option>☁️</option><option>🌧️</option><option>⛈️</option><option>🌦️</option><option>🌫️</option><option>🌨️</option><option>🌙</option></select></div></div>
+            <div class="field"><label for="g_weather_position">Pozisyon</label><select id="g_weather_position" data-g="weather.position"><option value="top-left">Anlè agoch</option><option value="top-center">Anlè nan mitan</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div>
+          </div>
+          <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="countdown.on" id="g_countdown_on"><i></i></label><div class="grow"><label for="g_countdown_on"><b>Countdown</b></label><p class="note" style="margin:2px 0 0">Konte jiska yon evènman (match, fim, pwomosyon).</p></div></div>
+            <div class="row2"><div class="field"><label for="g_countdown_title">Tit</label><input type="text" id="g_countdown_title" data-g="countdown.title" maxlength="40" placeholder="Egz: Gwo match la kòmanse nan"></div><div class="field"><label for="g_countdown_target">Dat ak lè evènman an</label><input type="datetime-local" id="g_countdown_target" data-g="countdown.target"></div></div>
+            <div class="row2"><div class="field"><label for="g_countdown_doneText">Mesaj lè l fini (opsyonèl)</label><input type="text" id="g_countdown_doneText" data-g="countdown.doneText" maxlength="40" placeholder="Egz: KOUNYE A!"></div><div class="field"><label for="g_countdown_keepMin">Kenbe mesaj la (minit)</label><input type="number" id="g_countdown_keepMin" data-g="countdown.keepMin" min="0" max="1440" value="10"></div></div>
+            <div class="field"><label for="g_countdown_position">Pozisyon</label><select id="g_countdown_position" data-g="countdown.position"><option value="top-left">Anlè agoch</option><option value="top-center">Anlè nan mitan</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div>
+          </div>
+          <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="ident.on" id="g_ident_on"><i></i></label><div class="grow"><label for="g_ident_on"><b>Channel ident</b></label><p class="note" style="margin:2px 0 0">Logo oswa non chèn ou an parèt nan mitan ekran an pou kèk segonn.</p></div><button class="btn small purple" type="button" data-gxplay="ident">▶ Gade</button></div>
+            <div class="field"><label for="g_ident_imageUrl">URL logo</label><input type="url" id="g_ident_imageUrl" data-g="ident.imageUrl" maxlength="500" placeholder="https://…/logo.png"></div>
+            <div class="row2"><div class="field"><label for="g_ident_text">Non chèn nan</label><input type="text" id="g_ident_text" data-g="ident.text" maxlength="40" placeholder="GALAXY TV"></div><div class="field"><label for="g_ident_tagline">Eslogan</label><input type="text" id="g_ident_tagline" data-g="ident.tagline" maxlength="60" placeholder="Egz: Tout chèn ou yo, yon sèl kote"></div></div>
+            <div class="row2"><div class="field"><label for="g_ident_everyMin">Chak (minit, 0 = janm otomatik)</label><input type="number" id="g_ident_everyMin" data-g="ident.everyMin" min="0" max="240" value="30"></div><div class="field"><label for="g_ident_durationSec">Dire (segonn)</label><input type="number" id="g_ident_durationSec" data-g="ident.durationSec" min="2" max="15" value="5"></div></div>
+            <div class="inline"><label class="sw"><input type="checkbox" data-g="ident.onChannelChange" id="g_ident_onChannelChange"><i></i></label><label for="g_ident_onChannelChange">Montre l tou lè kliyan an chanje chanèl</label></div>
+          </div>
+          <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="bumper.on" id="g_bumper_on"><i></i></label><div class="grow"><label for="g_bumper_on"><b>Bumper</b></label><p class="note" style="margin:2px 0 0">Ekran ki pase anvan ak apre koupi piblisite a.</p></div><button class="btn small purple" type="button" data-gxplay="in">▶ Anvan</button><button class="btn small purple" type="button" data-gxplay="out">▶ Apre</button></div>
+            <div class="row2"><div class="field"><label for="g_bumper_inText">Tèks anvan piblisite</label><input type="text" id="g_bumper_inText" data-g="bumper.inText" maxlength="60" placeholder="N ap tounen touswit"></div><div class="field"><label for="g_bumper_outText">Tèks apre piblisite</label><input type="text" id="g_bumper_outText" data-g="bumper.outText" maxlength="60" placeholder="Nou tounen!"></div></div>
+            <div class="row2"><div class="field"><label for="g_bumper_inUrl">Oswa imaj anvan (URL)</label><input type="url" id="g_bumper_inUrl" data-g="bumper.inUrl" maxlength="500" placeholder="https://…/bumper-in.png"></div><div class="field"><label for="g_bumper_outUrl">Oswa imaj apre (URL)</label><input type="url" id="g_bumper_outUrl" data-g="bumper.outUrl" maxlength="500" placeholder="https://…/bumper-out.png"></div></div>
+            <div class="row3"><div class="field"><label for="g_bumper_durationSec">Dire (segonn)</label><input type="number" id="g_bumper_durationSec" data-g="bumper.durationSec" min="2" max="15" value="4"></div><label class="swatch"><input type="color" data-g="bumper.bgColor" value="#0b1630"><span><b>Fon</b></span></label><label class="swatch"><input type="color" data-g="bumper.textColor" value="#ffffff"><span><b>Tèks</b></span></label></div>
+          </div>
+        </div>
+        <div class="card gx-prevcard">
+          <div class="cardhead"><h2>Preview an dirèk</h2></div>
+          <div class="cystage" id="gxStage"><div class="cytv" id="gxTv"><div class="cysafe"></div><div class="cyfake-ticker"></div><div id="gxLayer"></div><div id="gxFull"></div></div></div>
+          <p class="note" style="margin:0">Menm gwosè ak menm pozisyon ak sa kliyan yo ap wè sou TV a (1080p).</p>
+          <p class="note" id="gxNote" style="margin:0"></p>
+        </div>
+      </div>
+    </main>
+
     <!-- Media Ads -->
     <main data-pane="ads" hidden>
-      <div class="pagehead"><div><h1>Media Ads</h1><p>Kijan piblisite yo parèt sou TV a</p></div></div>
+      <div class="pagehead"><div><h1>Media Ads</h1><p>Piblisite ou yo sou TV kliyan yo: koupi piblisite tankou chèn TV, preroll, kwen ak plen ekran.</p></div>
+        <div class="kpi" style="flex-direction:row;align-items:center;gap:10px;padding:10px 16px"><span class="dot on"></span><b id="brOnline">0</b></div></div>
+
+      <div class="gx-cols">
+        <div class="gx-list tk-list">
+      <!-- Koupi piblisite (tankou chèn TV) -->
+      <div class="card">
+        <div class="cardhead"><div><h2>📺 Koupi piblisite (tankou chèn TV)</h2><p class="note" style="margin:4px 0 0">Pandan kliyan an ap gade yon chanèl live, spot ou yo pase plen ekran youn apre lòt, epi TV a tounen sou chanèl la poukont li.</p></div></div>
+        <div class="cols">
+          <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+            <div class="label">Spot piblisite yo</div>
+            <div class="list" id="brList"></div>
+            <form class="tkform" id="brForm">
+              <div class="row2">
+                <div class="field"><label for="brName">Non spot la</label><input type="text" id="brName" maxlength="60" placeholder="Egz: Promo Digicel"></div>
+                <div class="field"><label for="brDur">Dire (segonn, pou imaj)</label><input type="number" id="brDur" value="15" min="3" max="300"></div>
+              </div>
+              <div class="field"><label for="brUrl">URL videyo (.mp4, .m3u8) oswa imaj (.png, .jpg)</label><input type="url" id="brUrl" placeholder="https://…/ad.mp4 oswa .png"></div>
+              <div class="btns"><button class="btn" type="button" id="brPvTest">👁 Teste nan preview a</button><button class="btn primary" type="submit">Ajoute spot</button></div>
+            </form>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+            <div class="anibox">
+              <div class="label">Pase kounye a</div>
+              <div class="field"><label for="brTarget">Ki TV</label><select id="brTarget"></select></div>
+              <button class="btn primary" id="brNow" type="button" style="height:48px;font-weight:700">▶ Pase piblisite kounye a</button>
+              <div class="msg" id="brMsg"></div>
+            </div>
+            <div class="anibox">
+              <div class="inline"><label class="sw"><input type="checkbox" id="brAuto"><i></i></label><label for="brAuto"><b>Otomatik (san w pa klike)</b></label></div>
+              <div class="row2">
+                <div class="field"><label for="brEvery">Chak (minit)</label><input type="number" id="brEvery" min="0" max="240" value="15"></div>
+                <div class="field"><label for="brSpots">Spot pa koupi</label><input type="number" id="brSpots" min="1" max="10" value="2"></div>
+              </div>
+              <div class="field"><label for="brTimes">Lè fiks (opsyonèl)</label><input type="text" id="brTimes" placeholder="19:00, 20:30, 21:15"></div>
+              <div class="field"><label for="brSkip">Kliyan an ka sote apre (segonn)</label><input type="number" id="brSkip" min="0" max="120" value="0"></div>
+              <p class="note" style="margin:0">"Chak" = 0: sèlman nan lè fiks yo. "Sote" = 0: kliyan an pa ka sote piblisite a (tankou sou TV). Lè fiks yo se lè TV kliyan an.</p>
+              <div class="msg" id="brAutoMsg"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="cols">
-        <div class="card"><h2>Media Ads</h2>
+        <div class="card"><h2>Lòt piblisite</h2>
           <div class="list" id="adList"></div>
           <form id="adForm" style="display:flex;flex-direction:column;gap:12px">
             <div class="field"><label for="adUrl">URL</label><input type="text" id="adUrl" placeholder="https://…/ad.mp4 oswa .png"></div>
@@ -595,16 +736,25 @@ main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
           </div>
           <p class="note">Dezaktive yon ad ak switch la pou l sispann parèt san w pa efase l.</p></div>
       </div>
+        </div>
+        <div class="card gx-prevcard">
+          <div class="brpv-head"><div class="label">Preview an dirèk</div>
+                <button class="btn small" id="brPvSound" type="button" aria-pressed="true">🔊</button>
+                <button class="btn small" id="brPvNext" type="button" disabled>⏭ Pwochen spot</button>
+                <button class="btn small" id="brPvStop" type="button" disabled>■ Kanpe</button>
+                <button class="btn small purple" id="brPvPlay" type="button">▶ Gade koupi a</button></div>
+          <div class="cystage" id="brStage"><div class="cytv" id="brTv"></div></div>
+              <p class="note" id="brPvInfo" style="margin:0"></p>
+        </div>
+      </div>
     </main>
 
     <!-- Ticker -->
     <main data-pane="tk" hidden>
       <div class="pagehead"><div><h1>Ticker</h1><p>Tout mesaj aktif yo defile anba ekran tout TV yo.</p></div>
         <div class="kpi" style="flex-direction:row;align-items:center;gap:12px;padding:10px 16px"><label class="sw"><input type="checkbox" id="tkActive" aria-label="Estati ticker"><i></i></label><b id="tkActiveT"></b></div></div>
-      <div class="card">
-        <div class="cardhead"><h2>Preview</h2><span class="note">Sa kliyan yo ap wè anba ekran TV a (avan w sove).</span></div>
-        <div id="tkPreview"></div>
-      </div>
+      <div class="gx-cols">
+        <div class="gx-list tk-list">
       <div class="cols">
         <div class="card"><h2>Mesaj ticker yo</h2>
           <div class="list" id="tickerList"></div>
@@ -664,6 +814,13 @@ main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
             </div>
             <div class="inline"><label class="sw"><input type="checkbox" id="tkRunFlip"><i></i></label><label for="tkRunFlip">Vire l (miwa) si l ap gade move bò</label></div>
           </div>
+        </div>
+      </div>
+        </div>
+        <div class="card gx-prevcard">
+          <div class="cardhead"><h2>Preview an dirèk</h2></div>
+          <div class="cystage" id="tkStage"><div class="cytv" id="tkTv"><div class="cysafe"></div><div id="tkPreview"></div></div></div>
+          <p class="note" style="margin:0">Menm gwosè ak menm pozisyon ak sa kliyan yo ap wè sou TV a (1080p).</p>
         </div>
       </div>
     </main>
@@ -755,7 +912,13 @@ main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
 
     <!-- Sistèm -->
     <main data-pane="sys" hidden>
-      <div class="pagehead"><div><h1>Sistèm</h1><p>Mentenans · Force Refresh</p></div></div>
+      <div class="pagehead"><div><h1>Sistèm</h1><p>Mentenans · Force Refresh · Kapasite</p></div></div>
+      <div class="card">
+        <div class="cardhead"><div><h2>⚡ Kapasite ak rapidite</h2><p class="sub">Sante sèvè a ak baz done a an dirèk.</p></div><button class="btn small" id="sysRefresh" type="button">Rafrechi</button></div>
+        <div class="kpis" id="sysKpis"></div>
+        <div class="field" style="margin-top:14px"><label id="sysCapLabel"></label><div class="sysbar"><i id="sysCapBar"></i></div></div>
+        <p class="note" id="sysNote" style="margin:10px 0 0"></p>
+      </div>
       <div class="cols">
         <div class="card"><h2>Mentenans</h2>
           <div class="field"><label for="mtMsg">Mesaj mentenans</label><input type="text" id="mtMsg"></div>
@@ -781,6 +944,7 @@ main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
 <script src="i18n.js"></script>
 <script src="symbols.js"></script>
 <script src="fx.js"></script>
+<script src="gfx.js"></script>
 <script>
 (() => {
 "use strict";
@@ -843,7 +1007,18 @@ async function api(method, path, body) {
   if (!r.ok) throw new Error(t((data && data.error) || t("Erè {0}", r.status)));
   return data;
 }
-const list = async (col) => (await api("GET", `/${col}?limit=100`)).data || [];
+// Tout eleman yo (pa sèlman 100 premye yo): gwo paj, epi kontinye si gen plis toujou
+const list = async (col) => { const first = await api("GET", `/${col}?limit=2000`); let out = first.data || [];
+  for (let p = 2; p <= (first.totalPages || 1) && p <= 50; p++) out = out.concat((await api("GET", `/${col}?limit=${first.limit || 100}&page=${p}`)).data || []);
+  return out; };
+// Pa retouche paj la si anyen pa chanje (lis yo rafrechi chak kèk segonn)
+function setHtml(el, html) { if (el.__h === html && el.firstChild) return; el.__h = html; el.innerHTML = html; }
+// Gwo lis: montre 100 premye yo, bouton "Montre plis" pou rès la (paj la rete rapid ak plizyè milye liy)
+const CAP = 100, caps = {};
+const capRows = (key, arr) => arr.slice(0, caps[key] || CAP);
+const moreHtml = (key, total) => { const left = total - Math.min(total, caps[key] || CAP); return left > 0 ? `<div class="morebar"><button class="btn" type="button" data-more="${key}">${esc(t("Montre {0} anplis", Math.min(left, 200)))}</button><span class="note">${esc(t("{0} sou {1} afiche", total - left, total))}</span></div>` : ""; };
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; caps[k] = (caps[k] || CAP) + 200;
+  ({ live: renderLive, dev: renderDevTable, crud: renderCrud })[k]?.(); });
 let toastT;
 function toast(m) { const el = $("#toast"); el.textContent = t(m); el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (el.hidden = true), 2800); }
 function setMsg(el, text, ok) { el.textContent = text ? t(text) : ""; el.className = "msg" + (text ? (ok ? " s" : " e") : ""); }
@@ -881,6 +1056,7 @@ function openTab(name) {
   if (name === "ev") loadEvents();
   if (name === "sys") loadSystem();
   if (name === "ads") loadAds();
+  if (name === "gfx") loadGfx();
   window.scrollTo({ top: 0 });
 }
 
@@ -896,7 +1072,7 @@ function screenHtml(d, big) {
   if (!L || !L.channel) return `<div class="screen off${big ? " big" : ""}">${esc(t(SCREEN[L?.screen] || "Online — poko gen chanèl"))}</div>`;
   const ch = L.channel, p = L.program, h = hue(ch.name);
   const pct = p && p.end > p.start ? Math.max(0, Math.min(100, (Date.now() - p.start) * 100 / (p.end - p.start))) : 0;
-  const state = L.screen === "epg" ? t("📅 Ap gade Gid TV a") : L.error ? esc(t("⚠ Erè: {0}", L.error)) : L.buffering ? t("⏳ Ap chaje (buffering)…") : "";
+  const state = L.adBreak ? t("📢 Piblisite ap pase") : L.screen === "epg" ? t("📅 Ap gade Gid TV a") : L.error ? esc(t("⚠ Erè: {0}", L.error)) : L.buffering ? t("⏳ Ap chaje (buffering)…") : "";
   return `<div class="screen${big ? " big" : ""}" style="background:linear-gradient(135deg,hsl(${h} 55% 22%),hsl(${(h + 60) % 360} 60% 10%))">
     <div class="bgname">${esc(ch.name)}</div>
     <div class="tags">${L.quality ? `<span class="tag q">${esc(L.quality)}</span>` : ""}<span class="tag l">${L.screen === "vod" ? esc(t("🎬 VOD")) : L.screen === "catchup" ? esc(t("⏪ CATCH-UP")) : "LIVE"}</span></div>
@@ -918,16 +1094,16 @@ async function loadLive() {
 function renderLive() {
   if (!liveData) return;
   const q = $("#liveFilter").value.trim().toLowerCase(); const onlyOn = $("#liveOnlyOn").checked;
-  const items = liveData.devices.filter((d) => (!onlyOn || d.online) && (!q || [d.mac, d.deviceName, d.customer, d.live?.channel?.name].join(" ").toLowerCase().includes(q)));
-  $("#liveGrid").innerHTML = items.length ? items.map((d) => `
+  const items = liveData.devices.filter((d) => (!onlyOn || (d.online && d.configured !== false)) && (!q || [d.mac, d.deviceName, d.customer, d.live?.channel?.name].join(" ").toLowerCase().includes(q)));
+  setHtml($("#liveGrid"), items.length ? capRows("live", items).map((d) => `
     <button class="tvcard" type="button" data-mac="${esc(d.mac)}">
       ${screenHtml(d, false)}
-      <div class="meta"><div class="n"><span>${esc(d.deviceName || d.model || t("Aparèy"))}</span>${d.blocked ? `<span class="pill p-bad">${t("Bloke")}</span>` : d.online ? `<span class="pill p-on">${t("Online")}</span>` : `<span class="pill p-off">${t("Offline")}</span>`}</div>
+      <div class="meta"><div class="n"><span>${esc(d.deviceName || d.model || t("Aparèy"))}</span>${d.blocked ? `<span class="pill p-bad">${t("Bloke")}</span>` : d.configured === false ? `<span class="pill p-off">${t("Pa konfigire")}</span>` : d.online ? `<span class="pill p-on">${t("Online")}</span>` : `<span class="pill p-off">${t("Offline")}</span>`}</div>
         <div class="m">${esc(d.mac)}</div>
         <div class="note">${d.customer ? esc(d.customer) + " · " : ""}${d.online && d.live?.channel ? esc(t("Sou chanèl sa a depi {0}", ago(d.live.since))) : d.live?.playlistName ? esc(t("Playlist: {0}", d.live.playlistName)) : ""}</div></div>
-    </button>`).join("") : `<div class="empty">${onlyOn ? t("Pa gen TV online kounye a.") : t("Pa gen aparèy.")}</div>`;
+    </button>`).join("") + moreHtml("live", items.length) : `<div class="empty">${onlyOn ? t("Pa gen TV online kounye a.") : t("Pa gen aparèy.")}</div>`);
 }
-$("#liveFilter").addEventListener("input", renderLive);
+$("#liveFilter").addEventListener("input", () => { caps.live = CAP; renderLive(); });
 $("#liveOnlyOn").addEventListener("change", renderLive);
 $("#liveGrid").addEventListener("click", (e) => { const c = e.target.closest("[data-mac]"); if (c) selectDevice(c.dataset.mac, true); });
 
@@ -960,8 +1136,8 @@ async function selectDevice(mac, jump) {
 }
 function renderDevice() {
   $("#dvMac").textContent = dev.mac; $("#dvKey").textContent = dev.deviceKey || t("— (ap tann TV a)"); $("#dvModel").textContent = dev.model || "—";
-  $("#dvVersion").textContent = dev.appVersion || "—"; $("#dvName").value = dev.deviceName || ""; $("#dvBlocked").checked = !!dev.blocked; $("#dvLimit").value = dev.limit ?? 1;
-  $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${c.name === dev.customer ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
+  $("#dvVersion").textContent = dev.appVersion || "—"; $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : ""; $("#dvBlocked").checked = !!dev.blocked; $("#dvLimit").value = dev.limit ?? 1;
+  $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${String(c.name).toUpperCase() === String(dev.customer || "").toUpperCase() ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
   $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow"><b>${esc(p.name)}</b> <span class="note">· ${esc(p.username)}${p.server ? " · " + esc(p.server) : ""}</span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
 }
 function renderRemoteChannels() {
@@ -975,7 +1151,7 @@ async function refreshDevLive() {
   if (!dev) return;
   try { devLive = await api("GET", `/galaxy/devices/${encodeURIComponent(dev.mac)}/live`); } catch { return; }
   $("#dvScreen").innerHTML = screenHtml(devLive, true);
-  $("#dvOnline").innerHTML = devLive.online ? `<span class="pill p-on">${t("Online")}</span>` : `<span class="pill p-off">${t("Offline")}</span>`;
+  $("#dvOnline").innerHTML = !(dev.playlists || []).length ? `<span class="pill p-off">${t("Pa konfigire")}</span>` : devLive.online ? `<span class="pill p-on">${t("Online")}</span>` : `<span class="pill p-off">${t("Offline")}</span>`;
   const L = devLive.live;
   $("#dvLiveNote").textContent = L ? [L.playlistName && t("Playlist: {0}", L.playlistName), L.resolution && `${L.resolution} ${L.codec || ""}`, L.channel && t("Sou chanèl sa a depi {0}", ago(L.since)), devLive.pendingCommands ? t("{0} kòmand ap tann TV a", devLive.pendingCommands) : ""].filter(Boolean).join(" · ") : t("TV a poko voye estati li.");
   $("#dvHistory").innerHTML = (devLive.history || []).map((h) => `<div><span>${h.num ? h.num + ". " : ""}${esc(h.name)}</span><time>${hhmm(h.at)}</time></div>`).join("") || `<div class="empty">${t("Pa gen istwa ankò.")}</div>`;
@@ -1005,7 +1181,7 @@ $$("[data-cmd]").forEach((b) => b.addEventListener("click", () => {
 
 // paramèt aparèy
 $("#dvSave").addEventListener("click", async () => {
-  try { dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { deviceName: $("#dvName").value.trim(), customer: $("#dvCustomer").value, blocked: $("#dvBlocked").checked, limit: Math.max(1, +$("#dvLimit").value || 1) })) };
+  try { dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { deviceName: $("#dvName").value.trim(), city: $("#dvCity").value.trim(), customer: $("#dvCustomer").value, blocked: $("#dvBlocked").checked, limit: Math.max(1, +$("#dvLimit").value || 1) })) };
     renderDevice(); setMsg($("#dvMsg"), "Sove. TV a ap aplike l nan pwochen minit lan (oswa klike \"Aplike chanjman yo\").", true); loadDevices(); }
   catch (err) { setMsg($("#dvMsg"), err.message); }
 });
@@ -1073,20 +1249,26 @@ const shortId = (d) => d.galaxy ? (d.deviceId && d.deviceId !== d.mac ? d.device
 async function loadDevices() {
   let devices; try { devices = await api("GET", "/galaxy/devices"); setDot("#hDb", true, "Database Online", "Database Offline"); }
   catch { setDot("#hDb", false, "Database Online", "Database Offline"); return; }
-  devicesCache = devices; updateBell();
+  devicesCache = devices; updateBell(); renderDevTable();
+}
+function renderDevTable() {
+  const all = devicesCache, q = $("#devFilter").value.trim().toLowerCase();
+  const devices = q ? all.filter((d) => [d.mac, d.deviceId, d.deviceName, d.customer, d.model, ...(d.playlists || []).map((p) => p.name)].join(" ").toLowerCase().includes(q)) : all;
+  $("#devCount").textContent = t("{0} eleman", devices.length);
   const on = new Map((liveData?.devices || []).map((d) => [d.mac, d]));
-  $("#devTable").innerHTML = devices.length ? `<table><thead><tr><th>${t("MAC Address")}</th><th>Device ID</th><th>${t("Tip")}</th><th>${t("Estati")}</th><th>${t("Provider")}</th><th>${t("Dènye fwa")}</th><th>${t("Limit")}</th><th>${t("Aksyon")}</th></tr></thead><tbody>` +
-    devices.map((d) => {
+  setHtml($("#devTable"), devices.length ? `<table><thead><tr><th>${t("MAC Address")}</th><th>Device ID</th><th>${t("Tip")}</th><th>${t("Estati")}</th><th>${t("Provider")}</th><th>${t("Dènye fwa")}</th><th>${t("Limit")}</th><th>${t("Aksyon")}</th></tr></thead><tbody>` +
+    capRows("dev", devices).map((d) => {
       const l = d.galaxy ? on.get(d.mac) : null;
       const online = l ? l.online : String(d.status).toLowerCase() === "online";
-      const st = d.blocked ? `<span class="st-block">${t("Bloke")}</span>` : `<span class="${online ? "st-on" : "st-off"}">${t(online ? "Online" : "Offline")}</span>`;
+      const st = d.blocked ? `<span class="st-block">${t("Bloke")}</span>` : !(d.playlists || []).length ? `<span class="st-off" title="${esc(t("Pa konfigire"))}">—</span>` : `<span class="${online ? "st-on" : "st-off"}">${t(online ? "Online" : "Offline")}</span>`;
       const key = d.galaxy ? `data-mac="${esc(d.mac)}"` : `data-id="${esc(d.deviceId)}"`;
       return `<tr class="click${dev && d.galaxy && dev.mac === d.mac ? " sel" : ""}" ${key}><td class="mono">${d.galaxy ? esc(d.mac) : "-"}</td><td>${esc(shortId(d))}</td><td>${esc(d.type || devType(d.model || ""))}</td><td>${st}</td>
         <td>${d.playlists.map((p) => esc(p.name)).join(", ") || t("Pa konfigire")}</td><td>${esc(d.lastSeen || "—")}</td><td>${esc(d.limit ?? 1)}</td>
         <td class="acts"><button class="btn purple" data-act="provider" type="button">${t("Ajoute provider")}</button><button class="btn green" data-act="activate" type="button">${t("Aktive l")}</button><button class="btn brown" data-act="block" type="button">${t("Bloke l")}</button><button class="btn red" data-act="delete" type="button">${t("Efase l")}</button></td></tr>`;
-    }).join("") + `</tbody></table>`
-    : `<div class="empty">${t("Pa gen aparèy Galaxy ankò. Louvri app la sou yon TV pou l parèt isit la.")}</div>`;
+    }).join("") + `</tbody></table>` + moreHtml("dev", devices.length)
+    : `<div class="empty">${q ? t("Pa gen anyen ki koresponn.") : t("Pa gen aparèy Galaxy ankò. Louvri app la sou yon TV pou l parèt isit la.")}</div>`);
 }
+let devFilterT; $("#devFilter").addEventListener("input", () => { clearTimeout(devFilterT); devFilterT = setTimeout(() => { caps.dev = CAP; renderDevTable(); }, 120); });
 /** Chemen API pou yon aparèy: TV Galaxy (MAC) oswa aparèy ansyen panel la (Device ID). */
 const devPath = (row) => row.dataset.mac ? { patch: ["PATCH", `/galaxy/devices/${encodeURIComponent(row.dataset.mac)}`], del: `/galaxy/devices/${encodeURIComponent(row.dataset.mac)}` }
   : { patch: ["PUT", `/devices/${encodeURIComponent(row.dataset.id)}`], del: `/devices/${encodeURIComponent(row.dataset.id)}` };
@@ -1162,8 +1344,8 @@ document.addEventListener("click", (e) => { const g = e.target.closest("[data-go
 // ------------------------------------------------------------ Paj koleksyon (CRUD)
 const PLANS = ["1 Month", "3 Months", "6 Months", "12 Months"];
 const CRUD = {
-  cust: { col: "customers", id: "id", title: "Kliyan yo", sub: "Kliyan yo, plan yo ak dat ekspirasyon.", auto: () => "C-" + (1000 + Math.floor(Math.random() * 9000)),
-    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email" }, { k: "phone", l: "Telefòn" }, { k: "plan", l: "Plan", opts: PLANS }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "date" }] },
+  cust: { upper: 1, col: "customers", id: "id", title: "Kliyan yo", sub: "Kliyan yo, plan yo ak dat ekspirasyon.", auto: () => "C-" + (1000 + Math.floor(Math.random() * 9000)),
+    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "date" }] },
   prov: { col: "providers", id: "id", title: "Providers", sub: "Sèvè IPTV yo. Yo parèt kòm chwa nan fòm Ajoute Playlist la.", auto: () => "P-" + Date.now().toString(36).toUpperCase(),
     fields: [{ k: "name", l: "Name", req: 1 }, { k: "type", l: "Tip", opts: ["Xtream Codes", "M3U", "Direct Stream"] }, { k: "url", l: "URL / DNS", req: 1, wide: 1 }, { k: "priority", l: "Priyorite", type: "number" }, { k: "enabled", l: "Aktif", type: "bool", def: () => true }, { k: "isDefault", l: "Pa defo", type: "bool" }] },
   prof: { col: "channel-profiles", id: "name", title: "Channel Profiles", sub: "Pakè chanèl. Kantite chanèl la se limit TV a.",
@@ -1183,7 +1365,7 @@ async function openCrud(name) {
   const C = CRUD[name]; crud = { name, items: [], editing: null, refs: {} };
   $("#crudTitle").textContent = t(C.title); $("#crudSub").textContent = t(C.sub); $("#crudListTitle").textContent = t(C.title);
   $("#crudAdd").hidden = !!C.readonly; $("#crudAdd").textContent = "+ " + t("Ajoute");
-  $("#crudFormCard").hidden = true; $("#crudSearch").value = "";
+  $("#crudFormCard").hidden = true; $("#crudSearch").value = ""; caps.crud = CAP;
   if (C.fields.some((f) => f.ref)) crud.refs.customers = await list("customers").catch(() => []);
   if (C.fields.some((f) => f.list)) crud.refs.providers = await list("providers").catch(() => []);
   await loadCrud();
@@ -1201,13 +1383,15 @@ function cellHtml(f, v) {
   if (f.pill && v) return `<span class="pill ${pillClass(v)}">${esc(v)}</span>`;
   return esc(v ?? "") || "—";
 }
+// Paj ki ekri an MAJISKIL (Kliyan yo): tout chan tèks yo, sof imèl la
+const isUpper = (C, f) => !!C.upper && !f.noUpper && !f.opts && !f.ref && !f.list && !f.type;
 function renderCrud() {
   const C = CRUD[crud.name]; const q = $("#crudSearch").value.trim().toLowerCase();
   const rows = crud.items.filter((it) => !q || C.fields.some((f) => String(it[f.k] ?? "").toLowerCase().includes(q)));
   $("#crudCount").textContent = t("{0} eleman", rows.length);
   const cols = C.fields.filter((f) => !f.hide);
   $("#crudTable").innerHTML = rows.length ? `<table><thead><tr>${cols.map((f) => `<th>${esc(t(f.l))}</th>`).join("")}${C.readonly ? "" : `<th>${t("Aksyon")}</th>`}</tr></thead><tbody>` +
-    rows.map((it) => `<tr class="${C.readonly ? "" : "click"}" data-row="${esc(it[C.id] ?? "")}">${cols.map((f) => `<td>${cellHtml(f, it[f.k])}</td>`).join("")}${C.readonly ? "" : `<td class="acts"><button class="btn small purple" data-edit type="button">${t("Modifye")}</button><button class="btn small red" data-del-row type="button">${t("Efase l")}</button></td>`}</tr>`).join("") + `</tbody></table>`
+    capRows("crud", rows).map((it) => `<tr class="${C.readonly ? "" : "click"}" data-row="${esc(it[C.id] ?? "")}">${cols.map((f) => `<td${isUpper(C, f) ? ' class="up"' : ""}>${cellHtml(f, it[f.k])}</td>`).join("")}${C.readonly ? "" : `<td class="acts"><button class="btn small purple" data-edit type="button">${t("Modifye")}</button><button class="btn small red" data-del-row type="button">${t("Efase l")}</button></td>`}</tr>`).join("") + `</tbody></table>` + moreHtml("crud", rows.length)
     : `<div class="empty">${t("Pa gen anyen isit la ankò.")}</div>`;
 }
 function openCrudForm(item) {
@@ -1223,7 +1407,7 @@ function openCrudForm(item) {
     else if (f.ref) { const names = (crud.refs[f.ref] || []).map((c) => c.name); input = `<select id="${id}"><option value="">—</option>${(v && !names.includes(v) ? [v, ...names] : names).map((n) => `<option${n === v ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`; }
     else if (f.type === "password") input = `<input type="password" id="${id}" autocomplete="new-password" placeholder="${item && item.hasPassword ? esc(t("•••••• (pa chanje)")) : ""}">`;
     else if (f.list) input = `<input type="text" id="${id}" list="${id}_l" value="${esc(v ?? "")}"><datalist id="${id}_l">${(crud.refs[f.list] || []).filter((x) => x.url).map((x) => `<option value="${esc(x.url)}">${esc(x.name || "")}</option>`).join("")}</datalist>`;
-    else input = `<input type="${f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}" id="${id}" value="${esc(v ?? "")}">`;
+    else input = `<input type="${f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}" id="${id}" value="${esc(isUpper(C, f) ? String(v ?? "").toUpperCase() : v ?? "")}"${isUpper(C, f) ? ' class="up" autocapitalize="characters"' : ""}>`;
     return `<div class="field"${f.wide ? ' style="grid-column:1/-1"' : ""}>${lab}${input}</div>`;
   }).join("");
   $("#crudFormCard").hidden = false; $("#crudFormCard").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1231,12 +1415,12 @@ function openCrudForm(item) {
 }
 $("#crudAdd").addEventListener("click", () => openCrudForm(null));
 $("#crudCancel").addEventListener("click", () => { $("#crudFormCard").hidden = true; crud.editing = null; });
-$("#crudSearch").addEventListener("input", renderCrud);
+let crudSearchT; $("#crudSearch").addEventListener("input", () => { clearTimeout(crudSearchT); crudSearchT = setTimeout(() => { caps.crud = CAP; renderCrud(); }, 120); });
 $("#crudRefresh").addEventListener("click", loadCrud);
 $("#crudForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const C = CRUD[crud.name]; const body = {};
   for (const f of C.fields) { const el = $("#cf_" + f.k); if (!el || f.ro) continue;
-    body[f.k] = f.type === "bool" ? el.checked : f.type === "number" ? (el.value === "" ? "" : +el.value) : el.value.trim();
+    body[f.k] = f.type === "bool" ? el.checked : f.type === "number" ? (el.value === "" ? "" : +el.value) : isUpper(C, f) ? el.value.trim().toUpperCase() : el.value.trim();
     if (f.req && (body[f.k] === "" || body[f.k] === undefined)) return setMsg($("#crudMsg"), t("Ranpli: {0}", t(f.l))); }
   try {
     if (crud.editing != null) await api("PUT", `/${C.col}/${encodeURIComponent(crud.editing)}`, body);
@@ -1468,6 +1652,8 @@ $("#tkClockFmt").addEventListener("click", (e) => { const b = e.target.closest("
   updateTkLabels(); renderTkPreview(); if (sel !== "#tkActive") scheduleTkSave();
 }));
 $("#tkActive").addEventListener("change", () => putSettings({ tickerActive: $("#tkActive").checked }, $("#tkActive").checked ? "Ticker aktive" : "Ticker dezaktive"));
+const tkScale = () => { const st = $("#tkStage"); if (st && st.clientWidth) $("#tkTv").style.transform = `scale(${st.clientWidth / 960})`; };
+if (window.ResizeObserver) new ResizeObserver(tkScale).observe($("#tkStage"));
 function renderTkPreview() {
   const box = $("#tkPreview"); if (!box) return;
   const gc = $("#tkColor").value; const typing = $("#tickerText").value.trim();
@@ -1482,11 +1668,12 @@ function renderTkPreview() {
   const bgTr = $("#tkBgTr").checked, size = +$("#tkSize").value || 20, bgA = bgTr ? 0 : +$("#tkBgA").value;
   const h12 = $("#tkClockFmt .on")?.dataset.v === "12";
   const clk = `<div class="clk"${bgTr ? ' style="background:transparent"' : ""}>${new Date().toLocaleTimeString(h12 ? "en-US" : [], { hour: h12 ? "numeric" : "2-digit", minute: "2-digit", hour12: h12 })}</div>`;
-  box.innerHTML = `<div class="tkstage"><div class="scene">${esc(t("Preview"))} · TV</div><div class="tkprev${$("#tkActive").checked ? "" : " off"}${bgA < 43 ? " shadow" : ""}" style="background:${rgba($("#tkBg").value, bgA)};font-size:${size}px;height:${size * 2 + 10}px">
+  box.innerHTML = `<div class="tkprev${$("#tkActive").checked ? "" : " off"}${bgA < 43 ? " shadow" : ""}" style="background:${rgba($("#tkBg").value, bgA)};font-size:${size}px;height:${size * 2}px">
     ${label ? `<div class="lab" style="background:${$("#tkLabelTr").checked ? "transparent" : esc($("#tkLabelBg").value)};color:${esc($("#tkLabelColor").value)}">${esc(label)}</div>` : ""}
     <div class="run"><div class="track">${half}${half}</div></div>
-    ${$("#tkClock").checked ? clk : ""}</div></div>`;
-  const tr = $(".track", box); const w = tr.firstElementChild.getBoundingClientRect().width;
+    ${$("#tkClock").checked ? clk : ""}</div>`;
+  tkScale();
+  const tr = $(".track", box); const w = tr.firstElementChild.offsetWidth; // lajè sou ekran 960 px la (pa lajè redwi a)
   const pxs = (+$("#tkSpeed").value || 5) * 24; // menm vitès ak app TV a (dp pa segonn)
   tr.style.animationDuration = Math.max(4, w / pxs) + "s";
   tr.style.animationDirection = $("#tkDir").value === "right" ? "reverse" : "normal";
@@ -1741,15 +1928,235 @@ $("#evForm").addEventListener("submit", async (e) => {
 });
 
 // ------------------------------------------------------------ Sistèm
+const fmtBytes = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : n >= 1024 ? Math.round(n / 1024) + " KB" : (n || 0) + " B");
+const fmtUp = (s) => { const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60); return d ? t("{0}j {1}h", d, h) : h ? `${h}h ${m}min` : `${m} min`; };
+async function loadSysStats() {
+  const t0 = performance.now(); let y; try { y = await api("GET", "/galaxy/system"); } catch { $("#sysKpis").innerHTML = `<div class="empty">${t("Sèvè a pa reponn.")}</div>`; return; }
+  const ping = Math.round(performance.now() - t0), n = (v) => Number(v || 0).toLocaleString(lang);
+  const k = (label, v, sub) => `<div class="kpi"><span class="k">${esc(t(label))}</span><span class="v">${esc(v)}</span>${sub ? `<span class="note">${esc(sub)}</span>` : ""}</div>`;
+  $("#sysKpis").innerHTML = k("Repons sèvè a", ping + " ms") + k("Gwosè baz done a", y.dbBytes ? fmtBytes(y.dbBytes) : "—", y.dbBytes ? t("Sove an {0} ms", y.dbWriteMs) : t("Poko gen chanjman depi sèvè a limen"))
+    + k("Aparèy", n(y.devices), t("{0} online", n(y.online))) + k("Playlist", n(y.playlists)) + k("Chanèl an memwa", n(y.channels), t("{0} lis", n(y.channelLists)))
+    + k("Kliyan yo", n(y.customers)) + k("Memwa sèvè a", y.memoryMb + " MB") + k("Sèvè a limen depi", fmtUp(y.uptimeSec), y.node);
+  // Limit pratik yon baz done JSON: ~50 MB anvan ekriti yo kòmanse lou
+  const pct = Math.min(100, Math.round(((y.dbBytes || 0) / (50 * 1048576)) * 100)), bar = $("#sysCapBar");
+  bar.style.width = Math.max(1, pct) + "%"; bar.className = pct >= 85 ? "bad" : pct >= 60 ? "warn" : "";
+  $("#sysCapLabel").textContent = t("Espas baz done a itilize: {0}%", pct);
+  $("#sysNote").textContent = (y.persistent ? t("✓ Done yo sou yon disk pèmanan.") : t("⚠ Done yo pa sou yon disk pèmanan: yo ka efase lè sèvè a redemare. Ajoute yon Disk sou Render ak DB_FILE=/data/db.json."))
+    + (y.dbWriteErrors ? " " + t("⚠ {0} erè ekriti sou disk la.", y.dbWriteErrors) : "");
+}
+$("#sysRefresh").addEventListener("click", loadSysStats);
 async function loadSystem() {
+  loadSysStats();
   settings = await api("GET", "/settings").catch(() => ({}));
   $("#mtOn").checked = !!settings.maintenanceMode; $("#mtMsg").value = settings.maintenanceMessage || "";
   $("#frLast").textContent = settings.forceRefreshAt ? t("Dènye fwa: {0}", new Date(settings.forceRefreshAt).toLocaleString(lang)) : "";
 }
+let brSpots = [], adStats = {};
 async function loadAds() {
-  const ads = await list("media-ads").catch(() => []);
-  $("#adList").innerHTML = ads.map((a) => `<div class="li">${sw("media-ads|" + a.id, isOn(a.status))}<span class="pill p-info">${esc(a.placement || "corner")}</span><span class="grow mono" style="font-size:12px">${esc(a.url)}</span><button class="btn small danger" data-del="media-ads|${esc(a.id)}" type="button">${t("Efase")}</button></div>`).join("") || `<div class="empty">${t("Pa gen ad.")}</div>`;
+  const [ads, st, stats] = await Promise.all([list("media-ads").catch(() => []), api("GET", "/settings").catch(() => settings), api("GET", "/galaxy/ad-stats").catch(() => ({}))]);
+  settings = st || settings; adStats = stats || {};
+  if (!liveData) await loadLive();
+  const ordOf = (a, i) => (a.order !== undefined && a.order !== "" && a.order !== null && isFinite(+a.order) ? +a.order : 1e6 + i);
+  brSpots = ads.map((a, i) => [a, ordOf(a, i)]).filter(([a]) => a.placement === "break").sort((x, y) => x[1] - y[1]).map(([a]) => a);
+  renderBreakSpots(); fillBreakSettings(); renderBreakTargets(); brPvIdle();
+  $("#adList").innerHTML = ads.filter((a) => a.placement !== "break").map((a) => `<div class="li">${sw("media-ads|" + a.id, isOn(a.status))}<span class="pill p-info">${esc(a.placement || "corner")}</span><span class="grow mono" style="font-size:12px;overflow-wrap:anywhere">${esc(a.url)}</span><button class="btn small danger" data-del="media-ads|${esc(a.id)}" type="button">${t("Efase l")}</button></div>`).join("") || `<div class="empty">${t("Pa gen ad.")}</div>`;
 }
+// ------------------------------------------------------------ Grafik TV
+// Sa panel la sove nan settings.gfx; sèvè a netwaye l epi voye l bay TV yo nan "graphics".
+const GX_DEF = { bug: { on: false, imageUrl: "", text: "", position: "top-right", size: 44, opacity: 85 },
+  watermark: { on: false, text: "{mac}", position: "bottom-right", size: 16, opacity: 25, move: false },
+  scoreboard: { on: false, league: "", clock: "", home: "", homeScore: "0", homeColor: "#1d4ed8", away: "", awayScore: "0", awayColor: "#dc2626", position: "top-left" },
+  weather: { on: false, city: "", scope: "all", unit: "C", auto: true, temp: 30, icon: "🌤️", position: "top-right" },
+  countdown: { on: false, title: "", target: "", doneText: "", keepMin: 10, position: "top-center" },
+  ident: { on: false, imageUrl: "", text: "", tagline: "", everyMin: 30, durationSec: 5, onChannelChange: false },
+  bumper: { on: false, inText: "", outText: "", inUrl: "", outUrl: "", durationSec: 4, bgColor: "#0b1630", textColor: "#ffffff" } };
+let gxWx = null, gxSaveT = null, gxTickT = null, gxFullT = null, gxWxT = null;
+const gxEls = () => $$('main[data-pane="gfx"] [data-g]');
+function gxRead() { const g = {}; gxEls().forEach((el) => { const [k, f] = el.dataset.g.split("."); (g[k] ??= {})[f] = el.type === "checkbox" ? el.checked : el.type === "number" || el.type === "range" ? (el.value === "" ? "" : +el.value) : el.value.trim(); }); return g; }
+function gxFill(g) { gxEls().forEach((el) => { const [k, f] = el.dataset.g.split("."); const v = g?.[k]?.[f] ?? GX_DEF[k][f]; if (el.type === "checkbox") el.checked = !!v; else el.value = v; }); gxLabels(); }
+function gxLabels() { $("#gxWxScopeNote").hidden = $('[data-g="weather.scope"]').value !== "client"; $$('main[data-pane="gfx"] [data-gv]').forEach((b) => { const el = $(`[data-g="${b.dataset.gv}"]`); b.textContent = el.value; });
+  $$('main[data-pane="gfx"] .anibox').forEach((box) => { const on = box.querySelector('.gxhead input[type="checkbox"]'); if (on) box.classList.toggle("gxbox-off", !on.checked); }); }
+/** Menm règ ak sèvè a (src/graphics.js), pou preview a montre egzakteman sa TV a ap resevwa. */
+function gxNormalize(g) {
+  const url = (u) => (/^https?:\/\//i.test(u || "") ? u : null), n = (v, d, lo, hi) => Math.min(hi, Math.max(lo, v === "" || v == null || !isFinite(+v) ? d : +v)), out = {};
+  const b = g.bug; if (b.on && (url(b.imageUrl) || b.text)) out.bug = { imageUrl: url(b.imageUrl), text: b.text, position: b.position, size: n(b.size, 44, 16, 160), opacity: n(b.opacity, 85, 10, 100) };
+  const w = g.watermark; if (w.on && w.text) { const text = w.text.replace(/\{mac\}/gi, "02:AA:BB:CC:DD:EE").replace(/\{customer\}/gi, "John Doe").replace(/\{device\}/gi, "Living Room TV"); out.watermark = { text, position: w.position, size: n(w.size, 16, 8, 60), opacity: n(w.opacity, 25, 3, 100), move: w.move }; }
+  const s = g.scoreboard; if (s.on && (s.home || s.away)) out.scoreboard = { ...s, homeScore: s.homeScore || "0", awayScore: s.awayScore || "0" };
+  if (g.weather.on && g.weather.scope === "client" && !g.weather.city) out.weather = { city: t("Vil kliyan an"), temp: "28°" + g.weather.unit, icon: "🌤️", position: g.weather.position };
+  const m = g.weather; if (m.on && m.city) { const live = m.auto && gxWx && gxWx.q === m.city.toLowerCase() ? gxWx : null; let c = live ? live.tempC : m.temp === "" ? null : m.unit === "F" ? ((+m.temp - 32) * 5) / 9 : +m.temp;
+    if (m.auto && !live) c = null;
+    if (c !== null && isFinite(c)) out.weather = { city: m.city, temp: Math.round(m.unit === "F" ? (c * 9) / 5 + 32 : c) + "°" + m.unit, icon: live ? live.icon : m.icon, position: m.position }; }
+  const c = g.countdown; if (c.on && c.target) { const at = Math.floor(new Date(c.target).getTime() / 1000), now = Date.now() / 1000; if (at && now < at + (c.doneText ? n(c.keepMin, 10, 0, 1440) * 60 : 0)) out.countdown = { title: c.title, targetAt: at, doneText: c.doneText, position: c.position }; }
+  const i = g.ident; if (i.on && (url(i.imageUrl) || i.text)) out.ident = { imageUrl: url(i.imageUrl), text: i.text, tagline: i.tagline, everyMin: n(i.everyMin, 30, 0, 240), durationSec: n(i.durationSec, 5, 2, 15) };
+  const u = g.bumper; if (u.on && (url(u.inUrl) || u.inText || url(u.outUrl) || u.outText)) out.bumper = { inUrl: url(u.inUrl), inText: u.inText, outUrl: url(u.outUrl), outText: u.outText, durationSec: n(u.durationSec, 4, 2, 15), bgColor: u.bgColor, textColor: u.textColor };
+  return out;
+}
+const gxScale = () => { const st = $("#gxStage"); if (st && st.clientWidth) $("#gxTv").style.transform = `scale(${st.clientWidth / 960})`; };
+if (window.ResizeObserver) new ResizeObserver(gxScale).observe($("#gxStage"));
+function gxPreview() {
+  gxLabels(); const g = gxRead(), o = gxNormalize(g);
+  setHtml($("#gxLayer"), GalaxyGfx.html(o, { bottom: 60 })); GalaxyGfx.tick($("#gxLayer"));
+  const notes = [];
+  if (g.weather.on && g.weather.city && !o.weather) notes.push(t("Meteyo: klike \"Teste vil la\" pou wè l nan preview a."));
+  if (g.countdown.on && g.countdown.target && !o.countdown) notes.push(t("Countdown: dat la deja pase."));
+  if (g.bumper.on && !brPvActive().length && !brSpots.length) notes.push(t("Bumper yo pase sèlman lè gen koupi piblisite (paj Media Ads)."));
+  $("#gxNote").textContent = notes.join(" ");
+}
+function gxPlay(which) {
+  const o = gxNormalize({ ...gxRead(), ...(which === "ident" ? { ident: { ...gxRead().ident, on: true } } : { bumper: { ...gxRead().bumper, on: true } }) });
+  const h = which === "ident" ? (o.ident ? GalaxyGfx.identHtml(o.ident) : "") : o.bumper ? GalaxyGfx.bumperHtml(o.bumper, which) : "";
+  if (!h) return toast(which === "ident" ? "Mete yon logo oswa yon non pou ident la an premye." : "Mete yon tèks oswa yon imaj pou bumper sa a an premye.");
+  clearTimeout(gxFullT); $("#gxFull").innerHTML = h; $("#gxStage").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  gxFullT = setTimeout(() => ($("#gxFull").innerHTML = ""), (which === "ident" ? o.ident.durationSec : o.bumper.durationSec) * 1000);
+}
+async function gxWeather(showMsg) {
+  const city = $('[data-g="weather.city"]').value.trim(); if (!city) { if (showMsg) setMsg($("#gxWxMsg"), "Mete non vil la"); return; }
+  if (showMsg) setMsg($("#gxWxMsg"), "Ap chèche…", true);
+  try { const r = await api("GET", "/galaxy/weather?city=" + enc(city)); gxWx = { ...r, q: city.toLowerCase() };
+    setMsg($("#gxWxMsg"), t("✓ {0}: {1}°C {2}", r.city + (r.country ? ", " + r.country : ""), Math.round(r.tempC), r.icon), true); }
+  catch (err) { gxWx = null; setMsg($("#gxWxMsg"), t("{0} — ou ka mete tanperati a alamen.", err.message)); }
+  gxPreview();
+}
+async function loadGfx() {
+  settings = await api("GET", "/settings").catch(() => settings); gxFill(settings.gfx || {}); gxScale(); gxPreview();
+  if (!brSpots.length) loadAds().then(gxPreview).catch(() => {});
+  const w = gxRead().weather; if (w.on && w.city && w.auto) gxWeather(false);
+  clearInterval(gxTickT); gxTickT = setInterval(() => { if (!$("#gxStage").offsetParent) return clearInterval(gxTickT); GalaxyGfx.tick($("#gxLayer")); }, 1000);
+}
+function gxSave() {
+  clearTimeout(gxSaveT); setMsg($("#gxMsg"), "Ap sove…", true);
+  gxSaveT = setTimeout(async () => { try { settings = await api("PUT", "/settings", { gfx: gxRead() }); setMsg($("#gxMsg"), "✓ Sove otomatikman — TV yo mete yo ajou touswit.", true); } catch (err) { setMsg($("#gxMsg"), err.message); } }, 700);
+}
+{ const pane = $('main[data-pane="gfx"]');
+  const changed = (e) => { if (!e.target.closest("[data-g]")) return; gxPreview(); gxSave();
+    if (e.target.dataset.g === "weather.city") { gxWx = null; clearTimeout(gxWxT); gxWxT = setTimeout(() => gxWeather(true), 900); } };
+  pane.addEventListener("input", changed); pane.addEventListener("change", changed);
+  pane.addEventListener("click", (e) => {
+    const st = e.target.closest("[data-step]"), ins = e.target.closest("[data-ins]"), pl = e.target.closest("[data-gxplay]");
+    if (st) { const [k, d] = st.dataset.step.split("|"), el = $(`[data-g="${k}"]`); el.value = Math.max(0, (parseInt(el.value, 10) || 0) + +d); gxPreview(); gxSave(); }
+    if (ins) { const el = $('[data-g="watermark.text"]'); el.value = (el.value + " " + ins.dataset.ins).trim().slice(0, 60); gxPreview(); gxSave(); }
+    if (pl) gxPlay(pl.dataset.gxplay);
+  });
+  $("#gxWxTest").addEventListener("click", () => gxWeather(true)); }
+
+// ---- Koupi piblisite (tankou chèn TV) ----
+const isVideoUrl = (u) => /\.(mp4|m3u8|webm|mkv|mov)(\?|$)/i.test(u || "");
+function renderBreakSpots() {
+  $("#brList").innerHTML = brSpots.map((a, i) => { const st = adStats[a.id] || {}; const vid = a.type === "video" || isVideoUrl(a.url);
+    return `<div class="li tkrow${isOn(a.status) ? "" : " off"}">${sw("media-ads|" + a.id, isOn(a.status))}
+      <div class="grow"><span class="msgt"><b>${esc(a.name || t("Spot {0}", i + 1))}</b></span>
+        <span class="when">${vid ? "🎬 " + esc(t("Videyo")) : "🖼 " + esc(t("Imaj")) + " · " + esc(a.durationSec || 10) + " s"} · ${esc(t("Pase {0} fwa", st.starts || 0))}</span>
+        <span class="note mono" style="overflow-wrap:anywhere">${esc(a.url)}</span></div>
+      <button class="btn small" type="button" data-brup="${i}" title="${esc(t("Monte"))}" aria-label="${esc(t("Monte"))}"${i === 0 ? " disabled" : ""}>▲</button>
+      <button class="btn small" type="button" data-brdown="${i}" title="${esc(t("Desann"))}" aria-label="${esc(t("Desann"))}"${i === brSpots.length - 1 ? " disabled" : ""}>▼</button>
+      <button class="btn small" type="button" data-brprev="${esc(a.id)}" title="${esc(t("Gade spot sa a nan preview a"))}" aria-label="${esc(t("Gade spot sa a nan preview a"))}">👁</button>
+      <button class="btn small purple" type="button" data-brplay="${esc(a.id)}" title="${esc(t("Pase spot sa a kounye a"))}">▶</button>
+      <button class="btn small red" type="button" data-brdel="${esc(a.id)}">${t("Efase l")}</button></div>`; }).join("") || `<div class="empty">${t("Pa gen spot. Ajoute premye a anba a.")}</div>`;
+}
+function renderBreakTargets() {
+  const on = (liveData?.devices || []).filter((d) => d.online && d.configured !== false);
+  $("#brOnline").textContent = t("TV online: {0}", on.length);
+  const cur = $("#brTarget").value;
+  $("#brTarget").innerHTML = `<option value="">${esc(t("Tout TV ki online ({0})", on.length))}</option>` + on.map((d) => `<option value="${esc(d.mac)}">${esc(d.deviceName || d.model || t("Aparèy"))} · ${esc(d.mac)}</option>`).join("");
+  if ([...$("#brTarget").options].some((o) => o.value === cur)) $("#brTarget").value = cur;
+}
+function fillBreakSettings() {
+  const s = settings;
+  $("#brAuto").checked = !!s.adBreakAuto; $("#brEvery").value = s.adBreakEveryMin === undefined || s.adBreakEveryMin === "" ? 15 : s.adBreakEveryMin;
+  $("#brSpots").value = s.adBreakSpots || 2; $("#brTimes").value = s.adBreakTimes || ""; $("#brSkip").value = s.adBreakSkipSec || 0;
+}
+async function sendBreak(adIds) {
+  const mac = $("#brTarget").value; setMsg($("#brMsg"), "");
+  try { const r = await api("POST", "/galaxy/adbreak", { ...(mac ? { mac } : {}), ...(adIds ? { adIds } : {}) });
+    setMsg($("#brMsg"), r.targets ? t("✓ {0} spot voye bay {1} TV.", r.spots, r.targets) : t("Pa gen TV ki online kounye a."), !!r.targets);
+    setTimeout(() => loadAds(), 4000); }
+  catch (err) { setMsg($("#brMsg"), err.message); }
+}
+// ---- Preview koupi a (sa kliyan an ap wè sou TV a, san l pa voye anyen bay TV yo) ----
+let brPv = null, brPvMuted = false;
+const brPvScale = () => { const st = $("#brStage"); if (st && st.clientWidth) $("#brTv").style.transform = `scale(${st.clientWidth / 960})`; };
+if (window.ResizeObserver) new ResizeObserver(brPvScale).observe($("#brStage"));
+window.addEventListener("resize", brPvScale);
+const brPvIsVideo = (a) => a.type === "video" || isVideoUrl(a.url);
+const mmss = (n) => { n = Math.max(0, Math.ceil(n)); return Math.floor(n / 60) + ":" + String(n % 60).padStart(2, "0"); };
+const brPvActive = () => brSpots.filter((a) => isOn(a.status));
+function brPvButtons() { $("#brPvStop").disabled = !brPv; $("#brPvNext").disabled = !brPv; }
+function brPvIdle(msg) {
+  if (brPv) return; brPvScale(); brPvButtons();
+  const q = brPvActive(), imgSec = q.filter((a) => !brPvIsVideo(a)).reduce((n, a) => n + Math.max(3, +a.durationSec || 10), 0), vids = q.filter(brPvIsVideo).length;
+  $("#brTv").innerHTML = `<div class="brpv-ch"><span class="brpv-live"><i></i>LIVE</span>${msg ? `<div class="brpv-back">${esc(msg)}</div>` : `<button class="brpv-big" type="button" id="brPvBig" aria-label="${esc(t("▶ Gade koupi a"))}">▶</button>`}
+    <div class="brpv-cap">${esc(t("Chanèl kliyan an ap gade a"))}</div></div>`;
+  $("#brPvInfo").textContent = q.length ? t("Koupi a: {0} spot aktif", q.length) + (vids ? " · " + t("{0} videyo", vids) : "") + (imgSec ? " · " + t("{0} s imaj", imgSec) : "") + ". " + t("Preview a pa voye anyen bay TV yo.")
+    : t("Pa gen spot piblisite aktif. Ajoute youn an premye.");
+}
+function brPvStart(queue) {
+  brPvStop(true); if (!queue.length) return brPvIdle();
+  brPv = { q: queue, i: 0, el: 0, skip: Math.max(0, Math.min(120, parseInt($("#brSkip").value, 10) || 0)), last: Date.now(), timer: null };
+  brPv.timer = setInterval(brPvTick, 250); brPvButtons(); brPvSpot();
+}
+function brPvPh(a, note) { const h = [...String(a.id || a.url)].reduce((n, c) => (n * 31 + c.charCodeAt(0)) >>> 0, 7);
+  return `<div class="brpv-ph" style="background:linear-gradient(135deg,hsl(${h % 360} 60% 24%),hsl(${(h + 70) % 360} 65% 10%))"><div class="big">${brPvIsVideo(a) ? "▶" : "🖼"}</div><div class="n">${esc(a.name || a.url.split("/").pop())}</div>${note ? `<small>${esc(note)}</small>` : ""}</div>`; }
+function brPvSpot() {
+  const p = brPv, a = p.q[p.i]; p.spotEl = 0; p.failed = false; p.video = null;
+  const m = (window.__adPreviewMedia && window.__adPreviewMedia(a)) || { url: a.url, video: brPvIsVideo(a) };
+  $("#brTv").innerHTML = `<div class="brpv-ad">${m.video ? `<video src="${esc(m.url)}" autoplay playsinline></video>` : `<img class="m" src="${esc(m.url)}" alt="">`}
+    <div class="brpv-tag"><b>${esc(t("PIBLISITE"))}</b><span id="brPvTag"></span></div><div class="brpv-bar"><i id="brPvBar"></i></div></div>`;
+  const el = $("#brTv .brpv-ad").firstElementChild, fail = () => { if (brPv !== p || p.q[p.i] !== a || p.failed) return; p.failed = true; p.video = null;
+    el.outerHTML = brPvPh(a, t("Medya a pa chaje nan preview a. Verifye URL la — lyen .m3u8 ak http:// pa jwe nan navigatè a, men yo jwe sou TV a.")); };
+  el.addEventListener("error", fail);
+  if (m.video) { p.video = el; el.muted = brPvMuted; el.addEventListener("ended", () => { if (brPv === p && p.q[p.i] === a) brPvNext(); });
+    const pr = el.play(); if (pr && pr.catch) pr.catch(() => { el.muted = true; el.play().catch(fail); }); }
+  $("#brPvInfo").textContent = t("Spot {0} sou {1}: {2}", p.i + 1, p.q.length, a.name || a.url);
+  brPvTick();
+}
+function brPvTick() {
+  const p = brPv; if (!p) return;
+  if (!$("#brStage").offsetParent) return brPvStop();
+  const now = Date.now(), dt = (now - p.last) / 1000; p.last = now; p.el += dt; p.spotEl += dt;
+  const a = p.q[p.i], v = p.video, dur = v && isFinite(v.duration) && v.duration > 0 ? v.duration : Math.max(3, +a.durationSec || 10);
+  const pos = v && isFinite(v.duration) && v.duration > 0 ? v.currentTime : p.spotEl;
+  if (!(v && !p.failed) && p.spotEl >= dur) return brPvNext();
+  const wait = p.skip - p.el, tag = $("#brPvTag"), bar = $("#brPvBar");
+  if (tag) tag.textContent = `${p.i + 1}/${p.q.length}   ·   ${mmss(dur - pos)}` + (p.skip > 0 ? "\n" + (wait > 0 ? t("Ou ka sote nan {0} s", Math.ceil(wait)) : t("Peze OK pou sote ▶")) : "");
+  if (bar) bar.style.width = Math.min(100, (pos / dur) * 100) + "%";
+}
+function brPvNext() { const p = brPv; if (!p) return; if (p.i + 1 < p.q.length) { p.i++; brPvSpot(); } else { brPvStop(true); brPvIdle(t("↩ Tounen sou chanèl la")); setTimeout(() => brPvIdle(), 1800); } }
+function brPvStop(quiet) { if (brPv) { clearInterval(brPv.timer); brPv = null; } const v = $("#brTv video"); if (v) { v.pause(); v.removeAttribute("src"); v.load(); } brPvButtons(); if (!quiet) brPvIdle(); }
+$("#brPvPlay").addEventListener("click", () => { const q = brPvActive(); if (!q.length) return toast("Pa gen spot piblisite aktif. Ajoute youn an premye."); brPvStart(q); });
+$("#brTv").addEventListener("click", (e) => { if (e.target.closest("#brPvBig")) $("#brPvPlay").click(); });
+$("#brPvStop").addEventListener("click", () => brPvStop());
+$("#brPvNext").addEventListener("click", () => brPvNext());
+$("#brPvSound").addEventListener("click", (e) => { brPvMuted = !brPvMuted; e.currentTarget.textContent = brPvMuted ? "🔇" : "🔊"; e.currentTarget.setAttribute("aria-pressed", String(!brPvMuted)); const v = $("#brTv video"); if (v) v.muted = brPvMuted; });
+$("#brPvTest").addEventListener("click", () => { const url = $("#brUrl").value.trim(); if (!/^https?:\/\//.test(url)) return toast("Mete yon URL ki kòmanse ak https://");
+  brPvStart([{ id: "test", name: $("#brName").value.trim() || t("Nouvo spot"), url, type: isVideoUrl(url) ? "video" : "image", durationSec: Math.max(3, +$("#brDur").value || 15) }]); $("#brStage").scrollIntoView({ block: "nearest", behavior: "smooth" }); });
+$("#brSkip").addEventListener("input", () => { if (brPv) brPv.skip = Math.max(0, Math.min(120, parseInt($("#brSkip").value, 10) || 0)); });
+$("#brPvSound").title = t("Son"); $("#brPvSound").setAttribute("aria-label", t("Son"));
+$("#brNow").addEventListener("click", () => sendBreak(null));
+$("#brForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); const url = $("#brUrl").value.trim(); if (!/^https?:\/\//.test(url)) return toast("Mete yon URL ki kòmanse ak https://");
+  try { await api("POST", "/media-ads", { name: $("#brName").value.trim(), url, type: isVideoUrl(url) ? "video" : "image", placement: "break", durationSec: Math.max(3, +$("#brDur").value || 15), skipAfterSec: 0, status: "Active", order: brSpots.length });
+    $("#brName").value = ""; $("#brUrl").value = ""; toast("Spot ajoute"); loadAds(); } catch (err) { toast(err.message); }
+});
+$("#brList").addEventListener("click", async (e) => {
+  const up = e.target.closest("[data-brup]"), dn = e.target.closest("[data-brdown]"), pl = e.target.closest("[data-brplay]"), de = e.target.closest("[data-brdel]"), pv = e.target.closest("[data-brprev]");
+  if (pv) { const a = brSpots.find((x) => String(x.id) === pv.dataset.brprev); if (a) brPvStart([a]); return; }
+  if (pl) return sendBreak([pl.dataset.brplay]);
+  if (de) { if (!confirm(t("Efase spot sa a?"))) return; try { await api("DELETE", `/media-ads/${enc(de.dataset.brdel)}`); toast("Efase"); loadAds(); } catch (err) { toast(err.message); } return; }
+  if (up || dn) { const i = +(up || dn).dataset[up ? "brup" : "brdown"], j = up ? i - 1 : i + 1; if (j < 0 || j >= brSpots.length) return;
+    const arr = brSpots.slice(); [arr[i], arr[j]] = [arr[j], arr[i]];
+    try { await Promise.all(arr.map((a, k) => (+a.order === k && a.order !== "" && a.order != null ? null : api("PUT", `/media-ads/${enc(a.id)}`, { order: k })))); loadAds(); } catch (err) { toast(err.message); } }
+});
+$("#brList").addEventListener("change", () => setTimeout(loadAds, 300));
+let brSaveT = null;
+["#brAuto", "#brEvery", "#brSpots", "#brTimes", "#brSkip"].forEach((sel) => $(sel).addEventListener("input", () => {
+  clearTimeout(brSaveT); setMsg($("#brAutoMsg"), "Ap sove…", true);
+  brSaveT = setTimeout(async () => {
+    try { settings = await api("PUT", "/settings", { adBreakAuto: $("#brAuto").checked, adBreakEveryMin: Math.max(0, Math.min(240, parseInt($("#brEvery").value, 10) || 0)),
+        adBreakSpots: Math.max(1, Math.min(10, parseInt($("#brSpots").value, 10) || 2)), adBreakTimes: $("#brTimes").value.trim(), adBreakSkipSec: Math.max(0, Math.min(120, parseInt($("#brSkip").value, 10) || 0)) });
+      setMsg($("#brAutoMsg"), "✓ Sove otomatikman — TV yo mete yo ajou touswit.", true); }
+    catch (err) { setMsg($("#brAutoMsg"), err.message); }
+  }, 700);
+}));
 $("#mtOn").addEventListener("change", (e) => putSettings({ maintenanceMode: e.target.checked, maintenanceMessage: $("#mtMsg").value.trim() }, e.target.checked ? "Tout TV yo an mentenans" : "Mentenans fini"));
 $("#forceRefresh").addEventListener("click", () => putSettings({ forceRefreshAt: new Date().toISOString() }, "Tout TV yo ap rechaje"));
 $("#adForm").addEventListener("submit", async (e) => {

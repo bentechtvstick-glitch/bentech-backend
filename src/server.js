@@ -13,6 +13,7 @@ import {
   DEVICE_PROTECTED_FIELDS,
 } from "./galaxy.js";
 import { mountGalaxyLive } from "./galaxy-live.js";
+import { fastWrites, gzipJson } from "./perf.js";
 
 // Baz done a. Sou Render, mete DB_FILE=/data/db.json (disk pèmanan) pou done yo
 // pa efase chak fwa sèvè a redemare oswa w fè yon deploy.
@@ -36,9 +37,14 @@ function resolveDbFile() {
 const DB_FILE = resolveDbFile();
 console.log(`Database: ${DB_FILE}`);
 const db = await JSONFilePreset(DB_FILE, {});
+// Ekriti gwoupe + fichye konpak: panel la reponn touswit menm ak anpil done
+fastWrites(db, DB_FILE);
 const app = express();
+app.disable?.("x-powered-by");
 app.use(cors());
-app.use(express.json());
+// Yon playlist ka gen plizyè milye chanèl: app TV a voye lis la nan yon sèl demann
+app.use(express.json({ limit: "12mb" }));
+app.use(gzipJson());
 
 // JWT configuration
 const JWT_SECRET = process.env.JWT_SECRET || "change-me-before-production";
@@ -50,6 +56,7 @@ const ADMIN_PASS = process.env.ADMIN_PASS || "changeme";
 
 // ---------- helpers ----------
 
+const AUDIT_MAX = 5000;
 /** Write an audit-log entry */
 function auditLog(action, detail, user = "system") {
   if (!db.data.auditLogs) db.data.auditLogs = [];
@@ -60,6 +67,8 @@ function auditLog(action, detail, user = "system") {
     user,
     timestamp: new Date().toISOString(),
   });
+  // Kenbe dènye 5000 aksyon yo sèlman pou baz done a pa gwosi san rete
+  if (db.data.auditLogs.length > AUDIT_MAX) db.data.auditLogs.splice(0, db.data.auditLogs.length - AUDIT_MAX);
   // fire-and-forget – don't block the response
   db.write().catch(() => {});
 }
@@ -156,13 +165,15 @@ function mountCollection(path, key, idField = "id", opts = {}) {
 
   // GET with pagination: ?page=1&limit=20
   app.get(`/api/${path}`, guard, (req, res) => {
-    const items = (db.data[key] || []).map(present);
+    let items = db.data[key] || [];
+    // ?q=tèks → rechèch sou sèvè a (tout chan tèks/nimewo yo)
+    const q = String(req.query.q || "").trim().toLowerCase();
+    if (q) items = items.filter((it) => it && Object.values(it).some((v) => (typeof v === "string" || typeof v === "number") && String(v).toLowerCase().includes(q)));
     const page = Math.max(parseInt(req.query.page) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 5000);
     const start = (page - 1) * limit;
-    const paginated = items.slice(start, start + limit);
     res.json({
-      data: paginated,
+      data: items.slice(start, start + limit).map(present), // prepare sèlman paj yo mande a
       page,
       limit,
       total: items.length,
@@ -248,7 +259,10 @@ mountGalaxy(app, db, { authenticate, auditLog });
 const galaxyLive = mountGalaxyLive(app, db, { authenticate, auditLog });
 syncTvs = galaxyLive.broadcastSync; // TV yo mete yo ajou touswit lè panel la chanje yon bagay
 
-app.get("/api/audit-logs", guard, (req, res) => res.json(db.data.auditLogs || []));
+app.get("/api/audit-logs", guard, (req, res) => {
+  const limit = Math.min(Math.max(parseInt(req.query.limit) || 1000, 1), AUDIT_MAX);
+  res.json((db.data.auditLogs || []).slice(-limit));
+});
 
 app.get("/api/settings", (req, res) => res.json(db.data.settings || {}));
 app.put("/api/settings", guard, async (req, res) => {

@@ -8,12 +8,14 @@
 // channel profiles, customers, settings) voye bay app la atravè /config.
 // ---------------------------------------------------------------------------
 import crypto from "node:crypto";
+import { deviceIndex } from "./perf.js";
+import { buildGraphics, fetchWeather, clientIp, ipPlace } from "./graphics.js";
 
 const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/;
 const ONLINE_MS = 3 * 60 * 1000; // aparèy la "Online" si li pale ak sèvè a nan 3 dènye minit yo
 
 /** Chan ki pa janm soti nan route jenerik /api/devices yo (pa gen modpas oswa kle ki fwit). */
-export const DEVICE_PRIVATE_FIELDS = ["deviceKey"];
+export const DEVICE_PRIVATE_FIELDS = ["deviceKey", "lastIp"];
 /** Chan route jenerik yo pa gen dwa chanje (sèlman route Galaxy yo ki pwoteje). */
 export const DEVICE_PROTECTED_FIELDS = ["deviceKey", "mac", "lastSeenAt"];
 
@@ -45,6 +47,7 @@ const isActive = (x) => {
   const s = String(x.status ?? x.active ?? "Active").toLowerCase();
   return ["active", "yes", "true", "live", "upcoming", "on"].includes(s);
 };
+const same = (a, b) => String(a ?? "").trim().toUpperCase() === String(b ?? "").trim().toUpperCase();
 const isUrl = (s) => /^https?:\/\//i.test(String(s || "").trim());
 const hashId = (s) => crypto.createHash("sha1").update(String(s)).digest("hex").slice(0, 12);
 
@@ -95,7 +98,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
   };
   ensure();
 
-  const findDevice = (mac) => data().devices.find((d) => d.deviceId === mac || d.mac === mac);
+  const findDevice = deviceIndex(() => data().devices);
   const playlistsOf = (mac) => (data().devicePlaylists[mac] ??= []);
   const settings = () => data().settings || {};
   const tz = () => settings().timezone || process.env.PANEL_TZ || "America/New_York";
@@ -216,7 +219,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
 
     // ---- Estati ----
     const customer = device.customer
-      ? (data().customers || []).find((c) => c.name === device.customer || c.id === device.customer)
+      ? (data().customers || []).find((c) => same(c.name, device.customer) || c.id === device.customer) // majiskil/miniskil pa konte
       : null;
     let status = playlists.length ? "active" : "pending";
     let statusMessage = "";
@@ -302,12 +305,27 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
     // ---- Media Ads ----
     const ads = (data().mediaAds || []).filter(isActive).filter((a) => a.url).map((a) => ({
       id: a.id || hashId(a.url),
+      name: String(a.name || ""),
       type: a.type === "video" || /\.(mp4|m3u8|webm|mkv)(\?|$)/i.test(a.url) ? "video" : "image",
       url: a.url,
       placement: a.placement || "corner",
       durationSec: Number(a.durationSec) || 10,
       skipAfterSec: Number(a.skipAfterSec ?? 5),
     }));
+
+    // ---- Koupi piblisite (tankou chèn TV): spot yo pase plen ekran pandan kliyan an ap gade live ----
+    const orderOf = new Map((data().mediaAds || []).map((a, i) => [String(a.id), Number.isFinite(Number(a.order)) && a.order !== "" && a.order != null ? Number(a.order) : 1e6 + i]));
+    const breakSpots = ads.filter((a) => a.placement === "break").sort((a, b) => (orderOf.get(String(a.id)) ?? 0) - (orderOf.get(String(b.id)) ?? 0));
+    const adBreak = breakSpots.length
+      ? {
+          auto: !!s.adBreakAuto,
+          everyMin: s.adBreakEveryMin === undefined || s.adBreakEveryMin === "" ? 15 : Math.min(240, Math.max(0, Number(s.adBreakEveryMin) || 0)), // chak konbyen minit (0 = sèlman lè fiks)
+          times: String(s.adBreakTimes || "").split(/[\s,;]+/).filter((t) => /^([01]?\d|2[0-3]):[0-5]\d$/.test(t)).map((t) => t.padStart(5, "0")), // lè fiks (zòn lè TV a)
+          spotsPerBreak: Math.min(10, Math.max(1, Number(s.adBreakSpots) || 2)),
+          skipAfterSec: Math.min(120, Math.max(0, Number(s.adBreakSkipSec) || 0)), // 0 = kliyan an pa ka sote
+          spots: breakSpots,
+        }
+      : null;
 
     // ---- Broadcast: mesaj ijans nan Settings ----
     const broadcast = s.emergencyActive && s.emergencyText
@@ -366,6 +384,15 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
         headlineSize: 14, nameSize: 26, titleSize: 16, sticker: "", animateEmoji: true });
     }
 
+    // ---- Grafik TV: logo bug, watermark, scoreboard, meteyo, countdown, ident, bumper ----
+    const ip = clientIp(req);
+    if (ip && device.lastIp !== ip) device.lastIp = ip;
+    const geo = ipPlace(ip); // vil selon IP a (pou meteyo "kote kliyan an ye")
+    if (geo && device.geoCity !== geo.name) device.geoCity = geo.name;
+    const gfx = buildGraphics(s.gfx, { mac, deviceName: device.deviceName || "", customer: customer?.name || device.customer || "", toEpoch: (v) => toEpochSec(v, zone),
+      ip, deviceCity: device.city || "", customerCity: customer?.city || "" });
+    const nextEdge = Math.min(tickerEdge, gfx.edge);
+
     res.json({
       known: true,
       status,
@@ -382,10 +409,12 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
       banners,
       popups,
       ads,
+      adBreak,
+      graphics: gfx.graphics,
       broadcast,
       liveEvents,
       forceRefreshAt: s.forceRefreshAt || "",
-      refreshSec: Number.isFinite(tickerEdge) ? Math.max(5, Math.min(refreshSec, tickerEdge)) : refreshSec,
+      refreshSec: Number.isFinite(nextEdge) ? Math.max(5, Math.min(refreshSec, nextEdge)) : refreshSec,
     });
   });
 
@@ -443,6 +472,12 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
   };
 
   /** Admin nan tape MAC la → aparèy la parèt (Device Key, modèl, estati, playlist). */
+  /** Panel la teste meteyo yon vil (pou grafik Meteyo a). */
+  app.get("/api/galaxy/weather", authenticate, async (req, res) => {
+    try { res.json({ ok: true, ...(await fetchWeather(req.query.city)) }); }
+    catch (err) { res.status(502).json({ ok: false, error: err.name === "AbortError" ? "Sèvis meteyo a pa reponn" : err.message }); }
+  });
+
   app.get("/api/galaxy/devices/lookup", authenticate, (req, res) => {
     const device = loadDevice(req, res);
     if (device) res.json(adminDevice(device));
@@ -459,7 +494,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
     const device = loadDevice(req, res);
     if (!device) return;
     const b = req.body || {};
-    for (const k of ["deviceName", "customer", "channelProfile", "blocked", "limit"]) {
+    for (const k of ["deviceName", "customer", "channelProfile", "blocked", "limit", "city"]) {
       if (b[k] !== undefined) device[k] = b[k];
     }
     if (b.maxChannels !== undefined) device.maxChannels = Math.max(0, parseInt(b.maxChannels, 10) || 0);
