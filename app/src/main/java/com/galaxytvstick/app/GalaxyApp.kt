@@ -10,6 +10,11 @@ import androidx.emoji2.text.EmojiCompat
  * menm sou ansyen vèsyon Android ki pa konnen nouvo imoji yo.
  */
 class GalaxyApp : Application() {
+    companion object {
+        /** Travay an aryè plan ki dwe kontinye menm lè yon ekran fèmen. */
+        val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
+    }
+
     override fun onCreate() {
         super.onCreate()
         EmojiCompat.init(

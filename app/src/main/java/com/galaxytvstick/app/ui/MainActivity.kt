@@ -11,7 +11,14 @@ import com.galaxytvstick.app.data.PanelApi
 import com.galaxytvstick.app.data.Prefs
 import com.galaxytvstick.app.data.XtreamApi
 import com.galaxytvstick.app.databinding.ActivityMainBinding
+import com.galaxytvstick.app.GalaxyApp
+import com.galaxytvstick.app.data.Account
+import com.galaxytvstick.app.data.ChannelCache
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Ekran chajman (style TiviMate): li chaje playlist la epi li ouvri TV a plen ekran
@@ -21,12 +28,16 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityMainBinding
     private lateinit var prefs: Prefs
+    private var useCache = false
+
+    companion object { const val EXTRA_USE_CACHE = "use_cache" }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
         val account = prefs.account ?: run { toActivation(); return }
 
+        useCache = intent.getBooleanExtra(EXTRA_USE_CACHE, false)
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
         b.playlistName.text = account.name ?: account.username
@@ -43,18 +54,41 @@ class MainActivity : AppCompatActivity() {
         b.errorBox.visibility = View.GONE
 
         lifecycleScope.launch {
-            // Chèche règ panel la an premye (chanèl kache, limit…)
-            runCatching { PanelApi(prefs).config() }.getOrNull()?.let { PanelState.config = it }
+            // Règ panel la (chanèl kache, limit…) ak playlist la chaje an menm tan, pa youn apre lòt
+            val cfgJob = async { runCatching { PanelApi(prefs).config() }.getOrNull() }
 
-            val result = runCatching { api.liveCategories() to api.liveStreams(null) }
+            // 1) Ouvèti rapid: lis chanèl ki sove sou aparèy la
+            val cached = if (useCache) withContext(Dispatchers.IO) { ChannelCache.read(applicationContext, account) } else null
+            useCache = false // "Eseye ankò" toujou rechaje sou sèvè a
+            if (cached != null) {
+                withTimeoutOrNull(2_500) { cfgJob.await() }?.let { PanelState.config = it }
+                ChannelStore.rawCategories = cached.categories
+                ChannelStore.rawChannels = cached.channels
+                ChannelStore.applyPanel(PanelState.config)
+                if (cached.ageMs > ChannelCache.REFRESH_AFTER_MS) refreshInBackground(account)
+                openTv()
+                return@launch
+            }
+
+            // 2) Chajman nòmal: kategori ak chanèl an menm tan
+            val catsJob = async { runCatching { api.liveCategoriesRaw() } }
+            val chansJob = async { runCatching { api.liveStreamsRaw() } }
+            val result = runCatching {
+                val catsJson = catsJob.await().getOrThrow()
+                val chansJson = chansJob.await().getOrThrow()
+                val parsed = withContext(Dispatchers.Default) { XtreamApi.parseCategories(catsJson) to XtreamApi.parseStreams(chansJson) }
+                GalaxyApp.scope.launch { ChannelCache.write(applicationContext, account, catsJson, chansJson) }
+                parsed
+            }
             result.onSuccess { (cats, chans) ->
+                cfgJob.await()?.let { PanelState.config = it }
                 ChannelStore.rawCategories = cats
                 ChannelStore.rawChannels = chans
                 ChannelStore.applyPanel(PanelState.config)
                 // Voye lis chanèl yo bay panel la pou admin nan ka hide/show yo
-                launch { runCatching { PanelApi(prefs).uploadChannels(chans, cats) } }
-                // Zòn lè sèvè a pou catch-up (maks 4 s pou pa fè TV a tann)
-                if (chans.any { it.tvArchive }) kotlinx.coroutines.withTimeoutOrNull(4_000) { api.serverTimezone() }?.let { prefs.serverTimezone = it }
+                GalaxyApp.scope.launch { runCatching { PanelApi(prefs).uploadChannels(chans, cats) } }
+                // Zòn lè sèvè a pou catch-up: an aryè plan, pou pa fè TV a tann
+                if (chans.any { it.tvArchive }) GalaxyApp.scope.launch { api.serverTimezone()?.let { prefs.serverTimezone = it } }
                 openTv()
             }.onFailure {
                 b.progress.visibility = View.GONE
@@ -62,6 +96,23 @@ class MainActivity : AppCompatActivity() {
                 b.errorText.text = getString(R.string.error_network, it.message ?: "")
                 b.errorBox.visibility = View.VISIBLE
                 b.btnRetry.requestFocus()
+            }
+        }
+    }
+
+    /** Mete lis ki sove a ajou an silans; nouvo lis la parèt pwochen fwa app la ouvri. */
+    private fun refreshInBackground(account: Account) {
+        val ctx = applicationContext
+        val p = prefs
+        GalaxyApp.scope.launch {
+            runCatching {
+                val api = XtreamApi(account)
+                val catsJson = api.liveCategoriesRaw()
+                val chansJson = api.liveStreamsRaw()
+                val chans = XtreamApi.parseStreams(chansJson)
+                if (chans.isEmpty()) return@runCatching
+                ChannelCache.write(ctx, account, catsJson, chansJson)
+                PanelApi(p).uploadChannels(chans, XtreamApi.parseCategories(catsJson))
             }
         }
     }

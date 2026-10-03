@@ -57,7 +57,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Si yon playlist deja konekte, ale dirèk nan chanèl yo
         if (prefs.account != null && !noAuto) {
-            openMain()
+            openMain(cold = true)
             return
         }
 
@@ -222,9 +222,10 @@ class LoginActivity : AppCompatActivity() {
         b.error.visibility = View.VISIBLE
     }
 
-    private fun openMain() {
+    private fun openMain(cold: Boolean = false) {
         pollJob?.cancel()
-        startActivity(Intent(this, MainActivity::class.java))
+        // cold = app la fèk ouvri: sèvi ak lis chanèl ki sove a pou TV a parèt touswit
+        startActivity(Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_USE_CACHE, cold))
         finish()
     }
 }

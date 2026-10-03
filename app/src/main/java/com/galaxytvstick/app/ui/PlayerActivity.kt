@@ -55,6 +55,8 @@ class PlayerActivity : AppCompatActivity() {
         const val EXTRA_OPEN_LIST = "open_list"
         /** Tip "Ad" pou bumper yo (ekran anvan/apre koupi piblisite a). */
         private const val BUMPER = "bumper"
+        /** Fòma ki mache ak sèvè playlist la: "m3u8" (HLS) oswa "ts". */
+        private var preferredExt = "m3u8"
     }
 
     // Lis chanèl sou videyo a (style TiviMate)
@@ -76,7 +78,8 @@ class PlayerActivity : AppCompatActivity() {
     private var channels: List<Channel> = emptyList()
     private var openListOnStart = false
     private var index = 0
-    private var triedTsFallback = false
+    private var triedFallback = false
+    private var curExt = "m3u8"
 
     // Piblisite preroll
     private var prerollAd: Ad? = null
@@ -210,7 +213,7 @@ class PlayerActivity : AppCompatActivity() {
 
         // Pi gwo buffer pou stream 4K/8K ki gen gwo bitrate
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(20_000, 60_000, 2_500, 5_000)
+            .setBufferDurationsMs(15_000, 50_000, 1_000, 3_000) // imaj la parèt apre 1 s buffer (zap pi rapid)
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
@@ -247,6 +250,9 @@ class PlayerActivity : AppCompatActivity() {
             b.loading.visibility = if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE
             val nowBuffering = state == Player.STATE_BUFFERING
             if (nowBuffering != buffering) { buffering = nowBuffering; reportStatus() }
+            // Sonje fòma ki mache ak sèvè sa a (HLS oswa TS) pou pwochen chanèl yo pa pèdi tan sou move a
+            if (state == Player.STATE_READY && !adPlaying && player?.currentMediaItem?.mediaId == "channel" &&
+                channels.getOrNull(index)?.directUrl == null) preferredExt = curExt
             if (state == Player.STATE_ENDED && adPlaying) { if (inBreak) nextBreakAd() else endPreroll() }
         }
 
@@ -259,9 +265,8 @@ class PlayerActivity : AppCompatActivity() {
             if (adPlaying) { endPreroll(); playChannel(index); return }
             // Si HLS (.m3u8) pa mache, eseye MPEG-TS (.ts) — sèlman pou chanèl Xtream
             val direct = channels.getOrNull(index)?.directUrl != null
-            if (!triedTsFallback && !direct) {
-                triedTsFallback = true
-                playChannel(index, ext = "ts")
+            if (!triedFallback && !direct) {
+                playChannel(index, ext = if (curExt == "m3u8") "ts" else "m3u8", fallback = true)
             } else {
                 b.errorText.text = getString(R.string.error_playback, error.errorCodeName)
                 b.errorText.visibility = View.VISIBLE
@@ -283,9 +288,10 @@ class PlayerActivity : AppCompatActivity() {
         return builder.build()
     }
 
-    private fun playChannel(i: Int, ext: String = "m3u8") {
+    private fun playChannel(i: Int, ext: String = preferredExt, fallback: Boolean = false) {
         val p = player ?: return
-        triedTsFallback = ext == "ts"
+        triedFallback = fallback
+        curExt = ext
         index = i
         val ch = channels[index]
         if (ch.directUrl == null) prefs.lastChannelId = ch.streamId // pa relanse yon evènman ki ka fini
@@ -308,7 +314,8 @@ class PlayerActivity : AppCompatActivity() {
         b.adBox.visibility = View.VISIBLE
         handler.post(adTick)
         val adItem = MediaItem.Builder().setMediaId("ad").setUri(ad.url).build()
-        p.setMediaItems(listOf(adItem, channelItem(channels[index], "m3u8")))
+        curExt = preferredExt; triedFallback = false
+        p.setMediaItems(listOf(adItem, channelItem(channels[index], preferredExt)))
         p.prepare()
         p.playWhenReady = true
     }

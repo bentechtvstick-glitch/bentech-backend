@@ -24,6 +24,31 @@ class XtreamApi(private val account: Account) {
             .followRedirects(true)
             .build()
 
+        fun parseCategories(text: String): List<Category> {
+            val arr = JSONArray(text)
+            return (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                Category(o.optString("category_id"), o.optString("category_name"))
+            }
+        }
+
+        fun parseStreams(text: String): List<Channel> {
+            val arr = JSONArray(text)
+            return (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                Channel(
+                    streamId = o.optInt("stream_id"),
+                    num = o.optInt("num", i + 1),
+                    name = o.optString("name"),
+                    icon = o.optString("stream_icon").takeIf { it.isNotBlank() && it != "null" },
+                    categoryId = o.optString("category_id"),
+                    epgChannelId = o.optString("epg_channel_id").takeIf { it.isNotBlank() && it != "null" },
+                    tvArchive = o.optInt("tv_archive", 0) == 1,
+                    archiveDays = o.optInt("tv_archive_duration", 0).coerceIn(0, 30)
+                )
+            }
+        }
+
         /** Mete http:// si li manke epi retire "/" nan fen an. */
         fun normalizeServer(input: String): String {
             var s = input.trim().trimEnd('/')
@@ -58,31 +83,15 @@ class XtreamApi(private val account: Account) {
         return info.optInt("auth", 0) == 1
     }
 
-    suspend fun liveCategories(): List<Category> {
-        val arr = JSONArray(get(apiUrl("get_live_categories")))
-        return (0 until arr.length()).map { i ->
-            val o = arr.getJSONObject(i)
-            Category(o.optString("category_id"), o.optString("category_name"))
-        }
-    }
+    suspend fun liveCategoriesRaw(): String = get(apiUrl("get_live_categories"))
+    suspend fun liveStreamsRaw(): String = get(apiUrl("get_live_streams"))
+
+    suspend fun liveCategories(): List<Category> = parseCategories(liveCategoriesRaw())
 
     /** categoryId = null → tout chanèl yo. */
     suspend fun liveStreams(categoryId: String?): List<Channel> {
         val extra = if (categoryId != null) mapOf("category_id" to categoryId) else emptyMap()
-        val arr = JSONArray(get(apiUrl("get_live_streams", extra)))
-        return (0 until arr.length()).map { i ->
-            val o = arr.getJSONObject(i)
-            Channel(
-                streamId = o.optInt("stream_id"),
-                num = o.optInt("num", i + 1),
-                name = o.optString("name"),
-                icon = o.optString("stream_icon").takeIf { it.isNotBlank() && it != "null" },
-                categoryId = o.optString("category_id"),
-                epgChannelId = o.optString("epg_channel_id").takeIf { it.isNotBlank() && it != "null" },
-                tvArchive = o.optInt("tv_archive", 0) == 1,
-                archiveDays = o.optInt("tv_archive_duration", 0).coerceIn(0, 30)
-            )
-        }
+        return parseStreams(get(apiUrl("get_live_streams", extra)))
     }
 
     /** Zòn lè sèvè a (pou catch-up). null si sèvè a pa di l. */
