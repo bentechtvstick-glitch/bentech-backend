@@ -30,7 +30,7 @@ jobs:
       - name: Report build errors
         if: failure()
         run: |
-          grep -E '^e: |^w: .*deprecat|error:|ERROR|AAPT|What went wrong|^> |Unresolved|FAILED|Could not' build.log | grep -v '^w: ' | sed "s#file://$GITHUB_WORKSPACE/##" | cut -c1-420 | awk '!seen[$0]++' > errs.txt || true
+          grep -E '^e: |^w: .*deprecat|error:|ERROR|AAPT|What went wrong|^> |Unresolved|FAILED|Could not' build.log | grep -v '^w: \|^> Task\|Run with\|help.gradle' | sed "s#file://$GITHUB_WORKSPACE/##" | cut -c1-420 | awk '!seen[$0]++' > errs.txt || true
           [ -s errs.txt ] || tail -80 build.log > errs.txt
           split -l 14 errs.txt chunk_
           n=0

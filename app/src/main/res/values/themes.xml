@@ -20,7 +20,7 @@
         <item name="android:textColorPrimary">@color/text</item>
     </style>
 
-    <style name="Galaxy.Input">
+    <style name="Galaxy.Input" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">56dp</item>
         <item name="android:layout_marginTop">12dp</item>
