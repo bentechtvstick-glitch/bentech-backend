@@ -1200,12 +1200,16 @@ function confirmIn(sel, text, yes, fn) {
 
 // playlist
 $("#plForm").addEventListener("submit", async (e) => {
-  e.preventDefault(); if (!dev) return;
+  e.preventDefault(); const msg = $("#plMsg"), btn = e.submitter || $('#plForm button[type="submit"]');
+  const say = (text, ok) => { setMsg(msg, text, ok); msg.scrollIntoView({ block: "nearest", behavior: "smooth" }); toast(text); };
+  if (!dev) return say("Chwazi yon aparèy nan lis la an premye.");
   const body = { name: $("#plName").value.trim(), server: $("#plServer").value.trim(), username: $("#plUser").value.trim(), password: $("#plPass").value.trim(), deviceKey: dev.deviceKey };
-  if (!body.name || !body.username || !body.password) return setMsg($("#plMsg"), "Non playlist, username ak password obligatwa.");
+  if (!body.name || !body.username || !body.password) return say("Non playlist, username ak password obligatwa.");
+  if (btn.disabled) return; const label = btn.textContent; btn.disabled = true; btn.textContent = t("Ap sove…");
   try { const r = await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/playlists`, body); dev = { ...dev, ...r.device }; renderDevice();
-    setMsg($("#plMsg"), t("Playlist \"{0}\" ajoute. L ap parèt sou TV a nan kèk segonn.", r.playlist.name), true); ["#plName", "#plUser", "#plPass"].forEach((s) => ($(s).value = "")); loadDevices(); }
-  catch (err) { setMsg($("#plMsg"), err.message); }
+    say(t("Playlist \"{0}\" ajoute. L ap parèt sou TV a nan kèk segonn.", r.playlist?.name || body.name), true); ["#plName", "#plUser", "#plPass"].forEach((x) => ($(x).value = "")); loadDevices(); }
+  catch (err) { say(err.message || "Sèvè a pa reponn."); }
+  btn.disabled = false; btn.textContent = label;
 });
 $("#plCancel").addEventListener("click", () => { ["#plName", "#plServer", "#plUser", "#plPass"].forEach((s) => ($(s).value = "")); setMsg($("#plMsg"), ""); $("#plTest").innerHTML = ""; });
 // ---- Tès playlist (sèvè a kontakte sèvè IPTV a an vre) ----

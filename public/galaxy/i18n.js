@@ -911,6 +911,7 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Chanje ticker, chyron, Grafik TV oswa piblisite: yo parèt isit la nan kèk segonn.": ["Change the ticker, chyron, TV graphics or ads: they appear here within seconds.", "Modifiez le ticker, le chyron, l'habillage ou les pubs : ils apparaissent ici en quelques secondes.", "Cambie el ticker, chyron, gráficos o anuncios: aparecen aquí en segundos."],
     "Detache TV a (pou deplase l)": ["Detach the TV (to move it)", "Détacher la TV (pour la déplacer)", "Separar el TV (para moverlo)"],
     "Mete TV a sou bò dwat la": ["Dock the TV on the right side", "Ancrer la TV à droite", "Acoplar el TV a la derecha"],
+    "Chwazi yon aparèy nan lis la an premye.": ["Select a device in the list first.", "Sélectionnez d'abord un appareil dans la liste.", "Seleccione primero un dispositivo de la lista."],
     "Pa gen spot piblisite aktif. Ajoute youn an premye.": ["No active ad spot. Add one first.", "Aucun spot actif. Ajoutez-en un d'abord.", "No hay spots activos. Añada uno primero."],
   };
   for (const [k, [en, fr, es]] of Object.entries(add)) { L.en[k] = en; L.fr[k] = fr; L.es[k] = es; }

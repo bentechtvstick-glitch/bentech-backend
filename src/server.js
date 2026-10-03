@@ -254,7 +254,7 @@ mountCollection("media-ads", "mediaAds", "id");
 mountCollection("chyrons", "chyrons", "id"); // Chyron / Lower third (plizyè, chak ak estil pa l)
 
 // Galaxy TV Stick: aparèy MAC, playlist, config pou app TV a
-mountGalaxy(app, db, { authenticate, auditLog });
+mountGalaxy(app, db, { authenticate, auditLog, syncTvs: () => syncTvs() }); // playlist/aparèy chanje → TV yo mete yo ajou touswit
 // Galaxy TV Stick: sa TV yo ap gade an dirèk, kòmand a distans, ak paj panel /galaxy
 const galaxyLive = mountGalaxyLive(app, db, { authenticate, auditLog });
 syncTvs = galaxyLive.broadcastSync; // TV yo mete yo ajou touswit lè panel la chanje yon bagay

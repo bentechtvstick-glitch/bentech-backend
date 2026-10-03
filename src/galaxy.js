@@ -85,7 +85,7 @@ export function toEpochSec(value, timeZone, endOfDay = false) {
   return Math.floor(utc / 1000);
 }
 
-export function mountGalaxy(app, db, { authenticate, auditLog }) {
+export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {} }) {
   const data = () => db.data;
   const ensure = () => {
     const d = data();
@@ -503,6 +503,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
     if (b.resetDeviceKey) device.deviceKey = ""; // pwochen fwa app la anrejistre, li pran nouvo kle a
     await db.write();
     auditLog("device-update", `Device ${device.mac} updated`, admin(req));
+    syncTvs();
     res.json(adminDevice(device));
   });
 
@@ -684,6 +685,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
     data().deletedDevices = data().deletedDevices.filter((m) => m !== device.mac);
     await db.write();
     auditLog("playlist-add", `Playlist "${playlist.name}" added to ${device.mac}`, admin(req));
+    syncTvs();
     const { password: _pw, ...safe } = playlist;
     res.status(201).json({ ok: true, playlist: safe, device: adminDevice(device) });
   });
@@ -698,6 +700,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
     }
     if (req.body?.server === "") pl.server = "";
     await db.write();
+    syncTvs();
     auditLog("playlist-update", `Playlist "${pl.name}" updated on ${device.mac}`, admin(req));
     res.json(adminDevice(device));
   });
@@ -709,6 +712,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
     const pl = list.find((p) => p.id === req.params.id);
     data().devicePlaylists[device.mac] = list.filter((p) => p.id !== req.params.id);
     await db.write();
+    syncTvs();
     auditLog("playlist-delete", `Playlist "${pl?.name || req.params.id}" removed from ${device.mac}`, admin(req));
     res.json(adminDevice(device));
   });
