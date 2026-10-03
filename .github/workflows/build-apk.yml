@@ -22,7 +22,23 @@ jobs:
           gradle-version: "8.7"
 
       - name: Build debug APK
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon 2>&1 | tee build.log
+
+      # Lè bati a echwe: mete erè yo kòm "annotations" pou yo ka li san telechaje jounal la
+      - name: Report build errors
+        if: failure()
+        run: |
+          grep -E '^e: |^w: .*deprecat|error:|ERROR|AAPT|What went wrong|^> |Unresolved|FAILED|Could not' build.log | grep -v '^w: ' | sed "s#file://$GITHUB_WORKSPACE/##" | cut -c1-420 | awk '!seen[$0]++' > errs.txt || true
+          [ -s errs.txt ] || tail -80 build.log > errs.txt
+          split -l 14 errs.txt chunk_
+          n=0
+          for f in chunk_*; do
+            n=$((n+1)); [ $n -gt 10 ] && break
+            msg=$(sed 's/%/%25/g' "$f" | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=build errors $n::$msg"
+          done
 
       - uses: actions/upload-artifact@v4
         with:
