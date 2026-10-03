@@ -7,6 +7,7 @@
   const CSS = `
 .ttv{position:fixed;right:18px;bottom:18px;z-index:40;width:min(460px,calc(100vw - 36px));background:var(--surface,#161e32);border:1px solid var(--line2,#2a3554);border-radius:14px;box-shadow:0 18px 48px rgba(0,0,0,.55);display:flex;flex-direction:column;overflow:hidden;color:var(--text,#fff)}
 .ttv-h{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line,#222c48);font-size:14px}
+.ttv-h{cursor:grab;touch-action:none;user-select:none}.ttv.drag .ttv-h{cursor:grabbing}.ttv.drag{transition:none;opacity:.94}
 .ttv-h b{white-space:nowrap}.ttv-h code{font-size:12px;color:#00E5FF;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ttv-h button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line2,#2a3554);background:var(--field,#0f1626);color:inherit;cursor:pointer;font-size:14px;flex:none}
 .ttv-h button:hover{border-color:#00E5FF}
@@ -79,7 +80,7 @@
     const T = { all: [], chs: [], cats: [], idx: 0, cat: "", listOpen: false, chKey: "", cfg: null, on: false, timers: [], abort: null, brk: null, seen: new Set(), cy: { i: 0, sig: "", timer: null }, lastIdent: 0, lastBreak: Date.now(), cursor: 0, lastMin: "", err: "" };
 
     const el = document.createElement("div"); el.className = "ttv"; el.hidden = true;
-    el.innerHTML = `<div class="ttv-h"><b>📺 Customer TV</b><code></code><button type="button" data-a="min" aria-label="${esc(t("Redui"))}" title="${esc(t("Redui"))}">—</button><button type="button" data-a="off" aria-label="${esc(t("Etenn TV tès la"))}" title="${esc(t("Etenn TV tès la"))}">✕</button></div>
+    el.innerHTML = `<div class="ttv-h"><b>📺 Customer TV</b><code></code><button type="button" data-a="dock"></button><button type="button" data-a="min" aria-label="${esc(t("Redui"))}" title="${esc(t("Redui"))}">—</button><button type="button" data-a="off" aria-label="${esc(t("Etenn TV tès la"))}" title="${esc(t("Etenn TV tès la"))}">✕</button></div>
       <div class="ttv-screen"><div class="ttv-stage"><div class="ttv-bg"></div><div class="ttv-ov"><div class="ttv-gfx"></div><div class="ttv-cy"></div><div class="ttv-tk"></div></div><div class="ttv-info" hidden></div><div class="ttv-full" hidden></div><div class="ttv-list" hidden></div><div class="ttv-ad" hidden></div><div class="ttv-scr" hidden></div><div class="ttv-dlg" hidden></div><div class="ttv-toast" hidden></div></div></div>
       <div class="ttv-f"><span></span><button class="btn small" type="button" data-a="copy"></button><button class="btn small" type="button" data-a="chdn" aria-label="CH−">CH−</button><button class="btn small" type="button" data-a="chup" aria-label="CH+">CH+</button><button class="btn small" type="button" data-a="list">☰</button><button class="btn small purple" type="button" data-a="dev"></button></div><div class="ttv-help"></div>`;
     document.body.appendChild(el);
@@ -294,9 +295,28 @@
     }
     const btn = () => document.getElementById("ttvBtn");
     // Louvri = TV a pran bò dwat paj la; redui (—) = yon ti ba anba adwat, panel la reprann tout lajè a
-    function layout() { el.classList.toggle("min", !!S.min); el.classList.toggle("dock", !S.min); document.body.classList.toggle("ttv-dock", !S.min && T.on); requestAnimationFrame(scale); }
+    // Trennen tèt TV a pou deplase l nenpòt kote sou ekran an; bouton ⇥ a remete l sou bò dwat la.
+    function layout() {
+      const wide = window.innerWidth >= 1100, docked = !S.min && !S.float && wide, free = S.x != null && (S.float || S.min || !wide);
+      el.classList.toggle("min", !!S.min); el.classList.toggle("dock", docked); document.body.classList.toggle("ttv-dock", docked && T.on);
+      if (free && !docked) { const w = el.offsetWidth || 460, h = el.offsetHeight || 60;
+        el.style.left = Math.max(0, Math.min(window.innerWidth - w, S.x)) + "px"; el.style.top = Math.max(0, Math.min(window.innerHeight - Math.min(h, 60), S.y)) + "px"; el.style.right = "auto"; el.style.bottom = "auto"; }
+      else { el.style.left = el.style.top = el.style.right = el.style.bottom = ""; }
+      const d = $('[data-a="dock"]'); d.textContent = docked ? "⧉" : "⇥"; d.title = t(docked ? "Detache TV a (pou deplase l)" : "Mete TV a sou bò dwat la"); d.setAttribute("aria-label", d.title); d.hidden = !wide || !!S.min;
+      requestAnimationFrame(scale);
+    }
+    window.addEventListener("resize", () => { if (T.on) layout(); });
+    { const head = $(".ttv-h"); let drag = null;
+      head.addEventListener("pointerdown", (e) => { if (e.target.closest("button") || e.button > 0) return; const r = el.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false, id: e.pointerId }; head.setPointerCapture(e.pointerId); });
+      head.addEventListener("pointermove", (e) => { if (!drag) return;
+        if (!drag.moved) { const r = el.getBoundingClientRect(); if (Math.abs(e.clientX - r.left - drag.dx) + Math.abs(e.clientY - r.top - drag.dy) < 5) return; drag.moved = true; el.classList.add("drag");
+          if (el.classList.contains("dock")) { S.float = true; S.x = e.clientX - 230; S.y = e.clientY - 20; drag.dx = 230; drag.dy = 20; } }
+        S.x = e.clientX - drag.dx; S.y = e.clientY - drag.dy; layout(); });
+      const end = () => { if (!drag) return; if (drag.moved) { if (!S.min) S.float = true; save(S); T.tkSig = null; } el.classList.remove("drag"); drag = null; };
+      head.addEventListener("pointerup", end); head.addEventListener("pointercancel", end); }
     el.addEventListener("click", (e) => { const a = e.target.closest("[data-a]")?.dataset.a;
       if (a === "off") stop(); if (a === "min") { S.min = !S.min; save(S); layout(); scale(); T.tkSig = null; }
+      if (a === "dock") { S.float = !el.classList.contains("dock") ? false : true; if (S.float && S.x == null) { S.x = window.innerWidth - 500; S.y = 90; } save(S); layout(); T.tkSig = null; }
       if (a === "copy") { navigator.clipboard?.writeText(S.mac).then(() => toast(t("MAC kopye")), () => {}); }
       if (a === "chup") play(T.idx + 1); if (a === "chdn") play(T.idx - 1); if (a === "list") (T.listOpen ? closeList() : openList());
       if (a === "dev") D.openDevice(S.mac); });
