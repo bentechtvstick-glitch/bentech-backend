@@ -877,6 +877,8 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Vil (pou meteyo sou TV sa a)": ["City (for the weather on this TV)", "Ville (pour la météo sur cette TV)", "Ciudad (para el clima en este TV)"],
     "Egz: Miami": ["e.g. Miami", "Ex. : Miami", "Ej.: Miami"],
     "Selon adrès IP li: {0}": ["From its IP address: {0}", "D'après son adresse IP : {0}", "Según su dirección IP: {0}"],
+    "Ap rafrechi…": ["Refreshing…", "Actualisation…", "Actualizando…"],
+    "Lis la ajou · {0}": ["List updated · {0}", "Liste à jour · {0}", "Lista actualizada · {0}"],
     "Pa gen spot piblisite aktif. Ajoute youn an premye.": ["No active ad spot. Add one first.", "Aucun spot actif. Ajoutez-en un d'abord.", "No hay spots activos. Añada uno primero."],
   };
   for (const [k, [en, fr, es]] of Object.entries(add)) { L.en[k] = en; L.fr[k] = fr; L.es[k] = es; }

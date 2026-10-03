@@ -1314,7 +1314,12 @@ function renderLinkBox() {
     } catch (err) { toast(err.message); }
   };
 }
-$("#devRefresh").addEventListener("click", () => { loadDevices(); loadLive(); });
+$("#devRefresh").addEventListener("click", async (e) => {
+  const b = e.currentTarget; if (b.disabled) return; b.disabled = true; b.textContent = t("Ap rafrechi…");
+  try { await Promise.all([loadDevices(), loadLive()]); renderDevTable(); toast(t("Lis la ajou · {0}", new Date().toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))); }
+  catch { toast("Sèvè a pa reponn."); }
+  b.disabled = false; b.textContent = t("Rafrechi");
+});
 $("#addMacBtn").addEventListener("click", () => { $("#findCard").hidden = false; $("#findCard").scrollIntoView({ behavior: "smooth", block: "center" }); $("#mac").focus({ preventScroll: true }); });
 
 // ------------------------------------------------------------ Dashboard
