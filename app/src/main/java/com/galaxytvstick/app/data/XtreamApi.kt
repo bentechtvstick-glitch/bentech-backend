@@ -16,7 +16,8 @@ import java.util.concurrent.TimeUnit
 class XtreamApi(private val account: Account) {
 
     companion object {
-        const val USER_AGENT = "GalaxyTvStick/1.0"
+        /** Menm fòm ak lòt app ki bati sou ExoPlayer/Media3 (kèk sèvè IPTV refize non yo pa konnen). */
+        val USER_AGENT = "GalaxyTvStick/1.0 (Linux;Android ${android.os.Build.VERSION.RELEASE}) AndroidXMedia3/1.4.1"
 
         val http: OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -283,4 +284,44 @@ class XtreamApi(private val account: Account) {
     fun streamUrl(channel: Channel, ext: String = "m3u8"): String =
         channel.directUrl
             ?: "${account.server}/live/${account.username}/${account.password}/${channel.streamId}.$ext"
+
+    private fun hide(s: String): String {
+        var out = s
+        if (account.username.isNotBlank()) out = out.replace(account.username, "***")
+        if (account.password.isNotBlank()) out = out.replace(account.password, "***")
+        return out
+    }
+
+    /** Ansyen fòm lyen Xtream (san "/live" ni ekstansyon): kèk sèvè bay sèlman sa a. */
+    fun streamUrlBare(channel: Channel): String =
+        channel.directUrl ?: "${account.server}/${account.username}/${account.password}/${channel.streamId}"
+
+    /**
+     * Gade sa sèvè a reponn vre pou yon lyen stream (pou esplike poukisa yon chanèl pa jwe).
+     * Pa janm retounen username/password.
+     */
+    suspend fun probe(url: String): String = withContext(Dispatchers.IO) {
+        runCatching {
+            val client = http.newBuilder().connectTimeout(8, TimeUnit.SECONDS).readTimeout(8, TimeUnit.SECONDS).build()
+            val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
+            client.newCall(req).execute().use { r ->
+                val type = r.header("Content-Type")?.substringBefore(';')?.trim().orEmpty()
+                val buf = ByteArray(376)
+                var n = 0
+                r.body?.byteStream()?.let { ins ->
+                    while (n < buf.size) { val k = ins.read(buf, n, buf.size - n); if (k <= 0) break; n += k }
+                }
+                val kind = when {
+                    n == 0 -> "vid"
+                    buf[0] == 0x47.toByte() && (n <= 188 || buf[188] == 0x47.toByte()) -> "MPEG-TS"
+                    String(buf, 0, minOf(n, 7)) == "#EXTM3U" -> "HLS"
+                    else -> {
+                        val txt = String(buf, 0, minOf(n, 90)).replace(Regex("[^\\x20-\\x7E]"), " ").replace(Regex("\\s+"), " ").trim()
+                        "\"" + hide(txt) + "\""
+                    }
+                }
+                "HTTP ${r.code} $type $kind".replace("  ", " ")
+            }
+        }.getOrElse { hide(it.javaClass.simpleName + " " + (it.message ?: "")).take(120) }
+    }
 }

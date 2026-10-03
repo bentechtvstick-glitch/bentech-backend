@@ -55,8 +55,13 @@ class PlayerActivity : AppCompatActivity() {
         const val EXTRA_OPEN_LIST = "open_list"
         /** Tip "Ad" pou bumper yo (ekran anvan/apre koupi piblisite a). */
         private const val BUMPER = "bumper"
-        /** Fòma ki mache ak sèvè playlist la: "m3u8" (HLS) oswa "ts". */
-        private var preferredExt = "m3u8"
+        /**
+         * Fason pou mande stream nan, youn apre lòt jiskaske youn mache:
+         * 0 = /live/…/id.m3u8 (HLS) · 1 = /live/…/id.ts · 2 = /…/id (ansyen fòm) · 3 = /…/id li kòm HLS
+         */
+        private const val MODES = 4
+        /** Fason ki mache ak sèvè playlist la (app la sonje l pou pwochen chanèl yo). */
+        private var preferredMode = 0
     }
 
     // Lis chanèl sou videyo a (style TiviMate)
@@ -78,8 +83,8 @@ class PlayerActivity : AppCompatActivity() {
     private var channels: List<Channel> = emptyList()
     private var openListOnStart = false
     private var index = 0
-    private var triedFallback = false
-    private var curExt = "m3u8"
+    private var attempts = 0
+    private var curMode = 0
 
     // Piblisite preroll
     private var prerollAd: Ad? = null
@@ -220,10 +225,17 @@ class PlayerActivity : AppCompatActivity() {
         val dataSource = OkHttpDataSource.Factory(XtreamApi.http)
             .setUserAgent(XtreamApi.USER_AGENT)
 
+        // Pi toleran ak stream MPEG-TS sèvè IPTV yo (kòmanse menm si premye imaj la pa yon keyframe konplè)
+        val extractors = androidx.media3.extractor.DefaultExtractorsFactory()
+            .setTsExtractorFlags(
+                androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES or
+                    androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+            )
+
         player = ExoPlayer.Builder(this, renderers)
             .setTrackSelector(trackSelector)
             .setLoadControl(loadControl)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSource))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSource, extractors))
             .build().also { p ->
                 p.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                 b.playerView.player = p
@@ -252,7 +264,7 @@ class PlayerActivity : AppCompatActivity() {
             if (nowBuffering != buffering) { buffering = nowBuffering; reportStatus() }
             // Sonje fòma ki mache ak sèvè sa a (HLS oswa TS) pou pwochen chanèl yo pa pèdi tan sou move a
             if (state == Player.STATE_READY && !adPlaying && player?.currentMediaItem?.mediaId == "channel" &&
-                channels.getOrNull(index)?.directUrl == null) preferredExt = curExt
+                channels.getOrNull(index)?.directUrl == null) preferredMode = curMode
             if (state == Player.STATE_ENDED && adPlaying) { if (inBreak) nextBreakAd() else endPreroll() }
         }
 
@@ -263,35 +275,53 @@ class PlayerActivity : AppCompatActivity() {
         override fun onPlayerError(error: PlaybackException) {
             if (inBreak) { nextBreakAd(); return } // spot la pa ka jwe: pase sou pwochen an
             if (adPlaying) { endPreroll(); playChannel(index); return }
-            // Si HLS (.m3u8) pa mache, eseye MPEG-TS (.ts) — sèlman pou chanèl Xtream
-            val direct = channels.getOrNull(index)?.directUrl != null
-            if (!triedFallback && !direct) {
-                playChannel(index, ext = if (curExt == "m3u8") "ts" else "m3u8", fallback = true)
+            // Si yon fason pa mache, eseye pwochen an (HLS → TS → ansyen fòm lyen) — sèlman pou chanèl Xtream
+            val ch = channels.getOrNull(index)
+            val direct = ch?.directUrl != null
+            if (attempts < MODES - 1 && !direct) {
+                playChannel(index, mode = (curMode + 1) % MODES, attempt = attempts + 1)
             } else {
-                b.errorText.text = getString(R.string.error_playback, error.errorCodeName)
+                val code = error.errorCodeName
+                b.errorText.text = getString(R.string.error_playback, code)
                 b.errorText.visibility = View.VISIBLE
-                lastError = error.errorCodeName
+                lastError = code
                 reportStatus()
+                // Montre sa sèvè playlist la reponn vre, pou konnen kote pwoblèm nan ye
+                if (ch != null) lifecycleScope.launch {
+                    val at = index
+                    val diag = api.probe(if (direct) ch.directUrl!! else api.streamUrl(ch, "ts"))
+                    if (index == at && b.errorText.visibility == View.VISIBLE) {
+                        b.errorText.text = getString(R.string.error_playback, code) + "\n" + diag
+                        lastError = "$code · $diag"
+                        reportStatus()
+                    }
+                }
             }
         }
     }
 
-    private fun channelItem(ch: Channel, ext: String): MediaItem {
+    private fun channelItem(ch: Channel, mode: Int): MediaItem {
+        val url = when {
+            ch.directUrl != null -> ch.directUrl
+            mode == 0 -> api.streamUrl(ch, "m3u8")
+            mode == 1 -> api.streamUrl(ch, "ts")
+            else -> api.streamUrlBare(ch)
+        }
         val builder = MediaItem.Builder()
             .setMediaId("channel")
-            .setUri(api.streamUrl(ch, ext))
+            .setUri(url)
             .setLiveConfiguration(
                 MediaItem.LiveConfiguration.Builder().setTargetOffsetMs(5_000).build()
             )
-        val isHls = if (ch.directUrl != null) ch.directUrl.contains(".m3u8", ignoreCase = true) else ext == "m3u8"
+        val isHls = if (ch.directUrl != null) ch.directUrl.contains(".m3u8", ignoreCase = true) else mode == 0 || mode == 3
         if (isHls) builder.setMimeType(MimeTypes.APPLICATION_M3U8)
         return builder.build()
     }
 
-    private fun playChannel(i: Int, ext: String = preferredExt, fallback: Boolean = false) {
+    private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0) {
         val p = player ?: return
-        triedFallback = fallback
-        curExt = ext
+        attempts = attempt
+        curMode = mode
         index = i
         val ch = channels[index]
         if (ch.directUrl == null) prefs.lastChannelId = ch.streamId // pa relanse yon evènman ki ka fini
@@ -299,7 +329,7 @@ class PlayerActivity : AppCompatActivity() {
         b.resBadge.visibility = View.GONE
         lastQuality = ""; lastResolution = ""; lastCodec = ""; lastError = ""
         reportStatus()
-        p.setMediaItem(channelItem(ch, ext))
+        p.setMediaItem(channelItem(ch, mode))
         p.prepare()
         p.playWhenReady = true
         showInfo()
@@ -314,8 +344,8 @@ class PlayerActivity : AppCompatActivity() {
         b.adBox.visibility = View.VISIBLE
         handler.post(adTick)
         val adItem = MediaItem.Builder().setMediaId("ad").setUri(ad.url).build()
-        curExt = preferredExt; triedFallback = false
-        p.setMediaItems(listOf(adItem, channelItem(channels[index], preferredExt)))
+        curMode = preferredMode; attempts = 0
+        p.setMediaItems(listOf(adItem, channelItem(channels[index], preferredMode)))
         p.prepare()
         p.playWhenReady = true
     }
