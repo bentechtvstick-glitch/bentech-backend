@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Galaxy TV Stick</string>
+
+    <!-- Login -->
+    <string name="login_title">Konekte ak kont IPTV ou</string>
+    <string name="hint_server">Sèvè (egz: http://example.com:8080)</string>
+    <string name="hint_username">Username</string>
+    <string name="hint_password">Password</string>
+    <string name="btn_login">Konekte</string>
+    <string name="error_fill_all">Tanpri ranpli tout chan yo.</string>
+    <string name="error_bad_login">Username oswa password la pa bon.</string>
+    <string name="error_network">Pa ka konekte ak sèvè a. %1$s</string>
+    <string name="device_info_fmt">Device ID: %1$s  •  Aparèy la sipòte jiska %2$s</string>
+    <string name="device_id_fmt">MAC: %1$s</string>
+
+    <!-- Main -->
+    <string name="hint_search">Chèche yon chanèl…</string>
+    <string name="cat_favorites">★ Favori</string>
+    <string name="cat_all">Tout chanèl (%1$d)</string>
+    <string name="live_events">🔴 Evènman an dirèk</string>
+    <string name="live_now">AN DIRÈK KOUNYE A</string>
+    <string name="empty_list">Pa gen chanèl nan lis sa a.</string>
+    <string name="retry">Eseye ankò</string>
+    <string name="logout">Dekonekte</string>
+    <string name="logout_confirm">Ou vle dekonekte kont sa a?</string>
+    <string name="yes">Wi</string>
+    <string name="no">Non</string>
+    <string name="ok">OK</string>
+    <string name="fav_added">%1$s ajoute nan favori</string>
+    <string name="fav_removed">%1$s retire nan favori</string>
+    <string name="channel_unavailable">Chanèl sa a pa disponib.</string>
+    <string name="hint_longpress">Kenbe OK pou ajoute nan favori</string>
+
+    <!-- Player -->
+    <string name="error_playback">Chanèl la pa ka jwe (%1$s). Eseye yon lòt chanèl.</string>
+    <string name="ad_label">PIBLISITE</string>
+    <string name="ad_skip_in">Ou ka sote nan %1$d s</string>
+    <string name="ad_skip_now">Peze OK pou sote ▶</string>
+
+    <!-- Panel -->
+    <string name="broadcast">Mesaj</string>
+    <string name="device_blocked">Aparèy sa a bloke.</string>
+    <string name="device_expired">Abònman ou ekspire.</string>
+    <string name="device_pending">Aparèy sa a poko aktive.</string>
+    <string name="blocker_help">Kontakte sèvis kliyan an epi ba yo MAC ki anba a.</string>
+
+    <!-- EPG / Gid TV -->
+    <string name="tv_guide">📅 Gid TV</string>
+    <string name="epg_loading">Gid la ap chaje…</string>
+    <string name="epg_no_info">Pa gen enfòmasyon pwogram</string>
+    <string name="epg_next_fmt">Apre: %1$s  %2$s</string>
+    <string name="epg_empty">Sèvè IPTV a pa voye okenn gid pou chanèl sa yo.</string>
+    <string name="epg_error">Gid la pa ka chaje. %1$s</string>
+    <string name="epg_play_hint">OK = gade  •  ⏪ = catch-up  •  ◀ ▶ = deplase nan tan  •  ⏪⏩ = 2 è  •  BACK = soti</string>
+
+    <!-- Aktivasyon (MAC) -->
+    <string name="label_mac">MAC ADDRESS</string>
+    <string name="label_device_key">DEVICE KEY</string>
+    <string name="waiting_playlist">Ap tann founisè a aktive aparèy la…</string>
+    <string name="connecting_playlist">Ap konekte ak %1$s…</string>
+    <string name="panel_offline">Pa ka rive nan panel la. N ap eseye ankò…</string>
+    <string name="choose_playlist">Chwazi yon playlist</string>
+    <string name="refresh_now">↻ Tcheke kounye a</string>
+    <string name="error_playlist_bad">Playlist \"%1$s\" pa mache: username oswa password la pa bon.</string>
+    <string name="error_no_server">Playlist \"%1$s\" pa gen adrès sèvè. Mete sèvè a nan panel la.</string>
+    <string name="playlist">Playlist</string>
+    <string name="playlist_removed">Playlist ou a retire nan panel la.</string>
+    <string name="current_mark">✓ %1$s</string>
+    <string name="device_short_fmt">MAC: %1$s  •  Jiska %2$s</string>
+
+    <!-- Style TiviMate -->
+    <string name="loading_channels">Ap chaje chanèl yo…</string>
+    <string name="playlists">📋 Playlist</string>
+    <string name="settings">⚙ Paramèt</string>
+    <string name="exit_title">Soti</string>
+    <string name="exit_confirm">Ou vle soti nan Galaxy TV Stick?</string>
+    <string name="switching_playlist">Ap chanje playlist…</string>
+    <string name="settings_info">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nAparèy la sipòte jiska: %4$s\nVèsyon: %5$s</string>
+
+    <!-- Panel BenTech -->
+    <string name="maintenance_title">Sèvis la an mentenans</string>
+
+    <!-- Sèvis kliyan a distans -->
+    <string name="remote_message_title">💬 Sèvis kliyan</string>
+    <string name="remote_play">🛠 Sèvis kliyan an chanje chanèl la</string>
+    <string name="remote_reload">🛠 Sèvis kliyan an ap rechaje chanèl yo</string>
+    <string name="remote_restart">🛠 Sèvis kliyan an ap redemare app la</string>
+    <string name="remote_logout">🛠 Sèvis kliyan an dekonekte playlist la</string>
+    <string name="remote_refresh">🛠 Sèvis kliyan an mete TV a ajou</string>
+
+    <!-- Lang app la -->
+    <string name="language">🌐 Lang</string>
+
+    <!-- Kòd aktivasyon -->
+    <string name="movies">🎬 Films</string>
+    <string name="series">🎞 Séries</string>
+    <string name="live_tv">📺 TV an dirèk</string>
+    <string name="catchup_label">⏪ CATCH-UP</string>
+    <string name="vod_search_hint">🔍 Chèche…</string>
+    <string name="vod_continue">▶ Kontinye gade</string>
+    <string name="vod_all">Tout</string>
+    <string name="vod_continue_empty">Pa gen anyen pou kontinye. Kòmanse yon fim oswa yon seri, l ap parèt isit la.</string>
+    <string name="vod_fav_empty">Pa gen favori. Kenbe OK sou yon afich pou ajoute l.</string>
+    <string name="vod_search_results">Rezilta pou “%1$s”</string>
+    <string name="vod_search_none">Pa jwenn anyen.</string>
+    <string name="vod_left">%1$d min ki rete</string>
+    <string name="vod_from_start">↺ Depi kòmansman</string>
+    <string name="vod_play">▶ Gade</string>
+    <string name="vod_resume">▶ Kontinye (%1$s)</string>
+    <string name="vod_play_episode">▶ Gade %1$s</string>
+    <string name="vod_in_favorites">★ Nan favori</string>
+    <string name="vod_add_favorite">☆ Favori</string>
+    <string name="vod_season">Sezon %1$d</string>
+    <string name="vod_no_episodes">Seri sa a poko gen epizòd.</string>
+    <string name="vod_director">Reyalizatè: %1$s</string>
+    <string name="vod_cast">Aktè: %1$s</string>
+    <string name="vod_next_episode">PWOCHEN EPIZÒD</string>
+    <string name="vod_resumed_at">Kontinye nan %1$s</string>
+    <string name="vod_error_playback">Videyo sa a pa ka jwe (%1$s).</string>
+    <string name="epg_catchup_hint">⏪ OK = gade l an catch-up</string>
+    <string name="catchup_unavailable">Chanèl sa a pa gen catch-up pou pwogram sa a.</string>
+</resources>

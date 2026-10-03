@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kouch panel la: ticker, chyron, banner, ad nan kwen, ekran bloke. Fèt pou 960×540dp (TV 1080p). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <!-- Piblisite nan kwen (player) -->
+    <ImageView android:id="@+id/cornerAd" android:layout_width="224dp" android:layout_height="126dp"
+        android:layout_gravity="top|end" android:layout_margin="20dp" android:scaleType="fitCenter"
+        android:visibility="gone" android:importantForAccessibility="no"/>
+
+    <!-- Chyron / Lower third: ChyronView mete l nan pozisyon panel la chwazi a (anba/anlè × agoch/mitan/adwat) -->
+    <com.galaxytvstick.app.ui.ChyronView android:id="@+id/chyron" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:visibility="gone"/>
+
+    <!-- Grafik TV: logo bug, watermark, scoreboard, meteyo, countdown, channel ident, bumper -->
+    <com.galaxytvstick.app.ui.GraphicsView android:id="@+id/gfx" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:visibility="gone"/>
+
+    <!-- Banner (imaj oswa tèks) — parèt anba adwat lè lis chanèl la ouvè -->
+    <FrameLayout android:id="@+id/bannerBox" android:layout_width="300dp" android:layout_height="84dp"
+        android:layout_gravity="bottom|end" android:layout_marginEnd="20dp" android:layout_marginBottom="52dp"
+        android:visibility="gone">
+        <ImageView android:id="@+id/bannerImage" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:scaleType="fitCenter" android:visibility="gone" android:importantForAccessibility="no"/>
+        <TextView android:id="@+id/bannerText" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:background="@drawable/bg_banner_text" android:gravity="center" android:maxLines="2" android:ellipsize="end"
+            android:paddingStart="16dp" android:paddingEnd="16dp"
+            android:textColor="@color/text" android:textSize="18sp" android:textStyle="bold" android:visibility="gone"/>
+    </FrameLayout>
+
+    <!-- Ticker -->
+    <com.galaxytvstick.app.ui.TickerView android:id="@+id/ticker" android:layout_width="match_parent" android:layout_height="40dp"
+        android:layout_gravity="bottom" android:visibility="gone"/>
+
+    <!-- Aparèy bloke / abònman ekspire / mentenans -->
+    <LinearLayout android:id="@+id/blocker" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="@color/bg" android:clickable="true" android:focusable="true" android:gravity="center"
+        android:orientation="vertical" android:padding="32dp" android:visibility="gone">
+        <ImageView android:layout_width="240dp" android:layout_height="120dp" android:src="@drawable/logo_full" android:scaleType="fitCenter" android:importantForAccessibility="no"/>
+        <TextView android:id="@+id/blockerTitle" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:gravity="center" android:textColor="@color/text" android:textSize="26sp" android:textStyle="bold"/>
+        <TextView android:id="@+id/blockerHelp" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:maxWidth="640dp" android:gravity="center"
+            android:text="@string/blocker_help" android:textColor="@color/text_dim" android:textSize="16sp"/>
+        <TextView android:id="@+id/blockerDevice" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:background="@drawable/bg_panel" android:fontFamily="monospace" android:padding="14dp"
+            android:textColor="@color/accent2" android:textSize="24sp" android:textStyle="bold"/>
+    </LinearLayout>
+</FrameLayout>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@android:color/black">
+
+    <androidx.media3.ui.PlayerView android:id="@+id/playerView" android:layout_width="match_parent" android:layout_height="match_parent"
+        app:use_controller="false" app:resize_mode="fit" app:surface_type="surface_view" app:shutter_background_color="@android:color/black"/>
+
+    <ImageView android:id="@+id/fullAd" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="@android:color/black" android:scaleType="fitCenter" android:visibility="gone" android:importantForAccessibility="no"/>
+
+    <ProgressBar android:id="@+id/loading" android:layout_width="64dp" android:layout_height="64dp" android:layout_gravity="center" android:visibility="gone"/>
+
+    <!-- Enfo chanèl -->
+    <LinearLayout android:id="@+id/infoPanel" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="top|start" android:layout_margin="24dp" android:background="@drawable/bg_panel"
+        android:orientation="horizontal" android:gravity="center_vertical" android:padding="18dp" android:visibility="gone">
+        <ImageView android:id="@+id/infoLogo" android:layout_width="84dp" android:layout_height="56dp" android:layout_marginEnd="16dp"
+            android:scaleType="fitCenter" android:importantForAccessibility="no"/>
+        <TextView android:id="@+id/infoNumber" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="@color/accent2" android:textSize="34sp" android:textStyle="bold"/>
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="18dp" android:orientation="vertical">
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center_vertical">
+                <TextView android:id="@+id/infoName" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:maxWidth="480dp" android:singleLine="true" android:ellipsize="end"
+                    android:textColor="@color/text" android:textSize="24sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/resBadge" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp" android:background="@drawable/bg_badge" android:paddingStart="8dp" android:paddingEnd="8dp"
+                    android:paddingTop="2dp" android:paddingBottom="2dp" android:textColor="@color/bg" android:textSize="14sp" android:textStyle="bold" android:visibility="gone"/>
+            </LinearLayout>
+            <TextView android:id="@+id/infoNow" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" android:maxWidth="520dp" android:singleLine="true" android:ellipsize="end"
+                android:textColor="@color/text" android:textSize="17sp" android:visibility="gone"/>
+            <ProgressBar android:id="@+id/infoProgress" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="320dp" android:layout_height="4dp" android:layout_marginTop="4dp"
+                android:max="100" android:progressDrawable="@drawable/progress_epg" android:visibility="gone"/>
+            <TextView android:id="@+id/infoNext" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" android:maxWidth="520dp" android:singleLine="true" android:ellipsize="end"
+                android:textColor="@color/text_dim" android:textSize="14sp" android:visibility="gone"/>
+            <TextView android:id="@+id/techInfo" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" android:textColor="@color/text_dim" android:textSize="13sp" android:visibility="gone"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView android:id="@+id/numberEntry" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal" android:layout_marginTop="32dp" android:background="@drawable/bg_panel"
+        android:paddingStart="28dp" android:paddingEnd="28dp" android:paddingTop="8dp" android:paddingBottom="8dp"
+        android:textColor="@color/text" android:textSize="48sp" android:textStyle="bold" android:visibility="gone"/>
+
+    <TextView android:id="@+id/errorText" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:background="@drawable/bg_panel" android:padding="20dp"
+        android:textColor="@color/text" android:textSize="18sp" android:visibility="gone"/>
+
+    <!-- Piblisite preroll -->
+    <LinearLayout android:id="@+id/adBox" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end" android:layout_margin="40dp" android:background="@drawable/bg_panel"
+        android:orientation="vertical" android:padding="14dp" android:visibility="gone">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ad_label"
+            android:textColor="@color/accent2" android:textSize="12sp" android:textStyle="bold"/>
+        <TextView android:id="@+id/adSkip" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="@color/text" android:textSize="18sp"/>
+    </LinearLayout>
+
+    <!-- Lis chanèl sou videyo a (style TiviMate) -->
+    <LinearLayout android:id="@+id/channelOverlay" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="@drawable/bg_overlay_gradient" android:orientation="horizontal"
+        android:paddingStart="20dp" android:paddingEnd="20dp" android:paddingTop="20dp" android:paddingBottom="48dp" android:visibility="gone">
+
+        <LinearLayout android:layout_width="200dp" android:layout_height="match_parent" android:orientation="vertical">
+            <!-- Meni (tankou TiviMate) -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="40dp" android:layout_marginBottom="4dp" android:orientation="horizontal">
+                <Button android:id="@+id/btnMovies" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                    android:layout_marginEnd="4dp" android:background="@drawable/bg_focus" android:text="@string/movies"
+                    android:textAllCaps="false" android:textColor="@color/text" android:textSize="14sp"/>
+                <Button android:id="@+id/btnSeries" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                    android:background="@drawable/bg_focus" android:text="@string/series"
+                    android:textAllCaps="false" android:textColor="@color/text" android:textSize="14sp"/>
+            </LinearLayout>
+            <Button android:id="@+id/btnGuide" android:layout_width="match_parent" android:layout_height="40dp"
+                android:layout_marginBottom="4dp" android:background="@drawable/bg_focus" android:gravity="center_vertical|start"
+                android:paddingStart="14dp" android:text="@string/tv_guide" android:textAllCaps="false" android:textColor="@color/text" android:textSize="15sp"/>
+            <Button android:id="@+id/btnPlaylists" android:layout_width="match_parent" android:layout_height="40dp"
+                android:layout_marginBottom="4dp" android:background="@drawable/bg_focus" android:gravity="center_vertical|start"
+                android:paddingStart="14dp" android:text="@string/playlists" android:textAllCaps="false" android:textColor="@color/text" android:textSize="16sp"/>
+            <Button android:id="@+id/btnSettings" android:layout_width="match_parent" android:layout_height="40dp"
+                android:layout_marginBottom="10dp" android:background="@drawable/bg_focus" android:gravity="center_vertical|start"
+                android:paddingStart="14dp" android:text="@string/settings" android:textAllCaps="false" android:textColor="@color/text" android:textSize="16sp"/>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/ovCategories" android:layout_width="match_parent"
+                android:layout_height="match_parent" android:descendantFocusability="afterDescendants"/>
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/ovChannels" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="match_parent" android:layout_marginStart="10dp" android:descendantFocusability="afterDescendants"/>
+
+        <!-- Detay pwogram chanèl ki gen fokis la -->
+        <LinearLayout android:layout_width="300dp" android:layout_height="wrap_content" android:layout_marginStart="12dp"
+            android:background="@drawable/bg_panel" android:orientation="vertical" android:padding="14dp">
+            <TextView android:id="@+id/ovChName" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textColor="@color/accent2" android:textSize="15sp" android:textStyle="bold"/>
+            <TextView android:id="@+id/ovTitle" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" android:textColor="@color/text" android:textSize="20sp" android:textStyle="bold"/>
+            <TextView android:id="@+id/ovTime" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" android:textColor="@color/text_dim" android:textSize="14sp"/>
+            <TextView android:id="@+id/ovDesc" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="10dp" android:maxLines="8" android:ellipsize="end"
+                android:textColor="#DDFFFFFF" android:textSize="14sp"/>
+            <TextView android:id="@+id/ovNext" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:textColor="@color/text_dim" android:textSize="14sp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <include android:id="@+id/overlay" layout="@layout/overlay_panel"/>
+</FrameLayout>

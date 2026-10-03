@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Detay yon fim oswa yon seri: afich, rezime, bouton Gade/Kontinye, sezon ak epizòd -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg">
+
+    <ImageView android:id="@+id/backdrop" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:alpha="0.35" android:scaleType="centerCrop" android:importantForAccessibility="no"/>
+    <View android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_detail_gradient"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal"
+        android:paddingStart="36dp" android:paddingEnd="32dp" android:paddingTop="28dp" android:paddingBottom="20dp">
+
+        <ImageView android:id="@+id/poster" android:layout_width="170dp" android:layout_height="255dp"
+            android:background="@color/bg_panel" android:scaleType="centerCrop" android:importantForAccessibility="no"/>
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+            android:layout_marginStart="26dp" android:orientation="vertical">
+            <TextView android:id="@+id/title" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:maxLines="2" android:ellipsize="end" android:textColor="@color/text" android:textSize="28sp" android:textStyle="bold"/>
+            <TextView android:id="@+id/meta" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                android:singleLine="true" android:ellipsize="end" android:textColor="@color/accent2" android:textSize="14sp"/>
+            <TextView android:id="@+id/plot" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp"
+                android:maxLines="4" android:ellipsize="end" android:lineSpacingExtra="2dp" android:textColor="#E6FFFFFF" android:textSize="14sp"/>
+            <TextView android:id="@+id/credits" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp"
+                android:maxLines="2" android:ellipsize="end" android:textColor="@color/text_dim" android:textSize="12sp"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:orientation="horizontal">
+                <Button android:id="@+id/btnPlay" android:layout_width="wrap_content" android:layout_height="46dp" android:minWidth="160dp"
+                    android:background="@drawable/bg_button" android:paddingStart="20dp" android:paddingEnd="20dp"
+                    android:textAllCaps="false" android:textColor="@color/text" android:textSize="16sp" android:textStyle="bold"/>
+                <Button android:id="@+id/btnRestart" android:layout_width="wrap_content" android:layout_height="46dp" android:layout_marginStart="10dp"
+                    android:background="@drawable/bg_focus" android:paddingStart="16dp" android:paddingEnd="16dp" android:text="@string/vod_from_start"
+                    android:textAllCaps="false" android:textColor="@color/text" android:textSize="14sp" android:visibility="gone"/>
+                <Button android:id="@+id/btnFav" android:layout_width="wrap_content" android:layout_height="46dp" android:layout_marginStart="10dp"
+                    android:background="@drawable/bg_focus" android:paddingStart="16dp" android:paddingEnd="16dp"
+                    android:textAllCaps="false" android:textColor="@color/text" android:textSize="14sp"/>
+            </LinearLayout>
+
+            <!-- Seri: sezon yo ak epizòd yo -->
+            <HorizontalScrollView android:id="@+id/seasonsScroll" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="14dp" android:scrollbars="none" android:visibility="gone">
+                <LinearLayout android:id="@+id/seasons" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal"/>
+            </HorizontalScrollView>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/episodes" android:layout_width="match_parent" android:layout_height="0dp"
+                android:layout_weight="1" android:layout_marginTop="8dp" android:clipToPadding="false" android:paddingBottom="12dp"
+                android:descendantFocusability="afterDescendants" android:visibility="gone"/>
+            <View android:id="@+id/spacer" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <ProgressBar android:id="@+id/progress" android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center"/>
+    <TextView android:id="@+id/message" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center"
+        android:background="@drawable/bg_panel" android:padding="18dp" android:textColor="@color/text" android:textSize="16sp" android:visibility="gone"/>
+</FrameLayout>

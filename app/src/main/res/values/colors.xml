@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0B0E1A</color>
+    <color name="bg_panel">#141A2E</color>
+    <color name="bg_item">#1B2240</color>
+    <color name="accent">#7C4DFF</color>
+    <color name="accent2">#00E5FF</color>
+    <color name="text">#FFFFFF</color>
+    <color name="text_dim">#9AA3C7</color>
+    <color name="live">#FF3D57</color>
+    <color name="focus_fill">#337C4DFF</color>
+    <color name="scrim">#CC000000</color>
+</resources>
