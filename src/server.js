@@ -273,6 +273,10 @@ app.put("/api/settings", guard, async (req, res) => {
   res.json(db.data.settings);
 });
 
+// Lyen kout pou telechaje app la sou Fire Stick la (app "Downloader"): https://…onrender.com/apk
+const APK_URL = process.env.APK_URL || "https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/GalaxyTvStick.apk";
+app.get(["/apk", "/galaxy.apk"], (req, res) => res.redirect(302, APK_URL));
+
 app.get("/api/health", (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
 app.get("/", (req, res) => {
