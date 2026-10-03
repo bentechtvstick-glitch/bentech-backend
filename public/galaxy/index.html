@@ -439,6 +439,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
     <header class="topbar">
       <label class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="text" id="gSearch" placeholder="Chèche MAC, aparèy, kliyan…" autocomplete="off"></label>
       <div class="right">
+        <button class="btn small" id="ttvBtn" type="button" hidden>📺 Customer TV</button>
         <span class="inline" style="flex-wrap:nowrap"><svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><select class="langsel" data-lang-select aria-label="Lang"></select></span>
         <div class="rel"><button class="iconbtn" id="bellBtn" type="button" aria-label="Notifikasyon"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg><span class="count" id="bellCount" hidden></span></button>
           <div class="menu" id="bellMenu" hidden></div></div>
@@ -945,6 +946,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 <script src="symbols.js"></script>
 <script src="fx.js"></script>
 <script src="gfx.js"></script>
+<script src="testtv.js"></script>
 <script>
 (() => {
 "use strict";
@@ -2173,8 +2175,14 @@ $("#adForm").addEventListener("submit", async (e) => {
 // ------------------------------------------------------------ Demaraj
 let timers = [];
 function stopTimers() { timers.forEach(clearInterval); timers = []; }
+// "Customer TV": yon TV tès nan navigatè a ki konekte ak vre backend la (public/galaxy/testtv.js)
+let ttv = null;
+$("#ttvBtn").addEventListener("click", () => ttv?.toggle());
 function startApp() {
   $("#loginView").hidden = true; $("#appView").hidden = false; stopTimers();
+  if (window.GalaxyTestTv) { $("#ttvBtn").hidden = false; $("#ttvBtn").title = t("Limen oswa etenn yon TV tès ki konekte ak panel sa a");
+    if (!ttv) ttv = GalaxyTestTv.init({ API, t, esc, cyHtml, openDevice: (mac) => { openTab("dev"); loadDevices().then(() => selectDevice(mac, true)); } });
+    if (ttv.wasOn()) ttv.start(); }
   openTab(tab); loadLive(); loadDevices(); checkHealth();
   timers.push(setInterval(() => { if (!document.hidden) checkHealth(); }, 30000));
   timers.push(setInterval(() => { if (!document.hidden) loadLive(); }, 5000));

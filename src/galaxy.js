@@ -520,6 +520,43 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
     res.status(204).end();
   });
 
+  /**
+   * Lis chanèl live playlist aparèy la, chèche pa sèvè a (yon navigatè pa ka rele sèvè IPTV a dirèkteman).
+   * Se "Customer TV" (TV tès panel la) ki sèvi ak li. Kenbe 10 minit nan memwa.
+   */
+  const liveListCache = new Map();
+  app.get("/api/devices/:mac/xtream/live", async (req, res) => {
+    ensure();
+    const mac = normMac(req.params.mac);
+    const device = findDevice(mac);
+    if (!device) return res.status(404).json({ ok: false, error: "Aparèy pa jwenn" });
+    if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) return res.status(403).json({ ok: false, error: "Device Key pa bon" });
+    const pl = playlistsOf(mac).find((p) => p.id === req.query.playlist) || playlistsOf(mac)[0];
+    if (!pl) return res.status(404).json({ ok: false, error: "Pa gen playlist sou aparèy sa a" });
+    const key = `${pl.server}|${pl.username}|${pl.password}`;
+    const hit = liveListCache.get(key);
+    if (hit && Date.now() - hit.at < 600_000 && req.query.fresh !== "1") return res.json(hit.data);
+    const cl = xtreamClient(pl);
+    if (cl.error) return res.status(400).json({ ok: false, error: cl.error });
+    try {
+      const info = await cl.get("");
+      if (!info?.user_info || Number(info.user_info.auth) === 0) return res.status(502).json({ ok: false, error: "Username oswa password la pa bon (sèvè a refize kont lan)." });
+      const [cats, live] = await Promise.all([cl.get("get_live_categories", 20000), cl.get("get_live_streams", 30000)]);
+      const catName = new Map((Array.isArray(cats) ? cats : []).map((c) => [String(c.category_id), String(c.category_name || "")]));
+      const channels = (Array.isArray(live) ? live : []).slice(0, 20000).map((c, i) => ({
+        id: Number(c.stream_id), num: Number(c.num) || i + 1, name: String(c.name || "").slice(0, 200),
+        categoryId: String(c.category_id || ""), categoryName: (catName.get(String(c.category_id)) || "").slice(0, 200),
+        icon: isUrl(c.stream_icon) ? String(c.stream_icon).slice(0, 500) : "",
+      })).filter((c) => Number.isFinite(c.id));
+      const data = { ok: true, playlist: pl.name || pl.username, categories: [...catName].map(([id, name]) => ({ id, name })), channels };
+      liveListCache.set(key, { at: Date.now(), data });
+      if (liveListCache.size > 200) liveListCache.delete(liveListCache.keys().next().value);
+      res.json(data);
+    } catch (e) {
+      res.status(502).json({ ok: false, error: e.message || "Sèvè IPTV a pa reponn." });
+    }
+  });
+
   /** Lis chanèl kliyan an ak eta hide/show chak grenn. */
   app.get("/api/galaxy/devices/:mac/channels", authenticate, (req, res) => {
     const device = loadDevice(req, res);
@@ -538,13 +575,14 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
     if (!/^https?:\/\//i.test(u)) u = "http://" + u;
     return u.replace(/\/(player_api\.php|get\.php|xmltv\.php)[^]*$/i, "").replace(/\/+$/, "");
   };
-  async function xtreamTest({ server, username, password }) {
+  /** Prepare yon kliyan Xtream (player_api.php) pou yon playlist. Retounen { error } oswa { get, host, base }. */
+  function xtreamClient({ server, username, password }) {
     const base = normServer(server);
-    if (!base) return { ok: false, error: "Mete adrès sèvè a (DNS) pou n ka teste playlist la." };
-    if (!String(username || "").trim() || !String(password || "").trim()) return { ok: false, error: "Username ak password obligatwa." };
+    if (!base) return { error: "Mete adrès sèvè a (DNS) pou n ka teste playlist la." };
+    if (!String(username || "").trim() || !String(password || "").trim()) return { error: "Username ak password obligatwa." };
     let host;
-    try { host = new URL(base).hostname; } catch { return { ok: false, error: "Adrès sèvè a pa valid." }; }
-    if (process.env.XTREAM_ALLOW_LOCAL !== "1" && /^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.|::1)/i.test(host)) return { ok: false, error: "Adrès sa a pa otorize." };
+    try { host = new URL(base).hostname; } catch { return { error: "Adrès sèvè a pa valid." }; }
+    if (process.env.XTREAM_ALLOW_LOCAL !== "1" && /^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.|::1)/i.test(host)) return { error: "Adrès sa a pa otorize." };
     const q = `username=${encodeURIComponent(String(username).trim())}&password=${encodeURIComponent(String(password).trim())}`;
     const get = async (action, ms = 12000) => {
       const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), ms);
@@ -563,6 +601,13 @@ export function mountGalaxy(app, db, { authenticate, auditLog }) {
         throw e;
       } finally { clearTimeout(tm); }
     };
+    return { get, host, base };
+  }
+
+  async function xtreamTest(pl) {
+    const cl = xtreamClient(pl);
+    if (cl.error) return { ok: false, error: cl.error };
+    const { get, host, base } = cl;
     const t0 = Date.now();
     try {
       const info = await get("");

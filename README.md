@@ -149,3 +149,12 @@ Paj **Grafik TV** nan panel la, ak Preview an dirèk. Tout sove otomatikman nan 
 | **Bumper** | Ekran (tèks oswa imaj) anvan ak apre chak koupi piblisite. |
 
 Grafik yo parèt sèlman pandan kliyan an ap gade yon chanèl live, e yo kache pandan piblisite. Kòd: `src/graphics.js`, `public/galaxy/gfx.js`.
+
+## 📺 Customer TV (TV tès nan panel la)
+
+Bouton **📺 Customer TV** anlè panel la limen yon TV vityèl nan navigatè a (`public/galaxy/testtv.js`). Li konekte ak backend la egzakteman tankou app Fire Stick la (MAC + Device Key, config, kòmand, estati), kidonk li parèt nan paj Aparèy ak TV an dirèk.
+
+- San playlist: li montre ekran aktivasyon an ak MAC/Device Key li. Ajoute yon playlist sou MAC sa a.
+- Ak playlist: li chaje vre lis chanèl la (`GET /api/devices/:mac/xtream/live` — se sèvè a ki rele sèvè IPTV a), ak kategori, logo, CH+/CH−.
+- Li montre ticker, chyron, Grafik TV, koupi piblisite ak bumper, pop-up ak mesaj panel la voye.
+- Li **pa jwe videyo** chanèl yo (navigatè a pa ka li flux IPTV yo); se pou verifye sa panel la mete sou ekran an.
