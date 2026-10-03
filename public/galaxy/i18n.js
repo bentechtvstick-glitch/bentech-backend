@@ -902,6 +902,13 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "{0} chanèl": ["{0} channels", "{0} chaînes", "{0} canales"],
     "Pa gen playlist sou aparèy sa a": ["No playlist on this device", "Aucune playlist sur cet appareil", "No hay playlist en este dispositivo"],
     "Sèvè IPTV a pa reponn.": ["The IPTV server is not responding.", "Le serveur IPTV ne répond pas.", "El servidor IPTV no responde."],
+    "Kopye MAC": ["Copy MAC", "Copier la MAC", "Copiar MAC"],
+    "MAC kopye": ["MAC copied", "MAC copiée", "MAC copiada"],
+    "Kijan pou sèvi ak li": ["How to use it", "Comment l'utiliser", "Cómo usarlo"],
+    "Klike \"Louvri nan Aparèy\" pou jwenn TV sa a nan lis la.": ["Click \"Open in Devices\" to find this TV in the list.", "Cliquez sur « Ouvrir dans Appareils » pour trouver cette TV dans la liste.", "Haga clic en \"Abrir en Dispositivos\" para encontrar este TV en la lista."],
+    "Ajoute yon playlist sou MAC li, tankou pou yon vre kliyan.": ["Add a playlist to its MAC, as you would for a real customer.", "Ajoutez une playlist à sa MAC, comme pour un vrai client.", "Añada una playlist a su MAC, como para un cliente real."],
+    "Klike sou ekran an pou wè chanèl yo; sèvi ak CH− / CH+ pou chanje.": ["Click the screen to see the channels; use CH− / CH+ to switch.", "Cliquez sur l'écran pour voir les chaînes ; utilisez CH− / CH+ pour changer.", "Haga clic en la pantalla para ver los canales; use CH− / CH+ para cambiar."],
+    "Chanje ticker, chyron, Grafik TV oswa piblisite: yo parèt isit la nan kèk segonn.": ["Change the ticker, chyron, TV graphics or ads: they appear here within seconds.", "Modifiez le ticker, le chyron, l'habillage ou les pubs : ils apparaissent ici en quelques secondes.", "Cambie el ticker, chyron, gráficos o anuncios: aparecen aquí en segundos."],
     "Pa gen spot piblisite aktif. Ajoute youn an premye.": ["No active ad spot. Add one first.", "Aucun spot actif. Ajoutez-en un d'abord.", "No hay spots activos. Añada uno primero."],
   };
   for (const [k, [en, fr, es]] of Object.entries(add)) { L.en[k] = en; L.fr[k] = fr; L.es[k] = es; }

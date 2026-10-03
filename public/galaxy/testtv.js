@@ -47,7 +47,19 @@
 .ttv-toast{inset:auto!important;left:50%!important;top:26px!important;transform:translateX(-50%);background:rgba(0,0,0,.82);border-radius:12px;padding:10px 22px;font-size:20px;white-space:nowrap}
 .ttv-f{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;font-size:12.5px;color:var(--dim,#9aa3c7)}
 .ttv-f span{flex:1;min-width:150px}.ttv-f button{flex:none}
-#ttvBtn.on{border-color:#00E5FF;color:#00E5FF}
+#ttvBtn.on{border-color:#00E5FF;color:#00E5FF}#ttvBtn{white-space:nowrap;flex:none}.topbar .langsel{min-width:100px}
+.ttv-help{display:none;padding:4px 14px 14px;font-size:13px;color:var(--dim,#9aa3c7);overflow-y:auto}
+.ttv-help h4{margin:8px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint,#7682a8)}
+.ttv-help ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px;line-height:1.4}
+/* Sou gwo ekran: panel la yon bò, TV a yon bò (tankou nan demo a) */
+@media (min-width:1100px){
+  body.ttv-dock #appView{margin-right:470px}
+  .ttv.dock{top:0;right:0;bottom:0;width:470px;border-radius:0;border-width:0 0 0 1px;box-shadow:none;background:var(--side,#0d1322)}
+  .ttv.dock .ttv-h{height:70px;padding:0 14px;flex:none}
+  .ttv.dock .ttv-screen{margin:14px 14px 0;width:auto;border-radius:8px;flex:none}
+  .ttv.dock .ttv-f{padding:12px 14px;font-size:13px;flex:none}
+  .ttv.dock .ttv-help{display:block}
+}
 @media (max-width:560px){.ttv{right:8px;bottom:8px;width:calc(100vw - 16px)}}
 `;
   const KEY = "galaxy_testtv";
@@ -69,7 +81,7 @@
     const el = document.createElement("div"); el.className = "ttv"; el.hidden = true;
     el.innerHTML = `<div class="ttv-h"><b>📺 Customer TV</b><code></code><button type="button" data-a="min" aria-label="${esc(t("Redui"))}" title="${esc(t("Redui"))}">—</button><button type="button" data-a="off" aria-label="${esc(t("Etenn TV tès la"))}" title="${esc(t("Etenn TV tès la"))}">✕</button></div>
       <div class="ttv-screen"><div class="ttv-stage"><div class="ttv-bg"></div><div class="ttv-ov"><div class="ttv-gfx"></div><div class="ttv-cy"></div><div class="ttv-tk"></div></div><div class="ttv-info" hidden></div><div class="ttv-full" hidden></div><div class="ttv-list" hidden></div><div class="ttv-ad" hidden></div><div class="ttv-scr" hidden></div><div class="ttv-dlg" hidden></div><div class="ttv-toast" hidden></div></div></div>
-      <div class="ttv-f"><span></span><button class="btn small" type="button" data-a="chdn" aria-label="CH−">CH−</button><button class="btn small" type="button" data-a="chup" aria-label="CH+">CH+</button><button class="btn small" type="button" data-a="list">☰</button><button class="btn small" type="button" data-a="dev"></button></div>`;
+      <div class="ttv-f"><span></span><button class="btn small" type="button" data-a="copy"></button><button class="btn small" type="button" data-a="chdn" aria-label="CH−">CH−</button><button class="btn small" type="button" data-a="chup" aria-label="CH+">CH+</button><button class="btn small" type="button" data-a="list">☰</button><button class="btn small purple" type="button" data-a="dev"></button></div><div class="ttv-help"></div>`;
     document.body.appendChild(el);
     const $ = (s) => el.querySelector(s), stage = $(".ttv-stage");
     const scale = () => { const w = $(".ttv-screen").clientWidth; if (w) stage.style.transform = `scale(${w / 960})`; };
@@ -116,7 +128,8 @@
         overlays(T.brk ? null : c);
         $(".ttv-f span").textContent = T.chs.length ? t("{0} chanèl · videyo a pa jwe nan TV tès la", T.chs.length) : t("Li montre sa panel la mete sou ekran an; li pa jwe vre chanèl yo.");
       }
-      $('[data-a="dev"]').textContent = t("Louvri nan Aparèy");
+      $('[data-a="dev"]').textContent = t("Louvri nan Aparèy"); $('[data-a="copy"]').textContent = t("Kopye MAC");
+      $(".ttv-help").innerHTML = `<h4>${esc(t("Kijan pou sèvi ak li"))}</h4><ol><li>${esc(t("Klike \"Louvri nan Aparèy\" pou jwenn TV sa a nan lis la."))}</li><li>${esc(t("Ajoute yon playlist sou MAC li, tankou pou yon vre kliyan."))}</li><li>${esc(t("Klike sou ekran an pou wè chanèl yo; sèvi ak CH− / CH+ pou chanje."))}</li><li>${esc(t("Chanje ticker, chyron, Grafik TV oswa piblisite: yo parèt isit la nan kèk segonn."))}</li></ol>`;
     }
 
     function overlays(c) {
@@ -269,19 +282,22 @@
       }
     }
     function start() {
-      if (T.on) return; T.on = true; S.on = true; save(S); el.hidden = false; el.classList.toggle("min", !!S.min); btn()?.classList.add("on"); scale(); render();
+      if (T.on) return; T.on = true; S.on = true; save(S); el.hidden = false; layout(); btn()?.classList.add("on"); scale(); render();
       T.abort = new AbortController();
       register().catch(() => {}).then(() => { poll(); commands(); });
       T.timers = [setInterval(() => { if (playing()) { overlays(T.brk ? null : T.cfg); const i = T.cfg.graphics?.ident; if (i && i.everyMin > 0 && !T.brk && Date.now() - T.lastIdent >= i.everyMin * 60000) ident(); } }, 1000),
         setInterval(breakTick, 250), setInterval(scheduler, 20000), setInterval(report, 20000)];
     }
     function stop() {
-      T.on = false; S.on = false; save(S); el.hidden = true; btn()?.classList.remove("on");
+      T.on = false; S.on = false; save(S); el.hidden = true; document.body.classList.remove("ttv-dock"); btn()?.classList.remove("on");
       T.timers.forEach(clearInterval); T.timers = []; clearTimeout(T.pollT); clearTimeout(T.cy.timer); T.abort?.abort(); T.brk = null; T.chKey = ""; T.all = []; T.chs = []; T.bgSig = null; closeList(); $(".ttv-ad").hidden = true; $(".ttv-ad").innerHTML = "";
     }
     const btn = () => document.getElementById("ttvBtn");
+    // Louvri = TV a pran bò dwat paj la; redui (—) = yon ti ba anba adwat, panel la reprann tout lajè a
+    function layout() { el.classList.toggle("min", !!S.min); el.classList.toggle("dock", !S.min); document.body.classList.toggle("ttv-dock", !S.min && T.on); requestAnimationFrame(scale); }
     el.addEventListener("click", (e) => { const a = e.target.closest("[data-a]")?.dataset.a;
-      if (a === "off") stop(); if (a === "min") { S.min = !S.min; save(S); el.classList.toggle("min", S.min); scale(); T.tkSig = null; }
+      if (a === "off") stop(); if (a === "min") { S.min = !S.min; save(S); layout(); scale(); T.tkSig = null; }
+      if (a === "copy") { navigator.clipboard?.writeText(S.mac).then(() => toast(t("MAC kopye")), () => {}); }
       if (a === "chup") play(T.idx + 1); if (a === "chdn") play(T.idx - 1); if (a === "list") (T.listOpen ? closeList() : openList());
       if (a === "dev") D.openDevice(S.mac); });
     return { start, stop, toggle: () => (T.on ? stop() : start()), isOn: () => T.on, wasOn: () => !!S.on, mac: S.mac };
