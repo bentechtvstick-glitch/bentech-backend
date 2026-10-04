@@ -243,6 +243,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       maxChannels = Number(profile?.channels) || 0;
     }
 
+    // ---- Pakè: si Channel Profile aparèy la se yon pakè, se pakè a ki deside gwoup/chanèl/non TV a wè ----
+    const eff = effectiveChannels(device);
+
     // ---- Ticker (style chèn TV): mesaj ak koulè pa yo, etikèt agoch, separatè, lè adwat ----
     // Chak mesaj ka gen yon orè (start/end nan zòn lè panel la): li parèt sèlman ant de lè sa yo
     const tickerItems = (data().tickers || []).filter(isActive)
@@ -401,11 +404,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       statusMessage,
       deviceName: device.deviceName || "",
       maxChannels,
-      hiddenChannels: (device.hiddenChannels || []).map(Number).filter(Number.isFinite),
-      hiddenCategories: (device.hiddenCategories || []).map(String),
+      hiddenChannels: eff.hiddenChannels,
+      hiddenCategories: eff.hiddenCategories,
       // Non admin nan chanje nan panel la (egz: gwoup "CARIBBEAN" → "HAITI")
-      categoryNames: device.categoryNames || {},
-      channelNames: device.channelNames || {},
+      categoryNames: eff.categoryNames,
+      channelNames: eff.channelNames,
       playlists: playlists.map(({ id, name, server, username, password }) => ({ id, name, server, username, password })),
       ticker,
       chyrons,
@@ -676,6 +679,40 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     return u.replace(/\/(player_api\.php|get\.php|xmltv\.php)[^]*$/i, "").replace(/\/+$/, "");
   };
   /** Prepare yon kliyan Xtream (player_api.php) pou yon playlist. Retounen { error } oswa { get, host, base }. */
+  // ---- Pakè chanèl (Channel Profile ki gen pkg:true) ----
+  // Yon pakè sove chwa yo pa NON founisè a (pa ID), pou menm pakè a mache sou tout aparèy ki gen menm gwoup yo.
+  const nkey = (v) => String(v ?? "").trim().toUpperCase();
+  const pkgCache = new Map();
+  function effectiveChannels(device) {
+    const p = device.channelProfile ? (data().channelProfiles || []).find((x) => x.name === device.channelProfile) : null;
+    if (!p || p.pkg !== true) {
+      return {
+        hiddenChannels: (device.hiddenChannels || []).map(Number).filter(Number.isFinite),
+        hiddenCategories: (device.hiddenCategories || []).map(String),
+        categoryNames: device.categoryNames || {}, channelNames: device.channelNames || {},
+      };
+    }
+    const chs = channelsOf(device.mac);
+    const ck = `${p.name}|${p.updatedAt || ""}|${chs.length}|${chs[0]?.id ?? ""}|${chs[chs.length - 1]?.id ?? ""}`;
+    const hit = pkgCache.get(device.mac);
+    if (hit && hit.ck === ck) return hit.out;
+    const hg = new Set((p.hiddenGroups || []).map(nkey)), hc = new Set((p.hiddenChannels || []).map(nkey));
+    const gn = Object.fromEntries(Object.entries(p.groupNames || {}).map(([k, v]) => [nkey(k), v]));
+    const cn = Object.fromEntries(Object.entries(p.channelNames || {}).map(([k, v]) => [nkey(k), v]));
+    const cats = new Set(); const out = { hiddenChannels: [], hiddenCategories: [], categoryNames: {}, channelNames: {} };
+    for (const c of chs) {
+      const g = nkey(c.categoryName), n = nkey(c.name), cid = String(c.categoryId);
+      if (hg.has(g)) cats.add(cid);
+      if (gn[g]) out.categoryNames[cid] = gn[g];
+      if (hc.has(n)) out.hiddenChannels.push(Number(c.id));
+      if (cn[n]) out.channelNames[String(c.id)] = cn[n];
+    }
+    out.hiddenCategories = [...cats];
+    if (pkgCache.size > 5000) pkgCache.clear();
+    pkgCache.set(device.mac, { ck, out });
+    return out;
+  }
+
   // ---- Plan ak ekspirasyon kliyan an soti nan founisè a (Xtream user_info) ----
 
   const customerOf = (device) => device?.customer

@@ -183,6 +183,7 @@ td.up,input.up{text-transform:uppercase}input.up::placeholder{text-transform:non
 .cat{font-size:13px;padding:7px 6px;border-radius:8px;background:rgba(255,255,255,.04);margin-top:2px;color:var(--text,#fff)}
 .cat .catx{background:none;border:0;color:inherit;cursor:pointer;font-size:13px;width:22px;height:22px;padding:0;flex:none}
 .cat .catn{cursor:pointer;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pkgnote{border:1px solid var(--accent,#7C4DFF);background:rgba(124,77,255,.12);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45}
 .chedit{flex:1;min-width:0;height:30px;padding:2px 8px;font-size:14px;text-transform:none;letter-spacing:0}
 .chrow .catx{background:none;border:0;color:var(--dim);cursor:pointer;font-size:13px;width:24px;height:22px;padding:0;flex:none}
 .cat.off .catn{color:var(--faint);text-decoration:line-through}
@@ -585,6 +586,8 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="field"><label for="chProfile">Channel Profile</label><select id="chProfile"></select></div>
           <div class="field"><label for="chMax">Limit chanèl (0 = pa gen limit)</label><input type="number" min="0" id="chMax"></div>
         </div>
+        <div class="pkgnote" id="chPkgNote" hidden></div>
+        <div class="inline"><input type="text" id="chPkgName" class="grow" placeholder="Non yon nouvo pakè (egz: Miami)" maxlength="40"><button class="btn small purple" id="chPkgSave" type="button">Sove kòm pakè</button></div>
         <div class="inline"><input type="text" id="chSearch" class="grow" placeholder="Chèche yon chanèl"><button class="btn small red" id="chHideShown" type="button">Kache sa ki nan lis la</button><button class="btn small green" id="chShowShown" type="button">Montre sa ki nan lis la</button><button class="btn small" id="chAllOn" type="button">Montre tout</button></div>
         <p class="note">Etenn bouton yon gwoup pou kache tout chanèl li yo ak yon sèl klik. Klike sou non gwoup la pou wè chanèl li yo. Kreyon an (✎) chanje non yon gwoup oswa yon chanèl.</p>
         <p class="note" id="chCount"></p>
@@ -1518,10 +1521,53 @@ async function loadChannels() {
     api("GET", "/galaxy/devices/lookup?mac=" + encodeURIComponent(dev.mac)).catch(() => dev),
   ]);
   dev = fresh;
-  chState = { chs, hid: new Set((dev.hiddenChannels || []).map(Number)), hidC: new Set((dev.hiddenCategories || []).map(String)), open: new Set(), catN: { ...(dev.categoryNames || {}) }, chN: { ...(dev.channelNames || {}) }, edit: null };
-  $("#chProfile").innerHTML = `<option value="">${t("Tout chanèl")}</option>` + profiles.map((p) => `<option value="${esc(p.name)}"${p.name === dev.channelProfile ? " selected" : ""}>${esc(p.name)}${p.channels ? " " + t("({0} chanèl)", p.channels) : ""}</option>`).join("");
-  $("#chMax").value = dev.maxChannels || 0; $("#chBody").hidden = false; setMsg($("#chMsg"), ""); renderChList();
+  chState = { chs, profiles, open: new Set(), edit: null };
+  $("#chProfile").innerHTML = `<option value="">${t("Pèsonalize pou aparèy sa a")}</option>` + profiles.map((p) => `<option value="${esc(p.name)}"${p.name === dev.channelProfile ? " selected" : ""}>${p.pkg ? "📦 " : ""}${esc(p.name)}${p.channels ? " " + t("({0} chanèl)", p.channels) : ""}</option>`).join("");
+  $("#chMax").value = dev.maxChannels || 0; $("#chBody").hidden = false; setMsg($("#chMsg"), ""); chLoadState();
 }
+// Yon pakè sove chwa yo pa NON founisè a (pa ID): konsa li mache sou tout aparèy ki gen menm gwoup yo.
+const nkey = (v) => String(v ?? "").trim().toUpperCase();
+const chPkg = () => chState?.profiles.find((p) => p.pkg && p.name === $("#chProfile").value) || null;
+/** Ranpli lis la: ak pakè ki chwazi a, oswa ak reglaj pa aparèy la si pa gen pakè. */
+function chLoadState() {
+  const pk = chPkg(); chState.pkg = pk; chState.edit = null;
+  if (pk) {
+    const hg = new Set((pk.hiddenGroups || []).map(nkey)), hc = new Set((pk.hiddenChannels || []).map(nkey));
+    const gn = Object.fromEntries(Object.entries(pk.groupNames || {}).map(([k, v]) => [nkey(k), v])), cn = Object.fromEntries(Object.entries(pk.channelNames || {}).map(([k, v]) => [nkey(k), v]));
+    chState.hid = new Set(); chState.hidC = new Set(); chState.catN = {}; chState.chN = {};
+    for (const c of chState.chs) { const g = nkey(c.categoryName), n = nkey(c.name);
+      if (hg.has(g)) chState.hidC.add(String(c.categoryId)); if (gn[g]) chState.catN[c.categoryId] = gn[g];
+      if (hc.has(n)) chState.hid.add(c.id); if (cn[n]) chState.chN[c.id] = cn[n]; }
+    const n = devicesCache.filter((d) => d.channelProfile === pk.name && d.mac !== dev.mac).length + 1;
+    $("#chPkgNote").innerHTML = `<b>📦 ${esc(t("W ap modifye pakè «{0}».", pk.name))}</b> ${esc(t("Sa w sove isit la aplike sou tout aparèy ki sèvi ak pakè sa a ({0}).", n))}`;
+  } else {
+    chState.hid = new Set((dev.hiddenChannels || []).map(Number)); chState.hidC = new Set((dev.hiddenCategories || []).map(String));
+    chState.catN = { ...(dev.categoryNames || {}) }; chState.chN = { ...(dev.channelNames || {}) };
+  }
+  $("#chPkgNote").hidden = !pk; renderChList();
+}
+/** Chwa ki sou ekran an → fòm pakè a (pa non). Kenbe sa pakè a te gen pou gwoup ki pa egziste sou aparèy sa a. */
+function chPkgBody(old) {
+  const { chs, hid, hidC, catN, chN } = chState; const hereG = new Set(chs.map((c) => nkey(c.categoryName))), hereC = new Set(chs.map((c) => nkey(c.name)));
+  const keepList = (l, here) => (l || []).filter((x) => !here.has(nkey(x))), keepMap = (m, here) => Object.fromEntries(Object.entries(m || {}).filter(([k]) => !here.has(nkey(k))));
+  const g = new Map(), gNames = keepMap(old?.groupNames, hereG), cNames = keepMap(old?.channelNames, hereC), hc = [];
+  for (const c of chs) { const cid = String(c.categoryId);
+    if (hidC.has(cid)) g.set(nkey(c.categoryName), c.categoryName || ""); if (catN[cid]) gNames[c.categoryName || ""] = catN[cid];
+    if (hid.has(c.id)) hc.push(c.name); if (chN[c.id]) cNames[c.name] = chN[c.id]; }
+  return { pkg: true, hiddenGroups: [...keepList(old?.hiddenGroups, hereG), ...g.values()], groupNames: gNames, hiddenChannels: [...keepList(old?.hiddenChannels, hereC), ...new Set(hc)], channelNames: cNames, updatedAt: new Date().toISOString() };
+}
+$("#chProfile").addEventListener("change", () => { if (!chState) return; chLoadState(); setMsg($("#chMsg"), "Chanjman yo poko sove.", false); $("#chMsg").className = "msg"; });
+$("#chPkgSave").addEventListener("click", async () => {
+  if (!chState) return; const name = $("#chPkgName").value.trim();
+  if (!name) { setMsg($("#chMsg"), "Ekri non nouvo pakè a an premye."); $("#chPkgName").focus(); return; }
+  try {
+    const old = chState.profiles.find((p) => p.name === name), body = chPkgBody(old && old.pkg ? old : null);
+    const saved = old ? await api("PUT", `/channel-profiles/${encodeURIComponent(name)}`, body) : await api("POST", "/channel-profiles", { name, channels: 0, ...body });
+    dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { channelProfile: name })) };
+    await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/commands`, { type: "refresh" }).catch(() => {});
+    $("#chPkgName").value = ""; await loadChannels(); setMsg($("#chMsg"), t("Pakè «{0}» sove. Chwazi l pou lòt aparèy yo nan kaz Channel Profile la.", saved?.name || name), true);
+  } catch (err) { setMsg($("#chMsg"), err.message); }
+});
 // Rechèch la gade non chanèl la AK non kategori a
 const chName = (c) => chState?.chN[c.id] || c.name, catName = (cid, orig) => chState?.catN[cid] || orig;
 const chMatch = (c, q) => !q || c.name.toLowerCase().includes(q) || String(c.categoryName || "").toLowerCase().includes(q) || chName(c).toLowerCase().includes(q) || String(catName(c.categoryId, "")).toLowerCase().includes(q);
@@ -1586,7 +1632,11 @@ $("#chShowShown").addEventListener("click", () => {
 });
 $("#chAllOn").addEventListener("click", () => { chState.hid.clear(); chState.hidC.clear(); renderChList(); });
 $("#chSave").addEventListener("click", async () => {
-  try { dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { channelProfile: $("#chProfile").value, maxChannels: +$("#chMax").value || 0, hiddenChannels: [...chState.hid], hiddenCategories: [...chState.hidC], categoryNames: chState.catN, channelNames: chState.chN })) };
+  try {
+    const pk = chPkg(), base = { channelProfile: $("#chProfile").value, maxChannels: +$("#chMax").value || 0 };
+    // Ak yon pakè: chwa yo ale nan pakè a (pou tout aparèy ki sèvi ak li). San pakè: yo rete sou aparèy sa a sèlman.
+    if (pk) Object.assign(pk, await api("PUT", `/channel-profiles/${encodeURIComponent(pk.name)}`, chPkgBody(pk)));
+    dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, pk ? base : { ...base, hiddenChannels: [...chState.hid], hiddenCategories: [...chState.hidC], categoryNames: chState.catN, channelNames: chState.chN })) };
     await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/commands`, { type: "refresh" }).catch(() => {});
     setMsg($("#chMsg"), "Sove. TV a ap aplike l touswit si l online.", true); }
   catch (err) { setMsg($("#chMsg"), err.message); }
