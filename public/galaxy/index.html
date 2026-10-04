@@ -1586,7 +1586,7 @@ function chChanged(n, hide) {
 }
 function renderChList() {
   const { chs, hid, hidC } = chState; const q = $("#chSearch").value.trim().toLowerCase();
-  if (!chs.length) { $("#chList").innerHTML = `<div class="empty">${t("TV a poko voye lis chanèl li. Li voye l chak fwa li chaje playlist la.")}</div>`; $("#chCount").textContent = ""; return; }
+  if (!chs.length) { $("#chList").innerHTML = `<div class="empty">${t((dev.playlists || []).length ? "Panel la pa rive jwenn lis chanèl playlist sa a kay founisè a. Peze \"Teste\" sou playlist la nan paj Aparèy la pou wè rezon an." : "Aparèy sa a poko gen playlist. Ajoute youn nan paj Aparèy la an premye.")}</div>`; $("#chCount").textContent = ""; return; }
   const shown = chs.filter((c) => !hid.has(c.id) && !hidC.has(c.categoryId)).length;
   $("#chCount").textContent = t("{0} sou {1} chanèl vizib (anvan limit Channel Profile la).", shown, chs.length);
   const byCat = new Map(); for (const c of chs) { if (!chMatch(c, q)) continue; if (!byCat.has(c.categoryId)) byCat.set(c.categoryId, { name: c.categoryName, items: [] }); byCat.get(c.categoryId).items.push(c); }
@@ -1640,6 +1640,7 @@ $("#chShowShown").addEventListener("click", () => {
 $("#chOnlyShown").addEventListener("click", () => {
   if (!$("#chSearch").value.trim()) { setMsg($("#chMsg"), "Ekri yon mo nan kaz rechèch la an premye (egz: tampa)."); $("#chSearch").focus(); return; }
   const items = chFiltered(); const ids = new Set(items.map((c) => c.id)); const partial = new Set(items.map((c) => String(c.categoryId)));
+  if (!items.length) { setMsg($("#chMsg"), "Pa gen okenn chanèl ni gwoup ki gen mo sa a. Anyen pa chanje."); return; } // pa kache tout pa erè
   chState.hid.clear(); chState.hidC.clear();
   for (const c of chState.chs) { const cid = String(c.categoryId); if (!partial.has(cid)) chState.hidC.add(cid); else if (!ids.has(c.id)) chState.hid.add(c.id); }
   const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep;

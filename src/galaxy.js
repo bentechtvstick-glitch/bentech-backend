@@ -442,6 +442,22 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   });
 
   /** App la voye lis chanèl Xtream kliyan an, pou admin nan ka hide/show yo. */
+  /** Sove lis chanèl yon aparèy (pataje ant aparèy ki gen egzakteman menm lis la). */
+  async function storeChannels(mac, channels) {
+    const list = (Array.isArray(channels) ? channels : []).slice(0, 20000).map((c) => ({
+      id: Number(c.id), num: Number(c.num) || 0, name: String(c.name || "").slice(0, 200),
+      categoryId: String(c.categoryId || ""), categoryName: String(c.categoryName || "").slice(0, 200),
+    }));
+    const hash = crypto.createHash("sha1").update(JSON.stringify(list)).digest("hex");
+    if (data().deviceChannels[mac] !== hash) {
+      data().channelLists[hash] ??= list;
+      data().deviceChannels[mac] = hash;
+      pruneChannelLists();
+      await db.write();
+    }
+    return list;
+  }
+
   app.post("/api/devices/:mac/channels", async (req, res) => {
     ensure();
     const mac = normMac(req.params.mac);
@@ -450,18 +466,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) {
       return res.status(403).json({ ok: false, error: "Device Key pa bon" });
     }
-    const list = (Array.isArray(req.body?.channels) ? req.body.channels : []).slice(0, 20000).map((c) => ({
-      id: Number(c.id), num: Number(c.num) || 0, name: String(c.name || "").slice(0, 200),
-      categoryId: String(c.categoryId || ""), categoryName: String(c.categoryName || "").slice(0, 200),
-    }));
-    const hash = crypto.createHash("sha1").update(JSON.stringify(list)).digest("hex");
-    const changed = data().deviceChannels[mac] !== hash;
-    if (changed) {
-      data().channelLists[hash] ??= list;
-      data().deviceChannels[mac] = hash;
-      pruneChannelLists();
-      await db.write();
-    }
+    const list = await storeChannels(mac, req.body?.channels);
     res.json({ ok: true, count: list.length });
   });
 
@@ -554,6 +559,28 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
    * Se "Customer TV" (TV tès panel la) ki sèvi ak li. Kenbe 10 minit nan memwa.
    */
   const liveListCache = new Map();
+  /** Chèche lis chanèl yon playlist dirèk kay founisè a (10 min nan memwa). */
+  async function fetchLive(pl, fresh = false) {
+    const key = `${pl.server}|${pl.username}|${pl.password}`;
+    const hit = liveListCache.get(key);
+    if (hit && Date.now() - hit.at < 600_000 && !fresh) return hit.data;
+    const cl = xtreamClient(pl);
+    if (cl.error) throw Object.assign(new Error(cl.error), { status: 400 });
+    const info = await cl.get("");
+    if (!info?.user_info || Number(info.user_info.auth) === 0) throw new Error("Username oswa password la pa bon (sèvè a refize kont lan).");
+    const [cats, live] = await Promise.all([cl.get("get_live_categories", 20000), cl.get("get_live_streams", 30000)]);
+    const catName = new Map((Array.isArray(cats) ? cats : []).map((c) => [String(c.category_id), String(c.category_name || "")]));
+    const channels = (Array.isArray(live) ? live : []).slice(0, 20000).map((c, i) => ({
+      id: Number(c.stream_id), num: Number(c.num) || i + 1, name: String(c.name || "").slice(0, 200),
+      categoryId: String(c.category_id || ""), categoryName: (catName.get(String(c.category_id)) || "").slice(0, 200),
+      icon: isUrl(c.stream_icon) ? String(c.stream_icon).slice(0, 500) : "",
+    })).filter((c) => Number.isFinite(c.id));
+    const out = { ok: true, playlist: pl.name || pl.username, categories: [...catName].map(([id, name]) => ({ id, name })), channels };
+    liveListCache.set(key, { at: Date.now(), data: out });
+    if (liveListCache.size > 200) liveListCache.delete(liveListCache.keys().next().value);
+    return out;
+  }
+
   app.get("/api/devices/:mac/xtream/live", async (req, res) => {
     ensure();
     const mac = normMac(req.params.mac);
@@ -562,28 +589,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) return res.status(403).json({ ok: false, error: "Device Key pa bon" });
     const pl = playlistsOf(mac).find((p) => p.id === req.query.playlist) || playlistsOf(mac)[0];
     if (!pl) return res.status(404).json({ ok: false, error: "Pa gen playlist sou aparèy sa a" });
-    const key = `${pl.server}|${pl.username}|${pl.password}`;
-    const hit = liveListCache.get(key);
-    if (hit && Date.now() - hit.at < 600_000 && req.query.fresh !== "1") return res.json(hit.data);
-    const cl = xtreamClient(pl);
-    if (cl.error) return res.status(400).json({ ok: false, error: cl.error });
-    try {
-      const info = await cl.get("");
-      if (!info?.user_info || Number(info.user_info.auth) === 0) return res.status(502).json({ ok: false, error: "Username oswa password la pa bon (sèvè a refize kont lan)." });
-      const [cats, live] = await Promise.all([cl.get("get_live_categories", 20000), cl.get("get_live_streams", 30000)]);
-      const catName = new Map((Array.isArray(cats) ? cats : []).map((c) => [String(c.category_id), String(c.category_name || "")]));
-      const channels = (Array.isArray(live) ? live : []).slice(0, 20000).map((c, i) => ({
-        id: Number(c.stream_id), num: Number(c.num) || i + 1, name: String(c.name || "").slice(0, 200),
-        categoryId: String(c.category_id || ""), categoryName: (catName.get(String(c.category_id)) || "").slice(0, 200),
-        icon: isUrl(c.stream_icon) ? String(c.stream_icon).slice(0, 500) : "",
-      })).filter((c) => Number.isFinite(c.id));
-      const data = { ok: true, playlist: pl.name || pl.username, categories: [...catName].map(([id, name]) => ({ id, name })), channels };
-      liveListCache.set(key, { at: Date.now(), data });
-      if (liveListCache.size > 200) liveListCache.delete(liveListCache.keys().next().value);
-      res.json(data);
-    } catch (e) {
-      res.status(502).json({ ok: false, error: e.message || "Sèvè IPTV a pa reponn." });
-    }
+    try { res.json(await fetchLive(pl, req.query.fresh === "1")); }
+    catch (e) { res.status(e.status || 502).json({ ok: false, error: e.message || "Sèvè IPTV a pa reponn." }); }
   });
 
   // =========================================================================
@@ -676,9 +683,14 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   });
 
   /** Lis chanèl kliyan an ak eta hide/show chak grenn. */
-  app.get("/api/galaxy/devices/:mac/channels", authenticate, (req, res) => {
+  app.get("/api/galaxy/devices/:mac/channels", authenticate, async (req, res) => {
     const device = loadDevice(req, res);
     if (!device) return;
+    // TV a poko voye lis li (li pa janm louvri, oswa ansyen vèsyon app la)? Panel la al chèche l li menm kay founisè a.
+    if (!channelsOf(device.mac).length) {
+      const pl = playlistsOf(device.mac)[0];
+      if (pl) await fetchLive(pl).then((r) => storeChannels(device.mac, r.channels)).catch(() => {});
+    }
     const hidden = new Set((device.hiddenChannels || []).map(Number));
     const hiddenCats = new Set((device.hiddenCategories || []).map(String));
     res.json(channelsOf(device.mac).map((c) => ({
