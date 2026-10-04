@@ -102,4 +102,5 @@
     <string name="stream_refused">El servidor rechazó este canal (suscripción o límite de pantallas).</string>
     <string name="stream_unsupported">Este dispositivo no puede reproducir el formato de este canal.</string>
     <string name="rail_tv">TV en vivo</string>
+    <string name="crash_title">La app se cerró inesperadamente la última vez</string>
 </resources>

@@ -102,4 +102,5 @@
     <string name="stream_refused">Le serveur a refusé cette chaîne (abonnement ou nombre d\'écrans).</string>
     <string name="stream_unsupported">Cet appareil ne peut pas lire le format de cette chaîne.</string>
     <string name="rail_tv">TV en direct</string>
+    <string name="crash_title">L\'application s\'est fermée brusquement la dernière fois</string>
 </resources>

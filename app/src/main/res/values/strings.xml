@@ -125,4 +125,5 @@
     <string name="stream_refused">Sèvè a refize chanèl sa a (abònman an oswa kantite ekran pèmèt).</string>
     <string name="stream_unsupported">Aparèy sa a pa ka jwe fòma chanèl sa a.</string>
     <string name="rail_tv">TV an dirèk</string>
+    <string name="crash_title">App la te fèmen sibitman dènye fwa</string>
 </resources>

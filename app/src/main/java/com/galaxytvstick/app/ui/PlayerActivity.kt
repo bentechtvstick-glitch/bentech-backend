@@ -103,6 +103,7 @@ class PlayerActivity : AppCompatActivity() {
     private var channels: List<Channel> = emptyList()
     private var openListOnStart = false
     private var index = 0
+    private var lastCrash = ""
     private var attempts = 0
     private var curMode = 0
     private var curAlt = false
@@ -154,6 +155,19 @@ class PlayerActivity : AppCompatActivity() {
         prefs = Prefs(this)
         val account = prefs.account ?: run { finish(); return }
         api = XtreamApi(account)
+        // App la te fèmen sibitman dènye fwa? Montre rezon an yon sèl fwa
+        getSharedPreferences("galaxy_crash", MODE_PRIVATE).let { sp ->
+            val crash = sp.getString("last", null)
+            if (crash != null) {
+                sp.edit().remove("last").apply()
+                lastCrash = crash
+                AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
+                    .setTitle(R.string.crash_title)
+                    .setMessage(crash)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+            }
+        }
         // Reglaj ki te mache dènye fwa pou sèvè sa a (pou pa rechèche chak fwa app la ouvri)
         if (tunedFor != account.server) {
             tunedFor = account.server
@@ -702,7 +716,7 @@ class PlayerActivity : AppCompatActivity() {
             .put("codec", lastCodec)
             .put("buffering", buffering)
             .put("adBreak", inBreak)
-            .put("error", lastError)
+            .put("error", if (lastError.isEmpty() && lastCrash.isNotEmpty()) "CRASH · $lastCrash" else lastError)
             .put("playlistName", prefs.account?.name ?: "")
             .put("appVersion", BuildConfig.VERSION_NAME)
         if (now != null) body.put("program", org.json.JSONObject().put("title", now.title).put("start", now.start).put("end", now.end))

@@ -17,6 +17,19 @@ class GalaxyApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Si app la fèmen sibitman, sove rezon an pou montre l pwochen fwa (ede jwenn pwoblèm nan)
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, e ->
+            runCatching {
+                var root: Throwable = e
+                while (root.cause != null && root.cause !== root) root = root.cause!!
+                val frame = root.stackTrace.firstOrNull { it.className.startsWith("com.galaxytvstick") } ?: root.stackTrace.firstOrNull()
+                val where = frame?.let { it.className.substringAfterLast('.') + "." + it.methodName + ":" + it.lineNumber } ?: "?"
+                val text = "v${BuildConfig.VERSION_NAME} · ${root.javaClass.simpleName}: ${(root.message ?: "").take(120)} · $where · ${thread.name}"
+                getSharedPreferences("galaxy_crash", MODE_PRIVATE).edit().putString("last", text).commit()
+            }
+            previous?.uncaughtException(thread, e)
+        }
         EmojiCompat.init(
             BundledEmojiCompatConfig(this)
                 .setReplaceAll(true) // menm desen imoji sou tout aparèy

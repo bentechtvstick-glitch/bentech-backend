@@ -70,15 +70,10 @@ class MainActivity : AppCompatActivity() {
                 return@launch
             }
 
-            // 2) Chajman nòmal: kategori ak chanèl an menm tan
-            val catsJob = async { runCatching { api.liveCategoriesRaw() } }
-            val chansJob = async { runCatching { api.liveStreamsRaw() } }
+            // 2) Chajman nòmal (telechaje nan fichye, li objè pa objè: pa plen memwa a)
             val result = runCatching {
-                val catsJson = catsJob.await().getOrThrow()
-                val chansJson = chansJob.await().getOrThrow()
-                val parsed = withContext(Dispatchers.Default) { XtreamApi.parseCategories(catsJson) to XtreamApi.parseStreams(chansJson) }
-                GalaxyApp.scope.launch { ChannelCache.write(applicationContext, account, catsJson, chansJson) }
-                parsed
+                val e = withContext(Dispatchers.IO) { ChannelCache.fetch(applicationContext, account) }
+                e.categories to e.channels
             }
             result.onSuccess { (cats, chans) ->
                 cfgJob.await()?.let { PanelState.config = it }
@@ -105,14 +100,11 @@ class MainActivity : AppCompatActivity() {
         val ctx = applicationContext
         val p = prefs
         GalaxyApp.scope.launch {
+            // Kite TV a kòmanse jwe anvan (pa fè de gwo travay an menm tan sou yon ti aparèy)
+            kotlinx.coroutines.delay(90_000)
             runCatching {
-                val api = XtreamApi(account)
-                val catsJson = api.liveCategoriesRaw()
-                val chansJson = api.liveStreamsRaw()
-                val chans = XtreamApi.parseStreams(chansJson)
-                if (chans.isEmpty()) return@runCatching
-                ChannelCache.write(ctx, account, catsJson, chansJson)
-                PanelApi(p).uploadChannels(chans, XtreamApi.parseCategories(catsJson))
+                val e = ChannelCache.fetch(ctx, account)
+                if (e.channels.isNotEmpty()) PanelApi(p).uploadChannels(e.channels, e.categories)
             }
         }
     }

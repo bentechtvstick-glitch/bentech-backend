@@ -34,6 +34,56 @@ class XtreamApi(private val account: Account) {
             .followRedirects(true)
             .build()
 
+        /** Li yon lis JSON objè pa objè (pa janm tout an memwa): nesesè pou gwo playlist sou Fire Stick. */
+        fun readObjects(reader: java.io.Reader, each: (Map<String, String>) -> Unit) {
+            android.util.JsonReader(reader).use { jr ->
+                if (jr.peek() != android.util.JsonToken.BEGIN_ARRAY) { jr.skipValue(); return@use }
+                jr.beginArray()
+                while (jr.hasNext()) {
+                    if (jr.peek() != android.util.JsonToken.BEGIN_OBJECT) { jr.skipValue(); continue }
+                    val m = HashMap<String, String>(24)
+                    jr.beginObject()
+                    while (jr.hasNext()) {
+                        val name = jr.nextName()
+                        when (jr.peek()) {
+                            android.util.JsonToken.STRING, android.util.JsonToken.NUMBER -> m[name] = jr.nextString()
+                            android.util.JsonToken.BOOLEAN -> m[name] = jr.nextBoolean().toString()
+                            android.util.JsonToken.NULL -> jr.nextNull()
+                            else -> jr.skipValue()
+                        }
+                    }
+                    jr.endObject()
+                    each(m)
+                }
+                jr.endArray()
+            }
+        }
+
+        fun readCategories(file: java.io.File): List<Category> {
+            val out = ArrayList<Category>()
+            readObjects(file.bufferedReader()) { m -> out.add(Category(m["category_id"].orEmpty(), m["category_name"].orEmpty())) }
+            return out
+        }
+
+        fun readStreams(file: java.io.File): List<Channel> {
+            val out = ArrayList<Channel>()
+            readObjects(file.bufferedReader()) { m ->
+                out.add(
+                    Channel(
+                        streamId = m["stream_id"]?.toIntOrNull() ?: 0,
+                        num = m["num"]?.toIntOrNull() ?: (out.size + 1),
+                        name = m["name"].orEmpty(),
+                        icon = m["stream_icon"]?.takeIf { it.isNotBlank() && it != "null" },
+                        categoryId = m["category_id"].orEmpty(),
+                        epgChannelId = m["epg_channel_id"]?.takeIf { it.isNotBlank() && it != "null" },
+                        tvArchive = m["tv_archive"] == "1",
+                        archiveDays = (m["tv_archive_duration"]?.toIntOrNull() ?: 0).coerceIn(0, 30)
+                    )
+                )
+            }
+            return out
+        }
+
         fun parseCategories(text: String): List<Category> {
             val arr = JSONArray(text)
             return (0 until arr.length()).map { i ->
@@ -160,29 +210,23 @@ class XtreamApi(private val account: Account) {
         client.newCall(req).execute().use { r ->
             if (!r.isSuccessful) throw IOException("Sèvè a reponn HTTP ${r.code}")
             val body = r.body ?: throw IOException("Sèvè a voye yon repons vid")
-            android.util.JsonReader(body.charStream()).use { jr ->
-                if (jr.peek() != android.util.JsonToken.BEGIN_ARRAY) { jr.skipValue(); return@use }
-                jr.beginArray()
-                while (jr.hasNext()) {
-                    if (jr.peek() != android.util.JsonToken.BEGIN_OBJECT) { jr.skipValue(); continue }
-                    val m = HashMap<String, String>(24)
-                    jr.beginObject()
-                    while (jr.hasNext()) {
-                        val name = jr.nextName()
-                        when (jr.peek()) {
-                            android.util.JsonToken.STRING, android.util.JsonToken.NUMBER -> m[name] = jr.nextString()
-                            android.util.JsonToken.BOOLEAN -> m[name] = jr.nextBoolean().toString()
-                            android.util.JsonToken.NULL -> jr.nextNull()
-                            else -> jr.skipValue()
-                        }
-                    }
-                    jr.endObject()
-                    each(m)
-                }
-                jr.endArray()
-            }
+            readObjects(body.charStream(), each)
         }
     }
+
+    /** Telechaje yon repons dirèk nan yon fichye (san mete l an memwa). */
+    private suspend fun downloadTo(url: String, file: java.io.File) = withContext(Dispatchers.IO) {
+        val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
+        val client = http.newBuilder().readTimeout(90, TimeUnit.SECONDS).build()
+        client.newCall(req).execute().use { r ->
+            if (!r.isSuccessful) throw IOException("Sèvè a reponn HTTP ${r.code}")
+            val body = r.body ?: throw IOException("Sèvè a voye yon repons vid")
+            file.outputStream().use { out -> body.byteStream().copyTo(out, 64 * 1024) }
+        }
+    }
+
+    suspend fun downloadLiveCategories(file: java.io.File) = downloadTo(apiUrl("get_live_categories"), file)
+    suspend fun downloadLiveStreams(file: java.io.File) = downloadTo(apiUrl("get_live_streams"), file)
 
     private fun Map<String, String>.clean(key: String): String? =
         this[key]?.trim()?.takeIf { it.isNotEmpty() && it != "null" }

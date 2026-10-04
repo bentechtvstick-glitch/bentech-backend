@@ -22,6 +22,9 @@ object EpgRepository {
     private const val REFRESH_MS = 3 * 60 * 60 * 1000L   // 3 èdtan
     private const val KEEP_BEFORE_MS = 2 * 60 * 60 * 1000L
     private const val KEEP_AFTER_MS = 24 * 60 * 60 * 1000L
+    // Limit memwa pou ti aparèy (Fire Stick): gwo playlist ka gen dè santèn milye pwogram
+    private const val MAX_PROGRAMS = 60_000
+    private const val MAX_DESC = 220
 
     @Volatile private var programs: Map<String, List<Program>> = emptyMap()
     /** EPG achiv (catch-up) pa chanèl, chaje lè kliyan an ale nan tan ki pase nan gid la. */
@@ -109,6 +112,7 @@ object EpgRepository {
         var title = ""
         var desc = ""
         var inProgramme = false
+        var count = 0
 
         var event = parser.eventType
         while (event != XmlPullParser.END_DOCUMENT) {
@@ -128,11 +132,12 @@ object EpgRepository {
                         }
                     }
                     "title" -> if (inProgramme && title.isEmpty()) title = parser.nextText().trim()
-                    "desc" -> if (inProgramme && desc.isEmpty()) desc = parser.nextText().trim()
+                    "desc" -> if (inProgramme && desc.isEmpty()) desc = parser.nextText().trim().take(MAX_DESC)
                 }
                 XmlPullParser.END_TAG -> if (parser.name == "programme") {
-                    if (inProgramme && channel != null) {
+                    if (inProgramme && channel != null && count < MAX_PROGRAMS) {
                         out.getOrPut(channel) { ArrayList() }.add(Program(start, stop, title, desc))
+                        count++
                     }
                     inProgramme = false
                     channel = null
