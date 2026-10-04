@@ -43,6 +43,8 @@
 
         <activity
             android:name=".ui.LoginActivity"
+            android:banner="@drawable/banner"
+            android:icon="@drawable/ic_logo"
             android:exported="true"
             android:screenOrientation="landscape">
             <intent-filter>
