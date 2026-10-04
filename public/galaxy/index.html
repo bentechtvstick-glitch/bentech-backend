@@ -1354,7 +1354,7 @@ document.addEventListener("click", (e) => { const g = e.target.closest("[data-go
 const PLANS = ["1 Month", "3 Months", "6 Months", "12 Months"];
 const CRUD = {
   cust: { upper: 1, col: "customers", id: "id", title: "Kliyan yo", sub: "Kliyan yo, plan yo ak dat ekspirasyon.", auto: () => "C-" + (1000 + Math.floor(Math.random() * 9000)),
-    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "date" }] }, { k: "url", l: "URL / DNS", req: 1, wide: 1 }, { k: "priority", l: "Priyorite", type: "number" }, { k: "enabled", l: "Aktif", type: "bool", def: () => true }, { k: "isDefault", l: "Pa defo", type: "bool" }] },
+    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "date" }] },
   prof: { col: "channel-profiles", id: "name", title: "Channel Profiles", sub: "Pakè chanèl. Kantite chanèl la se limit TV a.",
     fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }, { k: "customers", l: "Kliyan", type: "number" }, { k: "tags", l: "Tags" }] },
   cats: { col: "categories", id: "name", title: "Kategori", sub: "Kategori chanèl yo.", fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }] },
