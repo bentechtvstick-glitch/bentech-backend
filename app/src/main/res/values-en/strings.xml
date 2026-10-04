@@ -109,7 +109,7 @@
     <string name="home_channels_ready">%1$d channels are ready.</string>
     <string name="home_watch_now">Watch Now  ›</string>
     <string name="home_guide_title">Live TV</string>
-    <string name="home_guide_sub">Channels & guide</string>
+    <string name="home_guide_sub">Channels &amp; guide</string>
     <string name="home_movies">Movies</string>
     <string name="home_movies_sub">Watch movies</string>
     <string name="home_series">Series</string>
