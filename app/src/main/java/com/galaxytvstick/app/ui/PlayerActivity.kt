@@ -85,6 +85,8 @@ class PlayerActivity : AppCompatActivity() {
     private var index = 0
     private var attempts = 0
     private var curMode = 0
+    private var curAlt = false
+    private var triedOtherBase = false
 
     // Piblisite preroll
     private var prerollAd: Ad? = null
@@ -264,7 +266,7 @@ class PlayerActivity : AppCompatActivity() {
             if (nowBuffering != buffering) { buffering = nowBuffering; reportStatus() }
             // Sonje fòma ki mache ak sèvè sa a (HLS oswa TS) pou pwochen chanèl yo pa pèdi tan sou move a
             if (state == Player.STATE_READY && !adPlaying && player?.currentMediaItem?.mediaId == "channel" &&
-                channels.getOrNull(index)?.directUrl == null) preferredMode = curMode
+                channels.getOrNull(index)?.directUrl == null) { preferredMode = curMode; XtreamApi.preferAlt = curAlt }
             if (state == Player.STATE_ENDED && adPlaying) { if (inBreak) nextBreakAd() else endPreroll() }
         }
 
@@ -279,33 +281,41 @@ class PlayerActivity : AppCompatActivity() {
             val ch = channels.getOrNull(index)
             val direct = ch?.directUrl != null
             if (attempts < MODES - 1 && !direct) {
-                playChannel(index, mode = (curMode + 1) % MODES, attempt = attempts + 1)
+                playChannel(index, mode = (curMode + 1) % MODES, attempt = attempts + 1, alt = curAlt, otherBase = triedOtherBase)
             } else {
                 val code = error.errorCodeName
-                b.errorText.text = getString(R.string.error_playback, code)
-                b.errorText.visibility = View.VISIBLE
-                lastError = code
-                reportStatus()
-                // Montre sa sèvè playlist la reponn vre, pou konnen kote pwoblèm nan ye
-                if (ch != null) lifecycleScope.launch {
-                    val at = index
-                    val diag = api.probe(if (direct) ch.directUrl!! else api.streamUrl(ch, "ts"))
-                    if (index == at && b.errorText.visibility == View.VISIBLE) {
-                        b.errorText.text = getString(R.string.error_playback, code) + "\n" + diag
-                        lastError = "$code · $diag"
-                        reportStatus()
+                val at = index
+                lifecycleScope.launch {
+                    // Dènye chans: eseye lòt sèvè a (adrès playlist la ↔ vre sèvè videyo founisè a bay nan server_info)
+                    if (!direct && !triedOtherBase) {
+                        val other = api.resolveAltBase()
+                        if (index != at || player == null) return@launch
+                        if (other != null) { triedOtherBase = true; playChannel(at, mode = 0, attempt = 0, alt = !curAlt, otherBase = true); return@launch }
+                    }
+                    b.errorText.text = getString(R.string.error_playback, code)
+                    b.errorText.visibility = View.VISIBLE
+                    lastError = code
+                    reportStatus()
+                    // Montre sa sèvè playlist la reponn vre, pou konnen kote pwoblèm nan ye
+                    if (ch != null) {
+                        val diag = api.probe(if (direct) ch.directUrl!! else api.streamUrl(ch, "ts", curAlt))
+                        if (index == at && b.errorText.visibility == View.VISIBLE) {
+                            b.errorText.text = getString(R.string.error_playback, code) + "\n" + diag
+                            lastError = "$code · $diag"
+                            reportStatus()
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun channelItem(ch: Channel, mode: Int): MediaItem {
+    private fun channelItem(ch: Channel, mode: Int, alt: Boolean = XtreamApi.preferAlt): MediaItem {
         val url = when {
             ch.directUrl != null -> ch.directUrl
-            mode == 0 -> api.streamUrl(ch, "m3u8")
-            mode == 1 -> api.streamUrl(ch, "ts")
-            else -> api.streamUrlBare(ch)
+            mode == 0 -> api.streamUrl(ch, "m3u8", alt)
+            mode == 1 -> api.streamUrl(ch, "ts", alt)
+            else -> api.streamUrlBare(ch, alt)
         }
         val builder = MediaItem.Builder()
             .setMediaId("channel")
@@ -318,10 +328,12 @@ class PlayerActivity : AppCompatActivity() {
         return builder.build()
     }
 
-    private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0) {
+    private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0, alt: Boolean = XtreamApi.preferAlt, otherBase: Boolean = false) {
         val p = player ?: return
         attempts = attempt
         curMode = mode
+        curAlt = alt
+        triedOtherBase = otherBase
         index = i
         val ch = channels[index]
         if (ch.directUrl == null) prefs.lastChannelId = ch.streamId // pa relanse yon evènman ki ka fini
@@ -329,7 +341,7 @@ class PlayerActivity : AppCompatActivity() {
         b.resBadge.visibility = View.GONE
         lastQuality = ""; lastResolution = ""; lastCodec = ""; lastError = ""
         reportStatus()
-        p.setMediaItem(channelItem(ch, mode))
+        p.setMediaItem(channelItem(ch, mode, alt))
         p.prepare()
         p.playWhenReady = true
         showInfo()
@@ -344,7 +356,7 @@ class PlayerActivity : AppCompatActivity() {
         b.adBox.visibility = View.VISIBLE
         handler.post(adTick)
         val adItem = MediaItem.Builder().setMediaId("ad").setUri(ad.url).build()
-        curMode = preferredMode; attempts = 0
+        curMode = preferredMode; attempts = 0; curAlt = XtreamApi.preferAlt; triedOtherBase = false
         p.setMediaItems(listOf(adItem, channelItem(channels[index], preferredMode)))
         p.prepare()
         p.playWhenReady = true

@@ -50,6 +50,11 @@ class XtreamApi(private val account: Account) {
             }
         }
 
+        /** Vre sèvè videyo a pa playlist (li nan server_info). */
+        private val altBases = java.util.concurrent.ConcurrentHashMap<String, String>()
+        /** true = chanèl yo jwe sou sèvè server_info a, pa sou adrès playlist la. */
+        @Volatile var preferAlt = false
+
         /** Mete http:// si li manke epi retire "/" nan fen an. */
         fun normalizeServer(input: String): String {
             var s = input.trim().trimEnd('/')
@@ -93,6 +98,29 @@ class XtreamApi(private val account: Account) {
     suspend fun liveStreams(categoryId: String?): List<Channel> {
         val extra = if (categoryId != null) mapOf("category_id" to categoryId) else emptyMap()
         return parseStreams(get(apiUrl("get_live_streams", extra)))
+    }
+
+    private fun base(alt: Boolean) = if (alt) altBases[account.server] ?: account.server else account.server
+    /** Adrès pou fim, seri ak catch-up: menm sèvè ki mache pou chanèl yo. */
+    private val mediaBase get() = base(preferAlt)
+
+    /**
+     * Kèk founisè bay yon adrès pou lis la (player_api) men videyo yo sou yon lòt sèvè.
+     * Vre adrès videyo a nan "server_info". null si se menm adrès la oswa si sèvè a pa di l.
+     */
+    suspend fun resolveAltBase(): String? {
+        if (altBases.containsKey(account.server)) return altBases[account.server]
+        val found = runCatching {
+            val si = JSONObject(get(apiUrl(null))).optJSONObject("server_info") ?: return@runCatching null
+            val host = si.optString("url").trim().removePrefix("http://").removePrefix("https://").trimEnd('/')
+            if (host.isBlank()) return@runCatching null
+            val https = si.optString("server_protocol").equals("https", true)
+            val port = (if (https) si.optString("https_port") else si.optString("port")).trim()
+            val b = (if (https) "https://" else "http://") + host + (if (port.isBlank() || host.contains(":") || port == (if (https) "443" else "80")) "" else ":$port")
+            b.takeIf { !it.equals(account.server, true) }
+        }.getOrNull()
+        if (found != null) altBases[account.server] = found
+        return found
     }
 
     /** Zòn lè sèvè a (pou catch-up). null si sèvè a pa di l. */
@@ -235,8 +263,8 @@ class XtreamApi(private val account: Account) {
         )
     }
 
-    fun movieUrl(id: Int, ext: String): String = "${account.server}/movie/${account.username}/${account.password}/$id.$ext"
-    fun episodeUrl(ep: Episode): String = "${account.server}/series/${account.username}/${account.password}/${ep.id}.${ep.ext}"
+    fun movieUrl(id: Int, ext: String): String = "$mediaBase/movie/${account.username}/${account.password}/$id.$ext"
+    fun episodeUrl(ep: Episode): String = "$mediaBase/series/${account.username}/${account.password}/${ep.id}.${ep.ext}"
 
     // ------------------------------------------------------------ Catch-up
 
@@ -248,7 +276,7 @@ class XtreamApi(private val account: Account) {
         val fmt = java.text.SimpleDateFormat("yyyy-MM-dd:HH-mm", java.util.Locale.US).apply {
             timeZone = serverTz?.let { java.util.TimeZone.getTimeZone(it) } ?: java.util.TimeZone.getDefault()
         }
-        return "${account.server}/timeshift/${account.username}/${account.password}/${minutes.coerceAtLeast(1)}/${fmt.format(java.util.Date(startMs))}/${ch.streamId}.ts"
+        return "$mediaBase/timeshift/${account.username}/${account.password}/${minutes.coerceAtLeast(1)}/${fmt.format(java.util.Date(startMs))}/${ch.streamId}.ts"
     }
 
     /** Tout EPG yon chanèl, ak pwogram ki pase yo (pou catch-up). Tit yo an base64. */
@@ -281,9 +309,9 @@ class XtreamApi(private val account: Account) {
         .build().toString()
 
     /** ext = "m3u8" (HLS) oswa "ts" (MPEG-TS). */
-    fun streamUrl(channel: Channel, ext: String = "m3u8"): String =
+    fun streamUrl(channel: Channel, ext: String = "m3u8", alt: Boolean = false): String =
         channel.directUrl
-            ?: "${account.server}/live/${account.username}/${account.password}/${channel.streamId}.$ext"
+            ?: "${base(alt)}/live/${account.username}/${account.password}/${channel.streamId}.$ext"
 
     private fun hide(s: String): String {
         var out = s
@@ -293,8 +321,8 @@ class XtreamApi(private val account: Account) {
     }
 
     /** Ansyen fòm lyen Xtream (san "/live" ni ekstansyon): kèk sèvè bay sèlman sa a. */
-    fun streamUrlBare(channel: Channel): String =
-        channel.directUrl ?: "${account.server}/${account.username}/${account.password}/${channel.streamId}"
+    fun streamUrlBare(channel: Channel, alt: Boolean = false): String =
+        channel.directUrl ?: "${base(alt)}/${account.username}/${account.password}/${channel.streamId}"
 
     /**
      * Gade sa sèvè a reponn vre pou yon lyen stream (pou esplike poukisa yon chanèl pa jwe).
@@ -306,7 +334,7 @@ class XtreamApi(private val account: Account) {
             val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
             client.newCall(req).execute().use { r ->
                 val type = r.header("Content-Type")?.substringBefore(';')?.trim().orEmpty()
-                val buf = ByteArray(376)
+                val buf = ByteArray(2048)
                 var n = 0
                 r.body?.byteStream()?.let { ins ->
                     while (n < buf.size) { val k = ins.read(buf, n, buf.size - n); if (k <= 0) break; n += k }
@@ -316,7 +344,9 @@ class XtreamApi(private val account: Account) {
                     buf[0] == 0x47.toByte() && (n <= 188 || buf[188] == 0x47.toByte()) -> "MPEG-TS"
                     String(buf, 0, minOf(n, 7)) == "#EXTM3U" -> "HLS"
                     else -> {
-                        val txt = String(buf, 0, minOf(n, 90)).replace(Regex("[^\\x20-\\x7E]"), " ").replace(Regex("\\s+"), " ").trim()
+                        val all = String(buf, 0, n)
+                        val title = Regex("<title[^>]*>([^<]{1,80})", RegexOption.IGNORE_CASE).find(all)?.groupValues?.get(1)?.trim()
+                        val txt = (title?.let { "paj web: $it" } ?: all.take(90)).replace(Regex("[^\\x20-\\x7E]"), " ").replace(Regex("\\s+"), " ").trim()
                         "\"" + hide(txt) + "\""
                     }
                 }
