@@ -1328,7 +1328,9 @@ $("#addMacBtn").addEventListener("click", () => { $("#findCard").hidden = false;
 
 // ------------------------------------------------------------ Dashboard
 const today = () => new Date().toISOString().slice(0, 10);
-const daysLeft = (d) => d ? Math.ceil((new Date(d + "T23:59:59") - new Date()) / 86400000) : null;
+const expDate = (d) => new Date(/^\d{4}-\d{2}-\d{2}$/.test(d) ? d + "T23:59:59" : String(d).replace(" ", "T"));
+const daysLeft = (d) => { if (!d) return null; const x = (expDate(d) - new Date()) / 86400000; return Number.isNaN(x) ? null : x < 0 ? -1 : Math.ceil(x); };
+const fmtExp = (d) => String(d || "").replace("T", " ");
 async function loadDashboard() {
   const [dash, custs, audit] = await Promise.all([
     api("GET", "/dashboard").catch(() => ({})), list("customers").catch(() => []), api("GET", "/audit-logs").catch(() => []),
@@ -1340,7 +1342,7 @@ async function loadDashboard() {
   const k = (label, v, dot) => `<div class="kpi"><span class="k">${dot ? `<span class="dot ${dot}"></span>` : ""}${esc(t(label))}</span><span class="v">${v}</span></div>`;
   $("#dashKpis").innerHTML = k("Kliyan yo", dash.customers ?? custs.length) + k("Kliyan aktif", active, "on") + k("Aparèy", dash.devices ?? "–")
     + k("Online", liveData?.online ?? "–", "on") + k("Ap gade TV", liveData?.watching ?? "–", "live") + k("Playlist", devicesCache.reduce((n, d) => n + (d.playlists?.length || 0), 0));
-  $("#dashExpiring").innerHTML = soon.length ? `<table><thead><tr><th>${t("Name")}</th><th>${t("Plan")}</th><th>${t("Ekspirasyon")}</th><th>${t("Estati")}</th></tr></thead><tbody>${soon.slice(0, 12).map((c) => `<tr><td>${esc(c.name)}</td><td>${esc(c.plan || "")}</td><td>${esc(c.expiry)}</td><td>${c.left < 0 ? `<span class="pill p-bad">${t("Ekspire")}</span>` : `<span class="pill p-warn">${esc(t("{0} jou", c.left))}</span>`}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">${t("Pa gen kliyan k ap ekspire byento.")}</div>`;
+  $("#dashExpiring").innerHTML = soon.length ? `<table><thead><tr><th>${t("Name")}</th><th>${t("Plan")}</th><th>${t("Ekspirasyon")}</th><th>${t("Estati")}</th></tr></thead><tbody>${soon.slice(0, 12).map((c) => `<tr><td>${esc(c.name)}</td><td>${esc(c.plan || "")}</td><td>${esc(fmtExp(c.expiry))}</td><td>${c.left < 0 ? `<span class="pill p-bad">${t("Ekspire")}</span>` : `<span class="pill p-warn">${esc(t("{0} jou", c.left))}</span>`}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">${t("Pa gen kliyan k ap ekspire byento.")}</div>`;
   const waiting = devicesCache.filter((d) => d.galaxy && !d.blocked && !d.playlists.length);
   $("#dashNew").innerHTML = waiting.length ? waiting.slice(0, 6).map((d) => `<div class="li"><span class="grow"><span class="mono">${esc(d.mac)}</span> <span class="note">${esc(d.deviceName || "")} · ${esc(d.lastSeen || "")}</span></span><button class="btn small purple" data-newdev="${esc(d.mac)}" type="button">${t("Ajoute provider")}</button></div>`).join("") : `<div class="empty">${t("Pa gen notifikasyon.")}</div>`;
   const logs = [...audit].reverse().slice(0, 8);
@@ -1354,7 +1356,7 @@ document.addEventListener("click", (e) => { const g = e.target.closest("[data-go
 const PLANS = ["Trial", "1 Month", "3 Months", "6 Months", "12 Months"];
 const CRUD = {
   cust: { upper: 1, col: "customers", id: "id", title: "Kliyan yo", sub: "Kliyan yo, plan yo ak dat ekspirasyon.", auto: () => "C-" + (1000 + Math.floor(Math.random() * 9000)),
-    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "date" }] },
+    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS, def: () => "1 Month" }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "datetime" }] },
   prof: { col: "channel-profiles", id: "name", title: "Channel Profiles", sub: "Pakè chanèl. Kantite chanèl la se limit TV a.",
     fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }, { k: "customers", l: "Kliyan", type: "number" }, { k: "tags", l: "Tags" }] },
   cats: { col: "categories", id: "name", title: "Kategori", sub: "Kategori chanèl yo.", fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }] },
@@ -1388,6 +1390,7 @@ async function loadCrud() {
 function cellHtml(f, v) {
   if (f.type === "bool") return v ? `<span class="pill p-on">${t("Wi")}</span>` : `<span class="pill p-off">${t("Non")}</span>`;
   if (f.pill && v) return `<span class="pill ${pillClass(v)}">${esc(v)}</span>`;
+  if (f.type === "datetime") return esc(fmtExp(v)) || "—";
   return esc(v ?? "") || "—";
 }
 // Paj ki ekri an MAJISKIL (Kliyan yo): tout chan tèks yo, sof imèl la
@@ -1400,6 +1403,15 @@ function renderCrud() {
   $("#crudTable").innerHTML = rows.length ? `<table><thead><tr>${cols.map((f) => `<th>${esc(t(f.l))}</th>`).join("")}${C.readonly ? "" : `<th>${t("Aksyon")}</th>`}</tr></thead><tbody>` +
     capRows("crud", rows).map((it) => `<tr class="${C.readonly ? "" : "click"}" data-row="${esc(it[C.id] ?? "")}">${cols.map((f) => `<td${isUpper(C, f) ? ' class="up"' : ""}>${cellHtml(f, it[f.k])}</td>`).join("")}${C.readonly ? "" : `<td class="acts"><button class="btn small purple" data-edit type="button">${t("Modifye")}</button><button class="btn small red" data-del-row type="button">${t("Efase l")}</button></td>`}</tr>`).join("") + `</tbody></table>` + moreHtml("crud", rows.length)
     : `<div class="empty">${t("Pa gen anyen isit la ankò.")}</div>`;
+}
+/** Dat ekspirasyon pou yon plan, apati kounye a: "Trial" = 24 è, "N Month(s)" = N mwa. Fòma datetime-local. */
+function planExpiry(plan) {
+  const d = new Date(); const m = /^(\d+)\s*Month/i.exec(plan || "");
+  if (/^trial$/i.test(plan || "")) d.setTime(d.getTime() + 24 * 3600 * 1000);
+  else if (m) d.setMonth(d.getMonth() + +m[1]);
+  else return "";
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 function openCrudForm(item) {
   const C = CRUD[crud.name]; crud.editing = item ? item[C.id] : null;
@@ -1414,9 +1426,16 @@ function openCrudForm(item) {
     else if (f.ref) { const names = (crud.refs[f.ref] || []).map((c) => c.name); input = `<select id="${id}"><option value="">—</option>${(v && !names.includes(v) ? [v, ...names] : names).map((n) => `<option${n === v ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`; }
     else if (f.type === "password") input = `<input type="password" id="${id}" autocomplete="new-password" placeholder="${item && item.hasPassword ? esc(t("•••••• (pa chanje)")) : ""}">`;
     else if (f.list) input = `<input type="text" id="${id}" list="${id}_l" value="${esc(v ?? "")}"><datalist id="${id}_l">${(crud.refs[f.list] || []).filter((x) => x.url).map((x) => `<option value="${esc(x.url)}">${esc(x.name || "")}</option>`).join("")}</datalist>`;
+    else if (f.type === "datetime") input = `<input type="datetime-local" id="${id}" value="${esc(!v ? "" : /^\d{4}-\d{2}-\d{2}$/.test(v) ? v + "T23:59" : String(v).replace(" ", "T").slice(0, 16))}">`;
     else input = `<input type="${f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}" id="${id}" value="${esc(isUpper(C, f) ? String(v ?? "").toUpperCase() : v ?? "")}"${isUpper(C, f) ? ' class="up" autocapitalize="characters"' : ""}>`;
     return `<div class="field"${f.wide ? ' style="grid-column:1/-1"' : ""}>${lab}${input}</div>`;
   }).join("");
+  // Kliyan: lè w chwazi yon plan, dat ekspirasyon an ranpli poukont li (Trial = 24 è, 1 Month = 1 mwa…). Ou ka chanje l apre.
+  if (crud.name === "cust" && $("#cf_plan") && $("#cf_expiry")) {
+    const fill = () => { const v = planExpiry($("#cf_plan").value); if (v) $("#cf_expiry").value = v; };
+    $("#cf_plan").addEventListener("change", fill);
+    if (!item) fill();
+  }
   $("#crudFormCard").hidden = false; $("#crudFormCard").scrollIntoView({ behavior: "smooth", block: "start" });
   $("#crudFields input,#crudFields select")?.focus({ preventScroll: true });
 }
