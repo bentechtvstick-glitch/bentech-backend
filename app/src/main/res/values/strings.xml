@@ -126,4 +126,27 @@
     <string name="stream_unsupported">Aparèy sa a pa ka jwe fòma chanèl sa a.</string>
     <string name="rail_tv">TV an dirèk</string>
     <string name="crash_title">App la te fèmen sibitman dènye fwa</string>
+    <string name="home_tagline">Divètisman pou tout moun</string>
+    <string name="home_live_label">TV AN DIRÈK</string>
+    <string name="home_watch_title">Gade televizyon an dirèk</string>
+    <string name="home_channels_ready">%1$d chanèl pare.</string>
+    <string name="home_watch_now">Gade kounye a  ›</string>
+    <string name="home_guide_title">Live TV</string>
+    <string name="home_guide_sub">Chanèl ak gid</string>
+    <string name="home_movies">Fim</string>
+    <string name="home_movies_sub">Gade fim</string>
+    <string name="home_series">Seri</string>
+    <string name="home_series_sub">Emisyon TV</string>
+    <string name="home_kids">Timoun</string>
+    <string name="home_kids_sub">Pou tout fanmi an</string>
+    <string name="home_settings">Reglaj</string>
+    <string name="home_settings_sub">Reglaj app la</string>
+    <string name="home_footer">Gade TV an dirèk, fim, seri ak plis ankò…</string>
+    <string name="home_connected">📶  Konekte</string>
+    <string name="home_connecting">Ap konekte…</string>
+    <string name="home_no_kids">Playlist sa a pa gen kategori timoun.</string>
+    <string name="set_change_playlist">Chanje playlist</string>
+    <string name="set_reload">Rechaje chanèl yo</string>
+    <string name="set_device_info">Enfòmasyon aparèy la</string>
+    <string name="set_info_fmt">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVèsyon: %4$s</string>
 </resources>

@@ -103,4 +103,27 @@
     <string name="stream_unsupported">This device can\'t play this channel\'s format.</string>
     <string name="rail_tv">Live TV</string>
     <string name="crash_title">The app closed unexpectedly last time</string>
+    <string name="home_tagline">Entertainment for everyone</string>
+    <string name="home_live_label">LIVE TV</string>
+    <string name="home_watch_title">Watch Live Television</string>
+    <string name="home_channels_ready">%1$d channels are ready.</string>
+    <string name="home_watch_now">Watch Now  ›</string>
+    <string name="home_guide_title">Live TV</string>
+    <string name="home_guide_sub">Channels & guide</string>
+    <string name="home_movies">Movies</string>
+    <string name="home_movies_sub">Watch movies</string>
+    <string name="home_series">Series</string>
+    <string name="home_series_sub">TV shows</string>
+    <string name="home_kids">Kids</string>
+    <string name="home_kids_sub">For the whole family</string>
+    <string name="home_settings">Settings</string>
+    <string name="home_settings_sub">App settings</string>
+    <string name="home_footer">Stream live TV, movies, series and more…</string>
+    <string name="home_connected">📶  Connected</string>
+    <string name="home_connecting">Connecting…</string>
+    <string name="home_no_kids">This playlist has no kids category.</string>
+    <string name="set_change_playlist">Change playlist</string>
+    <string name="set_reload">Reload channels</string>
+    <string name="set_device_info">Device information</string>
+    <string name="set_info_fmt">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVersion: %4$s</string>
 </resources>

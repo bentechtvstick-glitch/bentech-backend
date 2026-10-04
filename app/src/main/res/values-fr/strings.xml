@@ -103,4 +103,27 @@
     <string name="stream_unsupported">Cet appareil ne peut pas lire le format de cette chaîne.</string>
     <string name="rail_tv">TV en direct</string>
     <string name="crash_title">L\'application s\'est fermée brusquement la dernière fois</string>
+    <string name="home_tagline">Du divertissement pour tous</string>
+    <string name="home_live_label">TV EN DIRECT</string>
+    <string name="home_watch_title">Regardez la télé en direct</string>
+    <string name="home_channels_ready">%1$d chaînes sont prêtes.</string>
+    <string name="home_watch_now">Regarder  ›</string>
+    <string name="home_guide_title">Live TV</string>
+    <string name="home_guide_sub">Chaînes et guide</string>
+    <string name="home_movies">Films</string>
+    <string name="home_movies_sub">Regarder des films</string>
+    <string name="home_series">Séries</string>
+    <string name="home_series_sub">Émissions TV</string>
+    <string name="home_kids">Enfants</string>
+    <string name="home_kids_sub">Pour toute la famille</string>
+    <string name="home_settings">Réglages</string>
+    <string name="home_settings_sub">Réglages de l\'app</string>
+    <string name="home_footer">TV en direct, films, séries et plus encore…</string>
+    <string name="home_connected">📶  Connecté</string>
+    <string name="home_connecting">Connexion…</string>
+    <string name="home_no_kids">Cette playlist n\'a pas de catégorie enfants.</string>
+    <string name="set_change_playlist">Changer de playlist</string>
+    <string name="set_reload">Recharger les chaînes</string>
+    <string name="set_device_info">Informations de l\'appareil</string>
+    <string name="set_info_fmt">Playlist : %1$s\nMAC : %2$s\nDevice Key : %3$s\nVersion : %4$s</string>
 </resources>

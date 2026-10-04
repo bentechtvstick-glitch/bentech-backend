@@ -119,15 +119,9 @@ class MainActivity : AppCompatActivity() {
             b.btnRetry.requestFocus()
             return
         }
-        val last = prefs.lastChannelId
-        val startId = all.firstOrNull { it.streamId == last }?.streamId ?: all.firstOrNull()?.streamId
         ChannelStore.current = all
-        startActivity(
-            Intent(this, PlayerActivity::class.java)
-                .putExtra(PlayerActivity.EXTRA_STREAM_ID, startId ?: -1)
-                // Premye fwa (pa gen dènye chanèl): louvri lis chanèl la dirèk
-                .putExtra(PlayerActivity.EXTRA_OPEN_LIST, last < 0 || startId != last)
-        )
+        // Ekran akèy la (TV an dirèk, gid, fim, seri, timoun, reglaj)
+        startActivity(Intent(this, HomeActivity::class.java))
         finish()
     }
 

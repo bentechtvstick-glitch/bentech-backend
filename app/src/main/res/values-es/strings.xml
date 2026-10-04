@@ -103,4 +103,27 @@
     <string name="stream_unsupported">Este dispositivo no puede reproducir el formato de este canal.</string>
     <string name="rail_tv">TV en vivo</string>
     <string name="crash_title">La app se cerró inesperadamente la última vez</string>
+    <string name="home_tagline">Entretenimiento para todos</string>
+    <string name="home_live_label">TV EN VIVO</string>
+    <string name="home_watch_title">Mira televisión en vivo</string>
+    <string name="home_channels_ready">%1$d canales listos.</string>
+    <string name="home_watch_now">Ver ahora  ›</string>
+    <string name="home_guide_title">Live TV</string>
+    <string name="home_guide_sub">Canales y guía</string>
+    <string name="home_movies">Películas</string>
+    <string name="home_movies_sub">Ver películas</string>
+    <string name="home_series">Series</string>
+    <string name="home_series_sub">Programas de TV</string>
+    <string name="home_kids">Niños</string>
+    <string name="home_kids_sub">Para toda la familia</string>
+    <string name="home_settings">Ajustes</string>
+    <string name="home_settings_sub">Ajustes de la app</string>
+    <string name="home_footer">TV en vivo, películas, series y más…</string>
+    <string name="home_connected">📶  Conectado</string>
+    <string name="home_connecting">Conectando…</string>
+    <string name="home_no_kids">Esta playlist no tiene categoría infantil.</string>
+    <string name="set_change_playlist">Cambiar playlist</string>
+    <string name="set_reload">Recargar canales</string>
+    <string name="set_device_info">Información del dispositivo</string>
+    <string name="set_info_fmt">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVersión: %4$s</string>
 </resources>
