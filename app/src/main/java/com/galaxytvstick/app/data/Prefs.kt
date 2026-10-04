@@ -119,4 +119,10 @@ class Prefs(context: Context) {
         s.add(id)
         sp.edit().putStringSet("seen_popups", s).apply()
     }
+
+    /** Reglaj ki mache pou jwe videyo yon sèvè playlist (fòm lyen, sèvè videyo, User-Agent). */
+    fun tune(server: String, key: String): String? = sp.getString("tune_${server.hashCode()}_$key", null)
+    fun setTune(server: String, key: String, value: String?) {
+        sp.edit().apply { if (value == null) remove("tune_${server.hashCode()}_$key") else putString("tune_${server.hashCode()}_$key", value) }.apply()
+    }
 }

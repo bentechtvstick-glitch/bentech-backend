@@ -17,7 +17,16 @@ class XtreamApi(private val account: Account) {
 
     companion object {
         /** Menm fòm ak lòt app ki bati sou ExoPlayer/Media3 (kèk sèvè IPTV refize non yo pa konnen). */
-        val USER_AGENT = "GalaxyTvStick/1.0 (Linux;Android ${android.os.Build.VERSION.RELEASE}) AndroidXMedia3/1.4.1"
+        val DEFAULT_USER_AGENT = "GalaxyTvStick/1.0 (Linux;Android ${android.os.Build.VERSION.RELEASE}) AndroidXMedia3/1.4.1"
+        @Volatile var USER_AGENT = DEFAULT_USER_AGENT
+        /** Lòt non jwè videyo kouran, pou sèvè ki refize non yo pa konnen (menm jan ak reglaj "User-Agent" lòt app IPTV yo). */
+        val ALT_USER_AGENTS = listOf(
+            "VLC/3.0.20 LibVLC/3.0.20",
+            "okhttp/4.12.0",
+            "Lavf/60.3.100",
+            "ExoPlayerLib/2.19.1",
+            "Dalvik/2.1.0 (Linux; U; Android ${android.os.Build.VERSION.RELEASE})"
+        )
 
         val http: OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -328,30 +337,83 @@ class XtreamApi(private val account: Account) {
      * Gade sa sèvè a reponn vre pou yon lyen stream (pou esplike poukisa yon chanèl pa jwe).
      * Pa janm retounen username/password.
      */
-    suspend fun probe(url: String): String = withContext(Dispatchers.IO) {
+    /** kind: "ts", "hls" (videyo) · "html", "empty", "other", "error" (pa videyo). */
+    class Probe(val kind: String, val summary: String) { val isVideo get() = kind == "ts" || kind == "hls" }
+
+    suspend fun probe(url: String, ua: String = USER_AGENT): Probe = withContext(Dispatchers.IO) {
         runCatching {
             val client = http.newBuilder().connectTimeout(8, TimeUnit.SECONDS).readTimeout(8, TimeUnit.SECONDS).build()
-            val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
+            val req = Request.Builder().url(url).header("User-Agent", ua).build()
+            val startHost = req.url.host
             client.newCall(req).execute().use { r ->
                 val type = r.header("Content-Type")?.substringBefore(';')?.trim().orEmpty()
-                val buf = ByteArray(2048)
+                val buf = ByteArray(16384)
                 var n = 0
                 r.body?.byteStream()?.let { ins ->
-                    while (n < buf.size) { val k = ins.read(buf, n, buf.size - n); if (k <= 0) break; n += k }
+                    while (n < buf.size) { val k = ins.read(buf, n, buf.size - n); if (k <= 0) break; n += k
+                        if (n >= 376 && buf[0] == 0x47.toByte()) break }
                 }
-                val kind = when {
-                    n == 0 -> "vid"
-                    buf[0] == 0x47.toByte() && (n <= 188 || buf[188] == 0x47.toByte()) -> "MPEG-TS"
-                    String(buf, 0, minOf(n, 7)) == "#EXTM3U" -> "HLS"
+                val redirected = if (r.request.url.host != startHost) " (redirije sou yon lòt sèvè)" else ""
+                val head = "HTTP ${r.code} $type".trim() + redirected
+                when {
+                    n == 0 -> Probe("empty", "$head · repons vid")
+                    buf[0] == 0x47.toByte() && (n <= 188 || buf[188] == 0x47.toByte()) -> Probe("ts", "$head · MPEG-TS")
+                    String(buf, 0, minOf(n, 7)) == "#EXTM3U" -> Probe("hls", "$head · HLS")
                     else -> {
                         val all = String(buf, 0, n)
-                        val title = Regex("<title[^>]*>([^<]{1,80})", RegexOption.IGNORE_CASE).find(all)?.groupValues?.get(1)?.trim()
-                        val txt = (title?.let { "paj web: $it" } ?: all.take(90)).replace(Regex("[^\\x20-\\x7E]"), " ").replace(Regex("\\s+"), " ").trim()
-                        "\"" + hide(txt) + "\""
+                        val clean = { t: String -> hide(t.replace(Regex("[^\\x20-\\x7E]"), " ").replace(Regex("\\s+"), " ").trim()) }
+                        val title = Regex("<title[^>]*>([^<]{1,80})", RegexOption.IGNORE_CASE).find(all)?.groupValues?.get(1)?.let(clean).orEmpty()
+                        val isHtml = all.contains("<html", true) || all.contains("<!doctype", true)
+                        val body = if (!isHtml) clean(all) else clean(
+                            all.replace(Regex("(?is)<(script|style|head)[^>]*>.*?</\\1>"), " ").replace(Regex("(?s)<[^>]*>"), " ")
+                        )
+                        Probe(if (isHtml) "html" else "other",
+                            head + (if (isHtml) " · paj web" else "") + (if (title.isNotBlank()) " \"$title\"" else "") +
+                                (if (body.isNotBlank()) " · " + body.take(110) else ""))
                     }
                 }
-                "HTTP ${r.code} $type $kind".replace("  ", " ")
             }
-        }.getOrElse { hide(it.javaClass.simpleName + " " + (it.message ?: "")).take(120) }
+        }.getOrElse { Probe("error", hide(it.javaClass.simpleName + " " + (it.message ?: "")).take(120)) }
     }
+
+    /** Kèk sèvè bay videyo sèlman bay app yo rekonèt. Chèche yon User-Agent sèvè a aksepte. */
+    suspend fun findUserAgent(url: String): String? {
+        for (ua in ALT_USER_AGENTS) if (ua != USER_AGENT && probe(url, ua).isVideo) return ua
+        return null
+    }
+
+    /**
+     * Li kòmansman lis M3U founisè a (get.php) pou wè ki adrès li menm li bay pou videyo yo.
+     * Retounen adrès sèvè videyo a si li diferan de sa nou deja eseye; sinon null.
+     */
+    suspend fun discoverFromM3u(): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            val url = "${account.server}/get.php".toHttpUrl().newBuilder()
+                .addQueryParameter("username", account.username)
+                .addQueryParameter("password", account.password)
+                .addQueryParameter("type", "m3u_plus")
+                .addQueryParameter("output", "ts")
+                .build()
+            val client = http.newBuilder().connectTimeout(8, TimeUnit.SECONDS).readTimeout(10, TimeUnit.SECONDS).build()
+            client.newCall(Request.Builder().url(url).header("User-Agent", USER_AGENT).build()).execute().use { r ->
+                if (!r.isSuccessful) return@use null
+                val reader = r.body?.byteStream()?.bufferedReader() ?: return@use null
+                val marker = "/${account.username}/${account.password}/"
+                var found: String? = null
+                var lines = 0
+                while (lines++ < 400 && found == null) {
+                    val line = reader.readLine() ?: break
+                    if (line.length > 4000) break
+                    val l = line.trim()
+                    val at = l.indexOf(marker)
+                    if (l.startsWith("http", true) && at > 0) found = l.substring(0, at).removeSuffix("/live").trimEnd('/')
+                }
+                found?.takeIf { !it.equals(account.server, true) && !it.equals(altBases[account.server], true) }
+                    ?.also { altBases[account.server] = it }
+            }
+        }.getOrNull()
+    }
+
+    val altBase: String? get() = altBases[account.server]
+    fun restoreAltBase(base: String) { altBases[account.server] = base }
 }
