@@ -16,7 +16,7 @@
 .ttv-stage{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0;overflow:hidden;color:#fff;font-family:inherit;line-height:1.35;user-select:none}
 .ttv-stage>div{position:absolute;inset:0}
 .ttv-bg{background:radial-gradient(ellipse at 70% 30%,rgba(255,190,110,.35),transparent 55%),linear-gradient(160deg,#16324f 0%,#3b2a5a 45%,#8a4a2c 80%,#c98a3a 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px}
-.ttv-bg b{font-size:54px;font-weight:800;color:rgba(255,255,255,.14)}.ttv-bg span{font-size:20px;color:rgba(255,255,255,.3)}
+.ttv-bg b{font-size:54px;font-weight:800;color:rgba(255,255,255,.14)}.ttv-bg span{font-size:20px;color:rgba(255,255,255,.3)}.ttv-bg.msg b{font-size:34px;color:#fff}.ttv-bg.msg span{color:rgba(255,255,255,.88);max-width:82%;text-align:center}
 .ttv-bg img{max-width:260px;max-height:150px;object-fit:contain;margin-bottom:6px}
 .ttv-info{inset:auto!important;left:24px!important;top:24px!important;background:rgba(0,0,0,.78);border-radius:14px;padding:14px 18px;display:flex;gap:16px;align-items:center;max-width:620px}
 .ttv-info img{width:84px;height:56px;object-fit:contain}.ttv-info .n{font-size:32px;font-weight:700;color:#00E5FF}.ttv-info .t{font-size:22px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px}.ttv-info .c{font-size:15px;color:#9AA3C7}
@@ -124,10 +124,14 @@
         overlays(null); closeList(); stopVideo(); $(".ttv-info").hidden = true; T.bgSig = null; $(".ttv-f span").textContent = T.err || t("TV tès la ap tann yon playlist.");
       } else {
         scr.hidden = true;
-        const ch = cur(), bgSig = ch ? ch.id + "|" + ch.name : "none|" + (T.chErr || "");
+        const allHidden = !T.chErr && T.all.length > 0 && !T.chs.length;
+        const ch = cur(), bgSig = ch ? ch.id + "|" + ch.name : "none|" + (T.chErr || "") + "|" + allHidden;
+        $(".ttv-bg").classList.toggle("msg", !ch && !!(T.chErr || allHidden));
         if (bgSig !== T.bgSig) { T.bgSig = bgSig; $(".ttv-bg").innerHTML = ch
           ? `${ch.icon ? `<img src="${esc(ch.icon)}" alt="" onerror="this.remove()">` : ""}<b>${esc(ch.name.slice(0, 26))}</b><span>${esc(ch.num + " · " + (ch.categoryName || c.playlists[0].name || ""))}</span>`
-          : `<b>Customer TV</b><span>${esc(T.chErr || c.playlists[0].name || "")} · ${esc(t(T.chErr ? "chanèl tès" : "Ap chaje chanèl yo…"))}</span>`; }
+          : T.chErr ? `<b>${esc(t("Lis chanèl la pa ka chaje"))}</b><span>${esc(T.chErr)}</span><span>${esc(t("Peze ☰ pou eseye ankò."))}</span>`
+          : allHidden ? `<b>${esc(t("Tout chanèl yo kache"))}</b><span>${esc(t("Pakè a oswa reglaj paj Chanèl la kache tout {0} chanèl aparèy sa a.", T.all.length))}</span>`
+          : `<b>Customer TV</b><span>${esc(c.playlists[0].name || "")} · ${esc(t("Ap chaje chanèl yo…"))}</span>`; }
         overlays(T.brk ? null : c);
         $(".ttv-f span").textContent = T.chs.length ? t("{0} chanèl", T.chs.length) : t("Li montre sa panel la mete sou ekran an; li pa jwe vre chanèl yo.");
       }
@@ -203,6 +207,9 @@
       const c = T.cfg || {}, hid = new Set(c.hiddenChannels || []), hidC = new Set((c.hiddenCategories || []).map(String)), keep = cur()?.id;
       let list = T.all.filter((x) => !hid.has(x.id) && !hidC.has(x.categoryId));
       if (c.maxChannels > 0) list = list.slice(0, c.maxChannels);
+      // Non admin nan chanje nan paj Chanèl la (gwoup ak chanèl)
+      const cn = c.channelNames || {}, gn = c.categoryNames || {};
+      list = list.map((x) => (cn[x.id] || gn[x.categoryId]) ? { ...x, name: cn[x.id] || x.name, categoryName: gn[x.categoryId] || x.categoryName } : x);
       T.chs = list; const seen = new Map(); for (const x of list) if (!seen.has(x.categoryId)) seen.set(x.categoryId, x.categoryName || "—"); T.cats = [...seen].map(([id, name]) => ({ id, name }));
       const i = list.findIndex((x) => x.id === keep); T.idx = i >= 0 ? i : 0;
     }
@@ -222,6 +229,7 @@
       startVideo(ch);
     }
     function openList() {
+      if (playing() && !T.brk && !T.all.length) { T.chKey = ""; T.chErr = ""; T.bgSig = ""; render(); loadChannels(); return; } // ☰ = eseye ankò
       if (!playing() || T.brk || !T.chs.length) return; T.listOpen = true; T.cat = T.cat && T.cats.some((c) => c.id === T.cat) ? T.cat : cur()?.categoryId || T.cats[0]?.id || "";
       const box = $(".ttv-list"), rows = T.chs.filter((x) => x.categoryId === T.cat), shown = rows.slice(0, 400), id = cur()?.id;
       box.innerHTML = `<div class="col cats"><h4>${esc(t("Kategori"))}</h4>${T.cats.map((c) => `<button type="button" data-cat="${esc(c.id)}"${c.id === T.cat ? ' class="on"' : ""}><span>${esc(c.name)}</span></button>`).join("")}</div>
