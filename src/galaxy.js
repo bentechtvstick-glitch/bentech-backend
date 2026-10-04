@@ -98,6 +98,21 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   };
   ensure();
 
+  // Yon sèl fwa: retire 4 fo egzanp Channel Profile ki te vin ak panel la (yo te sèlman yon non + yon chif).
+  // Nou efase yo sèlman si yo egzakteman jan yo te ye; yon pakè admin nan kreye (pkg) pa janm touche.
+  if (!data().samplesRemoved) {
+    const SAMPLES = { "50 Channels Starter": 50, "Sports Plus": 45, "Haiti Bundle": 32, "USA Bundle": 110 };
+    const gone = new Set();
+    data().channelProfiles = (data().channelProfiles || []).filter((p) => {
+      const sample = p.pkg !== true && SAMPLES[p.name] === Number(p.channels);
+      if (sample) gone.add(p.name);
+      return !sample;
+    });
+    for (const d of data().devices) if (gone.has(d.channelProfile)) d.channelProfile = "";
+    data().samplesRemoved = true;
+    db.write().catch(() => {});
+  }
+
   const findDevice = deviceIndex(() => data().devices);
   const playlistsOf = (mac) => (data().devicePlaylists[mac] ??= []);
   const settings = () => data().settings || {};

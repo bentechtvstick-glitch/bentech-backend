@@ -2,32 +2,7 @@
   "customers": [],
   "devices": [],
   "activationCodes": [],
-  "channelProfiles": [
-    {
-      "name": "50 Channels Starter",
-      "channels": 50,
-      "customers": 540,
-      "tags": "General"
-    },
-    {
-      "name": "Sports Plus",
-      "channels": 45,
-      "customers": 340,
-      "tags": "Sports"
-    },
-    {
-      "name": "Haiti Bundle",
-      "channels": 32,
-      "customers": 268,
-      "tags": "Haiti"
-    },
-    {
-      "name": "USA Bundle",
-      "channels": 110,
-      "customers": 812,
-      "tags": "USA"
-    }
-  ],
+  "channelProfiles": [],
   "channels": [],
   "banners": [],
   "popups": [],
@@ -134,5 +109,6 @@
   "deviceHistory": [],
   "mediaAds": [],
   "bufferEvents": [],
-  "playbackEvents": []
+  "playbackEvents": [],
+  "samplesRemoved": true
 }
