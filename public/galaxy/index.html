@@ -179,6 +179,10 @@ td.up,input.up{text-transform:uppercase}input.up::placeholder{text-transform:non
 .chrow{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 24px;font-size:14px;border-radius:6px}
 .chrow.off{color:var(--faint);text-decoration:line-through}
 .chrow input,.cat input{accent-color:var(--blue2)}
+.cat{font-size:13px;padding:7px 6px;border-radius:8px;background:rgba(255,255,255,.04);margin-top:2px;color:var(--text,#fff)}
+.cat .catx{background:none;border:0;color:inherit;cursor:pointer;font-size:13px;width:22px;height:22px;padding:0;flex:none}
+.cat .catn{cursor:pointer;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat.off .catn{color:var(--faint);text-decoration:line-through}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line2);border-radius:10px;padding:10px 16px;z-index:40;box-shadow:0 10px 30px #000}
 
 /* koulè, chips, seleksyonè imoji, preview ticker */
@@ -578,7 +582,8 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="field"><label for="chProfile">Channel Profile</label><select id="chProfile"></select></div>
           <div class="field"><label for="chMax">Limit chanèl (0 = pa gen limit)</label><input type="number" min="0" id="chMax"></div>
         </div>
-        <div class="inline"><input type="text" id="chSearch" class="grow" placeholder="Chèche yon chanèl"><button class="btn small" id="chAllOn" type="button">Montre tout</button></div>
+        <div class="inline"><input type="text" id="chSearch" class="grow" placeholder="Chèche yon chanèl"><button class="btn small red" id="chHideShown" type="button">Kache sa ki nan lis la</button><button class="btn small green" id="chShowShown" type="button">Montre sa ki nan lis la</button><button class="btn small" id="chAllOn" type="button">Montre tout</button></div>
+        <p class="note">Etenn bouton yon gwoup pou kache tout chanèl li yo ak yon sèl klik. Klike sou non gwoup la pou wè chanèl li yo.</p>
         <p class="note" id="chCount"></p>
         <div class="chlist" id="chList"></div>
       </div>
@@ -1505,27 +1510,51 @@ async function loadChannels() {
     api("GET", "/galaxy/devices/lookup?mac=" + encodeURIComponent(dev.mac)).catch(() => dev),
   ]);
   dev = fresh;
-  chState = { chs, hid: new Set((dev.hiddenChannels || []).map(Number)), hidC: new Set((dev.hiddenCategories || []).map(String)) };
+  chState = { chs, hid: new Set((dev.hiddenChannels || []).map(Number)), hidC: new Set((dev.hiddenCategories || []).map(String)), open: new Set() };
   $("#chProfile").innerHTML = `<option value="">${t("Tout chanèl")}</option>` + profiles.map((p) => `<option value="${esc(p.name)}"${p.name === dev.channelProfile ? " selected" : ""}>${esc(p.name)}${p.channels ? " " + t("({0} chanèl)", p.channels) : ""}</option>`).join("");
   $("#chMax").value = dev.maxChannels || 0; $("#chBody").hidden = false; setMsg($("#chMsg"), ""); renderChList();
+}
+// Rechèch la gade non chanèl la AK non kategori a
+const chMatch = (c, q) => !q || c.name.toLowerCase().includes(q) || String(c.categoryName || "").toLowerCase().includes(q);
+const chFiltered = () => { const q = $("#chSearch").value.trim().toLowerCase(); return chState ? chState.chs.filter((c) => chMatch(c, q)) : []; };
+function chChanged(n, hide) {
+  const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep;
+  setMsg($("#chMsg"), t(hide ? "{0} chanèl kache. Peze Sove pou aplike l." : "{0} chanèl montre. Peze Sove pou aplike l.", n), false); $("#chMsg").className = "msg";
 }
 function renderChList() {
   const { chs, hid, hidC } = chState; const q = $("#chSearch").value.trim().toLowerCase();
   if (!chs.length) { $("#chList").innerHTML = `<div class="empty">${t("TV a poko voye lis chanèl li. Li voye l chak fwa li chaje playlist la.")}</div>`; $("#chCount").textContent = ""; return; }
   const shown = chs.filter((c) => !hid.has(c.id) && !hidC.has(c.categoryId)).length;
   $("#chCount").textContent = t("{0} sou {1} chanèl vizib (anvan limit Channel Profile la).", shown, chs.length);
-  const byCat = new Map(); for (const c of chs) { if (q && !c.name.toLowerCase().includes(q)) continue; if (!byCat.has(c.categoryId)) byCat.set(c.categoryId, { name: c.categoryName, items: [] }); byCat.get(c.categoryId).items.push(c); }
+  const byCat = new Map(); for (const c of chs) { if (!chMatch(c, q)) continue; if (!byCat.has(c.categoryId)) byCat.set(c.categoryId, { name: c.categoryName, items: [] }); byCat.get(c.categoryId).items.push(c); }
   let h = ""; for (const [cid, g] of byCat) {
-    h += `<label class="cat"><input type="checkbox" data-cat="${esc(cid)}"${hidC.has(cid) ? "" : " checked"}> ${esc(g.name || t("San kategori"))} <span class="note">(${g.items.length})</span></label>`;
-    for (const c of g.items) { const off = hid.has(c.id) || hidC.has(cid); h += `<label class="chrow${off ? " off" : ""}"><input type="checkbox" data-ch="${c.id}"${hid.has(c.id) ? "" : " checked"}${hidC.has(cid) ? " disabled" : ""}> ${c.num}. ${esc(c.name)}</label>`; }
+    // Yon gwoup = yon bouton: etenn li pou kache tout chanèl li yo. Klike sou non an pou wè chanèl yo.
+    const gOff = hidC.has(cid), open = !!q || chState.open.has(cid), nHid = gOff ? g.items.length : g.items.filter((c) => hid.has(c.id)).length;
+    h += `<div class="cat${gOff ? " off" : ""}"><button class="catx" type="button" data-open="${esc(cid)}" aria-expanded="${open}" aria-label="${esc(t("Louvri gwoup la"))}">${open ? "▾" : "▸"}</button><label class="sw" title="${esc(t("Montre / kache tout gwoup la"))}"><input type="checkbox" data-cat="${esc(cid)}"${gOff ? "" : " checked"}><i></i></label><span class="catn" data-open="${esc(cid)}">${esc(g.name || t("San kategori"))}</span><span class="note">(${g.items.length})</span>${gOff ? `<span class="pill p-bad">${t("Gwoup kache")}</span>` : nHid ? `<span class="pill p-warn">${esc(t("{0} kache", nHid))}</span>` : ""}</div>`;
+    if (open) for (const c of g.items) { const off = hid.has(c.id) || hidC.has(cid); h += `<label class="chrow${off ? " off" : ""}"><input type="checkbox" data-ch="${c.id}"${hid.has(c.id) ? "" : " checked"}${hidC.has(cid) ? " disabled" : ""}> ${c.num}. ${esc(c.name)}</label>`; }
   }
   $("#chList").innerHTML = h || `<div class="empty">${t("Pa gen chanèl ki koresponn.")}</div>`;
 }
 $("#chSearch").addEventListener("input", renderChList);
+$("#chList").addEventListener("click", (e) => {
+  const o = e.target.closest("[data-open]"); if (!o || !chState) return;
+  const cid = o.dataset.open; chState.open.has(cid) ? chState.open.delete(cid) : chState.open.add(cid);
+  const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep;
+});
 $("#chList").addEventListener("change", (e) => {
   const el = e.target; if (el.dataset.cat) { el.checked ? chState.hidC.delete(el.dataset.cat) : chState.hidC.add(el.dataset.cat); }
   if (el.dataset.ch) { const id = +el.dataset.ch; el.checked ? chState.hid.delete(id) : chState.hid.add(id); }
   const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep; setMsg($("#chMsg"), "Chanjman yo poko sove.", false); $("#chMsg").className = "msg";
+});
+$("#chHideShown").addEventListener("click", () => {
+  const items = chFiltered(); for (const c of items) chState.hid.add(c.id); chChanged(items.length, true);
+});
+$("#chShowShown").addEventListener("click", () => {
+  const items = chFiltered(); const ids = new Set(items.map((c) => c.id));
+  // Si kategori a te kache nèt: louvri l, men kite lòt chanèl li yo (ki pa nan lis la) kache
+  for (const cid of new Set(items.map((c) => c.categoryId))) if (chState.hidC.delete(cid)) for (const o of chState.chs) if (o.categoryId === cid && !ids.has(o.id)) chState.hid.add(o.id);
+  for (const id of ids) chState.hid.delete(id);
+  chChanged(items.length, false);
 });
 $("#chAllOn").addEventListener("click", () => { chState.hid.clear(); chState.hidC.clear(); renderChList(); });
 $("#chSave").addEventListener("click", async () => {
