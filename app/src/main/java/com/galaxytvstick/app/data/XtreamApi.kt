@@ -338,7 +338,7 @@ class XtreamApi(private val account: Account) {
      * Pa janm retounen username/password.
      */
     /** kind: "ts", "hls" (videyo) · "html", "empty", "other", "error" (pa videyo). */
-    class Probe(val kind: String, val summary: String) { val isVideo get() = kind == "ts" || kind == "hls" }
+    class Probe(val kind: String, val summary: String, val code: Int = 0) { val isVideo get() = kind == "ts" || kind == "hls" }
 
     suspend fun probe(url: String, ua: String = USER_AGENT): Probe = withContext(Dispatchers.IO) {
         runCatching {
@@ -356,9 +356,9 @@ class XtreamApi(private val account: Account) {
                 val redirected = if (r.request.url.host != startHost) " (redirije sou yon lòt sèvè)" else ""
                 val head = "HTTP ${r.code} $type".trim() + redirected
                 when {
-                    n == 0 -> Probe("empty", "$head · repons vid")
-                    buf[0] == 0x47.toByte() && (n <= 188 || buf[188] == 0x47.toByte()) -> Probe("ts", "$head · MPEG-TS")
-                    String(buf, 0, minOf(n, 7)) == "#EXTM3U" -> Probe("hls", "$head · HLS")
+                    n == 0 -> Probe("empty", "$head · repons vid", r.code)
+                    buf[0] == 0x47.toByte() && (n <= 188 || buf[188] == 0x47.toByte()) -> Probe("ts", "$head · MPEG-TS", r.code)
+                    String(buf, 0, minOf(n, 7)) == "#EXTM3U" -> Probe("hls", "$head · HLS", r.code)
                     else -> {
                         val all = String(buf, 0, n)
                         val clean = { t: String -> hide(t.replace(Regex("[^\\x20-\\x7E]"), " ").replace(Regex("\\s+"), " ").trim()) }
@@ -369,7 +369,7 @@ class XtreamApi(private val account: Account) {
                         )
                         Probe(if (isHtml) "html" else "other",
                             head + (if (isHtml) " · paj web" else "") + (if (title.isNotBlank()) " \"$title\"" else "") +
-                                (if (body.isNotBlank()) " · " + body.take(110) else ""))
+                                (if (body.isNotBlank()) " · " + body.take(110) else ""), r.code)
                     }
                 }
             }

@@ -120,4 +120,8 @@
     <string name="vod_error_playback">Videyo sa a pa ka jwe (%1$s).</string>
     <string name="epg_catchup_hint">⏪ OK = gade l an catch-up</string>
     <string name="catchup_unavailable">Chanèl sa a pa gen catch-up pou pwogram sa a.</string>
+    <string name="stream_unavailable">Chanèl sa a pa disponib kounye a. Eseye yon lòt chanèl.</string>
+    <string name="stream_no_network">Pa gen koneksyon ak sèvè a. Verifye entènèt la epi eseye ankò.</string>
+    <string name="stream_refused">Sèvè a refize chanèl sa a (abònman an oswa kantite ekran pèmèt).</string>
+    <string name="stream_unsupported">Aparèy sa a pa ka jwe fòma chanèl sa a.</string>
 </resources>

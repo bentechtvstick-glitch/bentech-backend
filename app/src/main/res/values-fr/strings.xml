@@ -97,4 +97,8 @@
     <string name="vod_error_playback">Cette vidéo ne peut pas être lue (%1$s).</string>
     <string name="epg_catchup_hint">⏪ OK = voir en replay</string>
     <string name="catchup_unavailable">Le replay n\'est pas disponible pour ce programme.</string>
+    <string name="stream_unavailable">Cette chaîne n\'est pas disponible pour le moment. Essayez une autre chaîne.</string>
+    <string name="stream_no_network">Impossible de joindre le serveur. Vérifiez la connexion internet et réessayez.</string>
+    <string name="stream_refused">Le serveur a refusé cette chaîne (abonnement ou nombre d\'écrans).</string>
+    <string name="stream_unsupported">Cet appareil ne peut pas lire le format de cette chaîne.</string>
 </resources>

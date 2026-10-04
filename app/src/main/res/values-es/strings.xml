@@ -97,4 +97,8 @@
     <string name="vod_error_playback">Este video no se puede reproducir (%1$s).</string>
     <string name="epg_catchup_hint">⏪ OK = ver en catch-up</string>
     <string name="catchup_unavailable">Catch-up no disponible para este programa.</string>
+    <string name="stream_unavailable">Este canal no está disponible ahora. Prueba otro canal.</string>
+    <string name="stream_no_network">No se puede conectar con el servidor. Revisa la conexión a internet e inténtalo de nuevo.</string>
+    <string name="stream_refused">El servidor rechazó este canal (suscripción o límite de pantallas).</string>
+    <string name="stream_unsupported">Este dispositivo no puede reproducir el formato de este canal.</string>
 </resources>

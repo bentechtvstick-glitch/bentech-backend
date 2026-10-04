@@ -318,24 +318,40 @@ class PlayerActivity : AppCompatActivity() {
                             if (found) { playChannel(at, mode = 0, attempt = 0, alt = alt, stage = stage); return@launch }
                         }
                     }
-                    b.errorText.text = getString(R.string.error_playback, code)
-                    b.errorText.visibility = View.VISIBLE
+                    // Mesaj senp pou kliyan an; detay teknik la an piti anba l (epi nan panel la)
+                    showPlayError(getString(R.string.stream_unavailable), code)
                     lastError = code
                     reportStatus()
-                    // Montre sa sèvè playlist la reponn vre, pou konnen kote pwoblèm nan ye
                     if (ch != null) {
+                        // Gade sa sèvè a reponn vre (egz: yon paj web olye yon videyo) pou bay bon mesaj la
                         val pr = api.probe(if (direct) ch.directUrl!! else api.streamUrl(ch, "ts", false))
-                        val diag = "v${BuildConfig.VERSION_NAME} · ${pr.summary}" +
+                        val diag = "v${BuildConfig.VERSION_NAME} · $code · ${pr.summary}" +
                             (if (direct) "" else " · lòt sèvè: " + (if (api.altBase != null) "wi, eseye" else "okenn") + " · lòt User-Agent: okenn pa mache")
+                        val msg = when {
+                            pr.kind == "error" -> R.string.stream_no_network
+                            pr.code == 401 || pr.code == 403 || pr.code == 429 -> R.string.stream_refused
+                            pr.isVideo -> R.string.stream_unsupported
+                            else -> R.string.stream_unavailable
+                        }
                         if (index == at && b.errorText.visibility == View.VISIBLE) {
-                            b.errorText.text = getString(R.string.error_playback, code) + "\n" + diag
-                            lastError = "$code · $diag"
+                            showPlayError(getString(msg), diag)
+                            lastError = diag
                             reportStatus()
                         }
                     }
                 }
             }
         }
+    }
+
+    /** Mesaj erè: yon fraz klè an gwo, detay teknik la an piti epi pal anba l. */
+    private fun showPlayError(message: String, detail: String) {
+        val text = android.text.SpannableString(message + "\n" + detail)
+        val from = message.length + 1
+        text.setSpan(android.text.style.RelativeSizeSpan(0.5f), from, text.length, 0)
+        text.setSpan(android.text.style.ForegroundColorSpan(0x99FFFFFF.toInt()), from, text.length, 0)
+        b.errorText.text = text
+        b.errorText.visibility = View.VISIBLE
     }
 
     /** Chanèl la jwe: sonje fason ki mache a (fòm lyen, sèvè videyo, User-Agent) pou pwochen chanèl ak pwochen ouvèti yo. */
