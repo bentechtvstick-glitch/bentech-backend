@@ -714,10 +714,12 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const hg = new Set((p.hiddenGroups || []).map(nkey)), hc = new Set((p.hiddenChannels || []).map(nkey));
     const gn = Object.fromEntries(Object.entries(p.groupNames || {}).map(([k, v]) => [nkey(k), v]));
     const cn = Object.fromEntries(Object.entries(p.channelNames || {}).map(([k, v]) => [nkey(k), v]));
+    // mode "only": TV a wè sèlman gwoup ki nan shownGroups (nouvo gwoup founisè a ajoute rete kache)
+    const only = p.mode === "only", sg = new Set((p.shownGroups || []).map(nkey));
     const cats = new Set(); const out = { hiddenChannels: [], hiddenCategories: [], categoryNames: {}, channelNames: {} };
     for (const c of chs) {
       const g = nkey(c.categoryName), n = nkey(c.name), cid = String(c.categoryId);
-      if (hg.has(g)) cats.add(cid);
+      if (only ? !sg.has(g) : hg.has(g)) cats.add(cid);
       if (gn[g]) out.categoryNames[cid] = gn[g];
       if (hc.has(n)) out.hiddenChannels.push(Number(c.id));
       if (cn[n]) out.channelNames[String(c.id)] = cn[n];
