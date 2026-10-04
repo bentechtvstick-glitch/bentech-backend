@@ -1355,8 +1355,8 @@ document.addEventListener("click", (e) => { const g = e.target.closest("[data-go
 // ------------------------------------------------------------ Paj koleksyon (CRUD)
 const PLANS = ["Trial", "1 Month", "3 Months", "6 Months", "12 Months"];
 const CRUD = {
-  cust: { upper: 1, col: "customers", id: "id", title: "Kliyan yo", sub: "Kliyan yo, plan yo ak dat ekspirasyon.", auto: () => "C-" + (1000 + Math.floor(Math.random() * 9000)),
-    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS, def: () => "1 Month" }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "datetime" }] },
+  cust: { upper: 1, col: "customers", id: "id", title: "Kliyan yo", sub: "Kliyan yo, plan yo ak dat ekspirasyon. Ak \"Plan otomatik\" limen, plan ak ekspirasyon an soti nan founisè playlist la poukont yo.", auto: () => "C-" + (1000 + Math.floor(Math.random() * 9000)),
+    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS, def: () => "1 Month" }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "datetime" }, { k: "autoPlan", l: "Plan otomatik (founisè)", type: "bool", def: () => true }] },
   prof: { col: "channel-profiles", id: "name", title: "Channel Profiles", sub: "Pakè chanèl. Kantite chanèl la se limit TV a.",
     fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }, { k: "customers", l: "Kliyan", type: "number" }, { k: "tags", l: "Tags" }] },
   cats: { col: "categories", id: "name", title: "Kategori", sub: "Kategori chanèl yo.", fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }] },
@@ -1419,6 +1419,7 @@ function openCrudForm(item) {
   $("#crudDelete").hidden = !item; $("#crudConfirm").innerHTML = ""; setMsg($("#crudMsg"), "");
   $("#crudFields").innerHTML = C.fields.filter((f) => !f.ro).map((f) => {
     let v = item ? item[f.k] : (f.def ? f.def() : f.k === C.id && C.auto ? C.auto() : "");
+    if (item && v === undefined && f.type === "bool" && f.def) v = f.def();
     const id = "cf_" + f.k, lab = `<label for="${id}">${esc(t(f.l))}${f.req ? " *" : ""}</label>`;
     let input;
     if (f.type === "bool") input = `<div class="inline"><label class="sw"><input type="checkbox" id="${id}"${v ? " checked" : ""}><i></i></label></div>`;
@@ -1433,7 +1434,9 @@ function openCrudForm(item) {
   // Kliyan: lè w chwazi yon plan, dat ekspirasyon an ranpli poukont li (Trial = 24 è, 1 Month = 1 mwa…). Ou ka chanje l apre.
   if (crud.name === "cust" && $("#cf_plan") && $("#cf_expiry")) {
     const fill = () => { const v = planExpiry($("#cf_plan").value); if (v) $("#cf_expiry").value = v; };
-    $("#cf_plan").addEventListener("change", fill);
+    // Si w chanje plan an alamen, se ou ki deside: etenn "Plan otomatik" pou founisè a pa ekraze l
+    $("#cf_plan").addEventListener("change", () => { fill(); if ($("#cf_autoPlan")) $("#cf_autoPlan").checked = false; });
+    $("#cf_expiry").addEventListener("change", () => { if ($("#cf_autoPlan")) $("#cf_autoPlan").checked = false; });
     if (!item) fill();
   }
   $("#crudFormCard").hidden = false; $("#crudFormCard").scrollIntoView({ behavior: "smooth", block: "start" });

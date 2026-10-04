@@ -401,6 +401,8 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Abònman": [null, "Subscriptions", "Abonnements", "Suscripciones"],
     "Kòd aktivasyon": [null, "Activation Codes", "Codes d'activation", "Códigos de activación"],
     "Providers": [null, "Providers", "Fournisseurs", "Proveedores"],
+    "Plan otomatik (founisè)": [null, "Automatic plan (provider)", "Forfait automatique (fournisseur)", "Plan automático (proveedor)"],
+    "Kliyan yo, plan yo ak dat ekspirasyon. Ak \"Plan otomatik\" limen, plan ak ekspirasyon an soti nan founisè playlist la poukont yo.": [null, "Customers, plans and expiry dates. With \"Automatic plan\" on, the plan and expiry come from the playlist provider automatically.", "Clients, forfaits et dates d'expiration. Avec « Forfait automatique » activé, le forfait et l'expiration viennent automatiquement du fournisseur de la playlist.", "Clientes, planes y fechas de vencimiento. Con \"Plan automático\" activado, el plan y el vencimiento vienen del proveedor de la playlist automáticamente."],
     "Channel Profiles": [null, "Channel Profiles", "Profils de chaînes", "Perfiles de canales"],
     "Kategori": [null, "Categories", "Catégories", "Categorías"],
     "Peyi": [null, "Countries", "Pays", "Países"],

@@ -216,6 +216,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const now = Math.floor(Date.now() / 1000);
     const zone = tz();
     const playlists = playlistsOf(mac);
+    // Chak 6 è: reverifye plan/ekspirasyon kliyan an kay founisè a (an aryè plan, TV a pa tann)
+    syncCustomerFromProvider(device).then((c) => { if (c) syncTvs(); }).catch(() => {});
 
     // ---- Estati ----
     const customer = device.customer
@@ -503,6 +505,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (b.resetDeviceKey) device.deviceKey = ""; // pwochen fwa app la anrejistre, li pran nouvo kle a
     await db.write();
     auditLog("device-update", `Device ${device.mac} updated`, admin(req));
+    if (b.customer !== undefined) await syncCustomerFromProvider(device, { force: true });
     syncTvs();
     res.json(adminDevice(device));
   });
@@ -666,6 +669,74 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     return u.replace(/\/(player_api\.php|get\.php|xmltv\.php)[^]*$/i, "").replace(/\/+$/, "");
   };
   /** Prepare yon kliyan Xtream (player_api.php) pou yon playlist. Retounen { error } oswa { get, host, base }. */
+  // ---- Plan ak ekspirasyon kliyan an soti nan founisè a (Xtream user_info) ----
+
+  const customerOf = (device) => device?.customer
+    ? (data().customers || []).find((c) => same(c.name, device.customer) || c.id === device.customer) || null
+    : null;
+
+  /** Segonn → "YYYY-MM-DDTHH:MM" nan zòn lè panel la (menm fòma ak kaz Ekspirasyon an). */
+  const localStamp = (sec) => new Intl.DateTimeFormat("sv-SE", {
+    timeZone: tz(), year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false,
+  }).format(new Date(sec * 1000)).replace(" ", "T").replace(/^(\d{4}-\d{2}-\d{2})T24:/, "$1T00:");
+
+  const planForDays = (days) => days < 8 ? "Trial" : days <= 49 ? "1 Month" : days <= 137 ? "3 Months" : days <= 274 ? "6 Months" : "12 Months";
+
+  /**
+   * Plan selon founisè a. Xtream pa bay non pakè a, donk nou dedui l:
+   * - kont esè (is_trial) → Trial
+   * - premye fwa nou wè kont lan → dire total li (kreyasyon → ekspirasyon)
+   * - founisè a pwolonje dat la (renouvèlman) → dire renouvèlman an
+   * - anyen pa chanje → kite plan an jan l ye
+   */
+  function providerPlan(u, customer) {
+    if (String(u.is_trial) === "1") return "Trial";
+    const exp = Number(u.exp_date), created = Number(u.created_at), prev = Number(customer.providerExp) || 0;
+    if (!(exp > 0)) return null;
+    const now = Date.now() / 1000;
+    if (prev > 0) return exp > prev + 86400 ? planForDays((exp - Math.max(prev, now)) / 86400) : null;
+    return created > 0 && exp > created ? planForDays((exp - created) / 86400) : null;
+  }
+
+  const SYNC_EVERY_MS = 6 * 60 * 60 * 1000;
+  const syncing = new Set();
+
+  /**
+   * Mete plan + ekspirasyon kliyan an ajou ak sa founisè playlist la di.
+   * Sèlman si kliyan an gen "Plan otomatik" limen (autoPlan !== false) epi aparèy la gen yon playlist.
+   */
+  async function syncCustomerFromProvider(device, { force = false } = {}) {
+    const customer = customerOf(device);
+    if (!customer || customer.autoPlan === false) return null;
+    const pl = playlistsOf(device.mac)[0];
+    if (!pl) return null;
+    if (!force && customer.providerSyncAt && Date.now() - Date.parse(customer.providerSyncAt) < SYNC_EVERY_MS) return null;
+    const key = String(customer.id || customer.name);
+    if (syncing.has(key)) return null;
+    const cl = xtreamClient(pl);
+    if (cl.error) return null;
+    syncing.add(key);
+    try {
+      customer.providerSyncAt = new Date().toISOString(); // menm si l echwe: pa relanse chak segonn
+      const info = await cl.get("").catch(() => null);
+      const u = info?.user_info;
+      if (!u || Number(u.auth) === 0) return null;
+      const plan = providerPlan(u, customer);
+      if (plan) customer.plan = plan;
+      const exp = Number(u.exp_date);
+      customer.providerExp = exp > 0 ? exp : 0;
+      customer.expiry = exp > 0 ? localStamp(exp) : ""; // pa gen dat = kont san limit
+      const ps = String(u.status || "").toLowerCase();
+      if (String(customer.status || "").toLowerCase() !== "suspended") {
+        if (ps === "expired" || (exp > 0 && exp * 1000 < Date.now())) customer.status = "Expired";
+        else if (ps === "active") customer.status = "Active";
+      }
+      customer.providerStatus = String(u.status || "");
+      await db.write();
+      return customer;
+    } catch { return null; } finally { syncing.delete(key); }
+  }
+
   function xtreamClient({ server, username, password }) {
     const base = normServer(server);
     if (!base) return { error: "Mete adrès sèvè a (DNS) pou n ka teste playlist la." };
@@ -736,6 +807,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const pl = playlistsOf(device.mac).find((p) => p.id === req.params.id);
     if (!pl) return res.status(404).json({ ok: false, error: "Playlist pa jwenn" });
     const out = await xtreamTest(pl);
+    if (out.ok) { await syncCustomerFromProvider(device, { force: true }); syncTvs(); }
     auditLog("playlist-test", `Playlist "${pl.name}" on ${device.mac}: ${out.ok ? out.status : out.error}`, admin(req));
     res.json(out);
   });
@@ -774,6 +846,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     data().deletedDevices = data().deletedDevices.filter((m) => m !== device.mac);
     await db.write();
     auditLog("playlist-add", `Playlist "${playlist.name}" added to ${device.mac}`, admin(req));
+    await syncCustomerFromProvider(device, { force: true });
     syncTvs();
     const { password: _pw, ...safe } = playlist;
     res.status(201).json({ ok: true, playlist: safe, device: adminDevice(device) });
@@ -789,6 +862,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     }
     if (req.body?.server === "") pl.server = "";
     await db.write();
+    await syncCustomerFromProvider(device, { force: true });
     syncTvs();
     auditLog("playlist-update", `Playlist "${pl.name}" updated on ${device.mac}`, admin(req));
     res.json(adminDevice(device));
