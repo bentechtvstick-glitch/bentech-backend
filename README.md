@@ -86,7 +86,7 @@ Estati an dirèk ak kòmand yo rete an memwa (yo pa chaje db.json). Si ou gen pl
 
 ## Panel konplè
 
-Panel `/galaxy` la gen paj sa yo: **Dashboard, Live TV, Devices, Channels, Customers, Providers, Channel Profiles, Live Events, Broadcast, Media Ads, Ticker, Chyron, Banners, Pop-ups, Categories, Countries, Regions, Languages, Admin Users, Audit Logs, System**.
+Panel `/galaxy` la gen paj sa yo: **Dashboard, Live TV, Devices, Channels, Customers, Channel Profiles, Live Events, Broadcast, Media Ads, Ticker, Chyron, Banners, Pop-ups, Categories, Countries, Regions, Languages, Admin Users, Audit Logs, System**.
 
 - **Devices** montre tout aparèy yo (menm kolòn ak panel BenTech la). Yon aparèy DVC-… ki pa gen MAC ka **konekte** ak TV Galaxy li a (Add Provider → tape MAC la → Konekte).
 - **⚡ Teste playlist la**: nan fòm Ajoute Playlist la (oswa sou yon playlist ki deja sove), backend la kontakte sèvè Xtream la an vre epi l montre si kont lan mache: estati, dat ekspirasyon, koneksyon (aktif / maks), kantite chanèl live ak kategori.

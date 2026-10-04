@@ -405,7 +405,6 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <button class="tab navlink" role="tab" data-tab="ch" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Chanèl</span></button>
       <div class="navsep"></div>
       <button class="tab navlink" role="tab" data-tab="cust" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 3.1a4 4 0 0 1 0 7.8M22 21a7 7 0 0 0-4-6.3"/></svg><span>Kliyan yo</span></button>
-      <button class="tab navlink" role="tab" data-tab="prov" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/></svg><span>Providers</span></button>
       <button class="tab navlink" role="tab" data-tab="prof" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/><circle cx="18" cy="17" r="3"/></svg><span>Channel Profiles</span></button>
       <div class="navsep"></div>
       <button class="tab navlink" role="tab" data-tab="ev" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/></svg><span>Live Events</span></button>
@@ -550,7 +549,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <form id="plForm" autocomplete="off" style="display:flex;flex-direction:column;gap:12px">
               <div class="label">Ajoute Playlist</div>
               <div class="field"><label for="plName">Non Playlist</label><input type="text" id="plName" placeholder="Egz: Salon"></div>
-              <div class="field"><label for="plServer">Sèvè (DNS)</label><input type="text" id="plServer" list="provList" placeholder="http://dns.example.com:8080"><datalist id="provList"></datalist></div>
+              <div class="field"><label for="plServer">Sèvè (DNS)</label><input type="text" id="plServer" placeholder="http://dns.example.com:8080"></div>
               <div class="row2">
                 <div class="field"><label for="plUser">Username</label><input type="text" id="plUser"></div>
                 <div class="field"><label for="plPass">Password</label><input type="text" id="plPass"></div>
@@ -1129,7 +1128,6 @@ async function selectDevice(mac, jump) {
   if (!customers.length) customers = await list("customers").catch(() => []);
   renderDevice();
   renderLinkBox();
-  list("providers").then((ps) => { $("#provList").innerHTML = ps.filter((x) => x.enabled !== false && x.url).map((x) => `<option value="${esc(x.url)}">${esc(x.name || "")}</option>`).join(""); }).catch(() => {});
   devChannels = await api("GET", `/galaxy/devices/${encodeURIComponent(mac)}/channels`).catch(() => []);
   renderRemoteChannels();
   refreshDevLive();
@@ -1356,9 +1354,7 @@ document.addEventListener("click", (e) => { const g = e.target.closest("[data-go
 const PLANS = ["1 Month", "3 Months", "6 Months", "12 Months"];
 const CRUD = {
   cust: { upper: 1, col: "customers", id: "id", title: "Kliyan yo", sub: "Kliyan yo, plan yo ak dat ekspirasyon.", auto: () => "C-" + (1000 + Math.floor(Math.random() * 9000)),
-    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "date" }] },
-  prov: { col: "providers", id: "id", title: "Providers", sub: "Sèvè IPTV yo. Yo parèt kòm chwa nan fòm Ajoute Playlist la.", auto: () => "P-" + Date.now().toString(36).toUpperCase(),
-    fields: [{ k: "name", l: "Name", req: 1 }, { k: "type", l: "Tip", opts: ["Xtream Codes", "M3U", "Direct Stream"] }, { k: "url", l: "URL / DNS", req: 1, wide: 1 }, { k: "priority", l: "Priyorite", type: "number" }, { k: "enabled", l: "Aktif", type: "bool", def: () => true }, { k: "isDefault", l: "Pa defo", type: "bool" }] },
+    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "date" }] }, { k: "url", l: "URL / DNS", req: 1, wide: 1 }, { k: "priority", l: "Priyorite", type: "number" }, { k: "enabled", l: "Aktif", type: "bool", def: () => true }, { k: "isDefault", l: "Pa defo", type: "bool" }] },
   prof: { col: "channel-profiles", id: "name", title: "Channel Profiles", sub: "Pakè chanèl. Kantite chanèl la se limit TV a.",
     fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }, { k: "customers", l: "Kliyan", type: "number" }, { k: "tags", l: "Tags" }] },
   cats: { col: "categories", id: "name", title: "Kategori", sub: "Kategori chanèl yo.", fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }] },
