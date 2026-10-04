@@ -40,7 +40,7 @@
     <string name="epg_next_fmt">Next: %1$s  %2$s</string>
     <string name="epg_empty">The IPTV server didn\'t send a guide for these channels.</string>
     <string name="epg_error">The guide couldn\'t load. %1$s</string>
-    <string name="epg_play_hint">OK = watch  •  ⏪ = catch-up  •  ◀ ▶ = move in time  •  ⏪⏩ = 2 h  •  BACK = exit</string>
+    <string name="epg_play_hint">OK = select channel  •  OK again = full screen  •  ◀ ▶ = time  •  BACK = categories</string>
     <string name="label_mac">MAC ADDRESS</string>
     <string name="label_device_key">DEVICE KEY</string>
     <string name="waiting_playlist">Waiting for provider to activate…</string>
@@ -101,4 +101,5 @@
     <string name="stream_no_network">Can\'t reach the server. Check the internet connection and try again.</string>
     <string name="stream_refused">The server refused this channel (subscription or screen limit).</string>
     <string name="stream_unsupported">This device can\'t play this channel\'s format.</string>
+    <string name="rail_tv">Live TV</string>
 </resources>

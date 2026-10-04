@@ -52,7 +52,7 @@
     <string name="epg_next_fmt">Apre: %1$s  %2$s</string>
     <string name="epg_empty">Sèvè IPTV a pa voye okenn gid pou chanèl sa yo.</string>
     <string name="epg_error">Gid la pa ka chaje. %1$s</string>
-    <string name="epg_play_hint">OK = gade  •  ⏪ = catch-up  •  ◀ ▶ = deplase nan tan  •  ⏪⏩ = 2 è  •  BACK = soti</string>
+    <string name="epg_play_hint">OK = chwazi chanèl  •  OK ankò = plen ekran  •  ◀ ▶ = tan  •  BACK = kategori</string>
 
     <!-- Aktivasyon (MAC) -->
     <string name="label_mac">MAC ADDRESS</string>
@@ -124,4 +124,5 @@
     <string name="stream_no_network">Pa gen koneksyon ak sèvè a. Verifye entènèt la epi eseye ankò.</string>
     <string name="stream_refused">Sèvè a refize chanèl sa a (abònman an oswa kantite ekran pèmèt).</string>
     <string name="stream_unsupported">Aparèy sa a pa ka jwe fòma chanèl sa a.</string>
+    <string name="rail_tv">TV an dirèk</string>
 </resources>

@@ -25,6 +25,15 @@ import com.galaxytvstick.app.data.Program
 import com.galaxytvstick.app.data.XtreamApi
 import com.galaxytvstick.app.databinding.ActivityEpgBinding
 import com.galaxytvstick.app.databinding.ItemEpgRowBinding
+import android.os.Handler
+import android.os.Looper
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.galaxytvstick.app.data.Category
+import com.galaxytvstick.app.databinding.ItemCategoryBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -33,14 +42,16 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Gid TV an griy (chanèl × lè), tankou TiviMate.
- * Fenèt la montre 2 èdtan; ◀ ▶ nan kwen yo deplase l 30 minit.
+ * Ekran TV prensipal la: meni agoch, kategori, ti apèsi videyo an dirèk ak enfo pwogram nan anlè,
+ * epi gid la an griy (chanèl × lè) anba. Fenèt la montre 1 è 30; ◀ ▶ nan kwen yo deplase l 30 minit.
+ * OK sou yon chanèl = mete l nan apèsi a; OK ankò = plen ekran.
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class EpgActivity : AppCompatActivity() {
 
     companion object {
         private const val SLOT_MS = 30 * 60 * 1000L
-        private const val WINDOW_MS = 4 * SLOT_MS           // 2 èdtan
+        private const val WINDOW_MS = 3 * SLOT_MS           // 1 è 30
         private const val MAX_BACK_MS = 2 * 60 * 60 * 1000L  // pa ale plis pase 2 è anvan
         private const val MAX_FORWARD_MS = 22 * 60 * 60 * 1000L
     }
@@ -58,6 +69,18 @@ class EpgActivity : AppCompatActivity() {
     /** Konbyen tan nou ka rekile: jiska achiv catch-up la (maks 7 jou), sinon 2 è. */
     private var maxBackMs = MAX_BACK_MS
     private lateinit var adapter: RowAdapter
+
+    // Kategori
+    private val catAdapter = CatAdapter()
+    private var selectedCat = ChannelLists.CAT_ALL
+    private var pendingCat = ChannelLists.CAT_ALL
+    private val handler = Handler(Looper.getMainLooper())
+    private val applyPendingCat = Runnable { if (pendingCat != selectedCat) applyCategory(pendingCat) }
+
+    // Ti apèsi videyo a
+    private var player: ExoPlayer? = null
+    private var previewCh: Channel? = null
+    private val startPreviewLater = Runnable { previewCh?.let { startPreview(it) } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,6 +100,20 @@ class EpgActivity : AppCompatActivity() {
         b.rows.adapter = adapter
         b.rows.itemAnimator = null
         adapter.items = channels
+
+        b.playlistName.text = account.name ?: account.username
+        b.categories.layoutManager = LinearLayoutManager(this)
+        b.categories.adapter = catAdapter
+        b.categories.itemAnimator = null
+        catAdapter.items = ChannelLists.categories(this)
+        catAdapter.notifyDataSetChanged()
+
+        b.railTv.setOnClickListener { (previewCh ?: channels.firstOrNull())?.let { openFull(it) } }
+        b.railMovies.setOnClickListener { startActivity(Intent(this, VodActivity::class.java).putExtra(VodActivity.EXTRA_KIND, "movie")) }
+        b.railSeries.setOnClickListener { startActivity(Intent(this, VodActivity::class.java).putExtra(VodActivity.EXTRA_KIND, "series")) }
+
+        previewCh = ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId } ?: channels.firstOrNull()
+        previewCh?.let { b.previewLogo.load(it.icon) { error(R.drawable.ic_tv) } }
         // Lè kliyan an desann nan lis la pandan l nan tan ki pase: chaje achiv nouvo chanèl yo
         b.rows.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(rv: RecyclerView, state: Int) {
@@ -104,6 +141,8 @@ class EpgActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         overlay.start()
+        // Tann yon ti moman pou player plen ekran an lage koneksyon l anvan (playlist ki pèmèt 1 sèl ekran)
+        handler.postDelayed(startPreviewLater, 800)
         // Di panel la kliyan an ap gade gid la
         val last = ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId }
         val body = org.json.JSONObject().put("screen", "epg").put("playlistName", prefs.account?.name ?: "")
@@ -114,6 +153,97 @@ class EpgActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         overlay.stop()
+        handler.removeCallbacks(startPreviewLater)
+        handler.removeCallbacks(applyPendingCat)
+        player?.release()
+        player = null
+        b.preview.player = null
+        b.previewLogo.visibility = View.VISIBLE
+    }
+
+    // ------------------------------------------------------------ Ti apèsi videyo
+
+    private val previewListener = object : Player.Listener {
+        override fun onRenderedFirstFrame() { b.previewLogo.visibility = View.GONE }
+        override fun onPlayerError(error: PlaybackException) { b.previewLogo.visibility = View.VISIBLE }
+    }
+
+    private fun startPreview(ch: Channel) {
+        previewCh = ch
+        b.previewLogo.visibility = View.VISIBLE
+        b.previewLogo.load(ch.icon) { error(R.drawable.ic_tv) }
+        val p = player ?: ExoPlayer.Builder(this)
+            .setMediaSourceFactory(
+                DefaultMediaSourceFactory(OkHttpDataSource.Factory(XtreamApi.http).setUserAgent(XtreamApi.USER_AGENT))
+            )
+            .build().also {
+                player = it
+                b.preview.player = it
+                it.addListener(previewListener)
+            }
+        p.setMediaItem(PlayerActivity.buildItem(api, ch))
+        p.prepare()
+        p.playWhenReady = true
+    }
+
+    // ------------------------------------------------------------ Kategori
+
+    private fun applyCategory(id: String) {
+        selectedCat = id
+        channels = ChannelLists.channelsFor(id, prefs)
+        adapter.items = channels
+        b.rows.scrollToPosition(0)
+        for (i in 0 until b.categories.childCount) {
+            val h = b.categories.getChildViewHolder(b.categories.getChildAt(i)) as? CatAdapter.VH ?: continue
+            val pos = h.bindingAdapterPosition
+            if (pos >= 0) h.b.root.isSelected = catAdapter.items[pos].id == selectedCat
+        }
+        if (channels.isEmpty()) {
+            b.message.text = getString(R.string.empty_list)
+            b.message.visibility = View.VISIBLE
+        } else b.message.visibility = View.GONE
+    }
+
+    private fun focusCategories() {
+        val pos = catAdapter.items.indexOfFirst { it.id == selectedCat }.coerceAtLeast(0)
+        b.categories.scrollToPosition(pos)
+        b.categories.post { b.categories.findViewHolderForAdapterPosition(pos)?.itemView?.requestFocus() }
+    }
+
+    private fun focusGrid() {
+        if (channels.isEmpty()) return
+        handler.removeCallbacks(applyPendingCat)
+        if (pendingCat != selectedCat) applyCategory(pendingCat)
+        if (channels.isEmpty()) return
+        val pos = channels.indexOfFirst { it.streamId == previewCh?.streamId }.coerceAtLeast(0)
+        (b.rows.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 50)
+        b.rows.post { focusCellInRow(pos, first = true) }
+    }
+
+    private inner class CatAdapter : RecyclerView.Adapter<CatAdapter.VH>() {
+        var items: List<Category> = emptyList()
+
+        inner class VH(val b: ItemCategoryBinding) : RecyclerView.ViewHolder(b.root)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+            VH(ItemCategoryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+
+        override fun getItemCount() = items.size
+
+        override fun onBindViewHolder(h: VH, position: Int) {
+            val c = items[position]
+            h.b.name.text = c.name
+            h.b.root.isSelected = c.id == selectedCat
+            // Tankou yon gid TV: lis chanèl la chanje pandan w ap pase sou kategori yo
+            h.b.root.setOnFocusChangeListener { _, has ->
+                if (has) {
+                    pendingCat = c.id
+                    handler.removeCallbacks(applyPendingCat)
+                    handler.postDelayed(applyPendingCat, 300)
+                }
+            }
+            h.b.root.setOnClickListener { pendingCat = c.id; focusGrid() }
+        }
     }
 
     private fun loadEpg() {
@@ -147,7 +277,7 @@ class EpgActivity : AppCompatActivity() {
     /** Mete fokis sou dènye chanèl yo t ap gade a, sou pwogram k ap pase kounye a. */
     private fun focusStartRow() {
         val pos = channels.indexOfFirst { it.streamId == prefs.lastChannelId }.coerceAtLeast(0)
-        (b.rows.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 120)
+        (b.rows.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 50)
         b.rows.post { focusCellInRow(pos, first = true) }
     }
 
@@ -227,13 +357,22 @@ class EpgActivity : AppCompatActivity() {
                         return true
                     }
                     KeyEvent.KEYCODE_DPAD_LEFT -> if (cell.isFirst) {
-                        shiftWindow(-SLOT_MS, cell.rowPos, focusLast = true)
-                        return true // pa kite fokis la soti nan griy la
+                        // Rekile nan tan; lè pa ka rekile ankò, ale nan kategori yo
+                        if (!shiftWindow(-SLOT_MS, cell.rowPos, focusLast = true)) focusCategories()
+                        return true
                     }
+                    KeyEvent.KEYCODE_BACK -> { focusCategories(); return true }
                     // ⏪ ⏩ sou remòt la: deplase 2 è alafwa (pou rive vit nan jou ki pase yo)
                     KeyEvent.KEYCODE_MEDIA_REWIND -> { shiftWindow(-WINDOW_MS, cell.rowPos, focusLast = false); return true }
                     KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> { shiftWindow(WINDOW_MS, cell.rowPos, focusLast = false); return true }
                 }
+            } else if (focused != null && focused.parent === b.categories) {
+                when (event.keyCode) {
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> { focusGrid(); return true }
+                    KeyEvent.KEYCODE_DPAD_LEFT -> { b.railTv.requestFocus(); return true }
+                }
+            } else if (focused != null && focused.parent === b.rail) {
+                if (event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { focusCategories(); return true }
             }
         }
         return super.dispatchKeyEvent(event)
@@ -258,7 +397,7 @@ class EpgActivity : AppCompatActivity() {
     /** Kòmand sèvis kliyan an pandan kliyan an nan gid la. */
     private fun onRemoteCommand(cmd: com.galaxytvstick.app.data.RemoteCommand) {
         when (cmd.type) {
-            "play" -> ChannelStore.all.firstOrNull { it.streamId == cmd.channelId }?.let { play(it) }
+            "play" -> ChannelStore.all.firstOrNull { it.streamId == cmd.channelId }?.let { openFull(it) }
             "reload", "restart" -> {
                 startActivity(
                     Intent(this, if (cmd.type == "reload") MainActivity::class.java else LoginActivity::class.java)
@@ -293,8 +432,19 @@ class EpgActivity : AppCompatActivity() {
         )
     }
 
-    private fun play(ch: Channel) {
-        ChannelStore.current = channels
+    /** OK sou yon chanèl: premye fwa li jwe nan ti apèsi a; OK ankò sou menm chanèl la louvri l plen ekran. */
+    private fun select(ch: Channel) {
+        if (previewCh?.streamId == ch.streamId && previewCh?.directUrl == ch.directUrl) { openFull(ch); return }
+        if (ch.directUrl == null) prefs.lastChannelId = ch.streamId
+        handler.removeCallbacks(startPreviewLater)
+        startPreview(ch)
+    }
+
+    private fun openFull(ch: Channel) {
+        handler.removeCallbacks(startPreviewLater)
+        player?.release()
+        player = null
+        ChannelStore.current = channels.ifEmpty { ChannelStore.all }
         startActivity(
             Intent(this, PlayerActivity::class.java)
                 .putExtra(PlayerActivity.EXTRA_STREAM_ID, ch.streamId)
@@ -373,7 +523,7 @@ class EpgActivity : AppCompatActivity() {
                 setTextColor(ContextCompat.getColor(ctx, if (live) R.color.accent2 else if (p == null) R.color.text_dim else R.color.text))
                 isActivated = live
                 setOnFocusChangeListener { _, has -> if (has) showDetail(ch, p) }
-                setOnClickListener { if (catchup && p != null) playCatchup(ch, p) else play(ch) }
+                setOnClickListener { if (catchup && p != null) playCatchup(ch, p) else select(ch) }
             }
         }
     }

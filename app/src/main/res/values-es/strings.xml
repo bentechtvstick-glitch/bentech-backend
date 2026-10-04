@@ -40,7 +40,7 @@
     <string name="epg_next_fmt">Después: %1$s  %2$s</string>
     <string name="epg_empty">El servidor IPTV no envió guía para estos canales.</string>
     <string name="epg_error">No se pudo cargar la guía. %1$s</string>
-    <string name="epg_play_hint">OK = ver  •  ⏪ = catch-up  •  ◀ ▶ = moverse en el tiempo  •  ⏪⏩ = 2 h  •  BACK = salir</string>
+    <string name="epg_play_hint">OK = elegir canal  •  OK otra vez = pantalla completa  •  ◀ ▶ = tiempo  •  BACK = categorías</string>
     <string name="label_mac">DIRECCIÓN MAC</string>
     <string name="label_device_key">CLAVE DEL DISPOSITIVO</string>
     <string name="waiting_playlist">Esperando que el proveedor active…</string>
@@ -101,4 +101,5 @@
     <string name="stream_no_network">No se puede conectar con el servidor. Revisa la conexión a internet e inténtalo de nuevo.</string>
     <string name="stream_refused">El servidor rechazó este canal (suscripción o límite de pantallas).</string>
     <string name="stream_unsupported">Este dispositivo no puede reproducir el formato de este canal.</string>
+    <string name="rail_tv">TV en vivo</string>
 </resources>

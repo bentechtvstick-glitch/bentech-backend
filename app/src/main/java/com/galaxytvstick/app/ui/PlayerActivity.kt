@@ -63,6 +63,25 @@ class PlayerActivity : AppCompatActivity() {
         /** Fason ki mache ak sèvè playlist la (app la sonje l pou pwochen chanèl yo). */
         private var preferredMode = 0
         private var tunedFor: String? = null
+
+        /** Lyen stream yon chanèl, ak fason ki mache pou sèvè a (gid la sèvi ak li tou pou ti apèsi a). */
+        fun buildItem(api: XtreamApi, ch: Channel, mode: Int = preferredMode, alt: Boolean = XtreamApi.preferAlt): MediaItem {
+            val url = when {
+                ch.directUrl != null -> ch.directUrl
+                mode == 0 -> api.streamUrl(ch, "m3u8", alt)
+                mode == 1 -> api.streamUrl(ch, "ts", alt)
+                else -> api.streamUrlBare(ch, alt)
+            }
+            val builder = MediaItem.Builder()
+                .setMediaId("channel")
+                .setUri(url)
+                .setLiveConfiguration(
+                    MediaItem.LiveConfiguration.Builder().setTargetOffsetMs(5_000).build()
+                )
+            val isHls = if (ch.directUrl != null) ch.directUrl.contains(".m3u8", ignoreCase = true) else mode == 0 || mode == 3
+            if (isHls) builder.setMimeType(MimeTypes.APPLICATION_M3U8)
+            return builder.build()
+        }
     }
 
     // Lis chanèl sou videyo a (style TiviMate)
@@ -366,23 +385,7 @@ class PlayerActivity : AppCompatActivity() {
         prefs.setTune(server, "ua", XtreamApi.USER_AGENT.takeIf { it != XtreamApi.DEFAULT_USER_AGENT })
     }
 
-    private fun channelItem(ch: Channel, mode: Int, alt: Boolean = XtreamApi.preferAlt): MediaItem {
-        val url = when {
-            ch.directUrl != null -> ch.directUrl
-            mode == 0 -> api.streamUrl(ch, "m3u8", alt)
-            mode == 1 -> api.streamUrl(ch, "ts", alt)
-            else -> api.streamUrlBare(ch, alt)
-        }
-        val builder = MediaItem.Builder()
-            .setMediaId("channel")
-            .setUri(url)
-            .setLiveConfiguration(
-                MediaItem.LiveConfiguration.Builder().setTargetOffsetMs(5_000).build()
-            )
-        val isHls = if (ch.directUrl != null) ch.directUrl.contains(".m3u8", ignoreCase = true) else mode == 0 || mode == 3
-        if (isHls) builder.setMimeType(MimeTypes.APPLICATION_M3U8)
-        return builder.build()
-    }
+    private fun channelItem(ch: Channel, mode: Int, alt: Boolean = XtreamApi.preferAlt): MediaItem = buildItem(api, ch, mode, alt)
 
     private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0, alt: Boolean = XtreamApi.preferAlt, stage: Int = 0) {
         val p = player ?: return
