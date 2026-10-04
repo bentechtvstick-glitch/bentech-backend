@@ -101,6 +101,7 @@ input[type=text],input[type=password],input[type=datetime-local],input[type=numb
 .inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .inline > .grow{flex:1;min-width:160px}
 .btns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.savebar{position:sticky;top:var(--stick,76px);z-index:6;background:var(--surface);padding:10px 0;margin:-10px 0 -4px;border-bottom:1px solid var(--line);align-items:center}
 
 /* buttons (same look as BenTech admin) */
 .btn{height:40px;padding:0 16px;border-radius:8px;border:1px solid var(--line2);background:transparent;cursor:pointer;font-weight:500;white-space:nowrap;font-size:15px}
@@ -577,7 +578,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
     <main data-pane="ch" hidden>
       <div class="pagehead"><div><h1>Chanèl</h1><p id="chFor">Chwazi yon aparèy nan onglet "Aparèy &amp; Playlist" la an premye.</p></div></div>
       <div class="card" id="chBody" hidden>
-        <div class="btns"><span class="msg" id="chMsg" style="margin-right:auto"></span><button class="btn primary" id="chSave" type="button">Sove chanjman yo</button></div>
+        <div class="btns savebar"><span class="msg" id="chMsg" style="margin-right:auto"></span><button class="btn primary" id="chSave" type="button">Sove chanjman yo</button></div>
         <div class="row2">
           <div class="field"><label for="chProfile">Channel Profile</label><select id="chProfile"></select></div>
           <div class="field"><label for="chMax">Limit chanèl (0 = pa gen limit)</label><input type="number" min="0" id="chMax"></div>
@@ -1499,6 +1500,11 @@ $("#gSearch").addEventListener("keydown", (e) => {
   openTab("live"); $("#liveFilter").value = v; $("#liveOnlyOn").checked = false; renderLive();
 });
 
+// Ba "Sove" a rete kole anba ba anlè a (oswa nèt anlè ekran an lè ba anlè a fin glise ale, sou telefòn)
+{
+  const setStick = () => { const tb = document.querySelector(".topbar"); const btm = tb ? tb.getBoundingClientRect().bottom : 0; document.documentElement.style.setProperty("--stick", Math.max(0, Math.round(btm)) + "px"); };
+  window.addEventListener("scroll", setStick, { passive: true, capture: true }); window.addEventListener("resize", setStick); setStick();
+}
 // ------------------------------------------------------------ Chanèl
 let chState = null;
 async function loadChannels() {
