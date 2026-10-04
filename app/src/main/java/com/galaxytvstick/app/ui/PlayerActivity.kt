@@ -805,7 +805,9 @@ class PlayerActivity : AppCompatActivity() {
         val allowed = ChannelStore.all.map { it.streamId }.toHashSet()
         val playingId = channels.getOrNull(index)?.streamId
         // Chanèl evènman ki gen lyen dirèk yo pa soti nan Xtream: kenbe yo
-        channels = channels.filter { it.directUrl != null || it.streamId in allowed }.ifEmpty { ChannelStore.all }
+        // Pran vèsyon ki ajou a (non admin nan ka fèk chanje nan panel la)
+        val fresh = ChannelStore.all.associateBy { it.streamId }
+        channels = channels.mapNotNull { if (it.directUrl != null) it else fresh[it.streamId] }.ifEmpty { ChannelStore.all }
         if (channels.isEmpty()) {
             player?.stop()
             return

@@ -183,6 +183,9 @@ data class PanelConfig(
     val maxChannels: Int,               // 0 = pa gen limit
     val hiddenChannels: Set<Int>,
     val hiddenCategories: Set<String>,
+    /** Non admin nan chanje nan panel la: ID kategori → non, ID chanèl → non. */
+    val categoryNames: Map<String, String> = emptyMap(),
+    val channelNames: Map<Int, String> = emptyMap(),
     val ticker: Ticker?,
     val chyron: Chyron?,
     /** Tout chyron aktif yo (vèsyon pwofesyonèl la). */
@@ -209,10 +212,12 @@ data class PanelConfig(
     /** Aplike règ panel la: kache chanèl/kategori epi limite kantite chanèl. */
     fun filterChannels(all: List<Channel>): List<Channel> {
         val visible = all.filter { it.streamId !in hiddenChannels && it.categoryId !in hiddenCategories }
-        return if (maxChannels > 0) visible.take(maxChannels) else visible
+        val limited = if (maxChannels > 0) visible.take(maxChannels) else visible
+        return if (channelNames.isEmpty()) limited else limited.map { c -> channelNames[c.streamId]?.let { c.copy(name = it) } ?: c }
     }
 
-    fun filterCategories(all: List<Category>): List<Category> = all.filter { it.id !in hiddenCategories }
+    fun filterCategories(all: List<Category>): List<Category> =
+        all.filter { it.id !in hiddenCategories }.map { c -> categoryNames[c.id]?.let { Category(c.id, it) } ?: c }
 
     companion object {
         /** Konfig pa defo si panel la pa reponn (app la kontinye mache nòmal). */
@@ -231,6 +236,8 @@ data class PanelConfig(
             maxChannels = o.optInt("maxChannels", 0),
             hiddenChannels = o.optJSONArray("hiddenChannels").ints().toSet(),
             hiddenCategories = o.optJSONArray("hiddenCategories").strings().toSet(),
+            categoryNames = o.optJSONObject("categoryNames").stringMap(),
+            channelNames = o.optJSONObject("channelNames").stringMap().mapNotNull { (k, v) -> k.toIntOrNull()?.let { it to v } }.toMap(),
             ticker = o.optJSONObject("ticker")?.takeIf { it.optBoolean("enabled", true) }?.let {
                 Ticker(
                     text = it.optString("text"),
@@ -523,3 +530,11 @@ private fun JSONArray?.strings(): List<String> =
 
 private fun JSONObject.optStringOrNull(key: String): String? =
     if (!has(key) || isNull(key)) null else optString(key).takeIf { it.isNotBlank() }
+
+private fun JSONObject?.stringMap(): Map<String, String> {
+    if (this == null) return emptyMap()
+    val out = HashMap<String, String>()
+    val it = keys()
+    while (it.hasNext()) { val k = it.next(); val v = optString(k).trim(); if (v.isNotEmpty()) out[k] = v }
+    return out
+}
