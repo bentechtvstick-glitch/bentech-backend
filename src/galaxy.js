@@ -403,6 +403,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       maxChannels,
       hiddenChannels: (device.hiddenChannels || []).map(Number).filter(Number.isFinite),
       hiddenCategories: (device.hiddenCategories || []).map(String),
+      // Non admin nan chanje nan panel la (egz: gwoup "CARIBBEAN" → "HAITI")
+      categoryNames: device.categoryNames || {},
+      channelNames: device.channelNames || {},
       playlists: playlists.map(({ id, name, server, username, password }) => ({ id, name, server, username, password })),
       ticker,
       chyrons,
@@ -502,6 +505,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (b.maxChannels !== undefined) device.maxChannels = Math.max(0, parseInt(b.maxChannels, 10) || 0);
     if (Array.isArray(b.hiddenChannels)) device.hiddenChannels = b.hiddenChannels.map(Number).filter(Number.isFinite);
     if (Array.isArray(b.hiddenCategories)) device.hiddenCategories = b.hiddenCategories.map(String);
+    // Non chanje: { id: "nouvo non" }; yon non vid retire chanjman an
+    const names = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [String(k), String(v ?? "").trim().slice(0, 80)]).filter(([, v]) => v).slice(0, 20000));
+    if (b.categoryNames && typeof b.categoryNames === "object" && !Array.isArray(b.categoryNames)) device.categoryNames = names(b.categoryNames);
+    if (b.channelNames && typeof b.channelNames === "object" && !Array.isArray(b.channelNames)) device.channelNames = names(b.channelNames);
     if (b.resetDeviceKey) device.deviceKey = ""; // pwochen fwa app la anrejistre, li pran nouvo kle a
     await db.write();
     auditLog("device-update", `Device ${device.mac} updated`, admin(req));

@@ -183,6 +183,8 @@ td.up,input.up{text-transform:uppercase}input.up::placeholder{text-transform:non
 .cat{font-size:13px;padding:7px 6px;border-radius:8px;background:rgba(255,255,255,.04);margin-top:2px;color:var(--text,#fff)}
 .cat .catx{background:none;border:0;color:inherit;cursor:pointer;font-size:13px;width:22px;height:22px;padding:0;flex:none}
 .cat .catn{cursor:pointer;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chedit{flex:1;min-width:0;height:30px;padding:2px 8px;font-size:14px;text-transform:none;letter-spacing:0}
+.chrow .catx{background:none;border:0;color:var(--dim);cursor:pointer;font-size:13px;width:24px;height:22px;padding:0;flex:none}
 .cat.off .catn{color:var(--faint);text-decoration:line-through}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line2);border-radius:10px;padding:10px 16px;z-index:40;box-shadow:0 10px 30px #000}
 
@@ -584,7 +586,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="field"><label for="chMax">Limit chanèl (0 = pa gen limit)</label><input type="number" min="0" id="chMax"></div>
         </div>
         <div class="inline"><input type="text" id="chSearch" class="grow" placeholder="Chèche yon chanèl"><button class="btn small red" id="chHideShown" type="button">Kache sa ki nan lis la</button><button class="btn small green" id="chShowShown" type="button">Montre sa ki nan lis la</button><button class="btn small" id="chAllOn" type="button">Montre tout</button></div>
-        <p class="note">Etenn bouton yon gwoup pou kache tout chanèl li yo ak yon sèl klik. Klike sou non gwoup la pou wè chanèl li yo.</p>
+        <p class="note">Etenn bouton yon gwoup pou kache tout chanèl li yo ak yon sèl klik. Klike sou non gwoup la pou wè chanèl li yo. Kreyon an (✎) chanje non yon gwoup oswa yon chanèl.</p>
         <p class="note" id="chCount"></p>
         <div class="chlist" id="chList"></div>
       </div>
@@ -1516,12 +1518,16 @@ async function loadChannels() {
     api("GET", "/galaxy/devices/lookup?mac=" + encodeURIComponent(dev.mac)).catch(() => dev),
   ]);
   dev = fresh;
-  chState = { chs, hid: new Set((dev.hiddenChannels || []).map(Number)), hidC: new Set((dev.hiddenCategories || []).map(String)), open: new Set() };
+  chState = { chs, hid: new Set((dev.hiddenChannels || []).map(Number)), hidC: new Set((dev.hiddenCategories || []).map(String)), open: new Set(), catN: { ...(dev.categoryNames || {}) }, chN: { ...(dev.channelNames || {}) }, edit: null };
   $("#chProfile").innerHTML = `<option value="">${t("Tout chanèl")}</option>` + profiles.map((p) => `<option value="${esc(p.name)}"${p.name === dev.channelProfile ? " selected" : ""}>${esc(p.name)}${p.channels ? " " + t("({0} chanèl)", p.channels) : ""}</option>`).join("");
   $("#chMax").value = dev.maxChannels || 0; $("#chBody").hidden = false; setMsg($("#chMsg"), ""); renderChList();
 }
 // Rechèch la gade non chanèl la AK non kategori a
-const chMatch = (c, q) => !q || c.name.toLowerCase().includes(q) || String(c.categoryName || "").toLowerCase().includes(q);
+const chName = (c) => chState?.chN[c.id] || c.name, catName = (cid, orig) => chState?.catN[cid] || orig;
+const chMatch = (c, q) => !q || c.name.toLowerCase().includes(q) || String(c.categoryName || "").toLowerCase().includes(q) || chName(c).toLowerCase().includes(q) || String(catName(c.categoryId, "")).toLowerCase().includes(q);
+// Ti fòm pou chanje yon non (gwoup oswa chanèl). Enter = OK, Esc = anile, non vid = remete non orijinal la.
+const editBox = (kind, id, cur) => `<input type="text" class="chedit" data-edit-${kind}="${esc(id)}" value="${esc(cur)}" maxlength="80" aria-label="${esc(t("Nouvo non"))}">`;
+const penBtn = (kind, id) => `<button class="catx" type="button" data-pen-${kind}="${esc(id)}" title="${esc(t("Chanje non an"))}" aria-label="${esc(t("Chanje non an"))}">✎</button>`;
 const chFiltered = () => { const q = $("#chSearch").value.trim().toLowerCase(); return chState ? chState.chs.filter((c) => chMatch(c, q)) : []; };
 function chChanged(n, hide) {
   const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep;
@@ -1536,19 +1542,35 @@ function renderChList() {
   let h = ""; for (const [cid, g] of byCat) {
     // Yon gwoup = yon bouton: etenn li pou kache tout chanèl li yo. Klike sou non an pou wè chanèl yo.
     const gOff = hidC.has(cid), open = !!q || chState.open.has(cid), nHid = gOff ? g.items.length : g.items.filter((c) => hid.has(c.id)).length;
-    h += `<div class="cat${gOff ? " off" : ""}"><button class="catx" type="button" data-open="${esc(cid)}" aria-expanded="${open}" aria-label="${esc(t("Louvri gwoup la"))}">${open ? "▾" : "▸"}</button><label class="sw" title="${esc(t("Montre / kache tout gwoup la"))}"><input type="checkbox" data-cat="${esc(cid)}"${gOff ? "" : " checked"}><i></i></label><span class="catn" data-open="${esc(cid)}">${esc(g.name || t("San kategori"))}</span><span class="note">(${g.items.length})</span>${gOff ? `<span class="pill p-bad">${t("Gwoup kache")}</span>` : nHid ? `<span class="pill p-warn">${esc(t("{0} kache", nHid))}</span>` : ""}</div>`;
-    if (open) for (const c of g.items) { const off = hid.has(c.id) || hidC.has(cid); h += `<label class="chrow${off ? " off" : ""}"><input type="checkbox" data-ch="${c.id}"${hid.has(c.id) ? "" : " checked"}${hidC.has(cid) ? " disabled" : ""}> ${c.num}. ${esc(c.name)}</label>`; }
+    h += `<div class="cat${gOff ? " off" : ""}"><button class="catx" type="button" data-open="${esc(cid)}" aria-expanded="${open}" aria-label="${esc(t("Louvri gwoup la"))}">${open ? "▾" : "▸"}</button><label class="sw" title="${esc(t("Montre / kache tout gwoup la"))}"><input type="checkbox" data-cat="${esc(cid)}"${gOff ? "" : " checked"}><i></i></label>${chState.edit === "c:" + cid ? editBox("cat", cid, catName(cid, g.name || "")) : `<span class="catn" data-open="${esc(cid)}">${esc(catName(cid, g.name) || t("San kategori"))}${chState.catN[cid] ? ` <span class="note" style="text-transform:none;font-weight:400">(${esc(g.name || "")})</span>` : ""}</span>${penBtn("cat", cid)}`}<span class="note">(${g.items.length})</span>${gOff ? `<span class="pill p-bad">${t("Gwoup kache")}</span>` : nHid ? `<span class="pill p-warn">${esc(t("{0} kache", nHid))}</span>` : ""}</div>`;
+    if (open) for (const c of g.items) { const off = hid.has(c.id) || hidC.has(cid); h += `<div class="chrow${off ? " off" : ""}"><input type="checkbox" data-ch="${c.id}" id="chk_${c.id}"${hid.has(c.id) ? "" : " checked"}${hidC.has(cid) ? " disabled" : ""}> ${chState.edit === "h:" + c.id ? `${c.num}. ` + editBox("ch", c.id, chName(c)) : `<label for="chk_${c.id}" style="flex:1;min-width:0">${c.num}. ${esc(chName(c))}${chState.chN[c.id] ? ` <span class="note">(${esc(c.name)})</span>` : ""}</label>${penBtn("ch", c.id)}`}</div>`; }
   }
   $("#chList").innerHTML = h || `<div class="empty">${t("Pa gen chanèl ki koresponn.")}</div>`;
 }
 $("#chSearch").addEventListener("input", renderChList);
+function chRerender() { const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep; }
+function chCommitEdit(el) {
+  if (!chState || !chState.edit) return;
+  const v = el.value.trim(); const isCat = el.dataset.editCat !== undefined; const id = isCat ? el.dataset.editCat : el.dataset.editCh; const map = isCat ? chState.catN : chState.chN;
+  const orig = isCat ? (chState.chs.find((c) => String(c.categoryId) === id)?.categoryName || "") : (chState.chs.find((c) => String(c.id) === id)?.name || "");
+  if (!v || v === orig) delete map[id]; else map[id] = v;
+  chState.edit = null; chRerender(); setMsg($("#chMsg"), "Chanjman yo poko sove.", false); $("#chMsg").className = "msg";
+}
+$("#chList").addEventListener("keydown", (e) => {
+  if (!e.target.classList.contains("chedit")) return;
+  if (e.key === "Enter") { e.preventDefault(); chCommitEdit(e.target); }
+  else if (e.key === "Escape") { chState.edit = null; chRerender(); }
+});
+$("#chList").addEventListener("focusout", (e) => { if (e.target.classList.contains("chedit") && chState?.edit) chCommitEdit(e.target); });
 $("#chList").addEventListener("click", (e) => {
+  const pen = e.target.closest("[data-pen-cat],[data-pen-ch]");
+  if (pen && chState) { chState.edit = pen.dataset.penCat !== undefined ? "c:" + pen.dataset.penCat : "h:" + pen.dataset.penCh; chRerender(); const i = $("#chList .chedit"); if (i) { i.focus(); i.select(); } return; }
   const o = e.target.closest("[data-open]"); if (!o || !chState) return;
   const cid = o.dataset.open; chState.open.has(cid) ? chState.open.delete(cid) : chState.open.add(cid);
   const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep;
 });
 $("#chList").addEventListener("change", (e) => {
-  const el = e.target; if (el.dataset.cat) { el.checked ? chState.hidC.delete(el.dataset.cat) : chState.hidC.add(el.dataset.cat); }
+  const el = e.target; if (el.classList.contains("chedit")) return chCommitEdit(el); if (el.dataset.cat) { el.checked ? chState.hidC.delete(el.dataset.cat) : chState.hidC.add(el.dataset.cat); }
   if (el.dataset.ch) { const id = +el.dataset.ch; el.checked ? chState.hid.delete(id) : chState.hid.add(id); }
   const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep; setMsg($("#chMsg"), "Chanjman yo poko sove.", false); $("#chMsg").className = "msg";
 });
@@ -1564,7 +1586,7 @@ $("#chShowShown").addEventListener("click", () => {
 });
 $("#chAllOn").addEventListener("click", () => { chState.hid.clear(); chState.hidC.clear(); renderChList(); });
 $("#chSave").addEventListener("click", async () => {
-  try { dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { channelProfile: $("#chProfile").value, maxChannels: +$("#chMax").value || 0, hiddenChannels: [...chState.hid], hiddenCategories: [...chState.hidC] })) };
+  try { dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { channelProfile: $("#chProfile").value, maxChannels: +$("#chMax").value || 0, hiddenChannels: [...chState.hid], hiddenCategories: [...chState.hidC], categoryNames: chState.catN, channelNames: chState.chN })) };
     await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/commands`, { type: "refresh" }).catch(() => {});
     setMsg($("#chMsg"), "Sove. TV a ap aplike l touswit si l online.", true); }
   catch (err) { setMsg($("#chMsg"), err.message); }
