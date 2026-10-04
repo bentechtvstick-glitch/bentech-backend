@@ -1351,7 +1351,7 @@ $("#dashNew").addEventListener("click", async (e) => { const b = e.target.closes
 document.addEventListener("click", (e) => { const g = e.target.closest("[data-goto]"); if (g) openTab(g.dataset.goto); });
 
 // ------------------------------------------------------------ Paj koleksyon (CRUD)
-const PLANS = ["1 Month", "3 Months", "6 Months", "12 Months"];
+const PLANS = ["Trial", "1 Month", "3 Months", "6 Months", "12 Months"];
 const CRUD = {
   cust: { upper: 1, col: "customers", id: "id", title: "Kliyan yo", sub: "Kliyan yo, plan yo ak dat ekspirasyon.", auto: () => "C-" + (1000 + Math.floor(Math.random() * 9000)),
     fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "date" }] },
