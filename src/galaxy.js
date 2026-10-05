@@ -419,6 +419,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       statusMessage,
       deviceName: device.deviceName || "",
       maxChannels,
+      // Kont kliyan an, pou ekran akèy app la (non, plan, ekspirasyon)
+      account: customer ? { name: customer.name || "", plan: customer.plan || "", expiry: customer.expiry || "" } : null,
       hiddenChannels: eff.hiddenChannels,
       hiddenCategories: eff.hiddenCategories,
       // Non admin nan chanje nan panel la (egz: gwoup "CARIBBEAN" → "HAITI")
