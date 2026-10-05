@@ -382,7 +382,9 @@ class XtreamApi(private val account: Account) {
      * Pa janm retounen username/password.
      */
     /** kind: "ts", "hls" (videyo) · "html", "empty", "other", "error" (pa videyo). */
-    class Probe(val kind: String, val summary: String, val code: Int = 0) { val isVideo get() = kind == "ts" || kind == "hls" }
+    class Probe(val kind: String, val summary: String, val code: Int = 0,
+        /** true = repons lan se yon paj blokaj rezo a (sekirite routè a / founisè entènèt la), pa sèvè chanèl la. */
+        val blockedByNetwork: Boolean = false) { val isVideo get() = kind == "ts" || kind == "hls" }
 
     suspend fun probe(url: String, ua: String = USER_AGENT): Probe = withContext(Dispatchers.IO) {
         runCatching {
@@ -413,7 +415,9 @@ class XtreamApi(private val account: Account) {
                         )
                         Probe(if (isHtml) "html" else "other",
                             head + (if (isHtml) " · paj web" else "") + (if (title.isNotBlank()) " \"$title\"" else "") +
-                                (if (body.isNotBlank()) " · " + body.take(110) else ""), r.code)
+                                (if (body.isNotBlank()) " · " + body.take(110) else ""), r.code,
+                            // Routè a (egz: Xfinity "Advanced Security") oswa founisè entènèt la ranplase videyo a ak yon paj avètisman
+                            blockedByNetwork = isHtml && Regex("advanced security|potential threat|threat detected|site could be risky|blocked access|site is blocked|access (is )?(denied|blocked|restricted)|web ?filter|parental control|content filter|safe ?browsing", RegexOption.IGNORE_CASE).containsMatchIn("$title $body"))
                     }
                 }
             }

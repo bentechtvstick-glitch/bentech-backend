@@ -149,4 +149,5 @@
     <string name="set_reload">Rechaje chanèl yo</string>
     <string name="set_device_info">Enfòmasyon aparèy la</string>
     <string name="set_info_fmt">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVèsyon: %4$s</string>
+    <string name="stream_blocked_network">Rezo entènèt la ap bloke chanèl sa a (sekirite routè a oswa founisè entènèt la). Kontakte sèvis kliyan an.</string>
 </resources>

@@ -375,6 +375,7 @@ class PlayerActivity : AppCompatActivity() {
                         val diag = "v${BuildConfig.VERSION_NAME} · $code · ${pr.summary}" +
                             (if (direct) "" else " · lòt sèvè: " + (if (api.altBase != null) "wi, eseye" else "okenn") + " · lòt User-Agent: okenn pa mache")
                         val msg = when {
+                            pr.blockedByNetwork -> R.string.stream_blocked_network
                             pr.kind == "error" -> R.string.stream_no_network
                             pr.code == 401 || pr.code == 403 || pr.code == 429 -> R.string.stream_refused
                             pr.isVideo -> R.string.stream_unsupported

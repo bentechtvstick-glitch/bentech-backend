@@ -126,4 +126,5 @@
     <string name="set_reload">Recargar canales</string>
     <string name="set_device_info">Información del dispositivo</string>
     <string name="set_info_fmt">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVersión: %4$s</string>
+    <string name="stream_blocked_network">La red de internet está bloqueando este canal (seguridad del router o del proveedor de internet). Contacta con atención al cliente.</string>
 </resources>
