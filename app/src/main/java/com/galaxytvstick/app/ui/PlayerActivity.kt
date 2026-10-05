@@ -225,6 +225,8 @@ class PlayerActivity : AppCompatActivity() {
         }
         prerollAd = null // yon sèl fwa pa ouvèti
         handler.postDelayed(breakScheduler, 20_000)
+        lastFrames = -1; frozenTicks = 0
+        handler.postDelayed(videoWatch, 4_000)
         if (openListOnStart) {
             openListOnStart = false
             b.root.post { if (!adPlaying) showChannelOverlay() }
@@ -271,11 +273,8 @@ class PlayerActivity : AppCompatActivity() {
         dataSourceFactory = dataSource
 
         // Pi toleran ak stream MPEG-TS sèvè IPTV yo (kòmanse menm si premye imaj la pa yon keyframe konplè)
+        // Reglaj estanda pou MPEG-TS. (De reglaj "pi toleran" mwen te ajoute yo te ka fè imaj la kole pandan son an kontinye.)
         val extractors = androidx.media3.extractor.DefaultExtractorsFactory()
-            .setTsExtractorFlags(
-                androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES or
-                    androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
-            )
 
         player = ExoPlayer.Builder(this, renderers)
             .setTrackSelector(trackSelector)
@@ -422,6 +421,23 @@ class PlayerActivity : AppCompatActivity() {
     private var readyAt = 0L
     private var reconnects = 0
     private val stallWatch = Runnable { if (!adPlaying && player?.playbackState == Player.STATE_BUFFERING) reconnect() }
+
+    // ---- Imaj la kole pandan son an kontinye: relanse chanèl la ----
+    private var lastFrames = -1
+    private var frozenTicks = 0
+    private val videoWatch: Runnable = object : Runnable {
+        override fun run() {
+            handler.postDelayed(this, 4_000)
+            val p = player ?: return
+            // Sèlman lè yon chanèl ki gen videyo ap jwe (pa pandan piblisite, pa pou radyo)
+            if (adPlaying || !p.isPlaying || p.currentMediaItem?.mediaId != "channel" || p.videoFormat == null) { lastFrames = -1; frozenTicks = 0; return }
+            val frames = runCatching { p.videoDecoderCounters?.also { it.ensureUpdated() }?.renderedOutputBufferCount }.getOrNull() ?: return
+            if (frames == lastFrames) {
+                // 2 kontwòl youn dèyè lòt (8 s) san okenn nouvo imaj: videyo a kole
+                if (++frozenTicks >= 2) { frozenTicks = 0; lastFrames = -1; reconnect() }
+            } else { frozenTicks = 0; lastFrames = frames }
+        }
+    }
 
     /** Relanse chanèl la sou menm fason ki t ap mache a. Retounen false lè li eseye twòp fwa (lè sa a nou montre erè a). */
     private fun reconnect(): Boolean {
