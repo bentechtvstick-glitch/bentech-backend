@@ -247,36 +247,15 @@ class PlayerActivity : AppCompatActivity() {
     private fun initPlayer() {
         if (player != null) return
 
-        // Chwa kalite estanda player a: li pran pi bon kalite aparèy la AK koneksyon an ka swiv, epi li desann si sa nesesè.
-        // (Anvan, nou te fòse pi gwo kalite a toujou: sou yon aparèy oswa yon rezo ki pa ka swiv, imaj la te kole pandan son an kontinye.)
-        val trackSelector = DefaultTrackSelector(this)
-
-        val renderers = DefaultRenderersFactory(this)
-            .setEnableDecoderFallback(true) // si dekodè prensipal la echwe, eseye yon lòt
-
-        // Rezèv videyo: limit memwa estanda player a (yon gwo rezèv 60 s an 4K te ka plen memwa yon ti aparèy epi fè imaj la kole)
-        val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(15_000, 50_000, 1_500, 4_000)
-            .build()
-
+        // Menm konstriksyon egzak ak ti fenèt videyo gid la (EpgActivity), ki jwe san pwoblèm sou menm aparèy la:
+        // player estanda Google la, san okenn reglaj espesyal sou kalite, memwa oswa dekodè.
         val dataSource = OkHttpDataSource.Factory(XtreamApi.http)
             .setUserAgent(XtreamApi.USER_AGENT)
         dataSourceFactory = dataSource
 
-        // Pi toleran ak stream MPEG-TS sèvè IPTV yo (kòmanse menm si premye imaj la pa yon keyframe konplè)
-        // Reglaj estanda pou MPEG-TS. (De reglaj "pi toleran" mwen te ajoute yo te ka fè imaj la kole pandan son an kontinye.)
-        val extractors = androidx.media3.extractor.DefaultExtractorsFactory()
-
-        player = ExoPlayer.Builder(this, renderers)
-            .setTrackSelector(trackSelector)
-            .setLoadControl(loadControl)
-            .setMediaSourceFactory(
-                DefaultMediaSourceFactory(dataSource, extractors)
-                    // Ti koupi rezo: eseye ankò plizyè fwa anvan player a deklare yon erè
-                    .setLoadErrorHandlingPolicy(androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy(6))
-            )
+        player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSource))
             .build().also { p ->
-                p.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                 b.playerView.player = p
                 p.addListener(listener)
                 // Pou dyagnostik: ki dekodè k ap travay, ak konbyen imaj li sote
