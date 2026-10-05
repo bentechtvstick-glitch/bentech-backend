@@ -992,6 +992,12 @@ class PlayerActivity : AppCompatActivity() {
         finish()
     }
 
+    /** BACK pandan w ap gade TV: tounen sou ekran akèy la. */
+    private fun goHome() {
+        if (isTaskRoot) startActivity(Intent(this, HomeActivity::class.java))
+        finish()
+    }
+
     private fun confirmExit() {
         AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
             .setTitle(R.string.exit_title)
@@ -1074,7 +1080,7 @@ class PlayerActivity : AppCompatActivity() {
 
         when (keyCode) {
             KeyEvent.KEYCODE_BACK -> {
-                if (b.infoPanel.visibility == View.VISIBLE) b.infoPanel.visibility = View.GONE else confirmExit()
+                if (b.infoPanel.visibility == View.VISIBLE) b.infoPanel.visibility = View.GONE else goHome()
                 return true
             }
             KeyEvent.KEYCODE_DPAD_LEFT -> { showChannelOverlay(); return true }

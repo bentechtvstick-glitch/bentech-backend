@@ -150,4 +150,19 @@
     <string name="set_device_info">Enfòmasyon aparèy la</string>
     <string name="set_info_fmt">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVèsyon: %4$s</string>
     <string name="stream_blocked_network">Rezo entènèt la ap bloke chanèl sa a (sekirite routè a oswa founisè entènèt la). Kontakte sèvis kliyan an.</string>
+    <string name="menu_home">Akèy</string>
+    <string name="menu_live">Live TV</string>
+    <string name="menu_favorites">Favori</string>
+    <string name="menu_catchup">Catch Up</string>
+    <string name="home_continue">Kontinye gade</string>
+    <string name="home_continue_empty">Fim ak seri ou kòmanse gade ap parèt isit la.</string>
+    <string name="home_live_sub">Tout chanèl ou yo</string>
+    <string name="home_catchup_sub">Pa janm rate yon emisyon</string>
+    <string name="home_fav_sub">Lis pèsonèl ou</string>
+    <string name="home_categories">Kategori Live TV</string>
+    <string name="home_all_channels">Tout chanèl</string>
+    <string name="home_left_fmt">%1$s rete</string>
+    <string name="home_no_fav">Ou poko gen chanèl favori. Peze OK lontan sou yon chanèl nan lis la pou ajoute l.</string>
+    <string name="home_plan_fmt">Plan: %1$s</string>
+    <string name="home_exp_fmt">Ekspire: %1$s</string>
 </resources>

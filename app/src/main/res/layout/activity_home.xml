@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ekran akèy: meni agoch, "Kontinye gade", 5 kat, kategori Live TV, kont kliyan an -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="#090B11">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:paddingBottom="46dp">
+
+        <!-- Meni agoch -->
+        <LinearLayout android:id="@+id/side" android:layout_width="224dp" android:layout_height="match_parent" android:background="#0D1018"
+            android:orientation="vertical" android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingTop="14dp" android:paddingBottom="10dp">
+            <ImageView android:layout_width="match_parent" android:layout_height="66dp" android:layout_marginBottom="12dp"
+                android:scaleType="fitCenter" android:src="@drawable/logo_full" android:contentDescription="@string/app_name"/>
+            <LinearLayout android:id="@+id/menuHome" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_side_item" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="🏠" android:textColor="#FFFFFF" android:textSize="17sp" android:importantForAccessibility="no"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:singleLine="true"
+                    android:text="@string/menu_home" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/menuLive" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_side_item" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="📺" android:textColor="#FFFFFF" android:textSize="17sp" android:importantForAccessibility="no"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:singleLine="true"
+                    android:text="@string/menu_live" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/menuMovies" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_side_item" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="🎬" android:textColor="#FFFFFF" android:textSize="17sp" android:importantForAccessibility="no"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:singleLine="true"
+                    android:text="@string/home_movies" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/menuSeries" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_side_item" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="🎞" android:textColor="#FFFFFF" android:textSize="17sp" android:importantForAccessibility="no"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:singleLine="true"
+                    android:text="@string/home_series" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/menuFav" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_side_item" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="⭐" android:textColor="#FFFFFF" android:textSize="17sp" android:importantForAccessibility="no"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:singleLine="true"
+                    android:text="@string/menu_favorites" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/menuCatchup" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_side_item" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="🕘" android:textColor="#FFFFFF" android:textSize="17sp" android:importantForAccessibility="no"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:singleLine="true"
+                    android:text="@string/menu_catchup" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/menuSettings" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_side_item" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="⚙" android:textColor="#FFFFFF" android:textSize="17sp" android:importantForAccessibility="no"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:singleLine="true"
+                    android:text="@string/home_settings" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#22FFFFFF"/>
+            <TextView android:id="@+id/accName" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:singleLine="true" android:ellipsize="end" android:textColor="#FFFFFF" android:textSize="14sp"/>
+            <TextView android:id="@+id/accPlan" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:textColor="#6EA2FF" android:textSize="13sp" android:textStyle="bold"/>
+            <TextView android:id="@+id/accExp" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:textColor="#9AA3B5" android:textSize="12sp"/>
+        </LinearLayout>
+
+        <!-- Kontni -->
+        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical"
+            android:paddingStart="20dp" android:paddingEnd="22dp" android:paddingTop="14dp">
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+                <TextView android:id="@+id/status" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:text="@string/home_connecting" android:textColor="#9AA3B5" android:textSize="13sp"/>
+                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="end" android:orientation="vertical">
+                    <TextView android:id="@+id/clock" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold"/>
+                    <TextView android:id="@+id/date" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:textColor="#C9CFDD" android:textSize="12sp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView android:id="@+id/contTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
+                android:text="@string/home_continue" android:textColor="#FFFFFF" android:textSize="17sp" android:textStyle="bold"/>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/contList" android:layout_width="match_parent" android:layout_height="138dp"
+                android:layout_marginTop="8dp" android:clipToPadding="false" android:descendantFocusability="afterDescendants"/>
+            <TextView android:id="@+id/contEmpty" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="8dp"
+                android:background="@drawable/bg_home_card" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp"
+                android:text="@string/home_continue_empty" android:textColor="#9AA3B5" android:textSize="13sp" android:visibility="gone"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="92dp" android:layout_marginTop="14dp" android:orientation="horizontal">
+                <LinearLayout android:id="@+id/tileLive" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                    android:background="@drawable/bg_tile_red" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                    android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true"
+                            android:text="@string/menu_live" android:textAllCaps="true" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="2"
+                            android:text="@string/home_live_sub" android:textColor="#D0D6E6" android:textSize="11sp"/>
+                    </LinearLayout>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📺" android:textSize="26sp" android:importantForAccessibility="no"/>
+                </LinearLayout>
+                <LinearLayout android:id="@+id/tileMovies" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                    android:layout_marginStart="10dp" android:background="@drawable/bg_tile_blue" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                    android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true"
+                            android:text="@string/home_movies" android:textAllCaps="true" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="2"
+                            android:text="@string/home_movies_sub" android:textColor="#D0D6E6" android:textSize="11sp"/>
+                    </LinearLayout>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎬" android:textSize="26sp" android:importantForAccessibility="no"/>
+                </LinearLayout>
+                <LinearLayout android:id="@+id/tileSeries" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                    android:layout_marginStart="10dp" android:background="@drawable/bg_tile_purple" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                    android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true"
+                            android:text="@string/home_series" android:textAllCaps="true" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="2"
+                            android:text="@string/home_series_sub" android:textColor="#D0D6E6" android:textSize="11sp"/>
+                    </LinearLayout>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎞" android:textSize="26sp" android:importantForAccessibility="no"/>
+                </LinearLayout>
+                <LinearLayout android:id="@+id/tileCatchup" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                    android:layout_marginStart="10dp" android:background="@drawable/bg_tile_teal" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                    android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true"
+                            android:text="@string/menu_catchup" android:textAllCaps="true" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="2"
+                            android:text="@string/home_catchup_sub" android:textColor="#D0D6E6" android:textSize="11sp"/>
+                    </LinearLayout>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🕘" android:textSize="26sp" android:importantForAccessibility="no"/>
+                </LinearLayout>
+                <LinearLayout android:id="@+id/tileFav" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                    android:layout_marginStart="10dp" android:background="@drawable/bg_tile_gray" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                    android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true"
+                            android:text="@string/menu_favorites" android:textAllCaps="true" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="2"
+                            android:text="@string/home_fav_sub" android:textColor="#D0D6E6" android:textSize="11sp"/>
+                    </LinearLayout>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="♡" android:textSize="26sp" android:importantForAccessibility="no"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:text="@string/home_categories" android:textColor="#FFFFFF" android:textSize="17sp" android:textStyle="bold"/>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/catList" android:layout_width="match_parent" android:layout_height="62dp"
+                android:layout_marginTop="8dp" android:clipToPadding="false" android:descendantFocusability="afterDescendants"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <include android:id="@+id/overlay" layout="@layout/overlay_panel"/>
+</FrameLayout>

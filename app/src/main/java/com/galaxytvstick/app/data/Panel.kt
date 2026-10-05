@@ -186,6 +186,10 @@ data class PanelConfig(
     /** Non admin nan chanje nan panel la: ID kategori → non, ID chanèl → non. */
     val categoryNames: Map<String, String> = emptyMap(),
     val channelNames: Map<Int, String> = emptyMap(),
+    /** Kont kliyan an nan panel la (vid si aparèy la pa lye ak yon kliyan). */
+    val accountName: String = "",
+    val accountPlan: String = "",
+    val accountExpiry: String = "",
     val ticker: Ticker?,
     val chyron: Chyron?,
     /** Tout chyron aktif yo (vèsyon pwofesyonèl la). */
@@ -237,6 +241,9 @@ data class PanelConfig(
             hiddenChannels = o.optJSONArray("hiddenChannels").ints().toSet(),
             hiddenCategories = o.optJSONArray("hiddenCategories").strings().toSet(),
             categoryNames = o.optJSONObject("categoryNames").stringMap(),
+            accountName = o.optJSONObject("account")?.optString("name").orEmpty(),
+            accountPlan = o.optJSONObject("account")?.optString("plan").orEmpty(),
+            accountExpiry = o.optJSONObject("account")?.optString("expiry").orEmpty(),
             channelNames = o.optJSONObject("channelNames").stringMap().mapNotNull { (k, v) -> k.toIntOrNull()?.let { it to v } }.toMap(),
             ticker = o.optJSONObject("ticker")?.takeIf { it.optBoolean("enabled", true) }?.let {
                 Ticker(

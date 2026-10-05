@@ -127,4 +127,19 @@
     <string name="set_device_info">Información del dispositivo</string>
     <string name="set_info_fmt">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVersión: %4$s</string>
     <string name="stream_blocked_network">La red de internet está bloqueando este canal (seguridad del router o del proveedor de internet). Contacta con atención al cliente.</string>
+    <string name="menu_home">Inicio</string>
+    <string name="menu_live">Live TV</string>
+    <string name="menu_favorites">Favoritos</string>
+    <string name="menu_catchup">Catch Up</string>
+    <string name="home_continue">Seguir viendo</string>
+    <string name="home_continue_empty">Las películas y series que empieces a ver aparecerán aquí.</string>
+    <string name="home_live_sub">Todos tus canales</string>
+    <string name="home_catchup_sub">No te pierdas ningún programa</string>
+    <string name="home_fav_sub">Tu lista personal</string>
+    <string name="home_categories">Categorías Live TV</string>
+    <string name="home_all_channels">Todos los canales</string>
+    <string name="home_left_fmt">Quedan %1$s</string>
+    <string name="home_no_fav">Aún no tienes canales favoritos. Mantén pulsado OK sobre un canal de la lista para añadirlo.</string>
+    <string name="home_plan_fmt">Plan: %1$s</string>
+    <string name="home_exp_fmt">Vence: %1$s</string>
 </resources>
