@@ -13,8 +13,9 @@
         android:name=".GalaxyApp"
         android:allowBackup="true"
         android:largeHeap="true"
-        android:banner="@drawable/banner"
-        android:icon="@drawable/ic_logo"
+        android:banner="@drawable/app_banner"
+        android:icon="@drawable/app_banner"
+        android:logo="@drawable/app_banner"
         android:label="@string/app_name"
         android:localeConfig="@xml/locales_config"
         android:theme="@style/Theme.Galaxy"
@@ -43,16 +44,27 @@
 
         <activity
             android:name=".ui.LoginActivity"
-            android:banner="@drawable/banner"
-            android:icon="@drawable/ic_logo"
-            android:exported="true"
-            android:screenOrientation="landscape">
+            android:exported="false"
+            android:screenOrientation="landscape" />
+
+        <!--
+          Pòt antre app la nan lis app TV a. Non an chanje ("Launcher") pou TV a bliye ansyen ikòn li te kenbe nan memwa.
+          Ikòn nan se imaj rektang 16:9 la nan tout ka (banner, icon, logo): kèlkeswa sa TV a chwazi montre, li ranpli kare a.
+        -->
+        <activity-alias
+            android:name=".Launcher"
+            android:targetActivity=".ui.LoginActivity"
+            android:banner="@drawable/app_banner"
+            android:icon="@drawable/app_banner"
+            android:logo="@drawable/app_banner"
+            android:label="@string/app_name"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <activity
             android:name=".ui.MainActivity"
