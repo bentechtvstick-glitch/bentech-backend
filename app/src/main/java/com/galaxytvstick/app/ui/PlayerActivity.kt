@@ -247,25 +247,16 @@ class PlayerActivity : AppCompatActivity() {
     private fun initPlayer() {
         if (player != null) return
 
-        // Pa limite rezolisyon: kite aparèy la chwazi pi bon kalite li ka dekode (jiska 8K)
-        val trackSelector = DefaultTrackSelector(this).apply {
-            parameters = buildUponParameters()
-                .clearVideoSizeConstraints()
-                .setMaxVideoSize(Int.MAX_VALUE, Int.MAX_VALUE)
-                .setMaxVideoBitrate(Int.MAX_VALUE)
-                .setForceHighestSupportedBitrate(true)
-                .setExceedRendererCapabilitiesIfNecessary(false)
-                .clearViewportSizeConstraints() // pa desann kalite a menm si ekran an pi piti
-                .build()
-        }
+        // Chwa kalite estanda player a: li pran pi bon kalite aparèy la AK koneksyon an ka swiv, epi li desann si sa nesesè.
+        // (Anvan, nou te fòse pi gwo kalite a toujou: sou yon aparèy oswa yon rezo ki pa ka swiv, imaj la te kole pandan son an kontinye.)
+        val trackSelector = DefaultTrackSelector(this)
 
         val renderers = DefaultRenderersFactory(this)
             .setEnableDecoderFallback(true) // si dekodè prensipal la echwe, eseye yon lòt
 
-        // Pi gwo buffer pou stream 4K/8K ki gen gwo bitrate
+        // Rezèv videyo: limit memwa estanda player a (yon gwo rezèv 60 s an 4K te ka plen memwa yon ti aparèy epi fè imaj la kole)
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(20_000, 60_000, 1_500, 4_000) // plis rezèv = mwens kanpe; imaj la parèt apre 1.5 s
-            .setPrioritizeTimeOverSizeThresholds(true)
+            .setBufferDurationsMs(15_000, 50_000, 1_500, 4_000)
             .build()
 
         val dataSource = OkHttpDataSource.Factory(XtreamApi.http)
@@ -288,6 +279,17 @@ class PlayerActivity : AppCompatActivity() {
                 p.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                 b.playerView.player = p
                 p.addListener(listener)
+                // Pou dyagnostik: ki dekodè k ap travay, ak konbyen imaj li sote
+                p.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
+                    override fun onVideoDecoderInitialized(
+                        eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
+                        decoderName: String, initializedTimestampMs: Long, initializationDurationMs: Long
+                    ) { videoDecoder = decoderName; droppedFrames = 0 }
+
+                    override fun onDroppedVideoFrames(
+                        eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, droppedFrames: Int, elapsedMs: Long
+                    ) { this@PlayerActivity.droppedFrames += droppedFrames }
+                })
             }
     }
 
@@ -425,6 +427,10 @@ class PlayerActivity : AppCompatActivity() {
     // ---- Imaj la kole pandan son an kontinye: relanse chanèl la ----
     private var lastFrames = -1
     private var frozenTicks = 0
+    private var videoDecoder = ""
+    private var droppedFrames = 0
+    private var freezeRestarts = 0
+    private var firstFreezeAt = 0L
     private val videoWatch: Runnable = object : Runnable {
         override fun run() {
             handler.postDelayed(this, 4_000)
@@ -434,7 +440,23 @@ class PlayerActivity : AppCompatActivity() {
             val frames = runCatching { p.videoDecoderCounters?.also { it.ensureUpdated() }?.renderedOutputBufferCount }.getOrNull() ?: return
             if (frames == lastFrames) {
                 // 2 kontwòl youn dèyè lòt (8 s) san okenn nouvo imaj: videyo a kole
-                if (++frozenTicks >= 2) { frozenTicks = 0; lastFrames = -1; reconnect() }
+                if (++frozenTicks >= 2) {
+                    frozenTicks = 0; lastFrames = -1
+                    val now = System.currentTimeMillis()
+                    if (now - firstFreezeAt > 180_000) { firstFreezeAt = now; freezeRestarts = 0 }
+                    if (++freezeRestarts <= 3) reconnect()
+                    else {
+                        // Relanse 3 fwa nan 3 minit pa ranje l: di sa klèman, ak detay pou jwenn kòz la
+                        val f = p.videoFormat
+                        val soft = videoDecoder.startsWith("OMX.google", true) || videoDecoder.startsWith("c2.android", true)
+                        val diag = "v${BuildConfig.VERSION_NAME} · imaj kole · dekodè: $videoDecoder${if (soft) " (lojisyèl)" else ""} · " +
+                            "${f?.width}x${f?.height} ${f?.sampleMimeType?.substringAfter('/')} ${f?.frameRate?.takeIf { it > 0 }?.toInt() ?: "?"}fps " +
+                            "${(f?.bitrate ?: -1).takeIf { it > 0 }?.let { "${it / 1000}kbps" } ?: ""} · imaj sote: $droppedFrames · fason: $curMode"
+                        showPlayError(getString(R.string.stream_unsupported), diag)
+                        lastError = diag
+                        reportStatus()
+                    }
+                }
             } else { frozenTicks = 0; lastFrames = frames }
         }
     }
