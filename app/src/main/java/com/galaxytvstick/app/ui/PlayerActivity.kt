@@ -992,12 +992,6 @@ class PlayerActivity : AppCompatActivity() {
         finish()
     }
 
-    /** BACK pandan w ap gade TV: tounen sou ekran akèy la. */
-    private fun goHome() {
-        if (isTaskRoot) startActivity(Intent(this, HomeActivity::class.java))
-        finish()
-    }
-
     private fun confirmExit() {
         AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
             .setTitle(R.string.exit_title)
@@ -1080,10 +1074,11 @@ class PlayerActivity : AppCompatActivity() {
 
         when (keyCode) {
             KeyEvent.KEYCODE_BACK -> {
-                if (b.infoPanel.visibility == View.VISIBLE) b.infoPanel.visibility = View.GONE else goHome()
+                if (b.infoPanel.visibility == View.VISIBLE) b.infoPanel.visibility = View.GONE else confirmExit()
                 return true
             }
-            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_MENU -> { showChannelOverlay(); return true }
+            KeyEvent.KEYCODE_DPAD_LEFT -> { showChannelOverlay(); return true }
+            KeyEvent.KEYCODE_MENU -> { openGuide(); return true } // bouton ≡ remòt la: gid la (chanèl, fim, seri, reglaj)
             KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_TV_INPUT -> { openGuide(); return true }
             KeyEvent.KEYCODE_MEDIA_REWIND -> { restartProgram(); return true }
             KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_CHANNEL_UP -> { zap(-1); return true }

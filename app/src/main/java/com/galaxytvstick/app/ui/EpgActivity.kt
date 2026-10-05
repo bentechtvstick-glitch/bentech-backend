@@ -111,6 +111,7 @@ class EpgActivity : AppCompatActivity() {
 
         b.railTv.setOnClickListener { (previewCh ?: channels.firstOrNull())?.let { openFull(it) } }
         b.railMovies.setOnClickListener { startActivity(Intent(this, VodActivity::class.java).putExtra(VodActivity.EXTRA_KIND, "movie")) }
+        b.railSettings.setOnClickListener { showSettings() }
         b.railSeries.setOnClickListener { startActivity(Intent(this, VodActivity::class.java).putExtra(VodActivity.EXTRA_KIND, "series")) }
 
         previewCh = ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId } ?: channels.firstOrNull()
@@ -225,7 +226,7 @@ class EpgActivity : AppCompatActivity() {
         if (pendingCat != selectedCat) applyCategory(pendingCat)
         if (channels.isEmpty()) return
         val pos = channels.indexOfFirst { it.streamId == previewCh?.streamId }.coerceAtLeast(0)
-        (b.rows.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 50)
+        (b.rows.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 0)
         b.rows.post { focusCellInRow(pos, first = true) }
     }
 
@@ -286,7 +287,7 @@ class EpgActivity : AppCompatActivity() {
     /** Mete fokis sou dènye chanèl yo t ap gade a, sou pwogram k ap pase kounye a. */
     private fun focusStartRow() {
         val pos = channels.indexOfFirst { it.streamId == prefs.lastChannelId }.coerceAtLeast(0)
-        (b.rows.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 50)
+        (b.rows.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 0)
         b.rows.post { focusCellInRow(pos, first = true) }
     }
 
@@ -401,6 +402,33 @@ class EpgActivity : AppCompatActivity() {
             b.detailTime.text = ""
             b.detailDesc.text = ""
         }
+    }
+
+    /** Reglaj: rechaje chanèl yo, chanje playlist, enfòmasyon aparèy la, soti. */
+    private fun showSettings() {
+        val items = arrayOf(getString(R.string.set_reload), getString(R.string.set_change_playlist), getString(R.string.set_device_info), getString(R.string.exit_title))
+        androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
+            .setTitle(R.string.home_settings)
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> { startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)); finish() }
+                    1 -> {
+                        startActivity(
+                            Intent(this, LoginActivity::class.java)
+                                .putExtra(LoginActivity.EXTRA_NO_AUTO, true)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        )
+                        finish()
+                    }
+                    2 -> androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
+                        .setTitle(R.string.set_device_info)
+                        .setMessage(getString(R.string.set_info_fmt, prefs.account?.name ?: prefs.account?.username ?: "", prefs.mac, prefs.deviceKey, com.galaxytvstick.app.BuildConfig.VERSION_NAME))
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show()
+                    else -> finishAffinity()
+                }
+            }
+            .show()
     }
 
     /** Kòmand sèvis kliyan an pandan kliyan an nan gid la. */
