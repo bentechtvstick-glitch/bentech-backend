@@ -1754,7 +1754,9 @@ $("#bcSend").addEventListener("click", () => { const v = $("#bcText").value.trim
 $("#bcStop").addEventListener("click", () => putSettings({ emergencyActive: false }, "Broadcast sispann"));
 // ------------------------------------------------------------ Ticker: estil tankou chèn TV
 let tkItems = [], tkSep = "•";
-const SEPS = ["•", "●", "◆", "◇", "★", "✦", "❖", "▶", "►", "»", "|", "║", "—", "⚡", "🔴", "🔹", "🔸", "⭐", "📢", "🇭🇹"];
+// "Okenn": yon karaktè envizib (zero-width space), pou ansyen vèsyon app la pa remete pwen an lè separatè a vid
+const SEP_NONE = "\u200B";
+const SEPS = [SEP_NONE, "•", "●", "◆", "◇", "★", "✦", "❖", "▶", "►", "»", "|", "║", "—", "⚡", "🔴", "🔹", "🔸", "⭐", "📢", "🇭🇹"];
 const hex6 = (c) => { const m = String(c || "").trim().match(/^#([0-9a-f]{6}|[0-9a-f]{8})$/i); if (!m) return "#ffffff"; return m[1].length === 8 ? "#" + m[1].slice(2) : "#" + m[1]; };
 const alphaOf = (c) => { const m = String(c || "").match(/^#([0-9a-f]{8})$/i); return m ? Math.round(parseInt(m[1].slice(0, 2), 16) / 2.55) : 100; };
 const argb = (hex, pct) => "#" + Math.round(Math.max(0, Math.min(100, pct)) * 2.55).toString(16).padStart(2, "0").toUpperCase() + hex.slice(1).toUpperCase();
@@ -1784,7 +1786,7 @@ function updateTkLabels() {
 }
 function renderSeps() {
   const custom = !SEPS.includes(tkSep);
-  $("#tkSeps").innerHTML = SEPS.map((x) => `<button type="button" class="chip${x === tkSep ? " on" : ""}" data-sep="${esc(x)}">${esc(x)}</button>`).join("")
+  $("#tkSeps").innerHTML = SEPS.map((x) => `<button type="button" class="chip${x === tkSep ? " on" : ""}" data-sep="${esc(x)}">${x === SEP_NONE ? esc(t("Okenn")) : esc(x)}</button>`).join("")
     + `<span class="chip${custom ? " on" : ""}"><input type="text" id="tkSepCustom" maxlength="8" placeholder="${esc(t("Lòt…"))}" value="${custom ? esc(tkSep) : ""}" aria-label="${esc(t("Lòt separatè"))}"></span>`;
 }
 $("#tkSeps").addEventListener("click", (e) => { const b = e.target.closest("[data-sep]"); if (!b) return; tkSep = b.dataset.sep; renderSeps(); renderTkPreview(); scheduleTkSave(); });
