@@ -80,6 +80,7 @@ class EpgActivity : AppCompatActivity() {
     // Ti apèsi videyo a
     private var player: ExoPlayer? = null
     private var previewCh: Channel? = null
+    private var previewRetries = 0
     private val startPreviewLater = Runnable { previewCh?.let { startPreview(it) } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -165,7 +166,15 @@ class EpgActivity : AppCompatActivity() {
 
     private val previewListener = object : Player.Listener {
         override fun onRenderedFirstFrame() { b.previewLogo.visibility = View.GONE }
-        override fun onPlayerError(error: PlaybackException) { b.previewLogo.visibility = View.VISIBLE }
+        override fun onPlayerError(error: PlaybackException) {
+            b.previewLogo.visibility = View.VISIBLE
+            // Ti koupi: relanse apèsi a (maks 5 fwa youn dèyè lòt)
+            if (previewRetries++ < 5) { handler.removeCallbacks(startPreviewLater); handler.postDelayed(startPreviewLater, 2_500) }
+        }
+        override fun onPlaybackStateChanged(state: Int) {
+            if (state == Player.STATE_READY) previewRetries = 0
+            if (state == Player.STATE_ENDED) { handler.removeCallbacks(startPreviewLater); handler.postDelayed(startPreviewLater, 1_500) }
+        }
     }
 
     private fun startPreview(ch: Channel) {
@@ -437,6 +446,7 @@ class EpgActivity : AppCompatActivity() {
         if (previewCh?.streamId == ch.streamId && previewCh?.directUrl == ch.directUrl) { openFull(ch); return }
         if (ch.directUrl == null) prefs.lastChannelId = ch.streamId
         handler.removeCallbacks(startPreviewLater)
+        previewRetries = 0
         startPreview(ch)
     }
 

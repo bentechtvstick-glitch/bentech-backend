@@ -75,9 +75,7 @@ class PlayerActivity : AppCompatActivity() {
             val builder = MediaItem.Builder()
                 .setMediaId("channel")
                 .setUri(url)
-                .setLiveConfiguration(
-                    MediaItem.LiveConfiguration.Builder().setTargetOffsetMs(5_000).build()
-                )
+                // Pa fòse player a rete kole sou "dirèk" la (5 s te twò pre: imaj la te kanpe souvan). Li swiv sa stream nan mande.
             val isHls = if (ch.directUrl != null) ch.directUrl.contains(".m3u8", ignoreCase = true) else mode == 0 || mode == 3
             if (isHls) builder.setMimeType(MimeTypes.APPLICATION_M3U8)
             return builder.build()
@@ -264,7 +262,7 @@ class PlayerActivity : AppCompatActivity() {
 
         // Pi gwo buffer pou stream 4K/8K ki gen gwo bitrate
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(15_000, 50_000, 1_000, 3_000) // imaj la parèt apre 1 s buffer (zap pi rapid)
+            .setBufferDurationsMs(20_000, 60_000, 1_500, 4_000) // plis rezèv = mwens kanpe; imaj la parèt apre 1.5 s
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
@@ -282,7 +280,11 @@ class PlayerActivity : AppCompatActivity() {
         player = ExoPlayer.Builder(this, renderers)
             .setTrackSelector(trackSelector)
             .setLoadControl(loadControl)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSource, extractors))
+            .setMediaSourceFactory(
+                DefaultMediaSourceFactory(dataSource, extractors)
+                    // Ti koupi rezo: eseye ankò plizyè fwa anvan player a deklare yon erè
+                    .setLoadErrorHandlingPolicy(androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy(6))
+            )
             .build().also { p ->
                 p.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                 b.playerView.player = p
@@ -313,6 +315,16 @@ class PlayerActivity : AppCompatActivity() {
             if (state == Player.STATE_READY && !adPlaying && player?.currentMediaItem?.mediaId == "channel" &&
                 channels.getOrNull(index)?.directUrl == null) rememberWorking()
             if (state == Player.STATE_ENDED && adPlaying) { if (inBreak) nextBreakAd() else endPreroll() }
+            // ---- Chanèl la pa dwe rete kanpe: rekonekte poukont li ----
+            val onChannel = !adPlaying && player?.currentMediaItem?.mediaId == "channel"
+            handler.removeCallbacks(stallWatch)
+            if (onChannel) when (state) {
+                Player.STATE_READY -> { playedOk = true; readyAt = System.currentTimeMillis() }
+                // Sèvè a fèmen koneksyon an (yon chanèl an dirèk pa janm "fini" vre)
+                Player.STATE_ENDED -> reconnect()
+                // Bloke sou "ap chaje" twò lontan: relanse koneksyon an
+                Player.STATE_BUFFERING -> if (playedOk) handler.postDelayed(stallWatch, 12_000)
+            }
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -322,6 +334,8 @@ class PlayerActivity : AppCompatActivity() {
         override fun onPlayerError(error: PlaybackException) {
             if (inBreak) { nextBreakAd(); return } // spot la pa ka jwe: pase sou pwochen an
             if (adPlaying) { endPreroll(); playChannel(index); return }
+            // Chanèl la t ap jwe byen epi li koupe (rezo, sèvè founisè a): rekonekte sou menm fason an, pa montre erè touswit
+            if (playedOk && reconnect()) return
             // Si yon fason pa mache, eseye pwochen an (HLS → TS → ansyen fòm lyen) — sèlman pou chanèl Xtream
             val ch = channels.getOrNull(index)
             val direct = ch?.directUrl != null
@@ -401,8 +415,39 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun channelItem(ch: Channel, mode: Int, alt: Boolean = XtreamApi.preferAlt): MediaItem = buildItem(api, ch, mode, alt)
 
+    // ---- Rekoneksyon otomatik ----
+    /** true = chanèl aktyèl la te deja rive jwe (donk yon erè se yon koupi, pa yon move lyen). */
+    private var playedOk = false
+    private var readyAt = 0L
+    private var reconnects = 0
+    private val stallWatch = Runnable { if (!adPlaying && player?.playbackState == Player.STATE_BUFFERING) reconnect() }
+
+    /** Relanse chanèl la sou menm fason ki t ap mache a. Retounen false lè li eseye twòp fwa (lè sa a nou montre erè a). */
+    private fun reconnect(): Boolean {
+        val p = player ?: return false
+        val ch = channels.getOrNull(index) ?: return false
+        // Si chanèl la te jwe byen pandan 1 minit, kontè a rekòmanse a zewo
+        if (readyAt > 0 && System.currentTimeMillis() - readyAt > 60_000) reconnects = 0
+        if (reconnects >= 8) { playedOk = false; return false }
+        reconnects++
+        val at = index; val mode = curMode; val alt = curAlt
+        b.loading.visibility = View.VISIBLE
+        handler.removeCallbacks(stallWatch)
+        handler.postDelayed({
+            if (index == at && !adPlaying && player === p) {
+                p.setMediaItem(channelItem(ch, mode, alt))
+                p.prepare()
+                p.playWhenReady = true
+            }
+        }, minOf(500L * reconnects, 4_000L))
+        return true
+    }
+
     private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0, alt: Boolean = XtreamApi.preferAlt, stage: Int = 0) {
         val p = player ?: return
+        // Nouvo chanèl (pa yon re-eseye): kontè rekoneksyon an rekòmanse
+        if (attempt == 0 && stage == 0) { playedOk = false; reconnects = 0; readyAt = 0L }
+        handler.removeCallbacks(stallWatch)
         attempts = attempt
         curMode = mode
         curAlt = alt
