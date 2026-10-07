@@ -286,6 +286,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
           label: s.tickerLabelOn === false ? "" : String(s.tickerLabel || ""), // switch etikèt la (tèks la kenbe menm si l etenn)
           labelBg: s.tickerLabelBgTransparent ? "#00000000" : s.tickerLabelBg || "#E50914",
           labelColor: s.tickerLabelColor || "#FFFFFF",
+          // Chanèl/gwoup ki deja gen pwòp ticker yo: mo kle (nan non chanèl la oswa non gwoup la)
+          hideOn: String(s.tickerHideOn || "").split(/[\n,]+/).map((x) => x.trim().toLowerCase()).filter(Boolean).slice(0, 100),
+          topOn: String(s.tickerTopOn || "").split(/[\n,]+/).map((x) => x.trim().toLowerCase()).filter(Boolean).slice(0, 100),
           showClock: !!s.tickerClock,
           clockFormat: String(s.tickerClockFormat) === "12" ? "12" : "24", // lè a: 12h (8:45 PM) oswa 24h (20:45)
           direction: s.tickerDirection === "right" ? "right" : "left", // left = defile de dwat a gòch (tankou chèn TV yo)

@@ -803,6 +803,12 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="field"><label>Separatè ant mesaj yo</label><div class="chips" id="tkSeps"></div></div>
           <div class="inline" style="justify-content:space-between;flex-wrap:wrap;gap:10px"><div class="inline"><label class="sw"><input type="checkbox" id="tkClock"><i></i></label><label for="tkClock">Montre lè a adwat</label></div>
             <div class="seg" id="tkClockFmt" role="radiogroup" aria-label="Fòma lè a"><button type="button" data-v="12">12h · 8:45 PM</button><button type="button" data-v="24" class="on">24h · 20:45</button></div></div>
+          <h2 style="margin-top:18px">Chanèl ki deja gen pwòp ticker yo</h2>
+          <p class="note" style="margin:4px 0 10px">Ekri yon mo pa liy (egz: News, CNN, BFM). Si mo a nan non chanèl la oswa nan non gwoup li a, règ la aplike lè kliyan an ap gade chanèl sa a plen ekran.</p>
+          <div class="row2">
+            <div class="field"><label for="tkHideOn">Kache ticker a sou chanèl sa yo</label><textarea id="tkHideOn" rows="4" placeholder="News&#10;CNN"></textarea></div>
+            <div class="field"><label for="tkTopOn">Mete ticker a anlè sou chanèl sa yo</label><textarea id="tkTopOn" rows="4" placeholder="Sports&#10;ESPN"></textarea></div>
+          </div>
           <div class="btns"><span class="msg" id="tkMsg" style="margin-right:auto"></span><button class="btn primary" id="tkSave" type="button">Sove</button></div>
         </div>
       </div>
@@ -1775,6 +1781,7 @@ function fillTickerStyle() {
   $("#tkBgTr").checked = !!s.tickerBgTransparent; $("#tkLabelTr").checked = !!s.tickerLabelBgTransparent;
   $("#tkAnim").checked = s.tickerAnimEmoji !== false; $("#tkRunOn").checked = !!s.tickerRunnerOn; $("#tkRun").value = s.tickerRunner ?? "🏎️💨";
   $("#tkRunSpeed").value = s.tickerRunnerSpeed || 6; $("#tkRunFlip").checked = !!s.tickerRunnerFlip;
+  $("#tkHideOn").value = s.tickerHideOn || ""; $("#tkTopOn").value = s.tickerTopOn || "";
   tkSep = s.tickerSeparator ?? "•"; renderSeps(); updateTkLabels();
 }
 function updateTkLabels() {
@@ -1839,6 +1846,7 @@ function tickerStylePatch() {
     tickerAnimEmoji: $("#tkAnim").checked, tickerRunnerOn: $("#tkRunOn").checked, tickerRunner: $("#tkRun").value.trim(),
     tickerRunnerSpeed: +$("#tkRunSpeed").value || 6, tickerRunnerFlip: $("#tkRunFlip").checked,
     tickerBgTransparent: $("#tkBgTr").checked, tickerLabelBgTransparent: $("#tkLabelTr").checked,
+    tickerHideOn: $("#tkHideOn").value.trim(), tickerTopOn: $("#tkTopOn").value.trim(),
   };
 }
 // Sove otomatikman: chak chanjman nan Estil ticker / Animasyon ale sou TV yo touswit (pa bezwen klike Sove)
@@ -1851,6 +1859,7 @@ function scheduleTkSave() {
     catch (err) { setMsg($("#tkMsg"), err.message); }
   }, 700);
 }
+["tkHideOn", "tkTopOn"].forEach((id) => $("#" + id).addEventListener("change", scheduleTkSave));
 $("#tkSave").addEventListener("click", async () => {
   clearTimeout(tkSaveTimer);
   await putSettings(tickerStylePatch(), "Estil ticker sove");
