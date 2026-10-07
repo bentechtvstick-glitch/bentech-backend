@@ -1284,7 +1284,7 @@ function renderDevTable() {
       const key = d.galaxy ? `data-mac="${esc(d.mac)}"` : `data-id="${esc(d.deviceId)}"`;
       return `<tr class="click${dev && d.galaxy && dev.mac === d.mac ? " sel" : ""}" ${key}><td class="mono">${d.galaxy ? esc(d.mac) : "-"}</td><td>${esc(shortId(d))}</td><td>${esc(d.type || devType(d.model || ""))}</td><td>${st}</td>
         <td>${d.playlists.map((p) => esc(p.name)).join(", ") || t("Pa konfigire")}</td><td>${esc(d.lastSeen || "—")}</td><td>${esc(d.limit ?? 1)}</td>
-        <td class="acts"><button class="btn purple" data-act="provider" type="button">${t("Ajoute provider")}</button><button class="btn green" data-act="activate" type="button">${t("Aktive l")}</button><button class="btn brown" data-act="block" type="button">${t("Bloke l")}</button><button class="btn red" data-act="delete" type="button">${t("Efase l")}</button></td></tr>`;
+        <td class="acts"><button class="btn purple" data-act="provider" type="button">${t("Ajoute provider")}</button><button class="btn ${d.blocked ? "red" : "green"}" data-act="${d.blocked ? "activate" : "block"}" type="button" title="${esc(t(d.blocked ? "Klike pou aktive aparèy la" : "Klike pou dezaktive aparèy la"))}">${t(d.blocked ? "Dezaktive" : "Aktif")}</button><button class="btn red" data-act="delete" type="button">${t("Efase l")}</button></td></tr>`;
     }).join("") + `</tbody></table>` + moreHtml("dev", devices.length)
     : `<div class="empty">${q ? t("Pa gen anyen ki koresponn.") : t("Pa gen aparèy Galaxy ankò. Louvri app la sou yon TV pou l parèt isit la.")}</div>`);
 }
@@ -1307,7 +1307,7 @@ $("#devTable").addEventListener("click", async (e) => {
     renderLinkBox(); $("#findCard").scrollIntoView({ behavior: "smooth", block: "center" }); $("#mac").focus({ preventScroll: true }); return;
   }
   if (act === "activate" || act === "block") {
-    try { await api(path.patch[0], path.patch[1], { blocked: act === "block" }); toast(act === "block" ? "Aparèy la bloke" : "Aparèy la aktive"); await loadDevices(); if (dev && dev.mac === mac) selectDevice(mac); }
+    try { await api(path.patch[0], path.patch[1], { blocked: act === "block" }); toast(act === "block" ? "Aparèy la dezaktive" : "Aparèy la aktive"); await loadDevices(); if (dev && dev.mac === mac) selectDevice(mac); }
     catch (err) { toast(err.message); } return;
   }
   if (act === "delete") {
