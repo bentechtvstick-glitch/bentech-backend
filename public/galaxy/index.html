@@ -413,7 +413,6 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <button class="tab navlink" role="tab" data-tab="dev" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg><span>Aparèy</span><span class="badge" id="navNew" hidden></span></button>
       <button class="tab navlink" role="tab" data-tab="ch" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Chanèl</span></button>
       <div class="navsep"></div>
-      <button class="tab navlink" role="tab" data-tab="prof" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/><circle cx="18" cy="17" r="3"/></svg><span>Channel Profiles</span></button>
       <div class="navsep"></div>
       <button class="tab navlink" role="tab" data-tab="ev" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/></svg><span>Live Events</span></button>
       <button class="tab navlink" role="tab" data-tab="bc" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4M9 10.5l2 2 4-4"/></svg><span>Broadcast</span></button>
@@ -964,7 +963,6 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 <script src="symbols.js"></script>
 <script src="fx.js"></script>
 <script src="gfx.js"></script>
-<script src="testtv.js"></script>
 <script>
 (() => {
 "use strict";
@@ -1550,7 +1548,8 @@ function chLoadState() {
       if (hc.has(n)) chState.hid.add(c.id); if (cn[n]) chState.chN[c.id] = cn[n]; }
     const n = devicesCache.filter((d) => d.channelProfile === pk.name && d.mac !== dev.mac).length + 1;
     $("#chPkgNote").innerHTML = `<b>📦 ${esc(t("W ap modifye pakè «{0}».", pk.name))}</b> ${esc(t("Sa w sove isit la aplike sou tout aparèy ki sèvi ak pakè sa a ({0}).", n))}
-      <label class="inline" style="margin-top:8px;gap:8px;cursor:pointer"><input type="checkbox" id="chPkgOnly"${only ? " checked" : ""}> <span>${esc(t("Sèlman gwoup ki limen yo: si founisè a ajoute yon nouvo gwoup, li rete kache."))}</span></label>`;
+      <label class="inline" style="margin-top:8px;gap:8px;cursor:pointer"><input type="checkbox" id="chPkgOnly"${only ? " checked" : ""}> <span>${esc(t("Sèlman gwoup ki limen yo: si founisè a ajoute yon nouvo gwoup, li rete kache."))}</span></label>
+      <div style="margin-top:8px"><button class="btn small danger" id="chPkgDel" type="button">${esc(t("Efase pakè sa a"))}</button></div>`;
   } else {
     chState.hid = new Set((dev.hiddenChannels || []).map(Number)); chState.hidC = new Set((dev.hiddenCategories || []).map(String));
     chState.catN = { ...(dev.categoryNames || {}) }; chState.chN = { ...(dev.channelNames || {}) };
@@ -1571,6 +1570,16 @@ function chPkgBody(old) {
   return { pkg: true, mode: only ? "only" : "hide", shownGroups: [...keepList(old?.shownGroups, hereG), ...shown], hiddenGroups: [...keepList(old?.hiddenGroups, hereG), ...g.values()], groupNames: gNames, hiddenChannels: [...keepList(old?.hiddenChannels, hereC), ...new Set(hc)], channelNames: cNames, updatedAt: new Date().toISOString() };
 }
 $("#chProfile").addEventListener("change", () => { if (!chState) return; chLoadState(); setMsg($("#chMsg"), "Chanjman yo poko sove.", false); $("#chMsg").className = "msg"; });
+// Efase yon pakè (modil Channel Profiles la retire: pakè yo jere isit la)
+$("#chPkgNote").addEventListener("click", async (ev) => {
+  if (!ev.target.closest("#chPkgDel")) return; const pk = chPkg(); if (!pk) return;
+  if (!confirm(t("Efase pakè «{0}»? Aparèy ki sèvi ak li ap resevwa tout chanèl yo.", pk.name))) return;
+  try {
+    for (const d of devicesCache.filter((x) => x.channelProfile === pk.name && x.mac)) await api("PATCH", `/galaxy/devices/${encodeURIComponent(d.mac)}`, { channelProfile: "" });
+    await api("DELETE", `/channel-profiles/${encodeURIComponent(pk.name)}`);
+    toast("Efase"); await loadDevices(); await loadChannels();
+  } catch (err) { toast(err.message); }
+});
 $("#chPkgSave").addEventListener("click", async () => {
   if (!chState) return; const name = $("#chPkgName").value.trim();
   if (!name) { setMsg($("#chMsg"), "Ekri non nouvo pakè a an premye."); $("#chPkgName").focus(); return; }
