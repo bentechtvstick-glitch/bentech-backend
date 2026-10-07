@@ -136,7 +136,7 @@ class EpgActivity : AppCompatActivity() {
         // Lè kliyan an desann nan lis la pandan l nan tan ki pase: chaje achiv nouvo chanèl yo
         b.rows.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(rv: RecyclerView, state: Int) {
-                if (state == RecyclerView.SCROLL_STATE_IDLE) ensureArchive((currentFocus?.tag as? Cell)?.rowPos ?: -1)
+                if (state == RecyclerView.SCROLL_STATE_IDLE) { ensureArchive((currentFocus?.tag as? Cell)?.rowPos ?: -1); fillMissing() }
             }
         })
 
@@ -300,6 +300,7 @@ class EpgActivity : AppCompatActivity() {
             b.message.text = getString(R.string.empty_list)
             b.message.visibility = View.VISIBLE
         } else b.message.visibility = View.GONE
+        b.rows.post { fillMissing() }
     }
 
     private fun focusCategories() {
@@ -363,13 +364,13 @@ class EpgActivity : AppCompatActivity() {
                     adapter.notifyDataSetChanged()
                     focusStartRow()
                 }
-                val hasAny = channels.any { EpgRepository.programsFor(it).isNotEmpty() }
-                b.message.text = getString(R.string.epg_empty)
-                b.message.visibility = if (hasAny) View.GONE else View.VISIBLE
+                b.message.visibility = View.GONE
+                b.rows.post { fillMissing() }
             }.onFailure {
-                b.message.text = getString(R.string.epg_error, it.message ?: "")
-                b.message.visibility = View.VISIBLE
+                // Gwo fichye gid la pa disponib: gid la toujou mache chanèl pa chanèl
+                EpgRepository.markLoaded()
                 focusStartRow()
+                b.rows.post { fillMissing() }
             }
         }
     }
@@ -421,6 +422,29 @@ class EpgActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
         b.rows.post { focusCellInRow(rowPos, first = !focusLast); ensureArchive(rowPos) }
         return true
+    }
+
+    private var fillJob: kotlinx.coroutines.Job? = null
+
+    /** Chanèl ki sou ekran an ki pa gen pwogram nan gwo fichye gid la: mande sèvè a youn pa youn. */
+    private fun fillMissing() {
+        if (!EpgRepository.isLoaded) return
+        fillJob?.cancel()
+        fillJob = lifecycleScope.launch {
+            delay(400)
+            val lm = b.rows.layoutManager as LinearLayoutManager
+            val first = lm.findFirstVisibleItemPosition().coerceAtLeast(0)
+            val last = lm.findLastVisibleItemPosition().coerceAtLeast(first)
+            val need = (first..last).mapNotNull { channels.getOrNull(it) }.filter { EpgRepository.needsSingle(it) }
+            if (need.isEmpty()) return@launch
+            var any = false
+            for (ch in need) if (EpgRepository.loadSingle(api, ch)) any = true
+            if (any) {
+                val row = (currentFocus?.tag as? Cell)?.rowPos ?: -1
+                adapter.notifyDataSetChanged()
+                if (row >= 0 && zone == 0) b.rows.post { focusCellInRow(row, first = true) }
+            }
+        }
     }
 
     /**

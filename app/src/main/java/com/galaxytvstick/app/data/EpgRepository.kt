@@ -36,8 +36,31 @@ object EpgRepository {
 
     val isLoaded get() = loadedAt > 0
 
+    /** Gwo fichye XMLTV a echwe: make "chaje" pou gid la kontinye ak demann chanèl pa chanèl. */
+    fun markLoaded() { if (loadedAt == 0L) loadedAt = System.currentTimeMillis() }
+
+    /** EPG chanèl pa chanèl (lè gwo fichye XMLTV a pa gen chanèl la): chaje sèlman pou chanèl ki sou ekran an. */
+    private val single = java.util.concurrent.ConcurrentHashMap<Int, List<Program>>()
+    private val singleTried = java.util.Collections.newSetFromMap(java.util.concurrent.ConcurrentHashMap<Int, Boolean>())
+
+    /** true si chanèl la poko gen okenn pwogram epi nou poko eseye mande sèvè a dirèkteman. */
+    fun needsSingle(ch: Channel) = ch.directUrl == null && ch.streamId > 0 && !singleTried.contains(ch.streamId) && programsFor(ch).isEmpty()
+
+    /** Mande sèvè a gid yon sèl chanèl. Retounen true si li jwenn pwogram. */
+    suspend fun loadSingle(api: XtreamApi, ch: Channel): Boolean {
+        if (!singleTried.add(ch.streamId)) return false
+        val now = System.currentTimeMillis()
+        val list = runCatching { api.archiveEpg(ch.streamId) }.getOrDefault(emptyList())
+            .filter { it.end > now - KEEP_BEFORE_MS && it.start < now + KEEP_AFTER_MS }
+            .map { if (it.desc.length > MAX_DESC) it.copy(desc = it.desc.take(MAX_DESC)) else it }
+        if (list.isEmpty()) return false
+        if (single.size > 600) single.clear()
+        single[ch.streamId] = list
+        return true
+    }
+
     fun programsFor(ch: Channel): List<Program> {
-        val x = ch.epgChannelId?.let { programs[it] } ?: emptyList()
+        val x = ch.epgChannelId?.let { programs[it.lowercase()] } ?: single[ch.streamId] ?: emptyList()
         val a = archive[ch.streamId] ?: return x
         if (x.isEmpty()) return a
         // Pwogram achiv yo ki pase anvan premye pwogram XMLTV a
@@ -67,16 +90,18 @@ object EpgRepository {
     suspend fun ensureLoaded(api: XtreamApi, channels: List<Channel>, force: Boolean = false): Boolean =
         mutex.withLock {
             if (!force && isLoaded && System.currentTimeMillis() - loadedAt < REFRESH_MS) return@withLock false
-            val wanted = channels.mapNotNull { it.epgChannelId }.toHashSet()
-            if (wanted.isEmpty()) return@withLock false
+            val wanted = channels.mapNotNull { it.epgChannelId?.lowercase() }.toHashSet()
+            if (wanted.isEmpty()) { loadedAt = System.currentTimeMillis(); return@withLock false }
             // Chanèl catch-up: kenbe pwogram ki pase yo pandan tout tan achiv la (maks 7 jou)
             val keepPast = HashMap<String, Long>()
             for (c in channels) {
-                val id = c.epgChannelId ?: continue
+                val id = c.epgChannelId?.lowercase() ?: continue
                 // Maks 2 jou nan XMLTV (memwa Fire Stick); jou ki pi lwen yo chaje lè kliyan an ale la (loadArchive)
                 if (c.tvArchive) keepPast[id] = maxOf(keepPast[id] ?: 0L, c.archiveDays.coerceIn(1, 2) * 86_400_000L)
             }
             archive.clear()
+            single.clear()
+            singleTried.clear()
             val result = withContext(Dispatchers.IO) { download(api.xmltvUrl(), wanted, keepPast) }
             programs = result
             loadedAt = System.currentTimeMillis()
@@ -119,7 +144,7 @@ object EpgRepository {
             when (event) {
                 XmlPullParser.START_TAG -> when (parser.name) {
                     "programme" -> {
-                        val ch = parser.getAttributeValue(null, "channel")
+                        val ch = parser.getAttributeValue(null, "channel")?.lowercase()
                         if (ch != null && ch in wanted) {
                             start = parseTime(parser.getAttributeValue(null, "start"))
                             stop = parseTime(parser.getAttributeValue(null, "stop"))

@@ -677,6 +677,10 @@ class PlayerActivity : AppCompatActivity() {
         b.qLogo.load(ch.icon) { error(R.drawable.ic_tv) }
         val now = EpgRepository.nowFor(ch)
         val next = EpgRepository.nextFor(ch)
+        // Chanèl la pa nan gwo fichye gid la: mande sèvè a pou chanèl sa a sèlman, epi mete ba a ajou
+        if (now == null && EpgRepository.needsSingle(ch)) lifecycleScope.launch {
+            if (EpgRepository.loadSingle(api, ch) && quickVisible && channels.getOrNull(index)?.streamId == ch.streamId) showQuickBar()
+        }
         b.qTitle.text = now?.title ?: ch.name
         if (now != null) {
             b.qTime.text = "${timeFmt.format(Date(now.start))} – ${timeFmt.format(Date(now.end))}"
