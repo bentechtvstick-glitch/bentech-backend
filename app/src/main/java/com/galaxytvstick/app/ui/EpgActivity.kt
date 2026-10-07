@@ -234,14 +234,29 @@ class EpgActivity : AppCompatActivity() {
     /** Montre/kache meni an ak kolòn kategori yo. */
     private fun setZone(z: Int) {
         zone = z
-        b.menu.visibility = if (z == 2) View.VISIBLE else View.GONE
+        b.menu.visibility = if (z >= 1) View.VISIBLE else View.GONE
         b.catPanel.visibility = if (z >= 1) View.VISIBLE else View.GONE
+        // Premye ◀: sèlman siy yo (chèche, TV, fim…) ak kategori yo. Dezyèm ◀: meni an louvri ak non yo.
+        val open = z == 2
+        val d = resources.displayMetrics.density
+        b.menu.layoutParams = b.menu.layoutParams.apply { width = ((if (open) 200 else 64) * d).toInt() }
+        b.menuLogo.visibility = if (open) View.VISIBLE else View.GONE
+        b.accBox.visibility = if (open) View.VISIBLE else View.INVISIBLE
+        val current = when (selectedCat) { ChannelLists.CAT_FAV -> b.menuFav; CAT_CATCHUP -> b.menuCatchup; else -> b.menuTv }
+        val labels = intArrayOf(R.string.menu_search, R.string.menu_tv, R.string.home_movies, R.string.home_series, R.string.menu_favorites, R.string.menu_catchup, R.string.home_settings)
+        val icons = arrayOf("🔍", "📺", "🎬", "🎞", "⭐", "🕘", "⚙")
+        val pad = (14 * d).toInt()
+        listOf(b.menuSearch, b.menuTv, b.menuMovies, b.menuSeries, b.menuFav, b.menuCatchup, b.menuSettings).forEachIndexed { i, v ->
+            v.text = if (open) "${icons[i]}    ${getString(labels[i])}" else icons[i]
+            v.gravity = if (open) Gravity.CENTER_VERTICAL else Gravity.CENTER
+            v.setPadding(if (open) pad else 0, 0, 0, 0)
+            v.isSelected = v === current
+        }
     }
 
     private fun showMenu() {
         setZone(2)
         val item = when (selectedCat) { ChannelLists.CAT_FAV -> b.menuFav; CAT_CATCHUP -> b.menuCatchup; else -> b.menuTv }
-        for (v in listOf(b.menuSearch, b.menuTv, b.menuMovies, b.menuSeries, b.menuFav, b.menuCatchup, b.menuSettings)) v.isSelected = v === item
         item.post { item.requestFocus() }
     }
 
