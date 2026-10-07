@@ -832,6 +832,8 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Ekspire depi {0} jou": ["Expired {0} days ago", "Expiré depuis {0} jours", "Vencida hace {0} días"],
     "Efase nan {0} jou": ["Deleted in {0} days", "Supprimée dans {0} jours", "Se elimina en {0} días"],
     "Pa gen TV ki ekspire.": ["No expired TV.", "Aucune TV expirée.", "Ninguna TV vencida."],
+    "Efase tout": ["Clear all", "Tout effacer", "Borrar todo"],
+    "Efase tout jounal aksyon yo? Sa pa ka defèt.": ["Clear all audit logs? This cannot be undone.", "Effacer tout le journal des actions ? Cette action est irréversible.", "¿Borrar todo el registro de acciones? No se puede deshacer."],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],

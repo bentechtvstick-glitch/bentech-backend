@@ -259,6 +259,15 @@ mountGalaxy(app, db, { authenticate, auditLog, syncTvs: () => syncTvs() }); // p
 const galaxyLive = mountGalaxyLive(app, db, { authenticate, auditLog });
 syncTvs = galaxyLive.broadcastSync; // TV yo mete yo ajou touswit lè panel la chanje yon bagay
 
+// Efase tout jounal aksyon yo (bouton "Efase tout" nan paj Audit Logs)
+app.delete("/api/audit-logs", guard, async (req, res) => {
+  const n = (db.data.auditLogs || []).length;
+  db.data.auditLogs = [];
+  await db.write();
+  auditLog("audit-clear", `${n} audit log entries cleared`, req.user?.sub || "anonymous");
+  res.json({ ok: true, cleared: n });
+});
+
 app.get("/api/audit-logs", guard, (req, res) => {
   const limit = Math.min(Math.max(parseInt(req.query.limit) || 1000, 1), AUDIT_MAX);
   res.json((db.data.auditLogs || []).slice(-limit));

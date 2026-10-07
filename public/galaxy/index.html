@@ -467,7 +467,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 
     <!-- Paj koleksyon (Kliyan, Abònman, Kòd, Providers…) -->
     <main data-pane="crud" hidden>
-      <div class="pagehead"><div><h1 id="crudTitle"></h1><p id="crudSub"></p></div><button class="btn primary big" id="crudAdd" type="button"></button></div>
+      <div class="pagehead"><div><h1 id="crudTitle"></h1><p id="crudSub"></p></div><div class="inline"><button class="btn danger" id="crudClear" type="button" hidden>Efase tout</button><button class="btn primary big" id="crudAdd" type="button"></button></div></div>
       <div class="card" id="crudFormCard" hidden>
         <div class="cardhead"><h2 id="crudFormTitle"></h2></div>
         <form id="crudForm" autocomplete="off" style="display:flex;flex-direction:column;gap:12px"><div class="row2" id="crudFields"></div>
@@ -1389,7 +1389,7 @@ const pillClass = (v) => { const x = String(v).toLowerCase(); return ["active", 
 async function openCrud(name) {
   const C = CRUD[name]; crud = { name, items: [], editing: null, refs: {} };
   $("#crudTitle").textContent = t(C.title); $("#crudSub").textContent = t(C.sub); $("#crudListTitle").textContent = t(C.title);
-  $("#crudAdd").hidden = !!C.readonly; $("#crudAdd").textContent = "+ " + t("Ajoute");
+  $("#crudAdd").hidden = !!C.readonly; $("#crudAdd").textContent = "+ " + t("Ajoute"); $("#crudClear").hidden = !C.readonly;
   $("#crudFormCard").hidden = true; $("#crudSearch").value = ""; caps.crud = CAP;
   if (C.fields.some((f) => f.ref)) crud.refs.customers = await list("customers").catch(() => []);
   if (C.fields.some((f) => f.list)) crud.refs.providers = await list("providers").catch(() => []);
@@ -1459,6 +1459,10 @@ function openCrudForm(item) {
   $("#crudFields input,#crudFields select")?.focus({ preventScroll: true });
 }
 $("#crudAdd").addEventListener("click", () => openCrudForm(null));
+$("#crudClear").addEventListener("click", async () => {
+  if (!confirm(t("Efase tout jounal aksyon yo? Sa pa ka defèt."))) return;
+  try { await api("DELETE", "/audit-logs"); toast("Efase"); await loadCrud(); } catch (err) { toast(err.message); }
+});
 $("#crudCancel").addEventListener("click", () => { $("#crudFormCard").hidden = true; crud.editing = null; });
 let crudSearchT; $("#crudSearch").addEventListener("input", () => { clearTimeout(crudSearchT); crudSearchT = setTimeout(() => { caps.crud = CAP; renderCrud(); }, 120); });
 $("#crudRefresh").addEventListener("click", loadCrud);
