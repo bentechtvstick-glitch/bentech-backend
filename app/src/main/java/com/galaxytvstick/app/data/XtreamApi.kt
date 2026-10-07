@@ -148,6 +148,12 @@ class XtreamApi(private val account: Account) {
         return info.optInt("auth", 0) == 1
     }
 
+    /** Dat ekspirasyon kont lan kay founisè a (yyyy-MM-dd), oswa null si li pa di l / san limit. */
+    suspend fun expiryDate(): String? = runCatching {
+        val exp = JSONObject(get(apiUrl(null))).optJSONObject("user_info")?.optString("exp_date").orEmpty().toLongOrNull() ?: return@runCatching null
+        if (exp <= 0) null else java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date(exp * 1000))
+    }.getOrNull()
+
     suspend fun liveCategoriesRaw(): String = get(apiUrl("get_live_categories"))
     suspend fun liveStreamsRaw(): String = get(apiUrl("get_live_streams"))
 
