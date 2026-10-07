@@ -71,6 +71,16 @@ class Prefs(context: Context) {
         get() = sp.getString("parental_pin", "") ?: ""
         set(value) = sp.edit().putString("parental_pin", value).apply()
 
+    /** Louvri app la pou kont li lè Fire Stick la limen. */
+    var autoStart: Boolean
+        get() = sp.getBoolean("auto_start", false)
+        set(value) = sp.edit().putBoolean("auto_start", value).apply()
+
+    /** Lè app la louvri: jwe dènye chanèl la plen ekran (olye gid la). */
+    var startLastChannel: Boolean
+        get() = sp.getBoolean("start_last_channel", false)
+        set(value) = sp.edit().putBoolean("start_last_channel", value).apply()
+
     var lastChannelId: Int
         get() = sp.getInt("last_channel", -1)
         set(value) = sp.edit().putInt("last_channel", value).apply()

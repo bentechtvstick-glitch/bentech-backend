@@ -121,7 +121,9 @@ class MainActivity : AppCompatActivity() {
         }
         ChannelStore.current = all
         // Ekran akèy la (meni, Kontinye gade, Live TV, fim, seri, kategori)
-        startActivity(Intent(this, EpgActivity::class.java))
+        val last = if (prefs.startLastChannel) all.firstOrNull { it.streamId == prefs.lastChannelId } else null
+        if (last != null) startActivity(Intent(this, PlayerActivity::class.java).putExtra(PlayerActivity.EXTRA_STREAM_ID, last.streamId))
+        else startActivity(Intent(this, EpgActivity::class.java))
         finish()
     }
 

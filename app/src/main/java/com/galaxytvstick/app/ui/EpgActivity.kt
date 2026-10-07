@@ -542,15 +542,20 @@ class EpgActivity : AppCompatActivity() {
     }
 
     /** Reglaj: rechaje chanèl yo, chanje playlist, enfòmasyon aparèy la, soti. */
+    private fun onOff(on: Boolean) = getString(if (on) R.string.switch_on else R.string.switch_off)
+
     private fun showSettings() {
-        val items = arrayOf(getString(R.string.set_device_info), getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off), getString(R.string.set_reload), getString(R.string.set_change_playlist), getString(R.string.exit_title))
+        val items = arrayOf(getString(R.string.set_device_info), getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off),
+            getString(R.string.set_autostart, onOff(prefs.autoStart)), getString(R.string.set_last_channel, onOff(prefs.startLastChannel)), getString(R.string.set_reload), getString(R.string.set_change_playlist), getString(R.string.exit_title))
         androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
             .setTitle(R.string.home_settings)
             .setItems(items) { _, which ->
                 when (which) {
                     1 -> parentalControl()
-                    2 -> { startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)); finish() }
-                    3 -> {
+                    2 -> { prefs.autoStart = !prefs.autoStart; showSettings() }
+                    3 -> { prefs.startLastChannel = !prefs.startLastChannel; showSettings() }
+                    4 -> { startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)); finish() }
+                    5 -> {
                         startActivity(
                             Intent(this, LoginActivity::class.java)
                                 .putExtra(LoginActivity.EXTRA_NO_AUTO, true)
