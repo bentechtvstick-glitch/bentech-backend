@@ -932,6 +932,11 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="kpis" id="sysKpis"></div>
         <div class="field" style="margin-top:14px"><label id="sysCapLabel"></label><div class="sysbar"><i id="sysCapBar"></i></div></div>
         <p class="note" id="sysNote" style="margin:10px 0 0"></p>
+        <div class="btns" style="justify-content:flex-start;margin-top:12px"><button class="btn" id="sysStorageBtn" type="button">Kisa ki pran plas?</button></div>
+        <div id="sysStorage" hidden style="margin-top:12px"></div>
+        <div class="field" style="margin-top:16px;max-width:520px"><label for="sysPurge">Efase yon TV otomatikman konbyen jou apre abònman li ekspire (0 = pa janm)</label>
+          <div class="inline" style="flex-wrap:nowrap"><input type="number" id="sysPurge" min="0" max="3650" style="max-width:120px"><button class="btn primary small" id="sysPurgeSave" type="button">Sove</button></div></div>
+        <p class="note" style="margin:6px 0 0">TV a ak lis chanèl li efase pou sove espas. Kliyan an rete nan panel la. Pou remete TV a, ajoute MAC li ankò.</p>
       </div>
       <div class="cols">
         <div class="card"><h2>Mentenans</h2>
@@ -2098,10 +2103,26 @@ async function loadSysStats() {
   const pct = Math.min(100, Math.round(((y.dbBytes || 0) / (50 * 1048576)) * 100)), bar = $("#sysCapBar");
   bar.style.width = Math.max(1, pct) + "%"; bar.className = pct >= 85 ? "bad" : pct >= 60 ? "warn" : "";
   $("#sysCapLabel").textContent = t("Espas baz done a itilize: {0}%", pct);
+  if (document.activeElement !== $("#sysPurge")) $("#sysPurge").value = settings.autoPurgeDays ?? 15;
   $("#sysNote").textContent = (y.persistent ? t("✓ Done yo sou yon disk pèmanan.") : t("⚠ Done yo pa sou yon disk pèmanan: yo ka efase lè sèvè a redemare. Ajoute yon Disk sou Render ak DB_FILE=/data/db.json."))
     + (y.dbWriteErrors ? " " + t("⚠ {0} erè ekriti sou disk la.", y.dbWriteErrors) : "");
 }
 $("#sysRefresh").addEventListener("click", loadSysStats);
+// ---- Kisa ki pran plas nan baz done a + TV ki pral efase otomatikman ----
+const STORE_LABELS = { channelLists: "Lis chanèl yo", devices: "Aparèy", deviceChannels: "Lyen aparèy → lis chanèl", devicePlaylists: "Playlist", customers: "Kliyan yo", auditLogs: "Jounal aksyon yo", channelProfiles: "Pakè chanèl", tickers: "Ticker", banners: "Banner", popups: "Pop-up", mediaAds: "Piblisite", liveEvents: "Evènman dirèk", chyrons: "Chyron", settings: "Reglaj", users: "Admin", deletedDevices: "Aparèy ki efase" };
+async function loadStorage() {
+  const box = $("#sysStorage"); box.hidden = false; box.innerHTML = `<div class="empty">${t("Ap chaje…")}</div>`;
+  let y; try { y = await api("GET", "/galaxy/storage"); } catch (err) { box.innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
+  $("#sysPurge").value = y.purgeDays;
+  const row = (a, b, c) => `<div class="li"><div class="grow">${a}</div><span class="note">${b}</span><b style="min-width:80px;text-align:right">${c}</b></div>`;
+  const pct = (b) => (y.total ? Math.round((b / y.total) * 100) : 0) + "%";
+  let h = `<div class="list">` + y.parts.filter((p) => p.bytes > 200).slice(0, 10).map((p) => row(esc(t(STORE_LABELS[p.key] || p.key)), `${Number(p.count).toLocaleString(lang)} · ${pct(p.bytes)}`, fmtBytes(p.bytes))).join("") + `</div>`;
+  if (y.lists.length) h += `<h2 style="margin:16px 0 8px">${t("Lis chanèl yo")}</h2><div class="list">` + y.lists.map((l) => row(l.devices.length ? esc(l.devices.join(", ")) : `<i>${t("Okenn aparèy")}</i>`, t("{0} chanèl", Number(l.channels).toLocaleString(lang)), fmtBytes(l.bytes))).join("") + `</div>`;
+  h += `<h2 style="margin:16px 0 8px">${t("Abònman ki ekspire")}</h2>` + (y.expired.length ? `<div class="list">` + y.expired.map((x) => row(`${esc(x.name || x.mac)} · ${esc(x.customer)}`, t("Ekspire depi {0} jou", x.daysExpired), x.daysLeft === null ? "—" : t("Efase nan {0} jou", x.daysLeft))).join("") + `</div>` : `<div class="empty">${t("Pa gen TV ki ekspire.")}</div>`);
+  box.innerHTML = h;
+}
+$("#sysStorageBtn").addEventListener("click", loadStorage);
+$("#sysPurgeSave").addEventListener("click", async () => { const v = Math.max(0, Math.min(3650, Math.floor(+$("#sysPurge").value || 0))); await putSettings({ autoPurgeDays: v }, "Sove"); if (!$("#sysStorage").hidden) loadStorage(); });
 async function loadSystem() {
   loadSysStats();
   settings = await api("GET", "/settings").catch(() => ({}));

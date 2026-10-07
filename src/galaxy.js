@@ -957,4 +957,76 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     auditLog("playlist-delete", `Playlist "${pl?.name || req.params.id}" removed from ${device.mac}`, admin(req));
     res.json(adminDevice(device));
   });
+
+  // =========================================================================
+  // Espas: kisa ki pran plas nan baz done a + netwayaj otomatik TV ki ekspire
+  // =========================================================================
+
+  /** Konbyen jou apre ekspirasyon kliyan an yon TV efase otomatikman (0 = janm). */
+  const purgeDays = () => { const v = Number(settings().autoPurgeDays ?? 15); return Number.isFinite(v) && v >= 0 ? Math.min(3650, Math.floor(v)) : 15; };
+
+  /** TV ki gen yon kliyan ki ekspire: [{ device, customer, expiredSec (depi konbyen segonn) }]. */
+  /** Dat règ netwayaj la kòmanse (segonn): pa gen TV ki efase mwens pase N jou apre dat sa a, menm si l te ekspire lontan anvan. */
+  const purgeSince = () => {
+    const s = data().settings ||= {};
+    if (!s.autoPurgeSince) s.autoPurgeSince = new Date().toISOString();
+    return Math.floor(new Date(s.autoPurgeSince).getTime() / 1000) || 0;
+  };
+
+  const expiredDevices = () => {
+    const zone = tz(), now = Math.floor(Date.now() / 1000), since = purgeSince(), out = [];
+    for (const device of data().devices || []) {
+      if (!device.mac || !device.customer) continue;
+      const customer = (data().customers || []).find((c) => same(c.name, device.customer) || c.id === device.customer);
+      if (!customer || !customer.expiry) continue; // san dat ekspirasyon: nou pa janm efase l otomatikman
+      const exp = toEpochSec(customer.expiry, zone, true);
+      // graceSec: tan ki konte pou netwayaj la (depi ekspirasyon an, oswa depi règ la kòmanse si sa pi resan)
+      if (exp > 0 && exp < now) out.push({ device, customer, expiredSec: now - exp, graceSec: now - Math.max(exp, since) });
+    }
+    return out;
+  };
+
+  async function purgeExpired() {
+    ensure();
+    const days = purgeDays();
+    if (!days) return 0;
+    const gone = expiredDevices().filter((x) => x.graceSec > days * 86400);
+    if (!gone.length) return 0;
+    for (const { device, customer } of gone) {
+      const mac = device.mac;
+      data().devices = data().devices.filter((d) => d !== device);
+      delete data().devicePlaylists[mac];
+      delete data().deviceChannels[mac];
+      if (!data().deletedDevices.includes(mac)) data().deletedDevices.push(mac);
+      auditLog("device-auto-delete", `Device ${mac} (${customer.name || ""}) deleted automatically: expired more than ${days} days ago`, "system");
+    }
+    pruneChannelLists();
+    await db.write();
+    syncTvs();
+    return gone.length;
+  }
+  // Yon fwa 2 minit apre sèvè a limen, epi chak 6 è
+  setTimeout(() => purgeExpired().catch(() => {}), 2 * 60 * 1000).unref?.();
+  setInterval(() => purgeExpired().catch(() => {}), 6 * 60 * 60 * 1000).unref?.();
+
+  app.get("/api/galaxy/storage", authenticate, (req, res) => {
+    ensure();
+    const size = (v) => Buffer.byteLength(JSON.stringify(v ?? null));
+    const count = (v) => (Array.isArray(v) ? v.length : v && typeof v === "object" ? Object.keys(v).length : 0);
+    const d = db.data;
+    const parts = Object.keys(d).map((key) => ({ key, bytes: size(d[key]), count: count(d[key]) })).sort((a, b) => b.bytes - a.bytes);
+    const nameOf = (mac) => { const x = (d.devices || []).find((y) => y.mac === mac); return x ? (x.name || x.customer || mac) : mac; };
+    const lists = Object.entries(d.channelLists || {}).map(([hash, list]) => ({
+      channels: Array.isArray(list) ? list.length : 0, bytes: size(list),
+      devices: Object.entries(d.deviceChannels || {}).filter(([, h]) => h === hash).map(([mac]) => nameOf(mac)),
+    })).sort((a, b) => b.bytes - a.bytes);
+    const days = purgeDays();
+    res.json({
+      total: parts.reduce((n, p) => n + p.bytes, 0), parts, lists, purgeDays: days,
+      expired: expiredDevices().map((x) => ({
+        mac: x.device.mac, name: x.device.name || "", customer: x.customer.name || "", expiry: x.customer.expiry,
+        daysExpired: Math.floor(x.expiredSec / 86400), daysLeft: days ? Math.max(0, Math.ceil(days - x.graceSec / 86400)) : null,
+      })).sort((a, b) => b.daysExpired - a.daysExpired),
+    });
+  });
 }
