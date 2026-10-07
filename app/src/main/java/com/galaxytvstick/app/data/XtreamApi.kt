@@ -17,7 +17,7 @@ class XtreamApi(private val account: Account) {
 
     companion object {
         /** Menm fòm ak lòt app ki bati sou ExoPlayer/Media3 (kèk sèvè IPTV refize non yo pa konnen). */
-        val DEFAULT_USER_AGENT = "GalaxyTvStick/1.0 (Linux;Android ${android.os.Build.VERSION.RELEASE}) AndroidXMedia3/1.4.1"
+        val DEFAULT_USER_AGENT = "Galaxy TV"
         @Volatile var USER_AGENT = DEFAULT_USER_AGENT
         /** Lòt non jwè videyo kouran, pou sèvè ki refize non yo pa konnen (menm jan ak reglaj "User-Agent" lòt app IPTV yo). */
         val ALT_USER_AGENTS = listOf(
