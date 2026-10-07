@@ -788,7 +788,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (!customer || customer.autoPlan === false) return null;
     const pl = playlistsOf(device.mac)[0];
     if (!pl) return null;
-    if (!force && customer.providerSyncAt && Date.now() - Date.parse(customer.providerSyncAt) < SYNC_EVERY_MS) return null;
+    // Plan an poko parèt: re-eseye chak 2 minit (pa tann 6 è) jiskaske founisè a reponn
+    const every = customer.plan ? SYNC_EVERY_MS : 2 * 60 * 1000;
+    if (!force && customer.providerSyncAt && Date.now() - Date.parse(customer.providerSyncAt) < every) return null;
     const key = String(customer.id || customer.name);
     if (syncing.has(key)) return null;
     const cl = xtreamClient(pl);
@@ -799,9 +801,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       const info = await cl.get("").catch(() => null);
       const u = info?.user_info;
       if (!u || Number(u.auth) === 0) return null;
-      const plan = providerPlan(u, customer);
-      if (plan) customer.plan = plan;
       const exp = Number(u.exp_date);
+      // Si founisè a pa bay dat kreyasyon an, plan an dedui apati tan ki rete a, pou kaz Plan an pa janm rete vid
+      const plan = providerPlan(u, customer) || (!customer.plan && exp > 0 ? planForDays(Math.max(0, exp - Date.now() / 1000) / 86400) : null);
+      if (plan) customer.plan = plan;
       customer.providerExp = exp > 0 ? exp : 0;
       customer.expiry = exp > 0 ? localStamp(exp) : ""; // pa gen dat = kont san limit
       const ps = String(u.status || "").toLowerCase();
