@@ -53,6 +53,15 @@ class Prefs(context: Context) {
         get() = sp.getString("server_tz", null)
         set(value) = sp.edit().putString("server_tz", value).apply()
 
+    /** Dènye chanèl kliyan an te gade (pi resan an premye), pou ba rapid la sou plen ekran. */
+    var recentChannels: List<Int>
+        get() = (sp.getString("recent_ch", "") ?: "").split(",").mapNotNull { it.toIntOrNull() }
+        set(value) = sp.edit().putString("recent_ch", value.joinToString(",")).apply()
+
+    fun pushRecent(streamId: Int) {
+        recentChannels = (listOf(streamId) + recentChannels.filter { it != streamId }).take(12)
+    }
+
     var lastChannelId: Int
         get() = sp.getInt("last_channel", -1)
         set(value) = sp.edit().putInt("last_channel", value).apply()

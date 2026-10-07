@@ -472,7 +472,8 @@ class PlayerActivity : AppCompatActivity() {
         repairStage = stage
         index = i
         val ch = channels[index]
-        if (ch.directUrl == null) prefs.lastChannelId = ch.streamId // pa relanse yon evènman ki ka fini
+        if (ch.directUrl == null) { prefs.lastChannelId = ch.streamId; prefs.pushRecent(ch.streamId) } // pa relanse yon evènman ki ka fini
+        hideQuickBar()
         b.errorText.visibility = View.GONE
         b.resBadge.visibility = View.GONE
         lastQuality = ""; lastResolution = ""; lastCodec = ""; lastError = ""
@@ -545,6 +546,7 @@ class PlayerActivity : AppCompatActivity() {
 
     /** Lanse yon koupi piblisite: spot yo pase youn apre lòt plen ekran, epi TV a tounen sou chanèl la. */
     private fun startAdBreak(ads: List<Ad>, skipAfter: Int) {
+        hideQuickBar()
         if (ads.isEmpty() || adPlaying || isFinishing || player == null) return
         if (b.overlay.blocker.visibility == View.VISIBLE) return
         hideChannelOverlay()
@@ -651,7 +653,100 @@ class PlayerActivity : AppCompatActivity() {
 
     private val overlayVisible get() = b.channelOverlay.visibility == View.VISIBLE
 
+    // ------------------------------------------------------------ Ba rapid (OK sou plen ekran)
+
+    private val quickVisible get() = b.quickBar.visibility == View.VISIBLE
+    private val hideQuick = Runnable { hideQuickBar() }
+    private val quickClockFmt = SimpleDateFormat("EEE d MMM, HH:mm", Locale.getDefault())
+
+    private fun hideQuickBar() {
+        handler.removeCallbacks(hideQuick)
+        b.quickBar.visibility = View.GONE
+    }
+
+    private fun keepQuickBar() {
+        handler.removeCallbacks(hideQuick)
+        handler.postDelayed(hideQuick, 10_000)
+    }
+
+    /** OK sou plen ekran: enfo pwogram nan anba, ak Gid TV, lis chanèl yo ak dènye chanèl kliyan an te gade. */
+    private fun showQuickBar() {
+        val ch = channels.getOrNull(index) ?: return
+        handler.removeCallbacks(hideInfo)
+        b.infoPanel.visibility = View.GONE
+        b.qLogo.load(ch.icon) { error(R.drawable.ic_tv) }
+        val now = EpgRepository.nowFor(ch)
+        val next = EpgRepository.nextFor(ch)
+        b.qTitle.text = now?.title ?: ch.name
+        if (now != null) {
+            b.qTime.text = "${timeFmt.format(Date(now.start))} – ${timeFmt.format(Date(now.end))}"
+            b.qProgress.progress = now.progress()
+            b.qLeft.text = "${((now.end - System.currentTimeMillis()) / 60_000).coerceAtLeast(1)} min"
+        }
+        val epgVis = if (now != null) View.VISIBLE else View.GONE
+        b.qTime.visibility = epgVis; b.qProgress.visibility = epgVis; b.qLeft.visibility = epgVis
+        b.qChannel.text = if (ch.num > 0) "${ch.num}   ${ch.name}" else ch.name
+        val tech = ArrayList<String>()
+        if (lastQuality.isNotBlank()) tech.add(lastQuality)
+        player?.videoFormat?.frameRate?.takeIf { it > 1f }?.let { tech.add("${Math.round(it)} FPS") }
+        player?.audioFormat?.channelCount?.takeIf { it > 0 }?.let { tech.add(when (it) { 1 -> "MONO"; 2 -> "STEREO"; 6 -> "5.1"; 8 -> "7.1"; else -> "$it CH" }) }
+        b.qTech.text = tech.joinToString("  ·  ")
+        b.qNext.text = next?.let { "${timeFmt.format(Date(it.start))} – ${timeFmt.format(Date(it.end))}   ${it.title}" } ?: ""
+        b.qClock.text = quickClockFmt.format(Date())
+
+        b.qTiles.removeAllViews()
+        val guide = quickTile("📅", null, getString(R.string.quick_guide)) { hideQuickBar(); openGuide() }
+        quickTile("☰", null, getString(R.string.quick_channels)) { hideQuickBar(); showChannelOverlay() }
+        val byId = ChannelStore.all.associateBy { it.streamId }
+        prefs.recentChannels.filter { it != ch.streamId }.mapNotNull { byId[it] }.take(8).forEach { r ->
+            quickTile(null, r, EpgRepository.nowFor(r)?.title ?: r.name) {
+                hideQuickBar()
+                var i = channels.indexOfFirst { it.streamId == r.streamId }
+                if (i < 0) { channels = ChannelStore.all; ChannelStore.current = channels; i = channels.indexOfFirst { it.streamId == r.streamId } }
+                if (i >= 0) playChannel(i)
+            }
+        }
+        b.quickBar.visibility = View.VISIBLE
+        guide.requestFocus()
+        keepQuickBar()
+    }
+
+    private fun quickTile(icon: String?, ch: Channel?, label: String, onClick: () -> Unit): View {
+        val d = resources.displayMetrics.density
+        val tile = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            layoutParams = android.widget.LinearLayout.LayoutParams((128 * d).toInt(), (78 * d).toInt()).apply { marginEnd = (8 * d).toInt() }
+            setPadding((8 * d).toInt(), (6 * d).toInt(), (8 * d).toInt(), (6 * d).toInt())
+            setBackgroundResource(R.drawable.bg_focus)
+            isFocusable = true
+            isClickable = true
+            setOnClickListener { onClick() }
+            setOnFocusChangeListener { _, has -> if (has) keepQuickBar() }
+        }
+        if (ch != null) {
+            tile.addView(android.widget.ImageView(this).apply {
+                layoutParams = android.widget.LinearLayout.LayoutParams((84 * d).toInt(), (36 * d).toInt())
+                scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+                load(ch.icon) { error(R.drawable.ic_tv) }
+            })
+        } else {
+            tile.addView(android.widget.TextView(this).apply { text = icon; textSize = 22f; setTextColor(0xFFFFFFFF.toInt()) })
+        }
+        tile.addView(android.widget.TextView(this).apply {
+            text = label
+            textSize = if (ch != null) 11f else 14f
+            setTextColor(0xFFFFFFFF.toInt())
+            setSingleLine(true)
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            gravity = android.view.Gravity.CENTER
+        })
+        b.qTiles.addView(tile)
+        return tile
+    }
+
     private fun showChannelOverlay() {
+        hideQuickBar()
         b.infoPanel.visibility = View.GONE
         b.channelOverlay.visibility = View.VISIBLE
         overlay.setListOpen(true)
@@ -1078,6 +1173,16 @@ class PlayerActivity : AppCompatActivity() {
             return super.onKeyDown(keyCode, event)
         }
 
+        // Ba rapid la ouvè: ◀ ▶ deplase sou kare yo, OK chwazi, BACK/▲/▼ fèmen l
+        if (quickVisible) {
+            when (keyCode) {
+                KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> { hideQuickBar(); return true }
+                KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_MENU -> { hideQuickBar(); openGuide(); return true }
+            }
+            keepQuickBar()
+            return super.onKeyDown(keyCode, event)
+        }
+
         when (keyCode) {
             KeyEvent.KEYCODE_BACK -> {
                 if (b.infoPanel.visibility == View.VISIBLE) b.infoPanel.visibility = View.GONE else goHome()
@@ -1089,8 +1194,8 @@ class PlayerActivity : AppCompatActivity() {
             KeyEvent.KEYCODE_MEDIA_REWIND -> { restartProgram(); return true }
             KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_CHANNEL_UP -> { zap(-1); return true }
             KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_CHANNEL_DOWN -> { zap(1); return true }
-            // OK = lis chanèl sou videyo a (tankou TiviMate)
-            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { showChannelOverlay(); return true }
+            // OK = ba rapid la (enfo pwogram, Gid TV, lis chanèl, dènye chanèl yo)
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { showQuickBar(); return true }
             KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_INFO -> {
                 if (b.infoPanel.visibility == View.VISIBLE) b.infoPanel.visibility = View.GONE else showInfo()
                 return true

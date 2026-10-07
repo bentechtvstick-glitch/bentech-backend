@@ -146,4 +146,6 @@
     <string name="menu_tv">TV</string>
     <string name="search_hint">Type the name of a channel, movie or show</string>
     <string name="search_none">Nothing found</string>
+    <string name="quick_guide">TV guide</string>
+    <string name="quick_channels">Channels</string>
 </resources>

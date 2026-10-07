@@ -146,4 +146,6 @@
     <string name="menu_tv">TV</string>
     <string name="search_hint">Tapez le nom d\'une chaîne, d\'un film ou d\'une série</string>
     <string name="search_none">Aucun résultat</string>
+    <string name="quick_guide">Guide TV</string>
+    <string name="quick_channels">Chaînes</string>
 </resources>

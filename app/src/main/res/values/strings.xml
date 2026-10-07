@@ -169,4 +169,6 @@
     <string name="menu_tv">TV</string>
     <string name="search_hint">Tape non yon chanèl, yon fim oswa yon seri</string>
     <string name="search_none">Pa jwenn anyen</string>
+    <string name="quick_guide">Gid TV</string>
+    <string name="quick_channels">Chanèl</string>
 </resources>
