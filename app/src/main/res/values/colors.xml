@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Estil TV sobre: fon prèske nwa, kare gri, tèks blan -->
-    <color name="bg">#121214</color>
-    <color name="bg_panel">#1C1C1F</color>
-    <color name="bg_item">#2A2A2E</color>
-    <color name="accent">#8E8E93</color>
-    <color name="accent2">#FFFFFF</color>
+    <color name="bg">#000000</color>
+    <color name="bg_panel">#101014</color>
+    <color name="bg_item">#1B1B20</color>
+    <color name="accent">#2F7BFF</color>
+    <color name="accent2">#5AA2FF</color>
     <color name="text">#FFFFFF</color>
     <color name="text_dim">#A0A0A6</color>
     <color name="live">#FF3D57</color>
-    <color name="focus_fill">#4E4E55</color>
+    <color name="focus_fill">#1E5FD8</color>
     <color name="scrim">#CC000000</color>
 </resources>

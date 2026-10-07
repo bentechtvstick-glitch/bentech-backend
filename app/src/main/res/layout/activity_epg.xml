@@ -8,7 +8,7 @@
 
         <!-- Meni agoch (parèt lè kliyan an peze BACK oswa ◀ de fwa) -->
         <LinearLayout android:id="@+id/menu" android:layout_width="200dp" android:layout_height="match_parent"
-            android:background="#0C0C0E" android:orientation="vertical" android:paddingStart="10dp" android:paddingEnd="10dp"
+            android:background="#000000" android:orientation="vertical" android:paddingStart="10dp" android:paddingEnd="10dp"
             android:paddingTop="14dp" android:paddingBottom="10dp" android:visibility="gone">
             <ImageView android:id="@+id/menuLogo" android:layout_width="wrap_content" android:layout_height="48dp" android:layout_marginStart="8dp" android:layout_marginBottom="12dp"
                 android:adjustViewBounds="true" android:scaleType="fitStart" android:src="@drawable/logo_full" android:importantForAccessibility="no"/>
@@ -55,7 +55,7 @@
 
         <!-- Kategori (parèt lè kliyan an peze ◀ nan kòmansman yon ranje) -->
         <LinearLayout android:id="@+id/catPanel" android:layout_width="214dp" android:layout_height="match_parent" android:orientation="vertical"
-            android:background="#18181B" android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingTop="14dp" android:visibility="gone">
+            android:background="#0A0A0D" android:paddingStart="8dp" android:paddingEnd="8dp" android:paddingTop="14dp" android:visibility="gone">
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/categories" android:layout_width="match_parent"
                 android:layout_height="match_parent" android:descendantFocusability="afterDescendants"/>
         </LinearLayout>
@@ -103,7 +103,7 @@
                 <androidx.recyclerview.widget.RecyclerView android:id="@+id/rows" android:layout_width="match_parent"
                     android:layout_height="match_parent" android:descendantFocusability="afterDescendants"/>
                 <View android:id="@+id/nowLine" android:layout_width="2dp" android:layout_height="match_parent"
-                    android:background="#DDFFFFFF" android:visibility="gone"/>
+                    android:background="#2F7BFF" android:visibility="gone"/>
                 <ProgressBar android:id="@+id/progress" android:layout_width="48dp" android:layout_height="48dp" android:layout_gravity="center"/>
                 <TextView android:id="@+id/message" android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:layout_gravity="center" android:textColor="@color/text_dim" android:textSize="15sp" android:visibility="gone"/>

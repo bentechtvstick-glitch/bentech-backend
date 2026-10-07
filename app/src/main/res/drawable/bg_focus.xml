@@ -4,10 +4,10 @@
         <shape><solid android:color="@color/focus_fill"/><stroke android:width="3dp" android:color="#FFFFFF"/><corners android:radius="8dp"/></shape>
     </item>
     <item android:state_activated="true">
-        <shape><solid android:color="#36363B"/><stroke android:width="2dp" android:color="@color/accent"/><corners android:radius="8dp"/></shape>
+        <shape><solid android:color="#14233F"/><stroke android:width="2dp" android:color="@color/accent"/><corners android:radius="8dp"/></shape>
     </item>
     <item android:state_selected="true">
-        <shape><solid android:color="#5C5C63"/><corners android:radius="8dp"/></shape>
+        <shape><solid android:color="#1A3566"/><corners android:radius="8dp"/></shape>
     </item>
     <item>
         <shape><solid android:color="@color/bg_item"/><corners android:radius="8dp"/></shape>
