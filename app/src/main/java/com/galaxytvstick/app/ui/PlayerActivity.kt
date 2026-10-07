@@ -1191,7 +1191,12 @@ class PlayerActivity : AppCompatActivity() {
         if (quickVisible) {
             when (keyCode) {
                 KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> { hideQuickBar(); return true }
-                KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_MENU -> { hideQuickBar(); openGuide(); return true }
+                KeyEvent.KEYCODE_GUIDE -> { hideQuickBar(); openGuide(); return true }
+                KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_SETTINGS -> {
+                    hideQuickBar()
+                    startActivity(Intent(this, EpgActivity::class.java).putExtra(EpgActivity.EXTRA_SETTINGS, true))
+                    return true
+                }
             }
             keepQuickBar()
             return super.onKeyDown(keyCode, event)
@@ -1203,7 +1208,12 @@ class PlayerActivity : AppCompatActivity() {
                 return true
             }
             KeyEvent.KEYCODE_DPAD_LEFT -> { showChannelOverlay(); return true }
-            KeyEvent.KEYCODE_MENU -> { openGuide(); return true } // bouton ≡ remòt la: gid la (chanèl, fim, seri, reglaj)
+            KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_SETTINGS -> { // bouton ≡ remòt la: Reglaj
+                hideChannelOverlay()
+                startActivity(Intent(this, EpgActivity::class.java).putExtra(EpgActivity.EXTRA_SETTINGS, true))
+                @Suppress("DEPRECATION") overridePendingTransition(0, 0)
+                return true
+            }
             KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_TV_INPUT -> { openGuide(); return true }
             KeyEvent.KEYCODE_MEDIA_REWIND -> { restartProgram(); return true }
             KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_CHANNEL_UP -> { zap(-1); return true }

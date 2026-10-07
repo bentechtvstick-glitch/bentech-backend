@@ -55,6 +55,8 @@ class EpgActivity : AppCompatActivity() {
         private const val MAX_BACK_MS = 2 * 60 * 60 * 1000L  // pa ale plis pase 2 è anvan
         private const val MAX_FORWARD_MS = 22 * 60 * 60 * 1000L
         private const val CAT_CATCHUP = "__catchup"
+        /** Louvri Reglaj touswit (bouton ≡ pandan kliyan an sou plen ekran). */
+        const val EXTRA_SETTINGS = "open_settings"
     }
 
     private lateinit var b: ActivityEpgBinding
@@ -148,6 +150,7 @@ class EpgActivity : AppCompatActivity() {
 
         updateHeader()
         loadEpg()
+        if (intent.getBooleanExtra(EXTRA_SETTINGS, false)) b.root.post { showSettings() }
         lifecycleScope.launch { providerExpiry = api.expiryDate() }
 
         // Revèy la ak liy "kounye a" mete yo ajou chak minit
@@ -488,6 +491,11 @@ class EpgActivity : AppCompatActivity() {
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN && b.overlay.blocker.visibility != View.VISIBLE) {
+            // Bouton ≡ (oswa Settings) sou remòt la: louvri Reglaj
+            if (event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_SETTINGS) {
+                if (event.repeatCount == 0) showSettings()
+                return true
+            }
             val focused = currentFocus
             val cell = focused?.tag as? Cell
             if (cell != null) {
@@ -599,11 +607,6 @@ class EpgActivity : AppCompatActivity() {
             getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off) to { parentalControl() },
             getString(R.string.set_autostart, onOff(prefs.autoStart)) to { prefs.autoStart = !prefs.autoStart; showSettings() },
             getString(R.string.set_last_channel, onOff(prefs.startLastChannel)) to { prefs.startLastChannel = !prefs.startLastChannel; showSettings() },
-            getString(R.string.set_reload) to { startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)); finish() },
-            getString(R.string.set_change_playlist) to {
-                startActivity(Intent(this, LoginActivity::class.java).putExtra(LoginActivity.EXTRA_NO_AUTO, true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
-                finish()
-            },
             getString(R.string.set_about, version) to { info(R.string.set_about_title, getString(R.string.set_about_fmt, version, android.os.Build.MODEL, android.os.Build.VERSION.RELEASE)) },
             getString(R.string.exit_title) to { finishAffinity() }
         ))
