@@ -125,7 +125,7 @@
     <string name="set_change_playlist">Change playlist</string>
     <string name="set_reload">Reload channels</string>
     <string name="set_device_info">Device information</string>
-    <string name="set_info_fmt">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVersion: %4$s</string>
+    <string name="set_info_fmt">Customer: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVersion: %4$s</string>
     <string name="stream_blocked_network">The internet network is blocking this channel (router or internet provider security). Contact customer service.</string>
     <string name="menu_home">Home</string>
     <string name="menu_live">Live TV</string>
@@ -148,4 +148,13 @@
     <string name="search_none">Nothing found</string>
     <string name="quick_guide">TV guide</string>
     <string name="quick_channels">Channels</string>
+    <string name="quick_clear">Clear history</string>
+    <string name="set_parental_on">Parental control: ON</string>
+    <string name="set_parental_off">Parental control: OFF</string>
+    <string name="parental_new_pin">Create a 4-digit PIN</string>
+    <string name="parental_enter_pin">Enter the 4-digit PIN</string>
+    <string name="parental_pin_4">The PIN must have 4 digits.</string>
+    <string name="parental_wrong_pin">Wrong PIN.</string>
+    <string name="parental_now_on">Parental control on: adult categories are hidden.</string>
+    <string name="parental_now_off">Parental control off.</string>
 </resources>

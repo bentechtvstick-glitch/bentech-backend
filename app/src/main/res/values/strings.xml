@@ -148,7 +148,7 @@
     <string name="set_change_playlist">Chanje playlist</string>
     <string name="set_reload">Rechaje chanèl yo</string>
     <string name="set_device_info">Enfòmasyon aparèy la</string>
-    <string name="set_info_fmt">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVèsyon: %4$s</string>
+    <string name="set_info_fmt">Kliyan: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVèsyon: %4$s</string>
     <string name="stream_blocked_network">Rezo entènèt la ap bloke chanèl sa a (sekirite routè a oswa founisè entènèt la). Kontakte sèvis kliyan an.</string>
     <string name="menu_home">Akèy</string>
     <string name="menu_live">Live TV</string>
@@ -171,4 +171,13 @@
     <string name="search_none">Pa jwenn anyen</string>
     <string name="quick_guide">Gid TV</string>
     <string name="quick_channels">Chanèl</string>
+    <string name="quick_clear">Efase istwa</string>
+    <string name="set_parental_on">Kontwòl paran: LIMEN</string>
+    <string name="set_parental_off">Kontwòl paran: ETENN</string>
+    <string name="parental_new_pin">Kreye yon PIN 4 chif</string>
+    <string name="parental_enter_pin">Antre PIN 4 chif la</string>
+    <string name="parental_pin_4">PIN lan dwe gen 4 chif.</string>
+    <string name="parental_wrong_pin">PIN lan pa bon.</string>
+    <string name="parental_now_on">Kontwòl paran limen: kategori pou granmoun yo kache.</string>
+    <string name="parental_now_off">Kontwòl paran etenn.</string>
 </resources>

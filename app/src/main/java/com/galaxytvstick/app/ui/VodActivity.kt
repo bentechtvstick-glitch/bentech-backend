@@ -18,6 +18,7 @@ import com.galaxytvstick.app.data.Category
 import com.galaxytvstick.app.data.PanelApi
 import com.galaxytvstick.app.data.Prefs
 import com.galaxytvstick.app.data.RemoteCommand
+import com.galaxytvstick.app.data.ChannelStore
 import com.galaxytvstick.app.data.VodItem
 import com.galaxytvstick.app.data.VodKind
 import com.galaxytvstick.app.data.WatchHistory
@@ -135,6 +136,13 @@ class VodActivity : AppCompatActivity() {
         Category(CAT_ALL, getString(R.string.vod_all))
     )
 
+    /** Kontwòl paran: ID kategori pou granmoun yo (pa kalite). */
+    private val adultCats = HashMap<VodKind, Set<String>>()
+    private fun noAdult(list: List<VodItem>): List<VodItem> {
+        val bad = adultCats[kind]
+        return if (!ChannelStore.hideAdult || bad.isNullOrEmpty()) list else list.filter { it.categoryId !in bad }
+    }
+
     private fun loadCategories() {
         catAdapter.items = specialCategories() + (catCache[kind] ?: emptyList())
         val start = if (history.continueWatching().any { it.kind == kind }) CAT_CONTINUE else null
@@ -143,7 +151,9 @@ class VodActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val r = runCatching { if (kind == VodKind.MOVIE) api.vodCategories() else api.seriesCategories() }
             showLoading(false)
-            r.onSuccess { cats ->
+            r.onSuccess { raw ->
+                val cats = if (ChannelStore.hideAdult) raw.filter { !ChannelStore.isAdult(it.name) } else raw
+                if (ChannelStore.hideAdult) adultCats[kind] = raw.filter { ChannelStore.isAdult(it.name) }.map { it.id }.toHashSet()
                 catCache[kind] = cats
                 catAdapter.items = specialCategories() + cats
                 selectCategory(start ?: cats.firstOrNull()?.id ?: CAT_ALL, focusGrid = false)
@@ -183,7 +193,8 @@ class VodActivity : AppCompatActivity() {
                     val catId = if (id == CAT_ALL) null else id
                     val r = runCatching { if (kind == VodKind.MOVIE) api.vodStreams(catId) else api.series(catId) }
                     showLoading(false)
-                    r.onSuccess { list ->
+                    r.onSuccess { rawList ->
+                        val list = noAdult(rawList)
                         cache[cacheKey] = list
                         if (selected == id) show(name, sortNewest(list).map { Entry(it, null) }, getString(R.string.empty_list), focusGrid)
                     }.onFailure { showMessage(getString(R.string.error_network, it.message ?: "")) }
@@ -230,7 +241,7 @@ class VodActivity : AppCompatActivity() {
                 showLoading(true)
                 val r = runCatching { if (kind == VodKind.MOVIE) api.vodStreams(null) else api.series(null) }
                 showLoading(false)
-                r.getOrNull()?.also { cache[cacheKey] = it } ?: run { showMessage(getString(R.string.error_network, r.exceptionOrNull()?.message ?: "")); return@launch }
+                r.getOrNull()?.let { noAdult(it) }?.also { cache[cacheKey] = it } ?: run { showMessage(getString(R.string.error_network, r.exceptionOrNull()?.message ?: "")); return@launch }
             }
             val found = all.filter { norm(it.name).contains(query) }.sortedByDescending { it.added }.take(300)
             catAdapter.selectedId = null

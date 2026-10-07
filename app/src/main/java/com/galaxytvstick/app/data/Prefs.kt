@@ -62,6 +62,15 @@ class Prefs(context: Context) {
         recentChannels = (listOf(streamId) + recentChannels.filter { it != streamId }).take(12)
     }
 
+    /** Kontwòl paran: kache kategori pou granmoun (chanèl, fim, seri) jiskaske yo antre PIN lan. */
+    var parentalOn: Boolean
+        get() = sp.getBoolean("parental_on", false)
+        set(value) = sp.edit().putBoolean("parental_on", value).apply()
+
+    var parentalPin: String
+        get() = sp.getString("parental_pin", "") ?: ""
+        set(value) = sp.edit().putString("parental_pin", value).apply()
+
     var lastChannelId: Int
         get() = sp.getInt("last_channel", -1)
         set(value) = sp.edit().putInt("last_channel", value).apply()

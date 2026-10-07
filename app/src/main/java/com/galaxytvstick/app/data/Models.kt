@@ -51,9 +51,18 @@ object ChannelStore {
     var rawChannels: List<Channel> = emptyList()
     var rawCategories: List<Category> = emptyList()
 
+    /** Kontwòl paran aktive: kategori pou granmoun yo pa parèt ditou. */
+    @Volatile var hideAdult = false
+    private val adultRx = Regex("(xxx|porn|adult(?!\\s*swim)|adulte|adulto|18\\s*\\+|\\+\\s*18)", RegexOption.IGNORE_CASE)
+    fun isAdult(name: String) = adultRx.containsMatchIn(name)
+
     /** Aplike règ panel la (hide/show, limit) sou lis sèvè a. */
     fun applyPanel(cfg: PanelConfig) {
         all = cfg.filterChannels(rawChannels)
+        if (hideAdult) {
+            val adult = rawCategories.filter { isAdult(it.name) }.map { it.id }.toHashSet()
+            if (adult.isNotEmpty()) all = all.filter { it.categoryId !in adult }
+        }
         val withChannels = all.map { it.categoryId }.toHashSet()
         categories = cfg.filterCategories(rawCategories).filter { it.id in withChannels }
         val allowedIds = all.map { it.streamId }.toHashSet()

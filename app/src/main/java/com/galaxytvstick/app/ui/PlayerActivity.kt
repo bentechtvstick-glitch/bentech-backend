@@ -702,13 +702,19 @@ class PlayerActivity : AppCompatActivity() {
         val guide = quickTile(R.drawable.ic_m_guide, null, getString(R.string.quick_guide)) { hideQuickBar(); openGuide() }
         quickTile(R.drawable.ic_m_list, null, getString(R.string.quick_channels)) { hideQuickBar(); showChannelOverlay() }
         val byId = ChannelStore.all.associateBy { it.streamId }
-        prefs.recentChannels.filter { it != ch.streamId }.mapNotNull { byId[it] }.take(8).forEach { r ->
+        val recents = prefs.recentChannels.filter { it != ch.streamId }.mapNotNull { byId[it] }.take(8)
+        recents.forEach { r ->
             quickTile(0, r, EpgRepository.nowFor(r)?.title ?: r.name) {
                 hideQuickBar()
                 var i = channels.indexOfFirst { it.streamId == r.streamId }
                 if (i < 0) { channels = ChannelStore.all; ChannelStore.current = channels; i = channels.indexOfFirst { it.streamId == r.streamId } }
                 if (i >= 0) playChannel(i)
             }
+        }
+        // Efase istwa a (dènye chanèl yo)
+        if (recents.isNotEmpty()) quickTile(R.drawable.ic_m_clear, null, getString(R.string.quick_clear)) {
+            prefs.recentChannels = listOf(ch.streamId)
+            showQuickBar()
         }
         b.quickBar.visibility = View.VISIBLE
         guide.requestFocus()

@@ -124,7 +124,8 @@ class EpgActivity : AppCompatActivity() {
         b.menuCatchup.setOnClickListener { openCatchup() }
         b.menuSettings.setOnClickListener { showSettings() }
         val cfg = PanelState.config
-        b.accName.text = cfg.accountName.ifBlank { account.name ?: account.username }
+        b.accName.text = cfg.accountName
+        b.accName.visibility = if (cfg.accountName.isBlank()) View.GONE else View.VISIBLE
         b.accPlan.text = if (cfg.accountPlan.isBlank()) "" else getString(R.string.home_plan_fmt, cfg.accountPlan)
         b.accPlan.visibility = if (cfg.accountPlan.isBlank()) View.GONE else View.VISIBLE
         b.accExp.text = if (cfg.accountExpiry.isBlank()) "" else getString(R.string.home_exp_fmt, cfg.accountExpiry.replace("T", " "))
@@ -542,13 +543,14 @@ class EpgActivity : AppCompatActivity() {
 
     /** Reglaj: rechaje chanèl yo, chanje playlist, enfòmasyon aparèy la, soti. */
     private fun showSettings() {
-        val items = arrayOf(getString(R.string.set_reload), getString(R.string.set_change_playlist), getString(R.string.set_device_info), getString(R.string.exit_title))
+        val items = arrayOf(getString(R.string.set_device_info), getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off), getString(R.string.set_reload), getString(R.string.set_change_playlist), getString(R.string.exit_title))
         androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
             .setTitle(R.string.home_settings)
             .setItems(items) { _, which ->
                 when (which) {
-                    0 -> { startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)); finish() }
-                    1 -> {
+                    1 -> parentalControl()
+                    2 -> { startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)); finish() }
+                    3 -> {
                         startActivity(
                             Intent(this, LoginActivity::class.java)
                                 .putExtra(LoginActivity.EXTRA_NO_AUTO, true)
@@ -556,15 +558,62 @@ class EpgActivity : AppCompatActivity() {
                         )
                         finish()
                     }
-                    2 -> androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
+                    0 -> androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
                         .setTitle(R.string.set_device_info)
-                        .setMessage(getString(R.string.set_info_fmt, prefs.account?.name ?: prefs.account?.username ?: "", prefs.mac, prefs.deviceKey, com.galaxytvstick.app.BuildConfig.VERSION_NAME))
+                        .setMessage(getString(R.string.set_info_fmt, PanelState.config.accountName, prefs.mac, prefs.deviceKey, com.galaxytvstick.app.BuildConfig.VERSION_NAME))
                         .setPositiveButton(android.R.string.ok, null)
                         .show()
                     else -> finishAffinity()
                 }
             }
             .show()
+    }
+
+    /** Mande yon PIN 4 chif (klavye Fire TV a). */
+    private fun askPin(title: Int, onPin: (String) -> Unit) {
+        val input = android.widget.EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            filters = arrayOf(android.text.InputFilter.LengthFilter(4))
+            hint = "••••"
+            gravity = Gravity.CENTER
+            textSize = 26f
+            setTextColor(ContextCompat.getColor(context, R.color.text))
+            setHintTextColor(ContextCompat.getColor(context, R.color.text_dim))
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
+            .setTitle(title)
+            .setView(input)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val pin = input.text.toString()
+                if (pin.length == 4) onPin(pin) else android.widget.Toast.makeText(this, R.string.parental_pin_4, android.widget.Toast.LENGTH_LONG).show()
+            }
+            .show()
+        input.requestFocus()
+    }
+
+    /** Kontwòl paran: kache kategori pou granmoun. Limen l = kreye/konfime PIN; etenn li = antre PIN lan. */
+    private fun parentalControl() {
+        fun setParental(on: Boolean) {
+            prefs.parentalOn = on
+            ChannelStore.hideAdult = on
+            android.widget.Toast.makeText(this, if (on) R.string.parental_now_on else R.string.parental_now_off, android.widget.Toast.LENGTH_LONG).show()
+            startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            finish()
+        }
+        if (prefs.parentalOn) {
+            askPin(R.string.parental_enter_pin) { pin ->
+                if (pin == prefs.parentalPin) setParental(false)
+                else android.widget.Toast.makeText(this, R.string.parental_wrong_pin, android.widget.Toast.LENGTH_LONG).show()
+            }
+        } else if (prefs.parentalPin.isEmpty()) {
+            askPin(R.string.parental_new_pin) { pin -> prefs.parentalPin = pin; setParental(true) }
+        } else {
+            askPin(R.string.parental_enter_pin) { pin ->
+                if (pin == prefs.parentalPin) setParental(true)
+                else android.widget.Toast.makeText(this, R.string.parental_wrong_pin, android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     /** Kòmand sèvis kliyan an pandan kliyan an nan gid la. */

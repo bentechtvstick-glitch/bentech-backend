@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
         useCache = intent.getBooleanExtra(EXTRA_USE_CACHE, false)
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
-        b.playlistName.text = account.name ?: account.username
+        b.playlistName.visibility = View.GONE // non playlist la pa parèt sou ekran
         b.btnRetry.setOnClickListener { load() }
         b.btnPlaylists.setOnClickListener { toActivation() }
         load()

@@ -125,7 +125,7 @@
     <string name="set_change_playlist">Cambiar playlist</string>
     <string name="set_reload">Recargar canales</string>
     <string name="set_device_info">Información del dispositivo</string>
-    <string name="set_info_fmt">Playlist: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVersión: %4$s</string>
+    <string name="set_info_fmt">Cliente: %1$s\nMAC: %2$s\nDevice Key: %3$s\nVersión: %4$s</string>
     <string name="stream_blocked_network">La red de internet está bloqueando este canal (seguridad del router o del proveedor de internet). Contacta con atención al cliente.</string>
     <string name="menu_home">Inicio</string>
     <string name="menu_live">Live TV</string>
@@ -148,4 +148,13 @@
     <string name="search_none">Sin resultados</string>
     <string name="quick_guide">Guía TV</string>
     <string name="quick_channels">Canales</string>
+    <string name="quick_clear">Borrar historial</string>
+    <string name="set_parental_on">Control parental: ACTIVADO</string>
+    <string name="set_parental_off">Control parental: DESACTIVADO</string>
+    <string name="parental_new_pin">Crea un PIN de 4 dígitos</string>
+    <string name="parental_enter_pin">Introduce el PIN de 4 dígitos</string>
+    <string name="parental_pin_4">El PIN debe tener 4 dígitos.</string>
+    <string name="parental_wrong_pin">PIN incorrecto.</string>
+    <string name="parental_now_on">Control parental activado: las categorías para adultos están ocultas.</string>
+    <string name="parental_now_off">Control parental desactivado.</string>
 </resources>

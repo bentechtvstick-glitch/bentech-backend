@@ -49,8 +49,12 @@ class SearchActivity : AppCompatActivity() {
         // Fim ak seri yo chaje dèyè; chanèl yo disponib touswit
         val api = XtreamApi(account)
         lifecycleScope.launch {
-            runCatching { api.vodStreams(null) }.onSuccess { movies = it; refresh() }
-            runCatching { api.series(null) }.onSuccess { series = it; refresh() }
+            // Kontwòl paran: pa montre sa ki nan kategori pou granmoun
+            val hide = ChannelStore.hideAdult
+            val badM = if (hide) runCatching { api.vodCategories() }.getOrDefault(emptyList()).filter { ChannelStore.isAdult(it.name) }.map { it.id }.toHashSet() else HashSet()
+            runCatching { api.vodStreams(null) }.onSuccess { l -> movies = l.filter { it.categoryId !in badM }; refresh() }
+            val badS = if (hide) runCatching { api.seriesCategories() }.getOrDefault(emptyList()).filter { ChannelStore.isAdult(it.name) }.map { it.id }.toHashSet() else HashSet()
+            runCatching { api.series(null) }.onSuccess { l -> series = l.filter { it.categoryId !in badS }; refresh() }
         }
     }
 
