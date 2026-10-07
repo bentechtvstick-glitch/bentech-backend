@@ -836,6 +836,7 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Efase tout jounal aksyon yo? Sa pa ka defèt.": ["Clear all audit logs? This cannot be undone.", "Effacer tout le journal des actions ? Cette action est irréversible.", "¿Borrar todo el registro de acciones? No se puede deshacer."],
     "Efase pakè sa a": ["Delete this package", "Supprimer ce bouquet", "Eliminar este paquete"],
     "Efase pakè «{0}»? Aparèy ki sèvi ak li ap resevwa tout chanèl yo.": ["Delete package “{0}”? Devices using it will get all channels.", "Supprimer le bouquet « {0} » ? Les appareils qui l'utilisent recevront toutes les chaînes.", "¿Eliminar el paquete «{0}»? Los dispositivos que lo usan recibirán todos los canales."],
+    "Lis la ajou · {0}": ["List updated · {0}", "Liste à jour · {0}", "Lista actualizada · {0}"],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],

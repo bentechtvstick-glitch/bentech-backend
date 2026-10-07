@@ -1463,7 +1463,13 @@ $("#crudClear").addEventListener("click", async () => {
 });
 $("#crudCancel").addEventListener("click", () => { $("#crudFormCard").hidden = true; crud.editing = null; });
 let crudSearchT; $("#crudSearch").addEventListener("input", () => { clearTimeout(crudSearchT); crudSearchT = setTimeout(() => { caps.crud = CAP; renderCrud(); }, 120); });
-$("#crudRefresh").addEventListener("click", loadCrud);
+// Rafrechi: rechaje lis la epi montre klèman li fèt (anvan, bouton an pa t montre anyen)
+$("#crudRefresh").addEventListener("click", async () => {
+  const b = $("#crudRefresh"); if (b.disabled) return;
+  b.disabled = true; b.textContent = t("Ap rafrechi…");
+  try { await loadCrud(); toast(t("Lis la ajou · {0}", new Date().toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))); }
+  finally { b.disabled = false; b.textContent = t("Rafrechi"); }
+});
 $("#crudForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const C = CRUD[crud.name]; const body = {};
   for (const f of C.fields) { const el = $("#cf_" + f.k); if (!el || f.ro) continue;
