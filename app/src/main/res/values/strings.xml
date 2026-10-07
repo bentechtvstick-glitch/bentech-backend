@@ -184,4 +184,9 @@
     <string name="set_last_channel">Jwe dènye chanèl la lè app la louvri: %1$s</string>
     <string name="switch_on">LIMEN</string>
     <string name="switch_off">ETENN</string>
+    <string name="set_expiry">Dat ekspirasyon: %1$s</string>
+    <string name="set_expiry_title">Abònman</string>
+    <string name="set_about">Konsènan app la (vèsyon %1$s)</string>
+    <string name="set_about_title">Konsènan</string>
+    <string name="set_about_fmt">Galaxy TV Stick\nVèsyon: %1$s\nAparèy: %2$s\nAndroid: %3$s</string>
 </resources>

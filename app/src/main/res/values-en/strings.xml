@@ -161,4 +161,9 @@
     <string name="set_last_channel">Turn on last channel on app start: %1$s</string>
     <string name="switch_on">ON</string>
     <string name="switch_off">OFF</string>
+    <string name="set_expiry">Expiration date: %1$s</string>
+    <string name="set_expiry_title">Subscription</string>
+    <string name="set_about">About (version %1$s)</string>
+    <string name="set_about_title">About</string>
+    <string name="set_about_fmt">Galaxy TV Stick\nVersion: %1$s\nDevice: %2$s\nAndroid: %3$s</string>
 </resources>

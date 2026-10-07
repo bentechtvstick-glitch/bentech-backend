@@ -161,4 +161,9 @@
     <string name="set_last_channel">Lire la dernière chaîne au lancement : %1$s</string>
     <string name="switch_on">ACTIVÉ</string>
     <string name="switch_off">DÉSACTIVÉ</string>
+    <string name="set_expiry">Date d’expiration : %1$s</string>
+    <string name="set_expiry_title">Abonnement</string>
+    <string name="set_about">À propos (version %1$s)</string>
+    <string name="set_about_title">À propos</string>
+    <string name="set_about_fmt">Galaxy TV Stick\nVersion : %1$s\nAppareil : %2$s\nAndroid : %3$s</string>
 </resources>
