@@ -422,6 +422,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       statusMessage,
       deviceName: device.deviceName || "",
       maxChannels,
+      // Mizajou app la: panel la "voye" yon vèsyon (bouton nan paj Sistèm); app la pwopoze l si l pi ansyen
+      update: appUpdate(),
       // Kont kliyan an, pou ekran akèy app la (non, plan, ekspirasyon)
       account: customer ? { name: customer.name || "", plan: customer.plan || "", expiry: customer.expiry || "" } : null,
       hiddenChannels: eff.hiddenChannels,
@@ -1031,5 +1033,59 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
         daysExpired: Math.floor(x.expiredSec / 86400), daysLeft: days ? Math.max(0, Math.ceil(days - x.graceSec / 86400)) : null,
       })).sort((a, b) => b.daysExpired - a.daysExpired),
     });
+  });
+
+  // =========================================================================
+  // Mizajou app la: admin nan voye dènye APK a bay TV yo depi paj Sistèm
+  // =========================================================================
+  const APK_LINK = process.env.APK_URL || "https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/GalaxyTvStick.apk";
+  const RELEASE_API = process.env.APK_RELEASE_API || "https://api.github.com/repos/bentechtvstick-glitch/bentech-backend/releases/tags/apk-latest";
+  let latestApk = { build: 0, at: 0, publishedAt: "" };
+
+  /** Nimewo dènye APK ki pibliye a (tit release la: "... (build 43)"). Kenbe 5 minit. */
+  async function latestBuild(force = false) {
+    if (!force && latestApk.build && Date.now() - latestApk.at < 5 * 60 * 1000) return latestApk;
+    try {
+      const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 8000);
+      const r = await fetch(RELEASE_API, { signal: ctl.signal, headers: { "User-Agent": "GalaxyTVStick-panel", Accept: "application/vnd.github+json" } });
+      clearTimeout(tm);
+      if (r.ok) {
+        const j = await r.json();
+        const m = /build\s+(\d+)/i.exec(String(j.name || "")) || /1\.0\.(\d+)/.exec(String(j.body || ""));
+        if (m) latestApk = { build: Number(m[1]), at: Date.now(), publishedAt: j.published_at || j.created_at || "" };
+      }
+    } catch { /* kenbe dènye valè nou konnen an */ }
+    return latestApk;
+  }
+
+  /** Sa app la resevwa nan /config: null toutotan admin nan pa voye okenn mizajou. */
+  function appUpdate() {
+    const s = settings();
+    const build = Number(s.updatePushBuild) || 0;
+    if (!build) return null;
+    return { build, version: `1.0.${build}`, url: APK_LINK, force: !!s.updateForce, pushAt: String(s.updatePushAt || "") };
+  }
+
+  app.get("/api/galaxy/app-update", authenticate, async (req, res) => {
+    const l = await latestBuild(req.query.fresh === "1");
+    const s = settings();
+    res.json({ latestBuild: l.build, latestVersion: l.build ? `1.0.${l.build}` : "", publishedAt: l.publishedAt,
+      pushedBuild: Number(s.updatePushBuild) || 0, pushedAt: s.updatePushAt || "", force: !!s.updateForce });
+  });
+
+  // Voye dènye vèsyon an bay tout TV yo (oswa { cancel: true } pou sispann pwopoze l)
+  app.post("/api/galaxy/app-update", authenticate, async (req, res) => {
+    ensure();
+    const s = (data().settings ||= {});
+    if (req.body?.cancel) { s.updatePushBuild = 0; s.updatePushAt = ""; s.updateForce = false; }
+    else {
+      const l = await latestBuild(true);
+      if (!l.build) return res.status(502).json({ error: "Pa ka jwenn dènye vèsyon app la kounye a. Eseye ankò nan yon ti moman." });
+      s.updatePushBuild = l.build; s.updatePushAt = new Date().toISOString(); s.updateForce = !!req.body?.force;
+    }
+    await db.write();
+    syncTvs();
+    auditLog("app-update", req.body?.cancel ? "App update push cancelled" : `App update 1.0.${s.updatePushBuild} sent to every TV${s.updateForce ? " (forced)" : ""}`, admin(req));
+    res.json({ ok: true, pushedBuild: s.updatePushBuild, pushedAt: s.updatePushAt, force: s.updateForce });
   });
 }

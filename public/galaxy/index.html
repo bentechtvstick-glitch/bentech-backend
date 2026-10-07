@@ -936,6 +936,12 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="inline" style="flex-wrap:nowrap"><input type="number" id="sysPurge" min="0" max="3650" style="max-width:120px"><button class="btn primary small" id="sysPurgeSave" type="button">Sove</button></div></div>
         <p class="note" style="margin:6px 0 0">TV a ak lis chanèl li efase pou sove espas. Kliyan an rete nan panel la. Pou remete TV a, ajoute MAC li ankò.</p>
       </div>
+      <div class="card">
+        <div class="cardhead"><div><h2>📲 Mizajou app la</h2><p class="sub">Voye dènye vèsyon app la bay TV yo. Kliyan an wè yon mesaj epi li peze "Mete ajou".</p></div><button class="btn small" id="upRefresh" type="button">Rafrechi</button></div>
+        <div class="kpis" id="upKpis"></div>
+        <div class="inline" style="margin-top:12px"><label class="sw"><input type="checkbox" id="upForce"><i></i></label><label for="upForce">Obligatwa: kliyan an pa ka kontinye san l pa mete ajou</label></div>
+        <div class="btns" style="justify-content:flex-start;margin-top:12px"><button class="btn primary" id="upSend" type="button">Voye mizajou bay tout TV</button><button class="btn" id="upCancel" type="button">Sispann pwopoze l</button><span class="msg" id="upMsg"></span></div>
+      </div>
       <div class="cols">
         <div class="card"><h2>Mentenans</h2>
           <div class="field"><label for="mtMsg">Mesaj mentenans</label><input type="text" id="mtMsg"></div>
@@ -2126,6 +2132,22 @@ async function loadSysStats() {
     + (y.dbWriteErrors ? " " + t("⚠ {0} erè ekriti sou disk la.", y.dbWriteErrors) : "");
 }
 $("#sysRefresh").addEventListener("click", loadSysStats);
+// ---- Mizajou app la: voye dènye APK a bay TV yo ----
+async function loadAppUpdate(fresh) {
+  let y; try { y = await api("GET", "/galaxy/app-update" + (fresh ? "?fresh=1" : "")); } catch (err) { $("#upKpis").innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
+  const k = (label, v, sub) => `<div class="kpi"><span class="k">${esc(t(label))}</span><span class="v">${esc(v)}</span>${sub ? `<span class="note">${esc(sub)}</span>` : ""}</div>`;
+  $("#upKpis").innerHTML = k("Dènye vèsyon ki disponib", y.latestVersion || "—", y.publishedAt ? fmtWhen(y.publishedAt) : "")
+    + k("Vèsyon ki voye bay TV yo", y.pushedBuild ? "1.0." + y.pushedBuild : t("Okenn"), y.pushedBuild ? fmtWhen(y.pushedAt) + (y.force ? " · " + t("Obligatwa") : "") : "");
+  $("#upForce").checked = !!y.force; $("#upCancel").hidden = !y.pushedBuild;
+}
+$("#upRefresh").addEventListener("click", () => loadAppUpdate(true));
+$("#upSend").addEventListener("click", async () => {
+  if (!confirm(t("Voye dènye vèsyon app la bay tout TV yo?"))) return;
+  try { const r = await api("POST", "/galaxy/app-update", { force: $("#upForce").checked }); setMsg($("#upMsg"), t("Vèsyon 1.0.{0} voye bay tout TV yo.", r.pushedBuild), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
+});
+$("#upCancel").addEventListener("click", async () => {
+  try { await api("POST", "/galaxy/app-update", { cancel: true }); setMsg($("#upMsg"), t("TV yo p ap pwopoze mizajou a ankò."), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
+});
 // ---- Kisa ki pran plas nan baz done a + TV ki pral efase otomatikman ----
 const STORE_LABELS = { channelLists: "Lis chanèl yo", devices: "Aparèy", deviceChannels: "Lyen aparèy → lis chanèl", devicePlaylists: "Playlist", customers: "Kliyan yo", auditLogs: "Jounal aksyon yo", channelProfiles: "Pakè chanèl", tickers: "Ticker", banners: "Banner", popups: "Pop-up", mediaAds: "Piblisite", liveEvents: "Evènman dirèk", chyrons: "Chyron", settings: "Reglaj", users: "Admin", deletedDevices: "Aparèy ki efase" };
 async function loadStorage() {
@@ -2141,7 +2163,7 @@ async function loadStorage() {
 }
 $("#sysStorageBtn").addEventListener("click", loadStorage);
 $("#sysPurgeSave").addEventListener("click", async () => { const v = Math.max(0, Math.min(3650, Math.floor(+$("#sysPurge").value || 0))); await putSettings({ autoPurgeDays: v }, "Sove"); if (!$("#sysStorage").hidden) loadStorage(); });
-async function loadSystem() {
+async function loadSystem() { loadAppUpdate();
   loadSysStats();
   settings = await api("GET", "/settings").catch(() => ({}));
   $("#mtOn").checked = !!settings.maintenanceMode; $("#mtMsg").value = settings.maintenanceMessage || "";
