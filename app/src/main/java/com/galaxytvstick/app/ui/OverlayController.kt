@@ -115,6 +115,16 @@ class OverlayController(
         adJob?.cancel(); adKey = null
     }
 
+    /** Chanèl kliyan an ap gade plen ekran (non, non gwoup): règ "kache / anlè" ticker a depann de li. */
+    private var watchName: String? = null
+    private var watchCategory = ""
+    fun setWatching(channelName: String?, categoryName: String = "") {
+        if (watchName == channelName && watchCategory == categoryName) return
+        watchName = channelName
+        watchCategory = categoryName
+        apply(PanelState.config)
+    }
+
     fun setListOpen(open: Boolean) {
         if (listOpen == open) return
         listOpen = open
@@ -140,13 +150,18 @@ class OverlayController(
         v.blocker.visibility = View.GONE
 
         // --- Ticker ---
-        val t = cfg.ticker.takeIf { showTicker }
+        val mode = watchName?.let { cfg.ticker?.modeFor(it, watchCategory) } ?: 0
+        val t = cfg.ticker.takeIf { showTicker && mode != 1 }
+        (v.ticker.layoutParams as? android.widget.FrameLayout.LayoutParams)?.let { lp ->
+            val g = if (mode == 2) android.view.Gravity.TOP else android.view.Gravity.BOTTOM
+            if (lp.gravity != g) { lp.gravity = g; v.ticker.layoutParams = lp }
+        }
         if (t != null) {
             v.ticker.visibility = View.VISIBLE
             v.ticker.setBackgroundColor(parseColor(t.bgColor, 0xCC7C4DFF.toInt()))
             v.ticker.setTicker(t, this::parseColor)
             // Chyron an rete anlè ticker a menm si tèks la pi gwo
-            v.chyron.bottomInset = v.ticker.barHeightFor(t) + (20 * v.root.resources.displayMetrics.density).toInt()
+            v.chyron.bottomInset = (if (mode == 2) 0 else v.ticker.barHeightFor(t)) + (20 * v.root.resources.displayMetrics.density).toInt()
         } else {
             v.ticker.visibility = View.GONE
             v.chyron.bottomInset = (30 * v.root.resources.displayMetrics.density).toInt()

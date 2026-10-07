@@ -474,6 +474,7 @@ class PlayerActivity : AppCompatActivity() {
         val ch = channels[index]
         if (ch.directUrl == null) { prefs.lastChannelId = ch.streamId; prefs.pushRecent(ch.streamId) } // pa relanse yon evènman ki ka fini
         hideQuickBar()
+        overlay.setWatching(ch.name, ChannelStore.categories.firstOrNull { it.id == ch.categoryId }?.name.orEmpty())
         b.errorText.visibility = View.GONE
         b.resBadge.visibility = View.GONE
         lastQuality = ""; lastResolution = ""; lastCodec = ""; lastError = ""

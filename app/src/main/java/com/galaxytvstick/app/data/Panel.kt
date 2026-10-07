@@ -51,8 +51,23 @@ data class Ticker(
     /** Animasyon k ap kouri sou ba a (egz: 🏎️💨); null = pa gen. */
     val runner: TickerRunner? = null,
     /** "left" = tèks la ale sou bò gòch (dwat → gòch, tankou chèn TV yo); "right" = gòch → dwat. */
-    val direction: String = "left"
-)
+    val direction: String = "left",
+    /** Mo kle (miniskil): chanèl/gwoup ki deja gen pwòp ticker yo → kache pa nou an. */
+    val hideOn: List<String> = emptyList(),
+    /** Mo kle (miniskil): chanèl/gwoup kote ticker pa nou an monte anlè ekran an. */
+    val topOn: List<String> = emptyList()
+) {
+    /** 0 = nòmal (anba), 1 = kache, 2 = anlè, pou chanèl sa a. */
+    fun modeFor(channelName: String, categoryName: String): Int {
+        if (hideOn.isEmpty() && topOn.isEmpty()) return 0
+        val hay = "$channelName\n$categoryName".lowercase()
+        return when {
+            hideOn.any { hay.contains(it) } -> 1
+            topOn.any { hay.contains(it) } -> 2
+            else -> 0
+        }
+    }
+}
 data class Chyron(val title: String, val subtitle: String, val logoUrl: String?)
 
 /** Yon chyron / lower third jan panel la voye l (paj "Chyron / Lower Third"). Gwosè yo an sp. */
@@ -265,7 +280,9 @@ data class PanelConfig(
                     runner = it.optJSONObject("runner")?.let { r ->
                         TickerRunner(r.optString("emoji").trim(), r.optInt("speed", 6).coerceIn(1, 10), r.optBoolean("flip", false))
                     }?.takeIf { r -> r.emoji.isNotBlank() },
-                    direction = it.optString("direction", "left")
+                    direction = it.optString("direction", "left"),
+                    hideOn = it.optJSONArray("hideOn").strings(),
+                    topOn = it.optJSONArray("topOn").strings()
                 )
             }?.takeIf { it.text.isNotBlank() },
             chyron = o.optJSONObject("chyron")?.takeIf { it.optBoolean("enabled", true) }?.let {
