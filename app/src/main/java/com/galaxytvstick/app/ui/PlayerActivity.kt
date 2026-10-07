@@ -862,6 +862,7 @@ class PlayerActivity : AppCompatActivity() {
     private fun openGuide() {
         hideChannelOverlay()
         startActivity(Intent(this, EpgActivity::class.java))
+        @Suppress("DEPRECATION") overridePendingTransition(0, 0) // san animasyon: gid la parèt touswit
     }
 
     // ------------------------------------------------------------ Panel

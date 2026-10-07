@@ -16,7 +16,7 @@ object ChannelLists {
     /** "🔴 Evènman" (si panel la gen), "★ Favori", "Tout chanèl", epi kategori ki gen chanèl vizib. */
     fun categories(ctx: Context): List<Category> {
         val special = mutableListOf<Category>()
-        if (eventChannels().isNotEmpty()) special += Category(CAT_EVENTS, ctx.getString(R.string.live_events))
+        if (PanelState.config.liveEvents.isNotEmpty() && eventChannels().isNotEmpty()) special += Category(CAT_EVENTS, ctx.getString(R.string.live_events))
         special += Category(CAT_FAV, ctx.getString(R.string.cat_favorites))
         special += Category(CAT_ALL, ctx.getString(R.string.cat_all))
         return special + ChannelStore.categories
@@ -38,9 +38,11 @@ object ChannelLists {
      * - Sinon li chèche chanèl Xtream ki gen menm ID oswa menm non an.
      */
     fun eventChannels(): List<Channel> {
+        // Pa gen evènman: pa fè okenn travay (lis sa a kalkile chak fwa gid la oswa lis chanèl la louvri)
+        if (PanelState.config.liveEvents.isEmpty()) return emptyList()
         val now = System.currentTimeMillis() / 1000
         val byId = ChannelStore.all.associateBy { it.streamId }
-        val byName = ChannelStore.all.associateBy { norm(it.name) }
+        val byName by lazy { ChannelStore.all.associateBy { norm(it.name) } }
         return PanelState.config.liveEvents
             .filter { it.endsAt == 0L || it.endsAt >= now }
             .sortedWith(compareByDescending<com.galaxytvstick.app.data.LiveEvent> { it.featured }.thenBy { it.startsAt })
@@ -66,7 +68,7 @@ object ChannelLists {
     }
 
     /** Konpare non chanèl san majiskil, espas oswa senbòl ("Sports Max" == "SPORTS-MAX HD"?). */
-    private fun norm(s: String) = s.lowercase()
-        .replace(Regex("\\b(hd|fhd|uhd|4k|sd)\\b"), "")
-        .replace(Regex("[^a-z0-9]"), "")
+    private val rxQuality = Regex("\\b(hd|fhd|uhd|4k|sd)\\b")
+    private val rxOther = Regex("[^a-z0-9]")
+    private fun norm(s: String) = s.lowercase().replace(rxQuality, "").replace(rxOther, "")
 }
