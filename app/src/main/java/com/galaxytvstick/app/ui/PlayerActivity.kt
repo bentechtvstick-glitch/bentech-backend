@@ -994,7 +994,7 @@ class PlayerActivity : AppCompatActivity() {
 
     /** BACK pandan w ap gade TV: tounen sou ekran akèy la. */
     private fun goHome() {
-        if (isTaskRoot) startActivity(Intent(this, HomeActivity::class.java))
+        if (isTaskRoot) startActivity(Intent(this, EpgActivity::class.java))
         finish()
     }
 

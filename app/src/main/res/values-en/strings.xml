@@ -11,7 +11,7 @@
     <string name="device_info_fmt">Device ID: %1$s  •  Supports up to %2$s</string>
     <string name="hint_search">Search channels…</string>
     <string name="cat_favorites">★ Favorites</string>
-    <string name="cat_all">All channels (%1$d)</string>
+    <string name="cat_all">All channels</string>
     <string name="live_events">🔴 Live events</string>
     <string name="live_now">LIVE NOW</string>
     <string name="empty_list">No channels in this list.</string>
@@ -142,4 +142,8 @@
     <string name="home_no_fav">You have no favorite channels yet. Long-press OK on a channel in the list to add it.</string>
     <string name="home_plan_fmt">Plan: %1$s</string>
     <string name="home_exp_fmt">Expires: %1$s</string>
+    <string name="menu_search">Search</string>
+    <string name="menu_tv">TV</string>
+    <string name="search_hint">Type the name of a channel, movie or show</string>
+    <string name="search_none">Nothing found</string>
 </resources>

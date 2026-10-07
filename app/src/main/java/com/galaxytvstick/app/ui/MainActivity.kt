@@ -121,7 +121,7 @@ class MainActivity : AppCompatActivity() {
         }
         ChannelStore.current = all
         // Ekran akèy la (meni, Kontinye gade, Live TV, fim, seri, kategori)
-        startActivity(Intent(this, HomeActivity::class.java))
+        startActivity(Intent(this, EpgActivity::class.java))
         finish()
     }
 

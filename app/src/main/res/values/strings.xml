@@ -17,7 +17,7 @@
     <!-- Main -->
     <string name="hint_search">Chèche yon chanèl…</string>
     <string name="cat_favorites">★ Favori</string>
-    <string name="cat_all">Tout chanèl (%1$d)</string>
+    <string name="cat_all">Tout chanèl</string>
     <string name="live_events">🔴 Evènman an dirèk</string>
     <string name="live_now">AN DIRÈK KOUNYE A</string>
     <string name="empty_list">Pa gen chanèl nan lis sa a.</string>
@@ -165,4 +165,8 @@
     <string name="home_no_fav">Ou poko gen chanèl favori. Peze OK lontan sou yon chanèl nan lis la pou ajoute l.</string>
     <string name="home_plan_fmt">Plan: %1$s</string>
     <string name="home_exp_fmt">Ekspire: %1$s</string>
+    <string name="menu_search">Chèche</string>
+    <string name="menu_tv">TV</string>
+    <string name="search_hint">Tape non yon chanèl, yon fim oswa yon seri</string>
+    <string name="search_none">Pa jwenn anyen</string>
 </resources>

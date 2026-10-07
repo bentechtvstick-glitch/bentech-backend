@@ -11,7 +11,7 @@
     <string name="device_info_fmt">ID appareil : %1$s  •  Prend en charge jusqu\'à %2$s</string>
     <string name="hint_search">Rechercher une chaîne…</string>
     <string name="cat_favorites">★ Favoris</string>
-    <string name="cat_all">Toutes les chaînes (%1$d)</string>
+    <string name="cat_all">Toutes les chaînes</string>
     <string name="live_events">🔴 En direct</string>
     <string name="live_now">EN DIRECT</string>
     <string name="empty_list">Aucune chaîne dans cette liste.</string>
@@ -142,4 +142,8 @@
     <string name="home_no_fav">Vous n\'avez pas encore de chaînes favorites. Appui long sur OK sur une chaîne de la liste pour l\'ajouter.</string>
     <string name="home_plan_fmt">Forfait : %1$s</string>
     <string name="home_exp_fmt">Expire : %1$s</string>
+    <string name="menu_search">Rechercher</string>
+    <string name="menu_tv">TV</string>
+    <string name="search_hint">Tapez le nom d\'une chaîne, d\'un film ou d\'une série</string>
+    <string name="search_none">Aucun résultat</string>
 </resources>

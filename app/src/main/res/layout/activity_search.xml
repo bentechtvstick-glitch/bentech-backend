@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg"
+    android:orientation="horizontal" android:paddingStart="28dp" android:paddingEnd="28dp" android:paddingTop="22dp" android:paddingBottom="22dp">
+
+    <!-- Klavye sou ekran an (mache ak remòt la) -->
+    <LinearLayout android:layout_width="330dp" android:layout_height="match_parent" android:orientation="vertical">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="14dp"
+            android:text="@string/menu_search" android:textColor="@color/text" android:textSize="20sp" android:textStyle="bold"/>
+        <LinearLayout android:id="@+id/keys" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:layout_marginStart="28dp" android:orientation="vertical">
+        <TextView android:id="@+id/query" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginBottom="10dp"
+            android:background="@color/bg_panel" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp"
+            android:singleLine="true" android:textColor="@color/text" android:textColorHint="@color/text_dim" android:hint="@string/search_hint" android:textSize="20sp"/>
+        <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/results" android:layout_width="match_parent"
+                android:layout_height="match_parent" android:descendantFocusability="afterDescendants"/>
+            <TextView android:id="@+id/empty" android:layout_width="wrap_content" android:layout_height="wrap_content" android:padding="14dp"
+                android:text="@string/search_none" android:textColor="@color/text_dim" android:textSize="15sp" android:visibility="gone"/>
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>

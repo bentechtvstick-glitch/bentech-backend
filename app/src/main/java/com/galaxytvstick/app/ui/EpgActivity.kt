@@ -54,6 +54,7 @@ class EpgActivity : AppCompatActivity() {
         private const val WINDOW_MS = 3 * SLOT_MS           // 1 è 30
         private const val MAX_BACK_MS = 2 * 60 * 60 * 1000L  // pa ale plis pase 2 è anvan
         private const val MAX_FORWARD_MS = 22 * 60 * 60 * 1000L
+        private const val CAT_CATCHUP = "__catchup"
     }
 
     private lateinit var b: ActivityEpgBinding
@@ -66,6 +67,10 @@ class EpgActivity : AppCompatActivity() {
 
     private var channels: List<Channel> = emptyList()
     private var windowStart = floorToSlot(System.currentTimeMillis())
+    /** Fenèt "kounye a": ◀ sou premye selil la louvri kategori yo sèlman lè gid la sou fenèt sa a. */
+    private var homeStart = windowStart
+    /** 0 = gid la, 1 = kategori yo vizib, 2 = meni an vizib. */
+    private var zone = 0
     /** Konbyen tan nou ka rekile: jiska achiv catch-up la (maks 7 jou), sinon 2 è. */
     private var maxBackMs = MAX_BACK_MS
     private lateinit var adapter: RowAdapter
@@ -102,17 +107,29 @@ class EpgActivity : AppCompatActivity() {
         b.rows.itemAnimator = null
         adapter.items = channels
 
-        b.playlistName.text = account.name ?: account.username
         b.categories.layoutManager = LinearLayoutManager(this)
         b.categories.adapter = catAdapter
         b.categories.itemAnimator = null
         catAdapter.items = ChannelLists.categories(this)
         catAdapter.notifyDataSetChanged()
 
-        b.railTv.setOnClickListener { (previewCh ?: channels.firstOrNull())?.let { openFull(it) } }
-        b.railMovies.setOnClickListener { startActivity(Intent(this, VodActivity::class.java).putExtra(VodActivity.EXTRA_KIND, "movie")) }
-        b.railSettings.setOnClickListener { showSettings() }
-        b.railSeries.setOnClickListener { startActivity(Intent(this, VodActivity::class.java).putExtra(VodActivity.EXTRA_KIND, "series")) }
+        b.menuSearch.setOnClickListener { startActivity(Intent(this, SearchActivity::class.java)) }
+        b.menuTv.setOnClickListener { pendingCat = if (selectedCat == CAT_CATCHUP || selectedCat == ChannelLists.CAT_FAV) ChannelLists.CAT_ALL else selectedCat; resetWindow(); focusGrid() }
+        b.menuMovies.setOnClickListener { startActivity(Intent(this, VodActivity::class.java).putExtra(VodActivity.EXTRA_KIND, "movie")) }
+        b.menuSeries.setOnClickListener { startActivity(Intent(this, VodActivity::class.java).putExtra(VodActivity.EXTRA_KIND, "series")) }
+        b.menuFav.setOnClickListener {
+            if (channelsOf(ChannelLists.CAT_FAV).isEmpty()) android.widget.Toast.makeText(this, R.string.home_no_fav, android.widget.Toast.LENGTH_LONG).show()
+            else { pendingCat = ChannelLists.CAT_FAV; resetWindow(); focusGrid() }
+        }
+        b.menuCatchup.setOnClickListener { openCatchup() }
+        b.menuSettings.setOnClickListener { showSettings() }
+        val cfg = PanelState.config
+        b.accName.text = cfg.accountName.ifBlank { account.name ?: account.username }
+        b.accPlan.text = if (cfg.accountPlan.isBlank()) "" else getString(R.string.home_plan_fmt, cfg.accountPlan)
+        b.accPlan.visibility = if (cfg.accountPlan.isBlank()) View.GONE else View.VISIBLE
+        b.accExp.text = if (cfg.accountExpiry.isBlank()) "" else getString(R.string.home_exp_fmt, cfg.accountExpiry.replace("T", " "))
+        b.accExp.visibility = if (cfg.accountExpiry.isBlank()) View.GONE else View.VISIBLE
+        b.rows.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateNowLine() }
 
         previewCh = ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId } ?: channels.firstOrNull()
         previewCh?.let { b.previewLogo.load(it.icon) { error(R.drawable.ic_tv) } }
@@ -135,6 +152,7 @@ class EpgActivity : AppCompatActivity() {
         lifecycleScope.launch {
             while (isActive) {
                 b.clock.text = timeFmt.format(Date())
+                updateNowLine()
                 delay(60_000)
             }
         }
@@ -144,6 +162,7 @@ class EpgActivity : AppCompatActivity() {
         super.onStart()
         overlay.start()
         // Tann yon ti moman pou player plen ekran an lage koneksyon l anvan (playlist ki pèmèt 1 sèl ekran)
+        ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId }?.let { previewCh = it }
         handler.postDelayed(startPreviewLater, 800)
         // Di panel la kliyan an ap gade gid la
         val last = ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId }
@@ -198,9 +217,63 @@ class EpgActivity : AppCompatActivity() {
 
     // ------------------------------------------------------------ Kategori
 
+    private fun channelsOf(id: String): List<Channel> =
+        if (id == CAT_CATCHUP) ChannelStore.all.filter { it.tvArchive && it.archiveDays > 0 && it.directUrl == null }
+        else ChannelLists.channelsFor(id, prefs)
+
+    /** Remete gid la sou lè kounye a. */
+    private fun resetWindow() {
+        val now = floorToSlot(System.currentTimeMillis())
+        if (windowStart == now && homeStart == now) return
+        windowStart = now
+        homeStart = now
+        updateHeader()
+        adapter.notifyDataSetChanged()
+    }
+
+    /** Montre/kache meni an ak kolòn kategori yo. */
+    private fun setZone(z: Int) {
+        zone = z
+        b.menu.visibility = if (z == 2) View.VISIBLE else View.GONE
+        b.catPanel.visibility = if (z >= 1) View.VISIBLE else View.GONE
+    }
+
+    private fun showMenu() {
+        setZone(2)
+        val item = when (selectedCat) { ChannelLists.CAT_FAV -> b.menuFav; CAT_CATCHUP -> b.menuCatchup; else -> b.menuTv }
+        for (v in listOf(b.menuSearch, b.menuTv, b.menuMovies, b.menuSeries, b.menuFav, b.menuCatchup, b.menuSettings)) v.isSelected = v === item
+        item.post { item.requestFocus() }
+    }
+
+    /** Catch Up: sèlman chanèl ki gen achiv, epi gid la kòmanse 1 è 30 dèyè. */
+    private fun openCatchup() {
+        if (channelsOf(CAT_CATCHUP).isEmpty()) {
+            android.widget.Toast.makeText(this, R.string.catchup_unavailable, android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
+        pendingCat = CAT_CATCHUP
+        applyCategory(CAT_CATCHUP)
+        val now = floorToSlot(System.currentTimeMillis())
+        homeStart = now
+        windowStart = maxOf(now - WINDOW_MS, floorToSlot(System.currentTimeMillis() - maxBackMs))
+        updateHeader()
+        adapter.notifyDataSetChanged()
+        setZone(0)
+        b.rows.post { focusCellInRow(0, first = false); ensureArchive(0) }
+    }
+
+    private fun confirmExit() {
+        androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
+            .setTitle(R.string.exit_title)
+            .setMessage(R.string.exit_confirm)
+            .setNegativeButton(R.string.no, null)
+            .setPositiveButton(R.string.yes) { _, _ -> finishAffinity() }
+            .show()
+    }
+
     private fun applyCategory(id: String) {
         selectedCat = id
-        channels = ChannelLists.channelsFor(id, prefs)
+        channels = channelsOf(id)
         adapter.items = channels
         b.rows.scrollToPosition(0)
         for (i in 0 until b.categories.childCount) {
@@ -215,6 +288,7 @@ class EpgActivity : AppCompatActivity() {
     }
 
     private fun focusCategories() {
+        setZone(1)
         val pos = catAdapter.items.indexOfFirst { it.id == selectedCat }.coerceAtLeast(0)
         b.categories.scrollToPosition(pos)
         b.categories.post { b.categories.findViewHolderForAdapterPosition(pos)?.itemView?.requestFocus() }
@@ -226,6 +300,7 @@ class EpgActivity : AppCompatActivity() {
         if (pendingCat != selectedCat) applyCategory(pendingCat)
         if (channels.isEmpty()) return
         val pos = channels.indexOfFirst { it.streamId == previewCh?.streamId }.coerceAtLeast(0)
+        setZone(0)
         (b.rows.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 0)
         b.rows.post { focusCellInRow(pos, first = true) }
     }
@@ -269,7 +344,7 @@ class EpgActivity : AppCompatActivity() {
             val result = runCatching { EpgRepository.ensureLoaded(api, channels) }
             b.progress.visibility = View.GONE
             result.onSuccess { fresh ->
-                if (fresh || !b.rows.hasFocus()) {
+                if (zone == 0 && (fresh || !b.rows.hasFocus())) {
                     adapter.notifyDataSetChanged()
                     focusStartRow()
                 }
@@ -309,6 +384,17 @@ class EpgActivity : AppCompatActivity() {
             }
             b.timeHeader.addView(tv)
         }
+        updateNowLine()
+    }
+
+    /** Liy vètikal ki montre lè li ye kounye a nan griy la. */
+    private fun updateNowLine() {
+        val frac = (System.currentTimeMillis() - windowStart).toFloat() / WINDOW_MS
+        val w = b.rows.width
+        val chanW = 184 * resources.displayMetrics.density
+        if (w <= chanW || frac < 0f || frac > 1f || channels.isEmpty()) { b.nowLine.visibility = View.GONE; return }
+        b.nowLine.translationX = chanW + (w - chanW) * frac
+        b.nowLine.visibility = View.VISIBLE
     }
 
     private fun shiftWindow(deltaMs: Long, rowPos: Int, focusLast: Boolean): Boolean {
@@ -367,22 +453,29 @@ class EpgActivity : AppCompatActivity() {
                         return true
                     }
                     KeyEvent.KEYCODE_DPAD_LEFT -> if (cell.isFirst) {
-                        // Rekile nan tan; lè pa ka rekile ankò, ale nan kategori yo
-                        if (!shiftWindow(-SLOT_MS, cell.rowPos, focusLast = true)) focusCategories()
+                        // Sou fenèt "kounye a": louvri kategori yo. Nan tan ki pase (catch-up): rekile.
+                        if (windowStart == homeStart || !shiftWindow(-SLOT_MS, cell.rowPos, focusLast = true)) focusCategories()
                         return true
                     }
-                    KeyEvent.KEYCODE_BACK -> { focusCategories(); return true }
+                    KeyEvent.KEYCODE_BACK -> { showMenu(); return true }
                     // ⏪ ⏩ sou remòt la: deplase 2 è alafwa (pou rive vit nan jou ki pase yo)
                     KeyEvent.KEYCODE_MEDIA_REWIND -> { shiftWindow(-WINDOW_MS, cell.rowPos, focusLast = false); return true }
                     KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> { shiftWindow(WINDOW_MS, cell.rowPos, focusLast = false); return true }
                 }
             } else if (focused != null && focused.parent === b.categories) {
                 when (event.keyCode) {
-                    KeyEvent.KEYCODE_DPAD_RIGHT -> { focusGrid(); return true }
-                    KeyEvent.KEYCODE_DPAD_LEFT -> { b.railTv.requestFocus(); return true }
+                    KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_BACK -> { focusGrid(); return true }
+                    KeyEvent.KEYCODE_DPAD_LEFT -> { showMenu(); return true }
                 }
-            } else if (focused != null && focused.parent === b.rail) {
-                if (event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { focusCategories(); return true }
+            } else if (focused != null && focused.parent === b.menuItems) {
+                when (event.keyCode) {
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> { focusCategories(); return true }
+                    KeyEvent.KEYCODE_DPAD_LEFT -> return true
+                    KeyEvent.KEYCODE_BACK -> { confirmExit(); return true }
+                }
+            } else if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+                if (zone == 2) confirmExit() else showMenu()
+                return true
             }
         }
         return super.dispatchKeyEvent(event)
@@ -395,6 +488,7 @@ class EpgActivity : AppCompatActivity() {
         if (p != null) {
             b.detailTitle.text = p.title
             b.detailTime.text = "${dayFmt.format(Date(p.start))}  ${timeFmt.format(Date(p.start))} - ${timeFmt.format(Date(p.end))}" +
+                (if (p.isNow()) "   ·   ${((p.end - System.currentTimeMillis()) / 60_000).coerceAtLeast(1)} min" else "") +
                 (if (ch.canCatchup(p)) "    ${getString(R.string.epg_catchup_hint)}" else "")
             b.detailDesc.text = p.desc
         } else {
@@ -543,22 +637,22 @@ class EpgActivity : AppCompatActivity() {
             val weight = ((e - s) / 60_000f).coerceAtLeast(1f)
             return TextView(ctx).apply {
                 layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight).apply {
-                    setMargins(3, 0, 3, 0)
+                    setMargins(2, 0, 2, 0)
                 }
                 tag = cell
                 isFocusable = true
                 isClickable = true
-                setBackgroundResource(R.drawable.bg_focus)
+                setBackgroundResource(R.drawable.bg_epg_cell)
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(10, 0, 6, 0)
-                maxLines = 2
+                setPadding(14, 0, 8, 0)
+                maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
-                textSize = 12f
+                textSize = 13f
                 val catchup = p != null && ch.canCatchup(p)
-                text = p?.let { "${if (catchup) "⏪ " else ""}${it.title}\n${timeFmt.format(Date(it.start))} - ${timeFmt.format(Date(it.end))}" }
-                    ?: getString(R.string.epg_no_info)
+                text = p?.let { "${if (catchup) "⏪ " else ""}${it.title}" } ?: "—"
                 val live = p?.isNow() == true
-                setTextColor(ContextCompat.getColor(ctx, if (live) R.color.accent2 else if (p == null) R.color.text_dim else R.color.text))
+                val past = e <= System.currentTimeMillis()
+                setTextColor(ContextCompat.getColorStateList(ctx, if (p == null || past) R.color.epg_cell_text_dim else R.color.epg_cell_text))
                 isActivated = live
                 setOnFocusChangeListener { _, has -> if (has) showDetail(ch, p) }
                 setOnClickListener { if (catchup && p != null) playCatchup(ch, p) else select(ch) }

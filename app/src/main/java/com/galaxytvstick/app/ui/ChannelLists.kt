@@ -18,7 +18,7 @@ object ChannelLists {
         val special = mutableListOf<Category>()
         if (eventChannels().isNotEmpty()) special += Category(CAT_EVENTS, ctx.getString(R.string.live_events))
         special += Category(CAT_FAV, ctx.getString(R.string.cat_favorites))
-        special += Category(CAT_ALL, ctx.getString(R.string.cat_all, ChannelStore.all.size))
+        special += Category(CAT_ALL, ctx.getString(R.string.cat_all))
         return special + ChannelStore.categories
     }
 

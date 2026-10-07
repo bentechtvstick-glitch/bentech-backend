@@ -77,6 +77,11 @@
             android:screenOrientation="landscape" />
 
         <activity
+            android:name=".ui.SearchActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+
+        <activity
             android:name=".ui.EpgActivity"
             android:exported="false"
             android:screenOrientation="landscape" />
