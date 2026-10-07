@@ -68,6 +68,8 @@ data class Ticker(
         }
     }
 }
+/** Mizajou app la panel la voye: nimewo bati a (versionCode), lyen APK a, obligatwa oswa non. */
+data class AppUpdate(val build: Int, val version: String, val url: String, val force: Boolean, val pushAt: String)
 data class Chyron(val title: String, val subtitle: String, val logoUrl: String?)
 
 /** Yon chyron / lower third jan panel la voye l (paj "Chyron / Lower Third"). Gwosè yo an sp. */
@@ -220,7 +222,9 @@ data class PanelConfig(
     val liveEvents: List<LiveEvent>,
     val refreshSec: Int,
     val playlists: List<PanelPlaylist> = emptyList(),
-    val forceRefreshAt: String = ""
+    val forceRefreshAt: String = "",
+    /** Mizajou admin nan voye depi panel la; null = pa gen. */
+    val update: AppUpdate? = null
 ) {
     /**
      * Sèlman desizyon admin nan bloke TV a (bloke, ekspire, mentenans).
@@ -392,6 +396,9 @@ data class PanelConfig(
                     featured = it.optBoolean("featured", false)
                 )
             },
+            update = o.optJSONObject("update")?.let { u ->
+                AppUpdate(u.optInt("build", 0), u.optString("version"), u.optString("url"), u.optBoolean("force", false), u.optString("pushAt"))
+            }?.takeIf { it.build > 0 && it.url.startsWith("http") },
             refreshSec = o.optInt("refreshSec", 60).coerceIn(5, 600), // 5 s lè yon mesaj ticker pral kòmanse/fini
             playlists = o.optJSONArray("playlists").objects().map {
                 PanelPlaylist(

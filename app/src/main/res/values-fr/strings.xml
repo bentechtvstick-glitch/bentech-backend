@@ -166,4 +166,12 @@
     <string name="set_about">À propos (version %1$s)</string>
     <string name="set_about_title">À propos</string>
     <string name="set_about_fmt">Galaxy TV Stick\nVersion : %1$s\nAppareil : %2$s\nAndroid : %3$s</string>
+    <string name="update_title">Nouvelle version disponible</string>
+    <string name="update_msg">La version %1$s de Galaxy TV Stick est disponible. Appuyez sur « Mettre à jour » pour l’installer. Vos réglages sont conservés.</string>
+    <string name="update_msg_force">Vous devez installer la version %1$s pour continuer à utiliser Galaxy TV Stick. Appuyez sur « Mettre à jour ».</string>
+    <string name="update_now">Mettre à jour</string>
+    <string name="update_later">Plus tard</string>
+    <string name="update_downloading">Téléchargement… %1$d%%</string>
+    <string name="update_failed">Échec de la mise à jour : %1$s</string>
+    <string name="update_allow">Si l’installation ne s’ouvre pas : Settings → My Fire TV → Developer options → Install unknown apps → Galaxy TV Stick → ON.</string>
 </resources>

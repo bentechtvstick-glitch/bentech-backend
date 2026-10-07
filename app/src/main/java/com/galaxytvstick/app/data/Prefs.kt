@@ -81,6 +81,11 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("start_last_channel", false)
         set(value) = sp.edit().putBoolean("start_last_channel", value).apply()
 
+    /** Dènye "voye mizajou" panel la kliyan an deja wè (pou pa remontre menm mesaj la chak minit). */
+    var updatePushSeen: String
+        get() = sp.getString("update_push_seen", "") ?: ""
+        set(value) = sp.edit().putString("update_push_seen", value).apply()
+
     var lastChannelId: Int
         get() = sp.getInt("last_channel", -1)
         set(value) = sp.edit().putInt("last_channel", value).apply()

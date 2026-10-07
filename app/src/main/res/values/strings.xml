@@ -189,4 +189,12 @@
     <string name="set_about">Konsènan app la (vèsyon %1$s)</string>
     <string name="set_about_title">Konsènan</string>
     <string name="set_about_fmt">Galaxy TV Stick\nVèsyon: %1$s\nAparèy: %2$s\nAndroid: %3$s</string>
+    <string name="update_title">Nouvo vèsyon disponib</string>
+    <string name="update_msg">Vèsyon %1$s Galaxy TV Stick la disponib. Peze \"Mete ajou\" pou enstale l. Reglaj ou yo ap rete jan yo ye.</string>
+    <string name="update_msg_force">Fòk ou enstale vèsyon %1$s pou kontinye sèvi ak Galaxy TV Stick. Peze \"Mete ajou\".</string>
+    <string name="update_now">Mete ajou</string>
+    <string name="update_later">Pita</string>
+    <string name="update_downloading">Ap telechaje… %1$d%%</string>
+    <string name="update_failed">Mizajou a pa mache: %1$s</string>
+    <string name="update_allow">Si enstalasyon an pa louvri: Settings → My Fire TV → Developer options → Install unknown apps → Galaxy TV Stick → ON.</string>
 </resources>

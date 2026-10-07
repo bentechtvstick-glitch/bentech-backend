@@ -239,6 +239,8 @@ class OverlayController(
 
     private fun showMessages(cfg: PanelConfig) {
         if (dialogShowing || activity.isFinishing) return
+        // Mizajou panel la voye a pase anvan lòt mesaj yo
+        if (Updater.maybePrompt(activity, cfg.update, prefs)) return
 
         cfg.broadcast?.let { b ->
             val key = "b:${b.id}"
