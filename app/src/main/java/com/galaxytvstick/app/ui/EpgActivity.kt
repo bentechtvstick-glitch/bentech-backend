@@ -244,12 +244,15 @@ class EpgActivity : AppCompatActivity() {
         b.accBox.visibility = if (open) View.VISIBLE else View.INVISIBLE
         val current = when (selectedCat) { ChannelLists.CAT_FAV -> b.menuFav; CAT_CATCHUP -> b.menuCatchup; else -> b.menuTv }
         val labels = intArrayOf(R.string.menu_search, R.string.menu_tv, R.string.home_movies, R.string.home_series, R.string.menu_favorites, R.string.menu_catchup, R.string.home_settings)
-        val icons = arrayOf("🔍", "📺", "🎬", "🎞", "⭐", "🕘", "⚙")
+        val icons = intArrayOf(R.drawable.ic_m_search, R.drawable.ic_m_tv, R.drawable.ic_m_movie, R.drawable.ic_m_series, R.drawable.ic_m_star, R.drawable.ic_m_history, R.drawable.ic_m_settings)
         val pad = (14 * d).toInt()
         listOf(b.menuSearch, b.menuTv, b.menuMovies, b.menuSeries, b.menuFav, b.menuCatchup, b.menuSettings).forEachIndexed { i, v ->
-            v.text = if (open) "${icons[i]}    ${getString(labels[i])}" else icons[i]
-            v.gravity = if (open) Gravity.CENTER_VERTICAL else Gravity.CENTER
-            v.setPadding(if (open) pad else 0, 0, 0, 0)
+            v.text = if (open) getString(labels[i]) else ""
+            v.gravity = Gravity.CENTER_VERTICAL
+            v.setCompoundDrawablesWithIntrinsicBounds(icons[i], 0, 0, 0)
+            v.compoundDrawablePadding = pad
+            // Fèmen: siy la nan mitan kare a (kare 44dp, siy 24dp)
+            v.setPadding(if (open) pad else (10 * d).toInt(), 0, 0, 0)
             v.isSelected = v === current
         }
     }

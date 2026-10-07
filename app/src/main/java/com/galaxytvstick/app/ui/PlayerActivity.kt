@@ -699,11 +699,11 @@ class PlayerActivity : AppCompatActivity() {
         b.qClock.text = quickClockFmt.format(Date())
 
         b.qTiles.removeAllViews()
-        val guide = quickTile("📅", null, getString(R.string.quick_guide)) { hideQuickBar(); openGuide() }
-        quickTile("☰", null, getString(R.string.quick_channels)) { hideQuickBar(); showChannelOverlay() }
+        val guide = quickTile(R.drawable.ic_m_guide, null, getString(R.string.quick_guide)) { hideQuickBar(); openGuide() }
+        quickTile(R.drawable.ic_m_list, null, getString(R.string.quick_channels)) { hideQuickBar(); showChannelOverlay() }
         val byId = ChannelStore.all.associateBy { it.streamId }
         prefs.recentChannels.filter { it != ch.streamId }.mapNotNull { byId[it] }.take(8).forEach { r ->
-            quickTile(null, r, EpgRepository.nowFor(r)?.title ?: r.name) {
+            quickTile(0, r, EpgRepository.nowFor(r)?.title ?: r.name) {
                 hideQuickBar()
                 var i = channels.indexOfFirst { it.streamId == r.streamId }
                 if (i < 0) { channels = ChannelStore.all; ChannelStore.current = channels; i = channels.indexOfFirst { it.streamId == r.streamId } }
@@ -715,7 +715,7 @@ class PlayerActivity : AppCompatActivity() {
         keepQuickBar()
     }
 
-    private fun quickTile(icon: String?, ch: Channel?, label: String, onClick: () -> Unit): View {
+    private fun quickTile(icon: Int, ch: Channel?, label: String, onClick: () -> Unit): View {
         val d = resources.displayMetrics.density
         val tile = android.widget.LinearLayout(this).apply {
             orientation = android.widget.LinearLayout.VERTICAL
@@ -735,7 +735,10 @@ class PlayerActivity : AppCompatActivity() {
                 load(ch.icon) { error(R.drawable.ic_tv) }
             })
         } else {
-            tile.addView(android.widget.TextView(this).apply { text = icon; textSize = 22f; setTextColor(0xFFFFFFFF.toInt()) })
+            tile.addView(android.widget.ImageView(this).apply {
+                layoutParams = android.widget.LinearLayout.LayoutParams((30 * d).toInt(), (30 * d).toInt()).apply { bottomMargin = (4 * d).toInt() }
+                setImageResource(icon)
+            })
         }
         tile.addView(android.widget.TextView(this).apply {
             text = label
