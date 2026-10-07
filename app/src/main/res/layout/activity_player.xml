@@ -99,8 +99,8 @@
         android:paddingStart="20dp" android:paddingEnd="20dp" android:paddingTop="20dp" android:paddingBottom="48dp" android:visibility="gone">
 
         <LinearLayout android:layout_width="200dp" android:layout_height="match_parent" android:orientation="vertical">
-            <!-- Meni (tankou TiviMate) -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="40dp" android:layout_marginBottom="4dp" android:orientation="horizontal">
+            <!-- Bouton meni yo kache: Fim, Seri, Gid, Playlist ak Reglaj nan meni gid la kounye a -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="40dp" android:layout_marginBottom="4dp" android:orientation="horizontal" android:visibility="gone">
                 <Button android:id="@+id/btnMovies" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
                     android:layout_marginEnd="4dp" android:background="@drawable/bg_focus" android:text="@string/movies"
                     android:textAllCaps="false" android:textColor="@color/text" android:textSize="14sp"/>
@@ -108,13 +108,13 @@
                     android:background="@drawable/bg_focus" android:text="@string/series"
                     android:textAllCaps="false" android:textColor="@color/text" android:textSize="14sp"/>
             </LinearLayout>
-            <Button android:id="@+id/btnGuide" android:layout_width="match_parent" android:layout_height="40dp"
+            <Button android:id="@+id/btnGuide" android:layout_width="match_parent" android:layout_height="40dp" android:visibility="gone"
                 android:layout_marginBottom="4dp" android:background="@drawable/bg_focus" android:gravity="center_vertical|start"
                 android:paddingStart="14dp" android:text="@string/tv_guide" android:textAllCaps="false" android:textColor="@color/text" android:textSize="15sp"/>
-            <Button android:id="@+id/btnPlaylists" android:layout_width="match_parent" android:layout_height="40dp"
+            <Button android:id="@+id/btnPlaylists" android:layout_width="match_parent" android:layout_height="40dp" android:visibility="gone"
                 android:layout_marginBottom="4dp" android:background="@drawable/bg_focus" android:gravity="center_vertical|start"
                 android:paddingStart="14dp" android:text="@string/playlists" android:textAllCaps="false" android:textColor="@color/text" android:textSize="16sp"/>
-            <Button android:id="@+id/btnSettings" android:layout_width="match_parent" android:layout_height="40dp"
+            <Button android:id="@+id/btnSettings" android:layout_width="match_parent" android:layout_height="40dp" android:visibility="gone"
                 android:layout_marginBottom="10dp" android:background="@drawable/bg_focus" android:gravity="center_vertical|start"
                 android:paddingStart="14dp" android:text="@string/settings" android:textAllCaps="false" android:textColor="@color/text" android:textSize="16sp"/>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/ovCategories" android:layout_width="match_parent"
