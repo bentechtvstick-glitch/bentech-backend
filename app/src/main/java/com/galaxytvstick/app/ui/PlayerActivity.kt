@@ -60,6 +60,15 @@ class PlayerActivity : AppCompatActivity() {
          * 0 = /live/…/id.m3u8 (HLS) · 1 = /live/…/id.ts · 2 = /…/id (ansyen fòm) · 3 = /…/id li kòm HLS
          */
         private const val MODES = 4
+
+        /**
+         * Chanje chanèl pi vit: player a kòmanse jwe depi li gen 1 s videyo (olye 2.5 s pa defo),
+         * epi 2 s apre yon koupi. Rès tanpon an (15–50 s) pa chanje, pou imaj la pa kole.
+         * Gid la (ti fenèt videyo a) sèvi ak menm reglaj la.
+         */
+        fun loadControl(): DefaultLoadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(15_000, 50_000, 1_000, 2_000)
+            .build()
         /** Fason ki mache ak sèvè playlist la (app la sonje l pou pwochen chanèl yo). */
         private var preferredMode = 0
         private var tunedFor: String? = null
@@ -255,6 +264,7 @@ class PlayerActivity : AppCompatActivity() {
 
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSource))
+            .setLoadControl(loadControl())
             .build().also { p ->
                 b.playerView.player = p
                 p.addListener(listener)
@@ -1144,11 +1154,21 @@ class PlayerActivity : AppCompatActivity() {
         handler.postDelayed(hideInfo, 4000)
     }
 
+    /** ▲▼ plizyè fwa vit: montre chak chanèl touswit, men chaje sèlman sa kliyan an kanpe sou li a. */
+    private var zapPending = false
+    private val doZap = Runnable {
+        zapPending = false
+        playChannel(index)
+        b.overlay.gfx.onChannelChanged()
+    }
+
     private fun zap(delta: Int) {
         if (channels.isEmpty() || adPlaying) return
-        val next = (index + delta + channels.size) % channels.size
-        playChannel(next)
-        b.overlay.gfx.onChannelChanged()
+        index = (index + delta + channels.size) % channels.size
+        zapPending = true
+        showInfo()
+        handler.removeCallbacks(doZap)
+        handler.postDelayed(doZap, 350)
     }
 
     private fun jumpToNumber() {
