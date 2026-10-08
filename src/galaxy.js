@@ -1099,4 +1099,31 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     auditLog("app-update", req.body?.cancel ? "App update push cancelled" : `App update 1.0.${s.updatePushBuild} sent to every TV${s.updateForce ? " (forced)" : ""}`, admin(req));
     res.json({ ok: true, pushedBuild: s.updatePushBuild, pushedAt: s.updatePushAt, force: s.updateForce });
   });
+
+  // =========================================================================
+  // Kopi done yo: telechaje tout baz done a, epi remete l (si sèvè a oswa disk la pèdi)
+  // =========================================================================
+  app.get("/api/galaxy/backup", authenticate, (req, res) => {
+    ensure();
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="galaxy-panel-backup-${stamp}.json"`);
+    res.send(JSON.stringify({ galaxyBackup: 1, savedAt: new Date().toISOString(), data: db.data }));
+    auditLog("backup", "Panel data backup downloaded", admin(req));
+  });
+
+  app.post("/api/galaxy/restore", authenticate, async (req, res) => {
+    const b = req.body || {};
+    const d = b.galaxyBackup && b.data && typeof b.data === "object" ? b.data : null;
+    if (!d || Array.isArray(d) || !Array.isArray(d.devices)) return res.status(400).json({ error: "Fichye sa a pa yon kopi done panel la." });
+    // Kenbe kont admin aktyèl yo si kopi a pa gen youn (pou pa fèmen pòt la sou tèt nou)
+    if (!Array.isArray(d.users) || !d.users.length) d.users = db.data.users || [];
+    db.data = d;
+    ensure();
+    pkgCache.clear();
+    await db.write();
+    syncTvs();
+    auditLog("restore", `Panel data restored from a backup saved at ${String(b.savedAt || "?").slice(0, 19)}`, admin(req));
+    res.json({ ok: true, devices: d.devices.length, customers: (d.customers || []).length });
+  });
 }

@@ -942,6 +942,11 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="inline" style="margin-top:12px"><label class="sw"><input type="checkbox" id="upForce"><i></i></label><label for="upForce">Obligatwa: kliyan an pa ka kontinye san l pa mete ajou</label></div>
         <div class="btns" style="justify-content:flex-start;margin-top:12px"><button class="btn primary" id="upSend" type="button">Voye mizajou bay tout TV</button><button class="btn" id="upCancel" type="button">Sispann pwopoze l</button><span class="msg" id="upMsg"></span></div>
       </div>
+      <div class="card">
+        <div class="cardhead"><div><h2>💾 Kopi done yo</h2><p class="sub">Sove yon kopi tout done panel la (TV, kliyan, playlist, pakè, ticker…) sou òdinatè w. Si yon bagay efase, ou remete l an yon klik.</p></div></div>
+        <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="bkDown" type="button">Telechaje yon kopi</button><button class="btn" id="bkUp" type="button">Remete yon kopi…</button><input type="file" id="bkFile" accept="application/json,.json" hidden><span class="msg" id="bkMsg"></span></div>
+        <p class="note" style="margin:8px 0 0">Kopi a gen modpas playlist yo ladan l: kenbe fichye a an sekirite, pa pataje l.</p>
+      </div>
       <div class="cols">
         <div class="card"><h2>Mentenans</h2>
           <div class="field"><label for="mtMsg">Mesaj mentenans</label><input type="text" id="mtMsg"></div>
@@ -2166,6 +2171,31 @@ async function loadSysStats() {
     + (y.dbWriteErrors ? " " + t("⚠ {0} erè ekriti sou disk la.", y.dbWriteErrors) : "");
 }
 $("#sysRefresh").addEventListener("click", loadSysStats);
+// ---- Kopi done yo: telechaje / remete ----
+$("#bkDown").addEventListener("click", async () => {
+  try {
+    setMsg($("#bkMsg"), "Ap prepare kopi a…", true);
+    const r = await fetch(API + "/galaxy/backup", { headers: { Authorization: "Bearer " + token } });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const blob = await r.blob(), a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = (r.headers.get("Content-Disposition") || "").match(/filename="([^"]+)"/)?.[1] || "galaxy-panel-backup.json";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    setMsg($("#bkMsg"), t("Kopi a telechaje ({0}). Kenbe l an sekirite.", fmtBytes(blob.size)), true);
+  } catch (err) { setMsg($("#bkMsg"), err.message); }
+});
+$("#bkUp").addEventListener("click", () => $("#bkFile").click());
+$("#bkFile").addEventListener("change", async (ev) => {
+  const f = ev.target.files[0]; ev.target.value = ""; if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    if (!j || !j.galaxyBackup || !j.data) throw new Error(t("Fichye sa a pa yon kopi done panel la."));
+    if (!confirm(t("Remete kopi {0} a? Tout done ki nan panel la kounye a ap ranplase.", String(j.savedAt || "").slice(0, 16).replace("T", " ")))) return;
+    setMsg($("#bkMsg"), "Ap remete kopi a…", true);
+    const r = await api("POST", "/galaxy/restore", j);
+    setMsg($("#bkMsg"), t("Kopi a remete: {0} aparèy, {1} kliyan.", r.devices, r.customers), true);
+    loadSystem(); loadDevices();
+  } catch (err) { setMsg($("#bkMsg"), err.message); }
+});
 // ---- Mizajou app la: voye dènye APK a bay TV yo ----
 async function loadAppUpdate(fresh) {
   let y; try { y = await api("GET", "/galaxy/app-update" + (fresh ? "?fresh=1" : "")); } catch (err) { $("#upKpis").innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
