@@ -584,6 +584,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="pkgnote" id="chPkgNote" hidden></div>
         <div class="inline"><input type="text" id="chPkgName" class="grow" placeholder="Non yon nouvo pakè (egz: Miami)" maxlength="40"><button class="btn small purple" id="chPkgSave" type="button">Sove kòm pakè</button></div>
         <div class="inline"><input type="text" id="chSearch" class="grow" placeholder="Chèche yon chanèl"><button class="btn small red" id="chHideShown" type="button">Kache sa ki nan lis la</button><button class="btn small purple" id="chOnlyShown" type="button">Sèlman sa ki nan lis la</button><button class="btn small green" id="chShowShown" type="button">Montre sa ki nan lis la</button><button class="btn small" id="chAllOn" type="button">Montre tout</button></div>
+        <div class="inline" style="margin-top:6px"><button class="btn small" id="chDupBtn" type="button">🔁 Chanèl doub</button><button class="btn small red" id="chDupHide" type="button" hidden>Kache doub yo (kenbe youn)</button><span class="note" id="chDupNote"></span></div>
         <p class="note">Etenn bouton yon gwoup pou kache tout chanèl li yo ak yon sèl klik. Klike sou non gwoup la pou wè chanèl li yo. Kreyon an (✎) chanje non yon gwoup oswa yon chanèl.</p>
         <p class="note" id="chCount"></p>
         <div class="chlist" id="chList"></div>
@@ -1555,7 +1556,8 @@ async function loadChannels() {
     api("GET", "/galaxy/devices/lookup?mac=" + encodeURIComponent(dev.mac)).catch(() => dev),
   ]);
   dev = fresh;
-  chState = { chs, profiles, open: new Set(), edit: null };
+  chState = { chs, profiles, open: new Set(), edit: null, dupOnly: false };
+  chComputeDups(); chDupUi();
   $("#chProfile").innerHTML = `<option value="">${t("Tout chanèl")}</option>` + profiles.map((p) => `<option value="${esc(p.name)}"${p.name === dev.channelProfile ? " selected" : ""}>${p.pkg ? "📦 " : ""}${esc(p.name)}${p.channels ? " " + t("({0} chanèl)", p.channels) : ""}</option>`).join("");
   $("#chMax").value = dev.maxChannels || 0; $("#chBody").hidden = false; setMsg($("#chMsg"), ""); chLoadState();
 }
@@ -1652,10 +1654,18 @@ $("#chPkgSave").addEventListener("click", async () => {
 });
 // Rechèch la gade non chanèl la AK non kategori a
 const chName = (c) => chState?.chN[c.id] || c.name, catName = (cid, orig) => chState?.catN[cid] || orig;
-const chMatch = (c, q) => !q || c.name.toLowerCase().includes(q) || String(c.categoryName || "").toLowerCase().includes(q) || chName(c).toLowerCase().includes(q) || String(catName(c.categoryId, "")).toLowerCase().includes(q);
+/** Kle pou jwenn chanèl doub: non an san kalite (HD, FHD, 4K…) ni ponktyasyon. "FR - France 24 HD" = "FR | FRANCE 24". */
+const dupKey = (n) => String(n || "").toLowerCase().replace(/\b(uhd|fhd|hd|sd|4k|8k|hevc|h\.?265|h\.?264|50fps|60fps|raw|backup|vip)\b/g, "").replace(/[^\p{L}\p{N}+]/gu, "");
+function chComputeDups() {
+  const m = new Map(); for (const c of chState.chs) { const k = dupKey(c.name); if (!k) continue; if (!m.has(k)) m.set(k, []); m.get(k).push(c); }
+  chState.dupGroups = [...m.values()].filter((l) => l.length > 1); chState.dupCount = new Map();
+  for (const l of chState.dupGroups) for (const c of l) chState.dupCount.set(c.id, l.length);
+}
+const chMatch0 = (c, q) => !q || c.name.toLowerCase().includes(q) || String(c.categoryName || "").toLowerCase().includes(q) || chName(c).toLowerCase().includes(q) || String(catName(c.categoryId, "")).toLowerCase().includes(q);
 // Ti fòm pou chanje yon non (gwoup oswa chanèl). Enter = OK, Esc = anile, non vid = remete non orijinal la.
 const editBox = (kind, id, cur) => `<input type="text" class="chedit" data-edit-${kind}="${esc(id)}" value="${esc(cur)}" maxlength="80" aria-label="${esc(t("Nouvo non"))}">`;
 const penBtn = (kind, id) => `<button class="catx" type="button" data-pen-${kind}="${esc(id)}" title="${esc(t("Chanje non an"))}" aria-label="${esc(t("Chanje non an"))}">✎</button>`;
+const chMatch = (c, q) => chMatch0(c, q) && (!chState?.dupOnly || chState.dupCount?.has(c.id));
 const chFiltered = () => { const q = $("#chSearch").value.trim().toLowerCase(); return chState ? chState.chs.filter((c) => chMatch(c, q)) : []; };
 function chChanged(n, hide) {
   const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep;
@@ -1669,13 +1679,31 @@ function renderChList() {
   const byCat = new Map(); for (const c of chs) { if (!chMatch(c, q)) continue; if (!byCat.has(c.categoryId)) byCat.set(c.categoryId, { name: c.categoryName, items: [] }); byCat.get(c.categoryId).items.push(c); }
   let h = ""; for (const [cid, g] of byCat) {
     // Yon gwoup = yon bouton: etenn li pou kache tout chanèl li yo. Klike sou non an pou wè chanèl yo.
-    const gOff = hidC.has(cid), open = !!q || chState.open.has(cid), nHid = gOff ? g.items.length : g.items.filter((c) => hid.has(c.id)).length;
+    const gOff = hidC.has(cid), open = !!q || !!chState.dupOnly || chState.open.has(cid), nHid = gOff ? g.items.length : g.items.filter((c) => hid.has(c.id)).length;
     h += `<div class="cat${gOff ? " off" : ""}"><button class="catx" type="button" data-open="${esc(cid)}" aria-expanded="${open}" aria-label="${esc(t("Louvri gwoup la"))}">${open ? "▾" : "▸"}</button><label class="sw" title="${esc(t("Montre / kache tout gwoup la"))}"><input type="checkbox" data-cat="${esc(cid)}"${gOff ? "" : " checked"}><i></i></label>${chState.edit === "c:" + cid ? editBox("cat", cid, catName(cid, g.name || "")) : `<span class="catn" data-open="${esc(cid)}">${esc(catName(cid, g.name) || t("San kategori"))}${chState.catN[cid] ? ` <span class="note" style="text-transform:none;font-weight:400">(${esc(g.name || "")})</span>` : ""}</span>${penBtn("cat", cid)}`}<span class="note">(${g.items.length})</span>${gOff ? `<span class="pill p-bad">${t("Gwoup kache")}</span>` : nHid ? `<span class="pill p-warn">${esc(t("{0} kache", nHid))}</span>` : ""}</div>`;
-    if (open) for (const c of g.items) { const off = hid.has(c.id) || hidC.has(cid); h += `<div class="chrow${off ? " off" : ""}"><input type="checkbox" data-ch="${c.id}" id="chk_${c.id}"${hid.has(c.id) ? "" : " checked"}${hidC.has(cid) ? " disabled" : ""}> ${chState.edit === "h:" + c.id ? `${c.num}. ` + editBox("ch", c.id, chName(c)) : `<label for="chk_${c.id}" style="flex:1;min-width:0">${c.num}. ${esc(chName(c))}${chState.chN[c.id] ? ` <span class="note">(${esc(c.name)})</span>` : ""}</label>${penBtn("ch", c.id)}`}</div>`; }
+    if (open) for (const c of g.items) { const off = hid.has(c.id) || hidC.has(cid); h += `<div class="chrow${off ? " off" : ""}"><input type="checkbox" data-ch="${c.id}" id="chk_${c.id}"${hid.has(c.id) ? "" : " checked"}${hidC.has(cid) ? " disabled" : ""}> ${chState.edit === "h:" + c.id ? `${c.num}. ` + editBox("ch", c.id, chName(c)) : `<label for="chk_${c.id}" style="flex:1;min-width:0">${c.num}. ${esc(chName(c))}${chState.dupCount?.get(c.id) > 1 ? ` <span class="pill p-info" title="${esc(t("Menm chanèl la parèt {0} fwa nan lis la", chState.dupCount.get(c.id)))}">×${chState.dupCount.get(c.id)}</span>` : ""}${chState.chN[c.id] ? ` <span class="note">(${esc(c.name)})</span>` : ""}</label>${penBtn("ch", c.id)}`}</div>`; }
   }
   $("#chList").innerHTML = h || `<div class="empty">${t("Pa gen chanèl ki koresponn.")}</div>`;
 }
 $("#chSearch").addEventListener("input", renderChList);
+// Chanèl doub: montre sèlman chanèl ki parèt plizyè fwa, epi kache tout sof youn nan chak
+function chDupUi() {
+  const n = chState?.dupGroups?.length || 0, on = !!chState?.dupOnly;
+  $("#chDupBtn").textContent = on ? t("✕ Kite chanèl doub yo") : t("🔁 Chanèl doub ({0})", n);
+  $("#chDupHide").hidden = !on || !n;
+  $("#chDupNote").textContent = on ? (n ? t("{0} chanèl parèt plizyè fwa. ×2, ×3 = konbyen fwa.", n) : t("Pa gen chanèl doub.")) : "";
+}
+$("#chDupBtn").addEventListener("click", () => { if (!chState) return; if (!chState.dupGroups) chComputeDups(); chState.dupOnly = !chState.dupOnly; chDupUi(); renderChList(); });
+$("#chDupHide").addEventListener("click", () => {
+  if (!chState?.dupGroups) return; let n = 0;
+  const vis = (c) => !chState.hid.has(c.id) && !chState.hidC.has(String(c.categoryId));
+  for (const l of chState.dupGroups) {
+    // Kenbe youn ki deja vizib (nimewo ki pi piti a), kache lòt yo
+    const keep = [...l].sort((a, b) => (vis(b) - vis(a)) || (a.num - b.num))[0];
+    for (const c of l) if (c !== keep && !chState.hid.has(c.id)) { chState.hid.add(c.id); n++; }
+  }
+  chChanged(n, true);
+});
 function chRerender() { const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep; }
 function chCommitEdit(el) {
   if (!chState || !chState.edit) return;
