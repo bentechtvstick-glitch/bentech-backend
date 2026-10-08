@@ -985,7 +985,7 @@ const API = location.origin + "/api";
 const LANGS = window.GALAXY_LANGS || [{ code: "ht", name: "Kreyòl" }];
 const DICT = window.GALAXY_I18N || {};
 let lang = (() => { try { return localStorage.getItem("galaxy_lang") || ""; } catch { return ""; } })();
-if (!LANGS.some((l) => l.code === lang)) lang = "ht"; // Kreyòl pa defo; chwa a sove nan navigatè a
+if (!LANGS.some((l) => l.code === lang)) lang = "en"; // Anglè pa defo; chwa a sove nan navigatè a
 /** Tradui yon tèks kreyòl. {0}, {1}… ranplase pa paramèt yo. */
 function t(key, ...args) {
   const s = (DICT[lang] && DICT[lang][key]) || key;
