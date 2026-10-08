@@ -869,6 +869,8 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Remete kopi {0} a? Tout done ki nan panel la kounye a ap ranplase.": ["Restore the backup from {0}? All data currently in the panel will be replaced.", "Restaurer la sauvegarde du {0} ? Toutes les données actuelles du panel seront remplacées.", "¿Restaurar la copia del {0}? Se reemplazarán todos los datos actuales del panel."],
     "Ap remete kopi a…": ["Restoring the backup…", "Restauration de la sauvegarde…", "Restaurando la copia…"],
     "Kopi a remete: {0} aparèy, {1} kliyan.": ["Backup restored: {0} devices, {1} customers.", "Sauvegarde restaurée : {0} appareils, {1} clients.", "Copia restaurada: {0} dispositivos, {1} clientes."],
+    "Aparèy la bloke. TV a montre ekran \"aparèy bloke\" a.": ["Device blocked. The TV shows the \"device blocked\" screen.", "Appareil bloqué. La TV affiche l'écran « appareil bloqué ».", "Dispositivo bloqueado. La TV muestra la pantalla «dispositivo bloqueado»."],
+    "Aparèy la aktive ankò.": ["Device active again.", "Appareil réactivé.", "Dispositivo activado de nuevo."],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],

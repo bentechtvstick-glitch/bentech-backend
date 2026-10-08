@@ -1208,6 +1208,16 @@ $$("[data-cmd]").forEach((b) => b.addEventListener("click", () => {
 }));
 
 // paramèt aparèy
+// Switch "Bloke aparèy la": aplike touswit, san bezwen peze Sove
+$("#dvBlocked").addEventListener("change", async (ev) => {
+  if (!dev?.mac) return; const on = ev.target.checked;
+  try {
+    dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { blocked: on })) };
+    await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/commands`, { type: "refresh" }).catch(() => {});
+    toast(on ? "Aparèy la bloke" : "Aparèy la aktive"); setMsg($("#dvMsg"), on ? "Aparèy la bloke. TV a montre ekran \"aparèy bloke\" a." : "Aparèy la aktive ankò.", true);
+    loadDevices().catch(() => {});
+  } catch (err) { ev.target.checked = !on; setMsg($("#dvMsg"), err.message); }
+});
 $("#dvSave").addEventListener("click", async () => {
   try { dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { deviceName: $("#dvName").value.trim(), city: $("#dvCity").value.trim(), customer: $("#dvCustomer").value, blocked: $("#dvBlocked").checked, limit: Math.max(1, +$("#dvLimit").value || 1) })) };
     renderDevice(); setMsg($("#dvMsg"), "Sove. TV a ap aplike l nan pwochen minit lan (oswa klike \"Aplike chanjman yo\").", true); loadDevices(); }
