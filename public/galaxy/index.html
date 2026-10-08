@@ -1152,7 +1152,8 @@ async function selectDevice(mac, jump) {
   } catch (err) { dev = null; $("#deviceView").hidden = true; setMsg($("#lookupMsg"), err.message); return; }
   setMsg($("#lookupMsg"), "");
   $("#deviceView").hidden = false; $("#rcConfirm").innerHTML = ""; $("#dvConfirm").innerHTML = ""; setMsg($("#rcMsgOut"), ""); setMsg($("#dvMsg"), ""); setMsg($("#plMsg"), "");
-  if (!customers.length) customers = await list("customers").catch(() => []);
+  // Toujou rechaje lis kliyan yo: yon kliyan ki fèk ajoute nan paj Customers dwe parèt touswit isit la
+  customers = await list("customers").catch(() => customers);
   renderDevice();
   renderLinkBox();
   devChannels = await api("GET", `/galaxy/devices/${encodeURIComponent(mac)}/channels`).catch(() => []);
