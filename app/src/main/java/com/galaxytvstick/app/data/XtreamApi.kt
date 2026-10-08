@@ -29,6 +29,7 @@ class XtreamApi(private val account: Account) {
         )
 
         val http: OkHttpClient = OkHttpClient.Builder()
+            .dns(SafeDns) // DNS prive: routeur ki bloke sèvè IPTV yo pa ka chanje adrès la
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .followRedirects(true)
