@@ -180,6 +180,7 @@
     <string name="parental_wrong_pin">PIN lan pa bon.</string>
     <string name="parental_now_on">Kontwòl paran limen: kategori pou granmoun yo kache.</string>
     <string name="parental_now_off">Kontwòl paran etenn.</string>
+    <string name="set_language">Lang: %1$s</string>
     <string name="set_autostart">Louvri app la lè aparèy la limen: %1$s</string>
     <string name="set_last_channel">Jwe dènye chanèl la lè app la louvri: %1$s</string>
     <string name="switch_on">LIMEN</string>

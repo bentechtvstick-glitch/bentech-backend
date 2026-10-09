@@ -157,6 +157,7 @@
     <string name="parental_wrong_pin">Code PIN incorrect.</string>
     <string name="parental_now_on">Contrôle parental activé : les catégories pour adultes sont masquées.</string>
     <string name="parental_now_off">Contrôle parental désactivé.</string>
+    <string name="set_language">Langue : %1$s</string>
     <string name="set_autostart">Lancer au démarrage de l’appareil : %1$s</string>
     <string name="set_last_channel">Lire la dernière chaîne au lancement : %1$s</string>
     <string name="switch_on">ACTIVÉ</string>

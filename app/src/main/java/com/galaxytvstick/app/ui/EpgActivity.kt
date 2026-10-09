@@ -53,6 +53,8 @@ import java.util.Locale
 class EpgActivity : AppCompatActivity() {
 
     companion object {
+        private val LANG_CODES = listOf("ht", "en", "fr", "es")
+        private val LANG_NAMES = listOf("Kreyòl", "English", "Français", "Español")
         private const val SLOT_MS = 30 * 60 * 1000L
         private const val WINDOW_MS = 3 * SLOT_MS           // 1 è 30
         private const val MAX_BACK_MS = 2 * 60 * 60 * 1000L  // pa ale plis pase 2 è anvan
@@ -630,12 +632,32 @@ class EpgActivity : AppCompatActivity() {
                 ).filter { it.isNotBlank() }.joinToString("\n"))
             },
             getString(R.string.set_device_info) to { info(R.string.set_device_info, getString(R.string.set_info_fmt, cfg.accountName, prefs.mac, prefs.deviceKey, version)) },
+            getString(R.string.set_language, LANG_NAMES[LANG_CODES.indexOf(currentLang())]) to { chooseLanguage() },
             getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off) to { parentalControl() },
             getString(R.string.set_autostart, onOff(prefs.autoStart)) to { prefs.autoStart = !prefs.autoStart; showSettings() },
             getString(R.string.set_last_channel, onOff(prefs.startLastChannel)) to { prefs.startLastChannel = !prefs.startLastChannel; showSettings() },
             getString(R.string.set_about, version) to { info(R.string.set_about_title, getString(R.string.set_about_fmt, version, android.os.Build.MODEL, android.os.Build.VERSION.RELEASE)) },
             getString(R.string.exit_title) to { finishAffinity() }
         ))
+    }
+
+    /** Lang app la kounye a: sa kliyan an chwazi, sinon lang TV a (Kreyòl si pa youn nan 4 yo). */
+    private fun currentLang(): String {
+        val picked = androidx.appcompat.app.AppCompatDelegate.getApplicationLocales().toLanguageTags().take(2)
+        val sys = java.util.Locale.getDefault().language
+        return listOf(picked, sys).firstOrNull { it in LANG_CODES } ?: "ht"
+    }
+
+    /** Kliyan an chwazi lang app la; ekran yo rechaje nan nouvo lang nan. */
+    private fun chooseLanguage() {
+        val cur = currentLang()
+        menuDialog(R.string.language, LANG_CODES.mapIndexed { i, code ->
+            ((if (code == cur) "✓  " else "     ") + LANG_NAMES[i]) to {
+                if (code != cur) androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
+                    androidx.core.os.LocaleListCompat.forLanguageTags(code)
+                )
+            }
+        })
     }
 
     /** Mande yon PIN 4 chif (klavye Fire TV a). */
