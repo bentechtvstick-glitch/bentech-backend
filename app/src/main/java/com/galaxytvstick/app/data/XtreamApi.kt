@@ -121,6 +121,9 @@ class XtreamApi(private val account: Account) {
             if (!s.startsWith("http://", true) && !s.startsWith("https://", true)) {
                 s = "http://$s"
             }
+            // Adrès pòtal MAG/Stalker (…/c, …/stalker_portal/c) oswa lyen M3U: API Xtream la sou rasin sèvè a
+            s = s.replace(Regex("/(player_api\\.php|get\\.php|xmltv\\.php).*$", RegexOption.IGNORE_CASE), "").trimEnd('/')
+            s = s.replace(Regex("/(stalker_portal/)?(c|server/load\\.php|portal\\.php)$", RegexOption.IGNORE_CASE), "").trimEnd('/')
             return s
         }
     }
