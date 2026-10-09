@@ -884,6 +884,8 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Chwazi yon drapo": ["Pick a flag", "Choisir un drapeau", "Elegir una bandera"],
     "Agrandi": ["Enlarge", "Agrandir", "Ampliar"],
     "Fèmen": ["Close", "Fermer", "Cerrar"],
+    "Repete mesaj yo san rete": ["Repeat messages continuously", "Répéter les messages sans arrêt", "Repetir los mensajes sin parar"],
+    "— etenn: chak mesaj pase yon sèl fwa sou ekran an, epi li rekòmanse apre": ["— off: each message crosses the screen once, then starts again", "— désactivé : chaque message traverse l'écran une fois, puis recommence", "— apagado: cada mensaje cruza la pantalla una vez y luego vuelve a empezar"],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],

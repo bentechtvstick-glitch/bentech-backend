@@ -289,6 +289,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
           // Chanèl/gwoup ki deja gen pwòp ticker yo: mo kle (nan non chanèl la oswa non gwoup la)
           hideOn: String(s.tickerHideOn || "").split(/[\n,]+/).map((x) => x.trim().toLowerCase()).filter(Boolean).slice(0, 100),
           topOn: String(s.tickerTopOn || "").split(/[\n,]+/).map((x) => x.trim().toLowerCase()).filter(Boolean).slice(0, 100),
+          // false (pa defo) = mesaj yo pase yon sèl fwa epi rekòmanse; true = yo repete san rete pou ba a toujou plen
+          repeat: s.tickerRepeat === true,
           showClock: !!s.tickerClock,
           clockFormat: String(s.tickerClockFormat) === "12" ? "12" : "24", // lè a: 12h (8:45 PM) oswa 24h (20:45)
           direction: s.tickerDirection === "right" ? "right" : "left", // left = defile de dwat a gòch (tankou chèn TV yo)

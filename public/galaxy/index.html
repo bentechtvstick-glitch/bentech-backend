@@ -801,6 +801,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="field"><label for="tkSize">Gwosè tèks <b id="tkSizeV"></b></label><input type="range" id="tkSize" min="12" max="40"></div>
             <div class="field"><label>&nbsp;</label><div class="inline"><label class="sw"><input type="checkbox" id="tkBgTr"><i></i></label><label for="tkBgTr">Fon transparan</label></div></div>
           </div>
+          <div class="inline" style="margin:6px 0 10px"><label class="sw"><input type="checkbox" id="tkRepeat"><i></i></label><label for="tkRepeat"><b>Repete mesaj yo san rete</b> <span class="note">— etenn: chak mesaj pase yon sèl fwa sou ekran an, epi li rekòmanse apre</span></label></div>
           <div class="inline" style="margin:6px 0 4px"><label class="sw"><input type="checkbox" id="tkLabelOn"><i></i></label><label for="tkLabelOn"><b>Montre etikèt agoch la</b></label></div>
           <div class="dimbox" id="tkLabelBox">
           <div class="field"><label for="tkLabel">Etikèt agoch (egz: 🔴 LIVE, ⚡ BREAKING NEWS)</label><input type="text" id="tkLabel" data-emoji placeholder="Vid = pa gen etikèt"></div>
@@ -1889,7 +1890,7 @@ const rgba = (hex, pct) => { const n = parseInt(hex.slice(1), 16); return `rgba(
 function fillTickerStyle() {
   const s = settings;
   $("#tkActive").checked = s.tickerActive !== false && String(s.tickerActive).toLowerCase() !== "inactive";
-  $("#tkDir").value = s.tickerDirection === "right" ? "right" : "left";
+  $("#tkDir").value = s.tickerDirection === "right" ? "right" : "left"; $("#tkRepeat").checked = s.tickerRepeat === true;
   $("#tkSpeed").value = s.tickerSpeed || 5;
   $("#tkColor").value = hex6(s.tickerTextColor || "#FFFFFF");
   $("#tkBg").value = hex6(s.tickerBgColor || "#CC7C4DFF"); $("#tkBgA").value = alphaOf(s.tickerBgColor || "#CC7C4DFF");
@@ -1919,7 +1920,7 @@ $("#tkSeps").addEventListener("click", (e) => { const b = e.target.closest("[dat
 $("#tkSeps").addEventListener("input", (e) => { if (e.target.id !== "tkSepCustom") return; tkSep = e.target.value || "•"; $$("#tkSeps .chip").forEach((c) => c.classList.toggle("on", c.contains(e.target))); renderTkPreview(); scheduleTkSave(); });
 const setSegTk = (v) => $$("#tkClockFmt [data-v]").forEach((b) => { b.classList.toggle("on", b.dataset.v === v); b.setAttribute("role", "radio"); b.setAttribute("aria-checked", String(b.dataset.v === v)); });
 $("#tkClockFmt").addEventListener("click", (e) => { const b = e.target.closest("[data-v]"); if (!b) return; setSegTk(b.dataset.v); if (!$("#tkClock").checked) { $("#tkClock").checked = true; } renderTkPreview(); scheduleTkSave(); });
-["#tkDir", "#tkSpeed", "#tkColor", "#tkBg", "#tkBgA", "#tkLabel", "#tkLabelBg", "#tkLabelColor", "#tkClock", "#tkActive", "#tkSize", "#tkBgTr", "#tkLabelOn", "#tkLabelTr", "#tkAnim", "#tkRunOn", "#tkRun", "#tkRunSpeed", "#tkRunFlip"].forEach((sel) => $(sel).addEventListener("input", () => {
+["#tkRepeat", "#tkDir", "#tkSpeed", "#tkColor", "#tkBg", "#tkBgA", "#tkLabel", "#tkLabelBg", "#tkLabelColor", "#tkClock", "#tkActive", "#tkSize", "#tkBgTr", "#tkLabelOn", "#tkLabelTr", "#tkAnim", "#tkRunOn", "#tkRun", "#tkRunSpeed", "#tkRunFlip"].forEach((sel) => $(sel).addEventListener("input", () => {
   // Ekri yon etikèt = limen switch etikèt la otomatikman
   if (sel === "#tkLabel" && $("#tkLabel").value.trim() && !$("#tkLabelOn").checked) $("#tkLabelOn").checked = true;
   if (sel === "#tkRun" && $("#tkRun").value.trim() && !$("#tkRunOn").checked) $("#tkRunOn").checked = true;
@@ -1936,28 +1937,37 @@ function renderTkPreview() {
   if (typing) items.push({ text: typing, color: $("#tickerColor").value });
   if (!items.length) { box.innerHTML = `<div class="empty">${t("Pa gen mesaj aktif. Ajoute youn pou w wè preview a.")}</div>`; return; }
   const anim = $("#tkAnim").checked, FX = window.GalaxyFx;
-  const one = items.map((x) => `<span style="color:${esc(x.color)}">${FX ? FX.html(x.text, anim) : esc(x.text)}</span><span style="color:${esc(gc)}">     ${FX ? FX.html(tkSep, anim) : esc(tkSep)}     </span>`).join("");
-  const half = `<span>${one.repeat(3)}</span>`;
+  const rep = $("#tkRepeat").checked;
+  const one = items.map((x, i) => `<span style="color:${esc(x.color)}">${FX ? FX.html(x.text, anim) : esc(x.text)}</span>${!rep && i === items.length - 1 ? "" : `<span style="color:${esc(gc)}">     ${FX ? FX.html(tkSep, anim) : esc(tkSep)}     </span>`}`).join("");
+  const half = rep ? `<span>${one.repeat(3)}</span>` : `<span>${one}</span>`;
   const label = $("#tkLabelOn").checked ? $("#tkLabel").value.trim() : "";
   const bgTr = $("#tkBgTr").checked, size = +$("#tkSize").value || 20, bgA = bgTr ? 0 : +$("#tkBgA").value;
   const h12 = $("#tkClockFmt .on")?.dataset.v === "12";
   const clk = `<div class="clk"${bgTr ? ' style="background:transparent"' : ""}>${new Date().toLocaleTimeString(h12 ? "en-US" : [], { hour: h12 ? "numeric" : "2-digit", minute: "2-digit", hour12: h12 })}</div>`;
   box.innerHTML = `<div class="tkprev${$("#tkActive").checked ? "" : " off"}${bgA < 43 ? " shadow" : ""}" style="background:${rgba($("#tkBg").value, bgA)};font-size:${size}px;height:${size * 2}px">
     ${label ? `<div class="lab" style="background:${$("#tkLabelTr").checked ? "transparent" : esc($("#tkLabelBg").value)};color:${esc($("#tkLabelColor").value)}">${esc(label)}</div>` : ""}
-    <div class="run"><div class="track">${half}${half}</div></div>
+    <div class="run"><div class="track">${rep ? half + half : half}</div></div>
     ${$("#tkClock").checked ? clk : ""}</div>`;
   tkScale();
   const tr = $(".track", box); const w = tr.firstElementChild.offsetWidth; // lajè sou ekran 960 px la (pa lajè redwi a)
   const pxs = (+$("#tkSpeed").value || 5) * 24; // menm vitès ak app TV a (dp pa segonn)
-  tr.style.animationDuration = Math.max(4, w / pxs) + "s";
-  tr.style.animationDirection = $("#tkDir").value === "right" ? "reverse" : "normal";
+  if (rep) {
+    tr.style.animationDuration = Math.max(4, w / pxs) + "s";
+    tr.style.animationDirection = $("#tkDir").value === "right" ? "reverse" : "normal";
+  } else if (tr.animate) {
+    // Yon sèl fwa: mesaj la antre sou yon bò, travèse tout ba a, epi li soti anvan l rekòmanse
+    const runW = $(".run", box).offsetWidth; tr.style.animation = "none";
+    const toRight = $("#tkDir").value === "right";
+    const a = `translateX(${runW}px)`, b = `translateX(${-w}px)`;
+    tr.animate(toRight ? [{ transform: b }, { transform: a }] : [{ transform: a }, { transform: b }], { duration: Math.max(3000, ((runW + w) / pxs) * 1000), iterations: Infinity });
+  }
   // Animasyon k ap kouri a (egz: 🏎️💨): 2.2× pi vit pase tèks la nan vitès 5
   const run = $(".run", box);
   if (window.GalaxyFx && run) GalaxyFx.runner(run, $("#tkRunOn").checked ? { emoji: $("#tkRun").value.trim(), flip: $("#tkRunFlip").checked } : null, $("#tkDir").value, (+$("#tkRunSpeed").value || 6) * 36);
 }
 function tickerStylePatch() {
   return {
-    tickerActive: $("#tkActive").checked, tickerDirection: $("#tkDir").value, tickerSpeed: +$("#tkSpeed").value || 5,
+    tickerActive: $("#tkActive").checked, tickerRepeat: $("#tkRepeat").checked, tickerDirection: $("#tkDir").value, tickerSpeed: +$("#tkSpeed").value || 5,
     tickerTextColor: $("#tkColor").value.toUpperCase(), tickerBgColor: argb($("#tkBg").value, +$("#tkBgA").value),
     tickerLabel: $("#tkLabel").value.trim(), tickerLabelBg: $("#tkLabelBg").value.toUpperCase(), tickerLabelColor: $("#tkLabelColor").value.toUpperCase(),
     tickerSeparator: tkSep, tickerClock: $("#tkClock").checked, tickerClockFormat: $("#tkClockFmt .on")?.dataset.v || "24",
