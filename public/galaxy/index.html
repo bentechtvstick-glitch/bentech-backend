@@ -281,6 +281,11 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .gx-prevcard{position:sticky;top:84px;background:rgba(22,30,50,.45);background:color-mix(in srgb,var(--surface) 45%,transparent);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 @container gxpane (max-width:1020px){.gx-cols{grid-template-columns:minmax(0,1fr)}.gx-prevcard{order:-1;z-index:5;box-shadow:0 10px 24px rgba(0,0,0,.35)}.gx-prevcard .cystage{max-width:calc(42vh * 16 / 9)}}
 .gxhead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}.gxhead .grow{flex:1;min-width:180px}.gxhead b{font-size:15px}
+.flagpop{position:fixed;z-index:60;width:340px;max-height:380px;display:flex;flex-direction:column;gap:8px;background:var(--panel,#141a2e);border:1px solid var(--line2,#2a3150);border-radius:12px;padding:10px;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+.flagpop .fg{overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:4px}
+.flagpop button{background:transparent;border:1px solid transparent;border-radius:8px;padding:4px 2px;cursor:pointer;color:inherit;display:flex;flex-direction:column;align-items:center;gap:2px}
+.flagpop button:hover,.flagpop button:focus{border-color:var(--accent,#7C4DFF);background:rgba(124,77,255,.15)}
+.flagpop button b{font-size:24px;line-height:1}.flagpop button small{font-size:10px;opacity:.75;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gx-score{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,.9fr);gap:12px;align-items:end}
 .gx-step{display:flex;gap:6px;align-items:center}.gx-step input{text-align:center;min-width:0}.gx-step .btn{flex:none;width:36px;padding:0;font-size:18px}
 @container gxpane (max-width:520px){.gx-score{grid-template-columns:1fr}}
@@ -638,10 +643,10 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           </div>
           <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="scoreboard.on" id="g_scoreboard_on"><i></i></label><div class="grow"><label for="g_scoreboard_on"><b>Scoreboard</b></label><p class="note" style="margin:2px 0 0">Rezilta match la sou ekran an. Chanje chif yo pandan match la; TV yo mete yo ajou touswit.</p></div></div>
             <div class="row2"><div class="field"><label for="g_scoreboard_league">Konpetisyon</label><input type="text" id="g_scoreboard_league" data-g="scoreboard.league" maxlength="30" placeholder="Egz: Kalifikasyon Mondyal"></div><div class="field"><label for="g_scoreboard_clock">Tan / peryòd</label><input type="text" id="g_scoreboard_clock" data-g="scoreboard.clock" maxlength="16" placeholder="67' · 2yèm mitan"></div></div>
-            <div class="gx-score"><div class="field"><label for="g_scoreboard_home">Ekip lakay</label><input type="text" id="g_scoreboard_home" data-g="scoreboard.home" maxlength="20" placeholder="HAI"></div>
+            <div class="gx-score"><div class="field"><label for="g_scoreboard_home">Ekip lakay</label><div class="inline" style="flex-wrap:nowrap;gap:6px"><button type="button" class="btn small flagbtn" data-flagfor="g_scoreboard_home" title="Drapo" aria-label="Chwazi yon drapo">🏳️</button><input type="text" id="g_scoreboard_home" data-g="scoreboard.home" maxlength="24" placeholder="🇭🇹 HAI"></div></div>
               <div class="field"><label for="g_scoreboard_homeScore">Gòl</label><div class="gx-step"><button type="button" class="btn small" data-step="scoreboard.homeScore|-1" aria-label="Retire 1">−</button><input type="text" inputmode="numeric" id="g_scoreboard_homeScore" data-g="scoreboard.homeScore" maxlength="4" value="0"><button type="button" class="btn small" data-step="scoreboard.homeScore|1" aria-label="Ajoute 1">+</button></div></div>
               <label class="swatch"><input type="color" data-g="scoreboard.homeColor" value="#1d4ed8"><span><b>Koulè</b></span></label></div>
-            <div class="gx-score"><div class="field"><label for="g_scoreboard_away">Ekip vizitè</label><input type="text" id="g_scoreboard_away" data-g="scoreboard.away" maxlength="20" placeholder="JAM"></div>
+            <div class="gx-score"><div class="field"><label for="g_scoreboard_away">Ekip vizitè</label><div class="inline" style="flex-wrap:nowrap;gap:6px"><button type="button" class="btn small flagbtn" data-flagfor="g_scoreboard_away" title="Drapo" aria-label="Chwazi yon drapo">🏳️</button><input type="text" id="g_scoreboard_away" data-g="scoreboard.away" maxlength="24" placeholder="🇯🇲 JAM"></div></div>
               <div class="field"><label for="g_scoreboard_awayScore">Gòl</label><div class="gx-step"><button type="button" class="btn small" data-step="scoreboard.awayScore|-1" aria-label="Retire 1">−</button><input type="text" inputmode="numeric" id="g_scoreboard_awayScore" data-g="scoreboard.awayScore" maxlength="4" value="0"><button type="button" class="btn small" data-step="scoreboard.awayScore|1" aria-label="Ajoute 1">+</button></div></div>
               <label class="swatch"><input type="color" data-g="scoreboard.awayColor" value="#dc2626"><span><b>Koulè</b></span></label></div>
             <div class="field"><label for="g_scoreboard_position">Pozisyon</label><select id="g_scoreboard_position" data-g="scoreboard.position"><option value="top-left">Anlè agoch</option><option value="top-center">Anlè nan mitan</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div>
@@ -2297,6 +2302,29 @@ const GX_DEF = { bug: { on: false, imageUrl: "", text: "", position: "top-right"
   bumper: { on: false, inText: "", outText: "", inUrl: "", outUrl: "", durationSec: 4, bgColor: "#0b1630", textColor: "#ffffff" } };
 let gxWx = null, gxSaveT = null, gxTickT = null, gxFullT = null, gxWxT = null;
 const gxEls = () => $$('main[data-pane="gfx"] [data-g]');
+// ---- Kaz drapo pou scoreboard la: tout drapo yo, ak non peyi a, epi rechèch ----
+const SB_FLAGS = (() => { const g = (window.GALAXY_SYMBOLS?.groups || []).find((x) => x[1] === "Flags"); return g ? g[2].filter((f) => /^[\u{1F1E6}-\u{1F1FF}]{2}$/u.test(f)) : []; })();
+const sbFlagCode = (f) => [...f].map((c) => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 65)).join("");
+const sbFlagName = (f) => { const c = sbFlagCode(f); try { return new Intl.DisplayNames([lang === "ht" ? "fr" : lang], { type: "region" }).of(c) || c; } catch { return c; } };
+let sbFlagPop = null;
+function sbCloseFlags() { sbFlagPop?.remove(); sbFlagPop = null; }
+function sbOpenFlags(btn) {
+  sbCloseFlags(); const input = document.getElementById(btn.dataset.flagfor); if (!input) return;
+  const list = SB_FLAGS.map((f) => ({ f, code: sbFlagCode(f), name: sbFlagName(f) })).sort((a, b) => a.name.localeCompare(b.name, lang));
+  sbFlagPop = document.createElement("div"); sbFlagPop.className = "flagpop";
+  sbFlagPop.innerHTML = `<input type="text" class="fs" placeholder="${esc(t("Chèche yon peyi (egz: Haiti, BRA)"))}"><div class="fg"></div><button type="button" class="btn small fx" style="flex-direction:row">${esc(t("Retire drapo a"))}</button>`;
+  document.body.appendChild(sbFlagPop);
+  const r = btn.getBoundingClientRect(); sbFlagPop.style.left = Math.max(8, Math.min(r.left, innerWidth - 350)) + "px"; sbFlagPop.style.top = Math.max(8, Math.min(r.bottom + 6, innerHeight - 390)) + "px";
+  const grid = sbFlagPop.querySelector(".fg"), search = sbFlagPop.querySelector(".fs");
+  const draw = () => { const q = search.value.trim().toLowerCase();
+    grid.innerHTML = list.filter((x) => !q || x.name.toLowerCase().includes(q) || x.code.toLowerCase() === q || x.code.toLowerCase().startsWith(q)).map((x) => `<button type="button" data-flag="${x.f}" title="${esc(x.name)}"><b>${x.f}</b><small>${esc(x.name)}</small></button>`).join("") || `<div class="note">${esc(t("Pa jwenn peyi sa a."))}</div>`; };
+  const put = (flag) => { const rest = input.value.replace(/^\s*(?:[\u{1F1E6}-\u{1F1FF}]{2}|🏳️|🏴)\s*/u, ""); input.value = flag ? `${flag} ${rest}`.trim() : rest; input.dispatchEvent(new Event("input", { bubbles: true })); input.dispatchEvent(new Event("change", { bubbles: true })); sbCloseFlags(); input.focus(); };
+  grid.addEventListener("click", (e) => { const b = e.target.closest("[data-flag]"); if (b) put(b.dataset.flag); });
+  sbFlagPop.querySelector(".fx").addEventListener("click", () => put(""));
+  search.addEventListener("input", draw); search.addEventListener("keydown", (e) => { if (e.key === "Escape") sbCloseFlags(); if (e.key === "Enter") { const b = grid.querySelector("[data-flag]"); if (b) put(b.dataset.flag); } });
+  draw(); search.focus();
+}
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-flagfor]"); if (b) { e.preventDefault(); return sbFlagPop ? sbCloseFlags() : sbOpenFlags(b); } if (sbFlagPop && !e.target.closest(".flagpop")) sbCloseFlags(); });
 function gxRead() { const g = {}; gxEls().forEach((el) => { const [k, f] = el.dataset.g.split("."); (g[k] ??= {})[f] = el.type === "checkbox" ? el.checked : el.type === "number" || el.type === "range" ? (el.value === "" ? "" : +el.value) : el.value.trim(); }); return g; }
 function gxFill(g) { gxEls().forEach((el) => { const [k, f] = el.dataset.g.split("."); const v = g?.[k]?.[f] ?? GX_DEF[k][f]; if (el.type === "checkbox") el.checked = !!v; else el.value = v; }); gxLabels(); }
 function gxLabels() { $("#gxWxScopeNote").hidden = $('[data-g="weather.scope"]').value !== "client"; $$('main[data-pane="gfx"] [data-gv]').forEach((b) => { const el = $(`[data-g="${b.dataset.gv}"]`); b.textContent = el.value; });

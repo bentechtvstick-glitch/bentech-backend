@@ -137,7 +137,7 @@ export function buildGraphics(g, ctx) {
   // Scoreboard
   const s = g.scoreboard || {};
   if (s.on && (str(s.home) || str(s.away))) {
-    out.scoreboard = { league: str(s.league, 30), home: str(s.home, 20), away: str(s.away, 20), homeScore: str(s.homeScore, 4) || "0", awayScore: str(s.awayScore, 4) || "0",
+    out.scoreboard = { league: str(s.league, 30), home: str(s.home, 26), away: str(s.away, 26), homeScore: str(s.homeScore, 4) || "0", awayScore: str(s.awayScore, 4) || "0",
       clock: str(s.clock, 16), homeColor: hex(s.homeColor, "#1D4ED8"), awayColor: hex(s.awayColor, "#DC2626"), position: pos(s.position, POS6, "top-left") };
   }
 
