@@ -882,6 +882,8 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Retire drapo a": ["Remove the flag", "Retirer le drapeau", "Quitar la bandera"],
     "Pa jwenn peyi sa a.": ["Country not found.", "Pays introuvable.", "País no encontrado."],
     "Chwazi yon drapo": ["Pick a flag", "Choisir un drapeau", "Elegir una bandera"],
+    "Agrandi": ["Enlarge", "Agrandir", "Ampliar"],
+    "Fèmen": ["Close", "Fermer", "Cerrar"],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],
