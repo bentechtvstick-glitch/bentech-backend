@@ -86,9 +86,71 @@ object EpgRepository {
     fun nextFor(ch: Channel, now: Long = System.currentTimeMillis()): Program? =
         programsFor(ch).firstOrNull { it.start >= now }
 
+    // ------------------------------------------------------------ Kopi sou disk
+    // Gid la sove sou aparèy la apre chak telechajman: lè app la louvri, li parèt touswit
+    // (olye tann gwo fichye XMLTV a telechaje + li chak fwa), epi li mete tèt li ajou an aryè plan.
+    private var cacheFile: java.io.File? = null
+    private const val CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000L
+
+    fun init(ctx: android.content.Context) { cacheFile = java.io.File(ctx.filesDir, "epg_cache.bin") }
+
+    private fun cacheKey(api: XtreamApi) = api.xmltvUrl().hashCode().toString()
+
+    /** Chaje gid ki sou disk la (si li pou menm playlist la epi li gen mwens pase 24 è). Retounen true si li chaje l. */
+    suspend fun loadDisk(api: XtreamApi): Boolean = mutex.withLock {
+        if (isLoaded) return@withLock true
+        readDisk(cacheKey(api))
+    }
+
+    private suspend fun readDisk(key: String): Boolean = withContext(Dispatchers.IO) {
+        val f = cacheFile ?: return@withContext false
+        if (!f.exists()) return@withContext false
+        runCatching {
+            java.io.DataInputStream(java.io.BufferedInputStream(f.inputStream(), 1 shl 16)).use { inp ->
+                if (inp.readInt() != 1) return@use false
+                if (inp.readUTF() != key) return@use false
+                val savedAt = inp.readLong()
+                if (System.currentTimeMillis() - savedAt > CACHE_MAX_AGE_MS) return@use false
+                val now = System.currentTimeMillis()
+                val n = inp.readInt()
+                val map = HashMap<String, List<Program>>(n * 2)
+                repeat(n) {
+                    val id = inp.readUTF()
+                    val m = inp.readInt()
+                    val list = ArrayList<Program>(m)
+                    repeat(m) {
+                        val p = Program(inp.readLong(), inp.readLong(), inp.readUTF(), inp.readUTF())
+                        if (p.end > now - 2 * KEEP_AFTER_MS) list.add(p)
+                    }
+                    if (list.isNotEmpty()) map[id] = list
+                }
+                programs = map
+                loadedAt = savedAt
+                true
+            }
+        }.getOrDefault(false)
+    }
+
+    private fun writeDisk(key: String, map: Map<String, List<Program>>, at: Long) {
+        val f = cacheFile ?: return
+        runCatching {
+            val tmp = java.io.File(f.parentFile, f.name + ".tmp")
+            java.io.DataOutputStream(java.io.BufferedOutputStream(tmp.outputStream(), 1 shl 16)).use { out ->
+                out.writeInt(1); out.writeUTF(key); out.writeLong(at); out.writeInt(map.size)
+                for ((id, list) in map) {
+                    out.writeUTF(id); out.writeInt(list.size)
+                    for (p in list) { out.writeLong(p.start); out.writeLong(p.end); out.writeUTF(p.title.take(300)); out.writeUTF(p.desc.take(MAX_DESC)) }
+                }
+            }
+            tmp.renameTo(f)
+        }
+    }
+
     /** Chaje EPG a si li poko chaje oswa si li twò vye. Retounen true si gen nouvo done. */
     suspend fun ensureLoaded(api: XtreamApi, channels: List<Channel>, force: Boolean = false): Boolean =
         mutex.withLock {
+            // Premye fwa: eseye kopi ki sou disk la anvan (pa bezwen tann telechajman an)
+            if (!isLoaded && readDisk(cacheKey(api)) && System.currentTimeMillis() - loadedAt < REFRESH_MS && !force) return@withLock true
             if (!force && isLoaded && System.currentTimeMillis() - loadedAt < REFRESH_MS) return@withLock false
             val wanted = channels.mapNotNull { it.epgChannelId?.lowercase() }.toHashSet()
             if (wanted.isEmpty()) { loadedAt = System.currentTimeMillis(); return@withLock false }
@@ -105,6 +167,8 @@ object EpgRepository {
             val result = withContext(Dispatchers.IO) { download(api.xmltvUrl(), wanted, keepPast) }
             programs = result
             loadedAt = System.currentTimeMillis()
+            val key = cacheKey(api); val at = loadedAt
+            withContext(Dispatchers.IO) { writeDisk(key, result, at) }
             true
         }
 

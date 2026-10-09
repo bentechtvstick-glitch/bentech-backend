@@ -30,6 +30,7 @@ class GalaxyApp : Application() {
             }
             previous?.uncaughtException(thread, e)
         }
+        com.galaxytvstick.app.data.EpgRepository.init(this)
         com.galaxytvstick.app.data.ChannelStore.hideAdult = com.galaxytvstick.app.data.Prefs(this).parentalOn
         EmojiCompat.init(
             BundledEmojiCompatConfig(this)

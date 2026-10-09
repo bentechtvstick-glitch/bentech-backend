@@ -37,6 +37,9 @@ import com.galaxytvstick.app.databinding.ItemCategoryBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.async
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -366,12 +369,21 @@ class EpgActivity : AppCompatActivity() {
         b.progress.visibility = if (EpgRepository.isLoaded) View.GONE else View.VISIBLE
         if (EpgRepository.isLoaded) focusStartRow()
         lifecycleScope.launch {
+            // Kopi ki sou aparèy la: gid la parèt touswit pandan nouvo a ap telechaje
+            if (!EpgRepository.isLoaded && EpgRepository.loadDisk(api)) {
+                b.progress.visibility = View.GONE
+                adapter.notifyDataSetChanged()
+                if (zone == 0) focusStartRow()
+                b.rows.post { fillMissing() }
+            }
             val result = runCatching { EpgRepository.ensureLoaded(api, channels) }
             b.progress.visibility = View.GONE
             result.onSuccess { fresh ->
                 if (zone == 0 && (fresh || !b.rows.hasFocus())) {
+                    // Si kliyan an deja ap navige (gid ki sou disk la te parèt), rete sou menm ranje a
+                    val row = (currentFocus?.tag as? Cell)?.rowPos ?: -1
                     adapter.notifyDataSetChanged()
-                    focusStartRow()
+                    if (row >= 0) b.rows.post { focusCellInRow(row, first = true) } else focusStartRow()
                 }
                 b.message.visibility = View.GONE
                 b.rows.post { fillMissing() }
@@ -446,8 +458,11 @@ class EpgActivity : AppCompatActivity() {
             val last = lm.findLastVisibleItemPosition().coerceAtLeast(first)
             val need = (first..last).mapNotNull { channels.getOrNull(it) }.filter { EpgRepository.needsSingle(it) }
             if (need.isEmpty()) return@launch
-            var any = false
-            for (ch in need) if (EpgRepository.loadSingle(api, ch)) any = true
+            // 4 demann alafwa olye youn pa youn
+            val gate = kotlinx.coroutines.sync.Semaphore(4)
+            val any = kotlinx.coroutines.coroutineScope {
+                need.map { ch -> async { gate.withPermit { EpgRepository.loadSingle(api, ch) } } }.awaitAll().any { it }
+            }
             if (any) {
                 val row = (currentFocus?.tag as? Cell)?.rowPos ?: -1
                 adapter.notifyDataSetChanged()
