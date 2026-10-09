@@ -126,21 +126,24 @@ class TickerView @JvmOverloads constructor(
         val t = ticker ?: return
         val baseColor = colorOf(t.textColor, Color.WHITE)
         val items = t.items.ifEmpty { listOf(com.galaxytvstick.app.data.TickerItem(t.text, "")) }
-        val sig = listOf(items, t.separator, t.label, t.labelColor, baseColor, t.showClock, t.direction, t.animateEmoji, t.runner, textPaint.textSize).toString()
+        val sig = listOf(items, t.separator, t.label, t.labelColor, baseColor, t.showClock, t.direction, t.animateEmoji, t.runner, textPaint.textSize, t.repeat).toString()
         if (sig != signature) {
             signature = sig
             val sb = SpannableStringBuilder()
             val sep = t.separator.ifBlank { "•" }
             textPaint.color = baseColor
             val glyphs = ArrayList<AnimGlyph>()
-            items.forEach { item ->
+            items.forEachIndexed { idx, item ->
                 val start = sb.length
                 appendAnimated(sb, item.text.trim(), textPaint, glyphs, t.animateEmoji)
                 val c = if (item.color.isNotBlank()) colorOf(item.color, baseColor) else baseColor
                 sb.setSpan(ForegroundColorSpan(c), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-                val s2 = sb.length
-                sb.append("     "); appendAnimated(sb, sep, textPaint, glyphs, t.animateEmoji); sb.append("     ")
-                sb.setSpan(ForegroundColorSpan(baseColor), s2, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                // Mòd "yon sèl fwa": pa gen separatè apre dènye mesaj la
+                if (t.repeat || idx < items.lastIndex) {
+                    val s2 = sb.length
+                    sb.append("     "); appendAnimated(sb, sep, textPaint, glyphs, t.animateEmoji); sb.append("     ")
+                    sb.setSpan(ForegroundColorSpan(baseColor), s2, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
             }
             val scroll = layoutOf(emoji(sb), textPaint)
             glyphs.forEach { it.x = scroll.getPrimaryHorizontal(it.offset) }
@@ -198,15 +201,22 @@ class TickerView @JvmOverloads constructor(
         if (areaW <= 0) return
         val w = scroll.width.toFloat()
         if (w <= 0f) return
-        if (offset.isNaN()) offset = 0f
+        val once = !t.repeat
+        val goRight = t.direction == "right"
+        if (offset.isNaN()) offset = if (once) (if (goRight) -w else areaW) else 0f
         canvas.save()
         canvas.clipRect(RectF(left, 0f, right, h))
-        // Premye kopi a kòmanse anvan kwen gòch la pou bann lan toujou plen
-        var x = offset % w
-        if (x > 0f) x -= w
-        while (x < areaW) {
-            canvas.save(); canvas.translate(left + x, (h - scroll.height) / 2f); scroll.draw(canvas); drawGlyphs(canvas, scrollGlyphs, scroll.height); canvas.restore()
-            x += w
+        if (once) {
+            // Yon sèl kopi: li antre sou yon bò, travèse tout ba a, epi li soti anvan l rekòmanse
+            canvas.save(); canvas.translate(left + offset, (h - scroll.height) / 2f); scroll.draw(canvas); drawGlyphs(canvas, scrollGlyphs, scroll.height); canvas.restore()
+        } else {
+            // Premye kopi a kòmanse anvan kwen gòch la pou bann lan toujou plen
+            var x = offset % w
+            if (x > 0f) x -= w
+            while (x < areaW) {
+                canvas.save(); canvas.translate(left + x, (h - scroll.height) / 2f); scroll.draw(canvas); drawGlyphs(canvas, scrollGlyphs, scroll.height); canvas.restore()
+                x += w
+            }
         }
         // Runner (egz: 🏎️💨) ki travèse ba a, pi vit pase tèks la
         runnerLayout?.let { r ->
@@ -225,7 +235,11 @@ class TickerView @JvmOverloads constructor(
             if (!toRight && runnerX < -rw) runnerX = areaW
         }
         canvas.restore()
-        offset = (if (t.direction == "right") offset + pxPerFrame else offset - pxPerFrame) % w
+        if (once) {
+            offset = if (goRight) offset + pxPerFrame else offset - pxPerFrame
+            if (!goRight && offset < -w) offset = areaW
+            if (goRight && offset > areaW) offset = -w
+        } else offset = (if (goRight) offset + pxPerFrame else offset - pxPerFrame) % w
         if (visibility == VISIBLE) postInvalidateOnAnimation()
     }
 

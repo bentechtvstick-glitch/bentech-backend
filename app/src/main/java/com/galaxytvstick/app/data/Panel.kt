@@ -52,6 +52,8 @@ data class Ticker(
     val runner: TickerRunner? = null,
     /** "left" = tèks la ale sou bò gòch (dwat → gòch, tankou chèn TV yo); "right" = gòch → dwat. */
     val direction: String = "left",
+    /** true = mesaj yo repete san rete (ba a toujou plen); false = chak mesaj pase yon sèl fwa epi rekòmanse. */
+    val repeat: Boolean = false,
     /** Mo kle (miniskil): chanèl/gwoup ki deja gen pwòp ticker yo → kache pa nou an. */
     val hideOn: List<String> = emptyList(),
     /** Mo kle (miniskil): chanèl/gwoup kote ticker pa nou an monte anlè ekran an. */
@@ -285,6 +287,7 @@ data class PanelConfig(
                         TickerRunner(r.optString("emoji").trim(), r.optInt("speed", 6).coerceIn(1, 10), r.optBoolean("flip", false))
                     }?.takeIf { r -> r.emoji.isNotBlank() },
                     direction = it.optString("direction", "left"),
+                    repeat = it.optBoolean("repeat", false),
                     hideOn = it.optJSONArray("hideOn").strings(),
                     topOn = it.optJSONArray("topOn").strings()
                 )
