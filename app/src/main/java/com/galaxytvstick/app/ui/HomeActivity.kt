@@ -144,10 +144,10 @@ class HomeActivity : AppCompatActivity() {
     private fun showAccount(cfg: PanelConfig) {
         b.accName.text = cfg.accountName.ifBlank { prefs.account?.name ?: prefs.account?.username ?: "" }
         b.accPlan.text = if (cfg.accountPlan.isBlank()) "" else getString(R.string.home_plan_fmt, cfg.accountPlan)
-        b.accPlan.visibility = if (cfg.accountPlan.isBlank()) View.GONE else View.VISIBLE
+        b.accPlan.visibility = View.GONE
         val exp = cfg.accountExpiry.replace("T", " ")
         b.accExp.text = if (exp.isBlank()) "" else getString(R.string.home_exp_fmt, exp)
-        b.accExp.visibility = if (exp.isBlank()) View.GONE else View.VISIBLE
+        b.accExp.visibility = View.GONE
     }
 
     private fun refreshContinue() {

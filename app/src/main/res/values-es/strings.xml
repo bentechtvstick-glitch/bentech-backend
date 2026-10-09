@@ -158,6 +158,7 @@
     <string name="parental_now_on">Control parental activado: las categorías para adultos están ocultas.</string>
     <string name="parental_now_off">Control parental desactivado.</string>
     <string name="set_language">Idioma: %1$s</string>
+    <string name="set_customer">Cliente: %1$s</string>
     <string name="set_autostart">Abrir al encender el dispositivo: %1$s</string>
     <string name="set_last_channel">Reproducir el último canal al abrir: %1$s</string>
     <string name="switch_on">ACTIVADO</string>

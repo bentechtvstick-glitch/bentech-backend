@@ -262,7 +262,7 @@ class EpgActivity : AppCompatActivity() {
         val d = resources.displayMetrics.density
         b.menu.layoutParams = b.menu.layoutParams.apply { width = ((if (open) 200 else 64) * d).toInt() }
         b.menuLogo.visibility = if (open) View.VISIBLE else View.GONE
-        b.accBox.visibility = if (open) View.VISIBLE else View.INVISIBLE
+        b.accBox.visibility = View.GONE // non kliyan an ak plan an nan Settings kounye a
         val current = when (selectedCat) { ChannelLists.CAT_FAV -> b.menuFav; CAT_CATCHUP -> b.menuCatchup; else -> b.menuTv }
         val labels = intArrayOf(R.string.menu_search, R.string.menu_tv, R.string.home_movies, R.string.home_series, R.string.menu_favorites, R.string.menu_catchup, R.string.home_settings)
         val icons = intArrayOf(R.drawable.ic_m_search, R.drawable.ic_m_tv, R.drawable.ic_m_movie, R.drawable.ic_m_series, R.drawable.ic_m_star, R.drawable.ic_m_history, R.drawable.ic_m_settings)
@@ -624,6 +624,12 @@ class EpgActivity : AppCompatActivity() {
         val exp = cfg.accountExpiry.replace("T", " ").ifBlank { providerExpiry ?: "—" }
         val version = com.galaxytvstick.app.BuildConfig.VERSION_NAME
         menuDialog(R.string.home_settings, listOf(
+            getString(R.string.set_customer, cfg.accountName.ifBlank { "—" }) to {
+                info(R.string.set_expiry_title, getString(R.string.set_customer, cfg.accountName.ifBlank { "—" }))
+            },
+            getString(R.string.home_plan_fmt, cfg.accountPlan.ifBlank { "—" }) to {
+                info(R.string.set_expiry_title, getString(R.string.home_plan_fmt, cfg.accountPlan.ifBlank { "—" }))
+            },
             getString(R.string.set_expiry, exp) to {
                 info(R.string.set_expiry_title, listOf(
                     cfg.accountName,
