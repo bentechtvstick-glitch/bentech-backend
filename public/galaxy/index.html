@@ -2243,7 +2243,11 @@ async function loadAppUpdate(fresh) {
     + k("Vèsyon ki voye bay TV yo", y.pushedBuild ? "1.0." + y.pushedBuild : t("Okenn"), y.pushedBuild ? fmtWhen(y.pushedAt) + (y.force ? " · " + t("Obligatwa") : "") : "");
   $("#upForce").checked = !!y.force; $("#upCancel").hidden = !y.pushedBuild;
 }
-$("#upRefresh").addEventListener("click", () => loadAppUpdate(true));
+$("#upRefresh").addEventListener("click", async () => {
+  const b = $("#upRefresh"); if (b.disabled) return; b.disabled = true; b.textContent = t("Ap rafrechi…");
+  try { await loadAppUpdate(true); toast(t("Lis la ajou · {0}", new Date().toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))); }
+  finally { b.disabled = false; b.textContent = t("Rafrechi"); }
+});
 $("#upSend").addEventListener("click", async () => {
   if (!confirm(t("Voye dènye vèsyon app la bay tout TV yo?"))) return;
   try { const r = await api("POST", "/galaxy/app-update", { force: $("#upForce").checked }); setMsg($("#upMsg"), t("Vèsyon 1.0.{0} voye bay tout TV yo.", r.pushedBuild), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }

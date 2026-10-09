@@ -1054,8 +1054,17 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   let latestApk = { build: 0, at: 0, publishedAt: "" };
 
   /** Nimewo dènye APK ki pibliye a (tit release la: "... (build 43)"). Kenbe 5 minit. */
+  const VERSION_LINK = process.env.APK_VERSION_URL || APK_LINK.replace(/[^/]+$/, "version.json");
   async function latestBuild(force = false) {
     if (!force && latestApk.build && Date.now() - latestApk.at < 5 * 60 * 1000) return latestApk;
+    // 1) Ti fichye version.json ki pibliye ak APK a (pa gen limit kantite demann)
+    try {
+      const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 8000);
+      const r = await fetch(`${VERSION_LINK}?t=${Date.now()}`, { signal: ctl.signal, redirect: "follow", headers: { "User-Agent": "GalaxyTVStick-panel" } });
+      clearTimeout(tm);
+      if (r.ok) { const j = JSON.parse(await r.text()); const b = Number(j.build); if (b > 0) { latestApk = { build: b, at: Date.now(), publishedAt: latestApk.publishedAt || "" }; return latestApk; } }
+    } catch { /* eseye API GitHub la */ }
+    // 2) API GitHub la (limite: 60 demann pa èdtan)
     try {
       const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 8000);
       const r = await fetch(RELEASE_API, { signal: ctl.signal, headers: { "User-Agent": "GalaxyTVStick-panel", Accept: "application/vnd.github+json" } });
