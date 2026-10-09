@@ -1140,7 +1140,7 @@ function renderLive() {
   setHtml($("#liveGrid"), items.length ? capRows("live", items).map((d) => `
     <button class="tvcard" type="button" data-mac="${esc(d.mac)}">
       ${screenHtml(d, false)}
-      <div class="meta"><div class="n"><span>${esc(d.deviceName || d.model || t("Aparèy"))}</span>${d.blocked ? `<span class="pill p-bad">${t("Bloke")}</span>` : d.configured === false ? `<span class="pill p-off">${t("Pa konfigire")}</span>` : d.online ? `<span class="pill p-on">${t("Online")}</span>` : `<span class="pill p-off">${t("Offline")}</span>`}</div>
+      <div class="meta"><div class="n"><span>${esc(d.deviceName && d.deviceName !== d.model ? d.deviceName : d.model ? devType(d.model) : t("Aparèy"))}</span>${d.blocked ? `<span class="pill p-bad">${t("Bloke")}</span>` : d.configured === false ? `<span class="pill p-off">${t("Pa konfigire")}</span>` : d.online ? `<span class="pill p-on">${t("Online")}</span>` : `<span class="pill p-off">${t("Offline")}</span>`}</div>
         <div class="m">${esc(d.mac)}</div>
         <div class="note">${d.customer ? esc(d.customer) + " · " : ""}${d.online && d.live?.channel ? esc(t("Sou chanèl sa a depi {0}", ago(d.live.since))) : d.live?.playlistName ? esc(t("Playlist: {0}", d.live.playlistName)) : ""}</div></div>
     </button>`).join("") + moreHtml("live", items.length) : `<div class="empty">${onlyOn ? t("Pa gen TV online kounye a.") : t("Pa gen aparèy.")}</div>`);
@@ -1177,7 +1177,7 @@ async function selectDevice(mac, jump) {
   $$("#devTable tr[data-mac]").forEach((r) => r.classList.toggle("sel", r.dataset.mac === mac));
 }
 function renderDevice() {
-  $("#dvMac").textContent = dev.mac; $("#dvKey").textContent = dev.deviceKey || t("— (ap tann TV a)"); $("#dvModel").textContent = dev.model || "—";
+  $("#dvMac").textContent = dev.mac; $("#dvKey").textContent = dev.deviceKey || t("— (ap tann TV a)"); $("#dvModel").textContent = dev.model ? `${devType(dev.model)} · ${dev.model}` : "—";
   $("#dvVersion").textContent = dev.appVersion || "—"; $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : ""; $("#dvBlocked").checked = !!dev.blocked; $("#dvLimit").value = dev.limit ?? 1;
   $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${String(c.name).toUpperCase() === String(dev.customer || "").toUpperCase() ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
   $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow"><b>${esc(p.name)}</b> <span class="note">· ${esc(p.username)}${p.server ? " · " + esc(p.server) : ""}</span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
@@ -1300,7 +1300,24 @@ $("#plList").addEventListener("click", (e) => {
 
 let devicesCache = [];
 let linkFrom = null; // aparèy DVC n ap konekte ak yon MAC
-const devType = (m) => /amazon|aft/i.test(m) ? "Fire TV" : /chromecast|google/i.test(m) ? "Google TV" : "Android TV";
+const DEV_MODELS = [
+  [/^AFTKRT/i, "Fire TV Stick 4K Max (2023)"], [/^AFTKA/i, "Fire TV Stick 4K Max (2021)"],
+  [/^AFTKM/i, "Fire TV Stick 4K (2023)"], [/^AFTMM/i, "Fire TV Stick 4K (2018)"],
+  [/^AFTSSS/i, "Fire TV Stick (3rd Gen)"], [/^AFTSS/i, "Fire TV Stick Lite"],
+  [/^AFTT$/i, "Fire TV Stick (2nd Gen)"], [/^AFTM$/i, "Fire TV Stick (1st Gen)"],
+  [/^AFTGAZL/i, "Fire TV Cube (3rd Gen)"], [/^AFTR$/i, "Fire TV Cube (2nd Gen)"], [/^AFTA$/i, "Fire TV Cube (1st Gen)"],
+  [/^AFTN$/i, "Fire TV (3rd Gen)"], [/^AFTS$/i, "Fire TV (2nd Gen)"], [/^AFTB$/i, "Fire TV (1st Gen)"],
+  [/^AFT/i, "Fire TV Smart TV"],
+];
+function devModelName(model) {
+  const m = String(model || "").trim(); const code = m.split(/\s+/).pop();
+  for (const [re, name] of DEV_MODELS) if (re.test(code)) return name;
+  if (/chromecast/i.test(m)) return "Chromecast Google TV";
+  if (/onn/i.test(m)) return "onn. Google TV";
+  if (/shield/i.test(m)) return "NVIDIA Shield";
+  return m || "Android TV";
+}
+const devType = (m) => devModelName(m);
 const shortId = (d) => d.galaxy ? (d.deviceId && d.deviceId !== d.mac ? d.deviceId : "GX-" + d.mac.replace(/:/g, "").slice(-6)) : d.deviceId;
 async function loadDevices() {
   let devices; try { devices = await api("GET", "/galaxy/devices"); setDot("#hDb", true, "Database Online", "Database Offline"); }
@@ -1318,7 +1335,7 @@ function renderDevTable() {
       const online = l ? l.online : String(d.status).toLowerCase() === "online";
       const st = d.blocked ? `<span class="st-block">${t("Bloke")}</span>` : !(d.playlists || []).length ? `<span class="st-off" title="${esc(t("Pa konfigire"))}">—</span>` : `<span class="${online ? "st-on" : "st-off"}">${t(online ? "Online" : "Offline")}</span>`;
       const key = d.galaxy ? `data-mac="${esc(d.mac)}"` : `data-id="${esc(d.deviceId)}"`;
-      return `<tr class="click${dev && d.galaxy && dev.mac === d.mac ? " sel" : ""}" ${key}><td class="mono">${d.galaxy ? esc(d.mac) : "-"}</td><td>${esc(shortId(d))}</td><td>${esc(d.type || devType(d.model || ""))}</td><td>${st}</td>
+      return `<tr class="click${dev && d.galaxy && dev.mac === d.mac ? " sel" : ""}" ${key}><td class="mono">${d.galaxy ? esc(d.mac) : "-"}</td><td>${esc(shortId(d))}</td><td>${esc(d.model ? devType(d.model) : (d.type || "Android TV"))}</td><td>${st}</td>
         <td>${d.playlists.map((p) => esc(p.name)).join(", ") || t("Pa konfigire")}</td><td>${esc(d.lastSeen || "—")}</td><td>${esc(d.limit ?? 1)}</td>
         <td class="acts"><button class="btn purple" data-act="provider" type="button">${t("Ajoute provider")}</button><button class="btn ${d.blocked ? "red" : "green"}" data-act="${d.blocked ? "activate" : "block"}" type="button" title="${esc(t(d.blocked ? "Klike pou aktive aparèy la" : "Klike pou dezaktive aparèy la"))}">${t(d.blocked ? "Dezaktive" : "Aktif")}</button><button class="btn red" data-act="delete" type="button">${t("Efase l")}</button></td></tr>`;
     }).join("") + `</tbody></table>` + moreHtml("dev", devices.length)

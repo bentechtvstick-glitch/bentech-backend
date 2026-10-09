@@ -31,6 +31,25 @@ export function presentDevice(d) {
   return { ...d, status: ms < ONLINE_MS ? "Online" : "Offline", lastSeen: timeAgo(ms) };
 }
 
+// Non vre aparèy la selon kòd modèl Android la (egz: Amazon AFTKA → Fire TV Stick 4K Max)
+const DEV_MODELS = [
+  [/^AFTKRT/i, "Fire TV Stick 4K Max (2023)"], [/^AFTKA/i, "Fire TV Stick 4K Max (2021)"],
+  [/^AFTKM/i, "Fire TV Stick 4K (2023)"], [/^AFTMM/i, "Fire TV Stick 4K (2018)"],
+  [/^AFTSSS/i, "Fire TV Stick (3rd Gen)"], [/^AFTSS/i, "Fire TV Stick Lite"],
+  [/^AFTT$/i, "Fire TV Stick (2nd Gen)"], [/^AFTM$/i, "Fire TV Stick (1st Gen)"],
+  [/^AFTGAZL/i, "Fire TV Cube (3rd Gen)"], [/^AFTR$/i, "Fire TV Cube (2nd Gen)"], [/^AFTA$/i, "Fire TV Cube (1st Gen)"],
+  [/^AFTN$/i, "Fire TV (3rd Gen)"], [/^AFTS$/i, "Fire TV (2nd Gen)"], [/^AFTB$/i, "Fire TV (1st Gen)"],
+  [/^AFT/i, "Fire TV Smart TV"],
+];
+function devModelName(model) {
+  const m = String(model || "").trim(); const code = m.split(/\s+/).pop();
+  for (const [re, name] of DEV_MODELS) if (re.test(code)) return name;
+  if (/chromecast/i.test(m)) return "Chromecast Google TV";
+  if (/onn/i.test(m)) return "onn. Google TV";
+  if (/shield/i.test(m)) return "NVIDIA Shield";
+  return m || "Android TV";
+}
+
 function timeAgo(ms) {
   const min = Math.floor(ms / 60000);
   if (min < 1) return "Just now";
@@ -165,9 +184,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       device = {
         deviceId: mac,
         mac,
-        deviceName: b.model || "Galaxy TV Stick",
+        deviceName: b.model ? devModelName(b.model) : "Galaxy TV Stick",
         customer: "",
-        type: isFireTv ? "Fire TV" : "Android TV",
+        type: devModelName(b.model),
         status: "Online",
         activated: "",
         lastSeen: "Just now",
@@ -201,6 +220,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
     device.deviceKey = device.deviceKey || key;
     device.model = b.model || device.model || "";
+    if (device.model) device.type = devModelName(device.model);
     device.androidVersion = b.androidVersion || device.androidVersion || "";
     device.appVersion = b.appVersion || device.appVersion || "";
     if (b.xtreamUser) device.xtreamUser = b.xtreamUser;
