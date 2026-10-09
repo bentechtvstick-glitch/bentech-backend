@@ -148,8 +148,18 @@ class EpgActivity : AppCompatActivity() {
 
         overlay = OverlayController(
             this, b.overlay, lifecycleScope, inPlayer = false,
-            onCommand = { cmd -> onRemoteCommand(cmd) }
+            onCommand = { cmd -> onRemoteCommand(cmd) },
+            bannersAlways = true,
+            onBannerShown = { on -> b.bannerSpace.visibility = if (on) View.VISIBLE else View.GONE }
         )
+        // Nan gid la, banner a chita anwo adwat (bò kote apèsi a), pa sou griy pwogram yo
+        (b.overlay.bannerBox.layoutParams as android.widget.FrameLayout.LayoutParams).apply {
+            gravity = android.view.Gravity.TOP or android.view.Gravity.END
+            val d = resources.displayMetrics.density
+            width = (260 * d).toInt(); height = (158 * d).toInt()
+            topMargin = (14 * d).toInt(); marginEnd = (16 * d).toInt(); bottomMargin = 0
+            b.overlay.bannerBox.layoutParams = this
+        }
 
         updateHeader()
         loadEpg()

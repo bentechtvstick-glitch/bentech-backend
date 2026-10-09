@@ -37,7 +37,10 @@ class OverlayController(
     private val showTicker: Boolean = true,
     private val onConfig: (PanelConfig) -> Unit = {},
     /** Kòmand panel la ekran an dwe fè li menm (play, reload, restart, logout). */
-    private val onCommand: (RemoteCommand) -> Unit = {}
+    private val onCommand: (RemoteCommand) -> Unit = {},
+    /** true = banner yo toujou parèt (egz: nan gid la), pa sèlman lè lis chanèl la ouvè. */
+    private val bannersAlways: Boolean = false,
+    private val onBannerShown: (Boolean) -> Unit = {}
 ) {
     private val prefs = Prefs(activity)
     private val api = PanelApi(prefs)
@@ -183,11 +186,12 @@ class OverlayController(
     // ------------------------------------------------------------ Banner
 
     private fun startBanners(cfg: PanelConfig) {
-        val banners: List<Banner> = if (inPlayer && listOpen) cfg.banners else emptyList()
+        val banners: List<Banner> = if ((inPlayer && listOpen) || bannersAlways) cfg.banners else emptyList()
         if (banners == bannerKey && bannerJob?.isActive == true) return
         bannerKey = banners
         bannerJob?.cancel()
         v.bannerBox.visibility = View.GONE
+        onBannerShown(banners.isNotEmpty())
         if (banners.isEmpty()) return
 
         bannerJob = scope.launch {

@@ -88,6 +88,8 @@
                     <TextView android:id="@+id/detailDesc" android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="4dp" android:maxLines="3" android:ellipsize="end" android:textColor="#DDFFFFFF" android:textSize="12sp"/>
                 </LinearLayout>
+                <!-- Plas pou banner panel la (OverlayController mete l vizib lè gen banner) -->
+                <View android:id="@+id/bannerSpace" android:layout_width="274dp" android:layout_height="match_parent" android:visibility="gone"/>
             </LinearLayout>
 
             <!-- Liy lè yo -->
