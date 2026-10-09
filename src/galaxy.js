@@ -736,7 +736,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     let u = String(v || "").trim();
     if (!u) return "";
     if (!/^https?:\/\//i.test(u)) u = "http://" + u;
-    return u.replace(/\/(player_api\.php|get\.php|xmltv\.php)[^]*$/i, "").replace(/\/+$/, "");
+    u = u.replace(/\/(player_api\.php|get\.php|xmltv\.php)[^]*$/i, "").replace(/\/+$/, "");
+    // Adrès pòtal MAG/Stalker (…/c, …/stalker_portal/c, …/portal.php): API Xtream la sou rasin sèvè a
+    return u.replace(/\/(stalker_portal\/)?(c|server\/load\.php|portal\.php)$/i, "").replace(/\/+$/, "");
   };
   /** Prepare yon kliyan Xtream (player_api.php) pou yon playlist. Retounen { error } oswa { get, host, base }. */
   // ---- Pakè chanèl (Channel Profile ki gen pkg:true) ----
@@ -952,7 +954,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const playlist = {
       id: crypto.randomUUID(),
       name: String(name).trim(),
-      server: String(server).trim(),
+      server: server ? normServer(server) : "",
       username: String(username).trim(),
       password: String(password).trim(),
       createdAt: new Date().toISOString(),
@@ -977,6 +979,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       if (req.body?.[k] !== undefined && String(req.body[k]).trim() !== "") pl[k] = String(req.body[k]).trim();
     }
     if (req.body?.server === "") pl.server = "";
+    if (pl.server) pl.server = normServer(pl.server);
     await db.write();
     await syncCustomerFromProvider(device, { force: true });
     syncTvs();
