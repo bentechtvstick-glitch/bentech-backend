@@ -193,7 +193,7 @@
     <string name="set_expiry_title">Abònman</string>
     <string name="set_about">Konsènan app la (vèsyon %1$s)</string>
     <string name="set_about_title">Konsènan</string>
-    <string name="disclaimer">Galaxy TV Stick se yon lektè videyo sèlman. Li pa vini ak okenn chanèl, fim oswa kontni. Kliyan an dwe itilize pwòp playlist li gen dwa pou l gade.</string>
+    <string name="disclaimer">Galaxy TV Stick se yon lektè videyo sèlman. Li pa vini ak okenn chanèl, fim oswa kontni.</string>
     <string name="set_about_fmt">Galaxy TV Stick\nVèsyon: %1$s\nAparèy: %2$s\nAndroid: %3$s</string>
     <string name="update_title">Nouvo vèsyon disponib</string>
     <string name="update_msg">Vèsyon %1$s Galaxy TV Stick la disponib. Peze \"Mete ajou\" pou enstale l. Reglaj ou yo ap rete jan yo ye.</string>

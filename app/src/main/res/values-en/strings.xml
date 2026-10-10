@@ -170,7 +170,7 @@
     <string name="set_expiry_title">Subscription</string>
     <string name="set_about">About (version %1$s)</string>
     <string name="set_about_title">About</string>
-    <string name="disclaimer">Galaxy TV Stick is a media player only. It does not include or provide any channels, movies or content. Users must add their own playlist that they are authorized to watch.</string>
+    <string name="disclaimer">Galaxy TV Stick is a media player only. It does not include or provide any channels, movies or content.</string>
     <string name="set_about_fmt">Galaxy TV Stick\nVersion: %1$s\nDevice: %2$s\nAndroid: %3$s</string>
     <string name="update_title">New version available</string>
     <string name="update_msg">Version %1$s of Galaxy TV Stick is available. Press \"Update\" to install it. Your settings stay as they are.</string>
