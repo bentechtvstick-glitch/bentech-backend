@@ -43,7 +43,7 @@ const app = express();
 app.disable?.("x-powered-by");
 app.use(cors());
 // Yon playlist ka gen plizyè milye chanèl: app TV a voye lis la nan yon sèl demann
-app.use(express.json({ limit: "12mb" }));
+app.use(express.json({ limit: "40mb" }));
 app.use(gzipJson());
 
 // JWT configuration

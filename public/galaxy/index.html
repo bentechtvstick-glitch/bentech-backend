@@ -596,7 +596,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="pkgnote" id="chPkgNote" hidden></div>
         <div class="inline"><input type="text" id="chPkgName" class="grow" placeholder="Non yon nouvo pakè (egz: Miami)" maxlength="40"><button class="btn small purple" id="chPkgSave" type="button">Sove kòm pakè</button></div>
         <div class="inline"><input type="text" id="chSearch" class="grow" placeholder="Chèche yon chanèl"><button class="btn small red" id="chHideShown" type="button">Kache sa ki nan lis la</button><button class="btn small purple" id="chOnlyShown" type="button">Sèlman sa ki nan lis la</button><button class="btn small green" id="chShowShown" type="button">Montre sa ki nan lis la</button><button class="btn small" id="chAllOn" type="button">Montre tout</button></div>
-        <div class="inline" style="margin-top:6px"><button class="btn small" id="chDupBtn" type="button">🔁 Chanèl doub</button><button class="btn small red" id="chDupHide" type="button" hidden>Kache doub yo (kenbe youn)</button><span class="note" id="chDupNote"></span></div>
+        <div class="inline" style="margin-top:6px"><button class="btn small" id="chReload" type="button">🔄 Rechaje lis chanèl yo</button><button class="btn small" id="chDupBtn" type="button">🔁 Chanèl doub</button><button class="btn small red" id="chDupHide" type="button" hidden>Kache doub yo (kenbe youn)</button><span class="note" id="chDupNote"></span></div>
         <p class="note">Etenn bouton yon gwoup pou kache tout chanèl li yo ak yon sèl klik. Klike sou non gwoup la pou wè chanèl li yo. Kreyon an (✎) chanje non yon gwoup oswa yon chanèl.</p>
         <p class="note" id="chCount"></p>
         <div class="chlist" id="chList"></div>
@@ -1742,6 +1742,17 @@ function chCommitEdit(el) {
   if (!v || v === orig) delete map[id]; else map[id] = v;
   chState.edit = null; chRerender(); setMsg($("#chMsg"), "Chanjman yo poko sove.", false); $("#chMsg").className = "msg";
 }
+$("#chReload").addEventListener("click", async () => {
+  if (!dev) return; const b = $("#chReload"); b.disabled = true; const before = chState?.chs.length || 0;
+  setMsg($("#chMsg"), t("Ap chèche lis chanèl yo kay founisè a…"));
+  try {
+    await api("GET", `/galaxy/devices/${encodeURIComponent(dev.mac)}/channels?refresh=1`);
+    await loadChannels();
+    const after = chState?.chs.length || 0;
+    setMsg($("#chMsg"), after > before ? t("Lis la mete ajou: {0} chanèl.", after) : t("Lis la gen {0} chanèl. Si TV a gen plis, louvri app la sou TV a: li voye lis konplè a bay panel la.", after), true);
+  } catch (e) { setMsg($("#chMsg"), e.message); }
+  b.disabled = false;
+});
 $("#chList").addEventListener("keydown", (e) => {
   if (!e.target.classList.contains("chedit")) return;
   if (e.key === "Enter") { e.preventDefault(); chCommitEdit(e.target); }

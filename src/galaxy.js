@@ -473,7 +473,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   /** App la voye lis chanèl Xtream kliyan an, pou admin nan ka hide/show yo. */
   /** Sove lis chanèl yon aparèy (pataje ant aparèy ki gen egzakteman menm lis la). */
   async function storeChannels(mac, channels) {
-    const list = (Array.isArray(channels) ? channels : []).slice(0, 20000).map((c) => ({
+    const list = (Array.isArray(channels) ? channels : []).slice(0, 80000).map((c) => ({
       id: Number(c.id), num: Number(c.num) || 0, name: String(c.name || "").slice(0, 200),
       categoryId: String(c.categoryId || ""), categoryName: String(c.categoryName || "").slice(0, 200),
     }));
@@ -562,7 +562,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (Array.isArray(b.extraGroups)) device.extraGroups = nameList(b.extraGroups);
     if (Array.isArray(b.extraChannels)) device.extraChannels = nameList(b.extraChannels);
     // Non chanje: { id: "nouvo non" }; yon non vid retire chanjman an
-    const names = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [String(k), String(v ?? "").trim().slice(0, 80)]).filter(([, v]) => v).slice(0, 20000));
+    const names = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [String(k), String(v ?? "").trim().slice(0, 80)]).filter(([, v]) => v).slice(0, 80000));
     if (b.categoryNames && typeof b.categoryNames === "object" && !Array.isArray(b.categoryNames)) device.categoryNames = names(b.categoryNames);
     if (b.channelNames && typeof b.channelNames === "object" && !Array.isArray(b.channelNames)) device.channelNames = names(b.channelNames);
     if (b.resetDeviceKey) device.deviceKey = ""; // pwochen fwa app la anrejistre, li pran nouvo kle a
@@ -603,7 +603,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (!info?.user_info || Number(info.user_info.auth) === 0) throw new Error("Username oswa password la pa bon (sèvè a refize kont lan).");
     const [cats, live] = await Promise.all([cl.get("get_live_categories", 20000), cl.get("get_live_streams", 30000)]);
     const catName = new Map((Array.isArray(cats) ? cats : []).map((c) => [String(c.category_id), String(c.category_name || "")]));
-    const channels = (Array.isArray(live) ? live : []).slice(0, 20000).map((c, i) => ({
+    const channels = (Array.isArray(live) ? live : []).slice(0, 80000).map((c, i) => ({
       id: Number(c.stream_id), num: Number(c.num) || i + 1, name: String(c.name || "").slice(0, 200),
       categoryId: String(c.category_id || ""), categoryName: (catName.get(String(c.category_id)) || "").slice(0, 200),
       icon: isUrl(c.stream_icon) ? String(c.stream_icon).slice(0, 500) : "",
@@ -720,9 +720,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const device = loadDevice(req, res);
     if (!device) return;
     // TV a poko voye lis li (li pa janm louvri, oswa ansyen vèsyon app la)? Panel la al chèche l li menm kay founisè a.
-    if (!channelsOf(device.mac).length) {
+    // ?refresh=1: admin nan mande lis la ankò kay founisè a (si sèvè a bloke Render, n kenbe lis TV a te voye a)
+    if (!channelsOf(device.mac).length || req.query.refresh === "1") {
       const pl = playlistsOf(device.mac)[0];
-      if (pl) await fetchLive(pl).then((r) => storeChannels(device.mac, r.channels)).catch(() => {});
+      if (pl) await fetchLive(pl, req.query.refresh === "1").then((r) => { if (r.channels.length) return storeChannels(device.mac, r.channels); }).catch(() => {});
     }
     const hidden = new Set((device.hiddenChannels || []).map(Number));
     const hiddenCats = new Set((device.hiddenCategories || []).map(String));
