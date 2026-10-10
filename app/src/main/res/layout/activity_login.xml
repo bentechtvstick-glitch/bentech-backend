@@ -41,8 +41,6 @@
             <!-- Playlist panel la voye yo -->
             <LinearLayout android:id="@+id/playlistBox" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginTop="14dp" android:orientation="vertical" android:visibility="gone">
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center"
-                    android:text="@string/choose_playlist" android:textColor="#1A1F36" android:textSize="16sp" android:textStyle="bold"/>
                 <androidx.recyclerview.widget.RecyclerView android:id="@+id/playlists" android:layout_width="match_parent"
                     android:layout_height="wrap_content" android:layout_marginTop="8dp"
                     android:descendantFocusability="afterDescendants"/>

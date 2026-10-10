@@ -147,7 +147,7 @@ class LoginActivity : AppCompatActivity() {
         if (auto != null && !noAuto) {
             connect(auto)
         } else {
-            setStatus(getString(R.string.choose_playlist), loading = false)
+            setStatus("", loading = false) // pa ekri "Choose a playlist" sou ekran an
         }
     }
 
@@ -202,12 +202,12 @@ class LoginActivity : AppCompatActivity() {
                 } else {
                     onFail()
                     showError(getString(R.string.error_playlist_bad, label))
-                    setStatus(getString(R.string.choose_playlist), loading = false)
+                    setStatus("", loading = false) // pa ekri "Choose a playlist" sou ekran an
                 }
             }.onFailure {
                 onFail()
                 showError(getString(R.string.error_network, it.message ?: ""))
-                setStatus(getString(R.string.choose_playlist), loading = false)
+                setStatus("", loading = false) // pa ekri "Choose a playlist" sou ekran an
             }
         }
     }
