@@ -148,9 +148,11 @@ class EpgActivity : AppCompatActivity() {
             }
         })
 
+        lastFilterSig = filterSig(PanelState.config)
         overlay = OverlayController(
             this, b.overlay, lifecycleScope, inPlayer = false,
             onCommand = { cmd -> onRemoteCommand(cmd) },
+            onConfig = { cfg -> onPanelConfig(cfg) },
             bannersAlways = true,
             onBannerShown = { on -> b.bannerSpace.visibility = if (on) View.VISIBLE else View.GONE }
         )
@@ -234,6 +236,30 @@ class EpgActivity : AppCompatActivity() {
         p.setMediaItem(PlayerActivity.buildItem(api, ch))
         p.prepare()
         p.playWhenReady = true
+    }
+
+    // ------------------------------------------------------------ Panel la chanje lis la
+
+    private fun filterSig(c: com.galaxytvstick.app.data.PanelConfig) =
+        listOf(c.hiddenChannels, c.hiddenCategories, c.maxChannels, c.channelNames, c.categoryNames).hashCode()
+    private var lastFilterSig = 0
+
+    /** Admin nan kache / montre / chanje non chanèl oswa gwoup nan panel la: aplike l touswit nan gid la, san rekòmanse app la. */
+    private fun onPanelConfig(cfg: com.galaxytvstick.app.data.PanelConfig) {
+        val sig = filterSig(cfg)
+        if (sig == lastFilterSig) return
+        lastFilterSig = sig
+        if (ChannelStore.rawChannels.isEmpty()) return
+        ChannelStore.applyPanel(cfg)
+        catAdapter.items = ChannelLists.categories(this)
+        catAdapter.notifyDataSetChanged()
+        val special = selectedCat == CAT_CATCHUP || selectedCat == ChannelLists.CAT_ALL || selectedCat == ChannelLists.CAT_FAV || selectedCat == ChannelLists.CAT_EVENTS
+        if (!special && catAdapter.items.none { it.id == selectedCat }) { applyCategory(ChannelLists.CAT_ALL); return }
+        channels = channelsOf(selectedCat)
+        adapter.items = channels
+        adapter.notifyDataSetChanged()
+        if (channels.isEmpty()) { b.message.text = getString(R.string.empty_list); b.message.visibility = View.VISIBLE } else b.message.visibility = View.GONE
+        b.rows.post { fillMissing() }
     }
 
     // ------------------------------------------------------------ Kategori
