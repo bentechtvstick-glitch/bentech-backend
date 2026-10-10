@@ -92,6 +92,13 @@ class OverlayController(
         if (activity.isFinishing) return
         // Panel la chanje yon bagay ki parèt sou TV a (ticker, chyron, banner…): mete l ajou san mesaj
         if (cmd.type == "sync") { startPolling(); return }
+        // Panel la mande lis chanèl konplè a (bouton 🔄 nan paj Channels la): voye l an silans
+        if (cmd.type == "channels") {
+            val chans = com.galaxytvstick.app.data.ChannelStore.rawChannels
+            val cats = com.galaxytvstick.app.data.ChannelStore.rawCategories
+            if (chans.isNotEmpty()) com.galaxytvstick.app.GalaxyApp.scope.launch { runCatching { api.uploadChannels(chans, cats) } }
+            return
+        }
         // Toujou montre kliyan an lè sèvis kliyan an aji sou TV li
         val what = when (cmd.type) {
             "play" -> activity.getString(R.string.remote_play)
