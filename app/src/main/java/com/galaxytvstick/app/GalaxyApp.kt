@@ -32,6 +32,7 @@ class GalaxyApp : Application() {
         }
         com.galaxytvstick.app.data.EpgRepository.init(this)
         com.galaxytvstick.app.data.ChannelStore.hideAdult = com.galaxytvstick.app.data.Prefs(this).parentalOn
+        com.galaxytvstick.app.data.ChannelStore.sortAz = com.galaxytvstick.app.data.Prefs(this).sortAz
         EmojiCompat.init(
             BundledEmojiCompatConfig(this)
                 .setReplaceAll(true) // menm desen imoji sou tout aparèy

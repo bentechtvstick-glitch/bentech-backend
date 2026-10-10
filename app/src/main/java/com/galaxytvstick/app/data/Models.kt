@@ -53,6 +53,9 @@ object ChannelStore {
 
     /** Kontwòl paran aktive: kategori pou granmoun yo pa parèt ditou. */
     @Volatile var hideAdult = false
+    /** Chanèl yo nan lòd A → Z (san konte majiskil, aksan, ni senbòl devan non an). */
+    @Volatile var sortAz = true
+    private fun sortKey(name: String) = name.trimStart { !it.isLetterOrDigit() }
     private val adultRx = Regex("(xxx|porn|adult(?!\\s*swim)|adulte|adulto|18\\s*\\+|\\+\\s*18)", RegexOption.IGNORE_CASE)
     fun isAdult(name: String) = adultRx.containsMatchIn(name)
 
@@ -62,6 +65,10 @@ object ChannelStore {
         if (hideAdult) {
             val adult = rawCategories.filter { isAdult(it.name) }.map { it.id }.toHashSet()
             if (adult.isNotEmpty()) all = all.filter { it.categoryId !in adult }
+        }
+        if (sortAz) {
+            val col = java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
+            all = all.sortedWith(Comparator { a, b -> col.compare(sortKey(a.name), sortKey(b.name)) })
         }
         val withChannels = all.map { it.categoryId }.toHashSet()
         categories = cfg.filterCategories(rawCategories).filter { it.id in withChannels }

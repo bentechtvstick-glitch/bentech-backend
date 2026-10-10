@@ -639,6 +639,12 @@ class EpgActivity : AppCompatActivity() {
             },
             getString(R.string.set_device_info) to { info(R.string.set_device_info, getString(R.string.set_info_fmt, cfg.accountName, prefs.mac, prefs.deviceKey, version)) },
             getString(R.string.set_language, LANG_NAMES[LANG_CODES.indexOf(currentLang())]) to { chooseLanguage() },
+            getString(R.string.set_sort, getString(if (prefs.sortAz) R.string.sort_az else R.string.sort_server)) to {
+                prefs.sortAz = !prefs.sortAz
+                ChannelStore.sortAz = prefs.sortAz
+                startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+                finish()
+            },
             getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off) to { parentalControl() },
             getString(R.string.set_autostart, onOff(prefs.autoStart)) to { prefs.autoStart = !prefs.autoStart; showSettings() },
             getString(R.string.set_last_channel, onOff(prefs.startLastChannel)) to { prefs.startLastChannel = !prefs.startLastChannel; showSettings() },

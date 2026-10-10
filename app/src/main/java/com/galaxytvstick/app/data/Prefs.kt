@@ -62,6 +62,11 @@ class Prefs(context: Context) {
         recentChannels = (listOf(streamId) + recentChannels.filter { it != streamId }).take(12)
     }
 
+    /** Chanèl yo nan lòd alfabetik (A → Z); false = lòd sèvè a / panel la. */
+    var sortAz: Boolean
+        get() = sp.getBoolean("sort_az", true)
+        set(value) = sp.edit().putBoolean("sort_az", value).apply()
+
     /** Kontwòl paran: kache kategori pou granmoun (chanèl, fim, seri) jiskaske yo antre PIN lan. */
     var parentalOn: Boolean
         get() = sp.getBoolean("parental_on", false)
