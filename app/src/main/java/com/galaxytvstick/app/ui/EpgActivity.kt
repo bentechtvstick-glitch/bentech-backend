@@ -674,7 +674,7 @@ class EpgActivity : AppCompatActivity() {
             getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off) to { parentalControl() },
             getString(R.string.set_autostart, onOff(prefs.autoStart)) to { prefs.autoStart = !prefs.autoStart; showSettings() },
             getString(R.string.set_last_channel, onOff(prefs.startLastChannel)) to { prefs.startLastChannel = !prefs.startLastChannel; showSettings() },
-            getString(R.string.set_about, version) to { info(R.string.set_about_title, getString(R.string.set_about_fmt, version, android.os.Build.MODEL, android.os.Build.VERSION.RELEASE)) },
+            getString(R.string.set_about, version) to { info(R.string.set_about_title, getString(R.string.set_about_fmt, version, android.os.Build.MODEL, android.os.Build.VERSION.RELEASE) + "\n\n" + getString(R.string.disclaimer)) },
             getString(R.string.exit_title) to { finishAffinity() }
         ))
     }

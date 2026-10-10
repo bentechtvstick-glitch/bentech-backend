@@ -65,6 +65,10 @@
 
             <TextView android:id="@+id/deviceInfo" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginTop="10dp" android:gravity="center" android:textColor="#8A90A2" android:textSize="12sp"/>
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:gravity="center" android:text="@string/disclaimer"
+                android:textColor="#6E7488" android:textSize="11sp"/>
         </LinearLayout>
     </ScrollView>
 </FrameLayout>
