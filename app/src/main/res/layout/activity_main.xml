@@ -20,8 +20,8 @@
                     android:background="@drawable/bg_button" android:paddingStart="24dp" android:paddingEnd="24dp"
                     android:text="@string/retry" android:textColor="@color/text"/>
                 <Button android:id="@+id/btnPlaylists" android:layout_width="wrap_content" android:layout_height="52dp"
-                    android:layout_marginStart="12dp" android:background="@drawable/bg_focus" android:paddingStart="24dp" android:paddingEnd="24dp"
-                    android:text="@string/playlists" android:textColor="@color/text"/>
+                    android:layout_marginStart="12dp" android:background="@drawable/bg_button" android:paddingStart="24dp" android:paddingEnd="24dp"
+                    android:text="@string/back" android:textColor="@color/text"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

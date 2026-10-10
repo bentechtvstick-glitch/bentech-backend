@@ -15,6 +15,7 @@
     <string name="live_events">🔴 Eventos en vivo</string>
     <string name="live_now">EN VIVO AHORA</string>
     <string name="empty_list">No hay canales en esta lista.</string>
+    <string name="back">Volver</string>
     <string name="retry">Reintentar</string>
     <string name="logout">Cerrar sesión</string>
     <string name="logout_confirm">¿Cerrar sesión de esta cuenta?</string>

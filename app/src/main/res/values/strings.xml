@@ -21,6 +21,7 @@
     <string name="live_events">🔴 Evènman an dirèk</string>
     <string name="live_now">AN DIRÈK KOUNYE A</string>
     <string name="empty_list">Pa gen chanèl nan lis sa a.</string>
+    <string name="back">Retounen</string>
     <string name="retry">Eseye ankò</string>
     <string name="logout">Dekonekte</string>
     <string name="logout_confirm">Ou vle dekonekte kont sa a?</string>
