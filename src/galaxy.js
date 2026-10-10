@@ -235,7 +235,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const mac = normMac(req.params.mac);
     const device = findDevice(mac);
     const s = settings();
-    const refreshSec = Number(s.appRefreshSec) || 60;
+    const refreshSec = Number(s.appRefreshSec) || 30;
 
     if (!device) {
       // known:false → app la pa chanje anyen, li jis re-anrejistre tèt li
