@@ -57,7 +57,7 @@ class PlayerActivity : AppCompatActivity() {
         private const val BUMPER = "bumper"
         /**
          * Fason pou mande stream nan, youn apre lòt jiskaske youn mache:
-         * 0 = /live/…/id.m3u8 (HLS) · 1 = /live/…/id.ts · 2 = /…/id (ansyen fòm) · 3 = /…/id li kòm HLS
+         * 0 = /live/…/id.ts (pi rapid pou chanje chanèl, jan TiviMate fè) · 1 = /live/…/id.m3u8 (HLS) · 2 = /…/id (ansyen fòm) · 3 = /…/id li kòm HLS
          */
         private const val MODES = 4
 
@@ -77,15 +77,15 @@ class PlayerActivity : AppCompatActivity() {
         fun buildItem(api: XtreamApi, ch: Channel, mode: Int = preferredMode, alt: Boolean = XtreamApi.preferAlt): MediaItem {
             val url = when {
                 ch.directUrl != null -> ch.directUrl
-                mode == 0 -> api.streamUrl(ch, "m3u8", alt)
-                mode == 1 -> api.streamUrl(ch, "ts", alt)
+                mode == 0 -> api.streamUrl(ch, "ts", alt)
+                mode == 1 -> api.streamUrl(ch, "m3u8", alt)
                 else -> api.streamUrlBare(ch, alt)
             }
             val builder = MediaItem.Builder()
                 .setMediaId("channel")
                 .setUri(url)
                 // Pa fòse player a rete kole sou "dirèk" la (5 s te twò pre: imaj la te kanpe souvan). Li swiv sa stream nan mande.
-            val isHls = if (ch.directUrl != null) ch.directUrl.contains(".m3u8", ignoreCase = true) else mode == 0 || mode == 3
+            val isHls = if (ch.directUrl != null) ch.directUrl.contains(".m3u8", ignoreCase = true) else mode == 1 || mode == 3
             if (isHls) builder.setMimeType(MimeTypes.APPLICATION_M3U8)
             return builder.build()
         }
@@ -178,7 +178,7 @@ class PlayerActivity : AppCompatActivity() {
         // Reglaj ki te mache dènye fwa pou sèvè sa a (pou pa rechèche chak fwa app la ouvri)
         if (tunedFor != account.server) {
             tunedFor = account.server
-            preferredMode = prefs.tune(account.server, "mode")?.toIntOrNull()?.coerceIn(0, MODES - 1) ?: 0
+            preferredMode = prefs.tune(account.server, "mode2")?.toIntOrNull()?.coerceIn(0, MODES - 1) ?: 0
             prefs.tune(account.server, "base")?.let { api.restoreAltBase(it) }
             XtreamApi.preferAlt = prefs.tune(account.server, "alt") == "1" && api.altBase != null
             XtreamApi.USER_AGENT = prefs.tune(account.server, "ua") ?: XtreamApi.DEFAULT_USER_AGENT
@@ -395,10 +395,10 @@ class PlayerActivity : AppCompatActivity() {
     /** Chanèl la jwe: sonje fason ki mache a (fòm lyen, sèvè videyo, User-Agent) pou pwochen chanèl ak pwochen ouvèti yo. */
     private fun rememberWorking() {
         val server = prefs.account?.server ?: return
-        if (preferredMode == curMode && XtreamApi.preferAlt == curAlt && prefs.tune(server, "ua") == XtreamApi.USER_AGENT.takeIf { it != XtreamApi.DEFAULT_USER_AGENT } && prefs.tune(server, "mode") != null) return
+        if (preferredMode == curMode && XtreamApi.preferAlt == curAlt && prefs.tune(server, "ua") == XtreamApi.USER_AGENT.takeIf { it != XtreamApi.DEFAULT_USER_AGENT } && prefs.tune(server, "mode2") != null) return
         preferredMode = curMode
         XtreamApi.preferAlt = curAlt
-        prefs.setTune(server, "mode", curMode.toString())
+        prefs.setTune(server, "mode2", curMode.toString())
         prefs.setTune(server, "alt", if (curAlt) "1" else "0")
         prefs.setTune(server, "base", if (curAlt) api.altBase else null)
         prefs.setTune(server, "ua", XtreamApi.USER_AGENT.takeIf { it != XtreamApi.DEFAULT_USER_AGENT })

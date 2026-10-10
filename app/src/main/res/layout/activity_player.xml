@@ -4,7 +4,7 @@
     android:layout_width="match_parent" android:layout_height="match_parent" android:background="@android:color/black">
 
     <androidx.media3.ui.PlayerView android:id="@+id/playerView" android:layout_width="match_parent" android:layout_height="match_parent"
-        app:use_controller="false" app:resize_mode="fit" app:surface_type="surface_view" app:shutter_background_color="@android:color/black"/>
+        app:use_controller="false" app:resize_mode="fit" app:surface_type="surface_view" app:shutter_background_color="@android:color/black" app:keep_content_on_player_reset="true"/>
 
     <ImageView android:id="@+id/fullAd" android:layout_width="match_parent" android:layout_height="match_parent"
         android:background="@android:color/black" android:scaleType="fitCenter" android:visibility="gone" android:importantForAccessibility="no"/>

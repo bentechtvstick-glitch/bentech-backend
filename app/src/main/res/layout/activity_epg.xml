@@ -68,7 +68,7 @@
                 <FrameLayout android:layout_width="281dp" android:layout_height="158dp" android:background="@android:color/black">
                     <androidx.media3.ui.PlayerView android:id="@+id/preview" android:layout_width="match_parent" android:layout_height="match_parent"
                         android:focusable="false"
-                        app:use_controller="false" app:resize_mode="fit" app:surface_type="surface_view" app:shutter_background_color="@android:color/black"/>
+                        app:use_controller="false" app:resize_mode="fit" app:surface_type="surface_view" app:shutter_background_color="@android:color/black" app:keep_content_on_player_reset="true"/>
                     <ImageView android:id="@+id/previewLogo" android:layout_width="match_parent" android:layout_height="match_parent"
                         android:background="@color/bg_panel" android:padding="44dp" android:scaleType="fitCenter" android:importantForAccessibility="no"/>
                 </FrameLayout>
