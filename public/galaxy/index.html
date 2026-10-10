@@ -1746,6 +1746,9 @@ $("#chReload").addEventListener("click", async () => {
   if (!dev) return; const b = $("#chReload"); b.disabled = true; const before = chState?.chs.length || 0;
   setMsg($("#chMsg"), t("Ap chèche lis chanèl yo kay founisè a…"));
   try {
+    // Mande TV a voye lis konplè li a (si l limen), epi chèche l tou kay founisè a
+    await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/commands`, { type: "channels" }).catch(() => {});
+    await new Promise((r) => setTimeout(r, 8000));
     await api("GET", `/galaxy/devices/${encodeURIComponent(dev.mac)}/channels?refresh=1`);
     await loadChannels();
     const after = chState?.chs.length || 0;

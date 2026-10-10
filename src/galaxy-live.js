@@ -21,6 +21,7 @@ export const COMMAND_TYPES = {
   message: "Voye yon mesaj sou ekran an",
   play: "Chanje chanèl",
   reload: "Rechaje lis chanèl yo",
+  channels: "Voye lis chanèl la bay panel la (an silans)",
   restart: "Redemare app la",
   logout: "Dekonekte playlist la sou TV a",
   refresh: "Aplike chanjman panel la kounye a",
