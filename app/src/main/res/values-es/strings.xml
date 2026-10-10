@@ -163,6 +163,8 @@
     <string name="set_sort">Orden de canales: %1$s</string>
     <string name="sort_az">A → Z</string>
     <string name="sort_server">Orden original</string>
+    <string name="set_playlist">Lista: %1$s</string>
+    <string name="set_playlist_title">Lista</string>
     <string name="set_autostart">Abrir al encender el dispositivo: %1$s</string>
     <string name="set_last_channel">Reproducir el último canal al abrir: %1$s</string>
     <string name="switch_on">ACTIVADO</string>

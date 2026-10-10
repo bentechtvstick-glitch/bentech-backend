@@ -186,6 +186,8 @@
     <string name="set_sort">Lòd chanèl yo: %1$s</string>
     <string name="sort_az">A → Z</string>
     <string name="sort_server">Lòd orijinal</string>
+    <string name="set_playlist">Playlist: %1$s</string>
+    <string name="set_playlist_title">Playlist</string>
     <string name="set_autostart">Louvri app la lè aparèy la limen: %1$s</string>
     <string name="set_last_channel">Jwe dènye chanèl la lè app la louvri: %1$s</string>
     <string name="switch_on">LIMEN</string>

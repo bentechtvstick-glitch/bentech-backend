@@ -142,8 +142,8 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        // Yon sèl playlist: konekte otomatikman
-        val auto = cfg.playlists.singleOrNull()?.takeIf { it.id !in failedIds }
+        // Konekte otomatikman ak premye playlist ki mache (pou chanje playlist: Settings → Playlist)
+        val auto = cfg.playlists.firstOrNull { it.id !in failedIds }
         if (auto != null && !noAuto) {
             connect(auto)
         } else {
@@ -154,7 +154,8 @@ class LoginActivity : AppCompatActivity() {
     private fun showPlaylists(list: List<PanelPlaylist>) {
         val changed = list.map { it.id to it.name } != playlists.map { it.id to it.name }
         playlists = list
-        b.playlistBox.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
+        // Non playlist la pa parèt sou ekran sa a ankò (li nan Settings): app la konekte poukont li
+        b.playlistBox.visibility = View.GONE
         if (changed) {
             playlistAdapter.items = list.map { Category(it.id, "▶  ${it.name.ifBlank { it.username }}") }
             if (list.isNotEmpty()) b.playlists.post { b.playlists.getChildAt(0)?.requestFocus() }

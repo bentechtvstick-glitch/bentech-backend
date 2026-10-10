@@ -663,6 +663,7 @@ class EpgActivity : AppCompatActivity() {
                     getString(R.string.home_exp_fmt, exp)
                 ).filter { it.isNotBlank() }.joinToString("\n"))
             },
+            getString(R.string.set_playlist, prefs.account?.name?.ifBlank { null } ?: prefs.account?.username ?: "—") to { choosePlaylist() },
             getString(R.string.set_device_info) to { info(R.string.set_device_info, getString(R.string.set_info_fmt, cfg.accountName, prefs.mac, prefs.deviceKey, version)) },
             getString(R.string.set_language, LANG_NAMES[LANG_CODES.indexOf(currentLang())]) to { chooseLanguage() },
             getString(R.string.set_sort, getString(if (prefs.sortAz) R.string.sort_az else R.string.sort_server)) to {
@@ -677,6 +678,31 @@ class EpgActivity : AppCompatActivity() {
             getString(R.string.set_about, version) to { info(R.string.set_about_title, getString(R.string.set_about_fmt, version, android.os.Build.MODEL, android.os.Build.VERSION.RELEASE) + "\n\n" + getString(R.string.disclaimer)) },
             getString(R.string.exit_title) to { finishAffinity() }
         ))
+    }
+
+    /** Playlist yo panel la bay: chwazi youn (app la rechaje chanèl yo). */
+    private fun choosePlaylist() {
+        val list = PanelState.config.playlists
+        val cur = prefs.account?.playlistId
+        if (list.size <= 1) {
+            info(R.string.set_playlist_title, prefs.account?.name?.ifBlank { null } ?: prefs.account?.username ?: "—")
+            return
+        }
+        menuDialog(R.string.set_playlist_title, list.map { pl ->
+            ((if (pl.id == cur) "✓  " else "     ") + pl.name.ifBlank { pl.username }) to {
+                if (pl.id != cur) {
+                    val server = pl.server.ifBlank { com.galaxytvstick.app.BuildConfig.DEFAULT_SERVER }
+                    if (server.isBlank()) {
+                        android.widget.Toast.makeText(this, getString(R.string.error_no_server, pl.name), android.widget.Toast.LENGTH_LONG).show()
+                    } else {
+                        prefs.account = com.galaxytvstick.app.data.Account(com.galaxytvstick.app.data.XtreamApi.normalizeServer(server), pl.username.trim(), pl.password.trim(), pl.name.ifBlank { pl.username }, pl.id)
+                        prefs.lastChannelId = -1
+                        startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+                        finish()
+                    }
+                }
+            }
+        })
     }
 
     /** Lang app la kounye a: sa kliyan an chwazi, sinon lang TV a (Kreyòl si pa youn nan 4 yo). */
