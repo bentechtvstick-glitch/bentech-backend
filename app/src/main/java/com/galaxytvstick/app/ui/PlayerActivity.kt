@@ -67,7 +67,7 @@ class PlayerActivity : AppCompatActivity() {
          * Gid la (ti fenèt videyo a) sèvi ak menm reglaj la.
          */
         fun loadControl(): DefaultLoadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(15_000, 50_000, 1_000, 2_000)
+            .setBufferDurationsMs(15_000, 50_000, 500, 2_000)
             .build()
         /** Fason ki mache ak sèvè playlist la (app la sonje l pou pwochen chanèl yo). */
         private var preferredMode = 0
@@ -298,7 +298,7 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         override fun onPlaybackStateChanged(state: Int) {
-            b.loading.visibility = if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE
+            b.loading.visibility = View.GONE // pa gen sèk k ap vire: dènye imaj la rete sou ekran an jiskaske nouvo chanèl la kòmanse
             val nowBuffering = state == Player.STATE_BUFFERING
             if (nowBuffering != buffering) { buffering = nowBuffering; reportStatus() }
             // Sonje fòma ki mache ak sèvè sa a (HLS oswa TS) pou pwochen chanèl yo pa pèdi tan sou move a
@@ -459,7 +459,6 @@ class PlayerActivity : AppCompatActivity() {
         if (reconnects >= 8) { playedOk = false; return false }
         reconnects++
         val at = index; val mode = curMode; val alt = curAlt
-        b.loading.visibility = View.VISIBLE
         handler.removeCallbacks(stallWatch)
         handler.postDelayed({
             if (index == at && !adPlaying && player === p) {
@@ -1168,7 +1167,7 @@ class PlayerActivity : AppCompatActivity() {
         zapPending = true
         showInfo()
         handler.removeCallbacks(doZap)
-        handler.postDelayed(doZap, 350)
+        handler.postDelayed(doZap, 200)
     }
 
     private fun jumpToNumber() {
