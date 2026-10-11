@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import com.galaxytvstick.app.BuildConfig
 import com.galaxytvstick.app.GalaxyApp
@@ -36,28 +35,45 @@ object Updater {
         if (activity.isFinishing) return false
         showing = true
         prefs.updatePushSeen = u.pushAt
-        val b = AlertDialog.Builder(activity, R.style.Theme_Galaxy_Dialog)
-            .setTitle(R.string.update_title)
-            .setMessage(activity.getString(if (u.force) R.string.update_msg_force else R.string.update_msg, u.version))
-            .setCancelable(!u.force)
-            .setPositiveButton(R.string.update_now) { _, _ -> download(activity, u) }
-            .setOnDismissListener { showing = false }
-        if (!u.force) b.setNegativeButton(R.string.update_later, null)
-        runCatching { b.show() }.onFailure { showing = false }
+        runCatching { showDialog(activity, u) }.onFailure { showing = false }
         return true
     }
 
-    private fun download(activity: Activity, u: AppUpdate) {
+    /** Ekran mizajou a (style TiviMate): icon, vèsyon, sa ki nouvo, ba pwogresyon nan menm fenèt la. */
+    private fun showDialog(activity: Activity, u: AppUpdate) {
+        val v = com.galaxytvstick.app.databinding.DialogUpdateBinding.inflate(activity.layoutInflater)
+        val dialog = android.app.Dialog(activity, R.style.Theme_Galaxy_Dialog)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        dialog.setContentView(v.root)
+        dialog.setCancelable(!u.force)
+        dialog.setOnDismissListener { showing = false }
+        v.upVersion.text = activity.getString(R.string.update_version_fmt, u.version, BuildConfig.VERSION_NAME)
+        v.upNotes.text = u.notes.ifBlank { activity.getString(R.string.update_default_notes) }
+        v.upLater.visibility = if (u.force) android.view.View.GONE else android.view.View.VISIBLE
+        v.upLater.setOnClickListener { dialog.dismiss() }
+        v.upNow.setOnClickListener {
+            v.upButtons.visibility = android.view.View.GONE
+            v.upProgressBox.visibility = android.view.View.VISIBLE
+            v.upProgress.progress = 0
+            v.upPct.text = activity.getString(R.string.update_downloading, 0)
+            dialog.setCancelable(false)
+            download(activity, u, onProgress = { pct ->
+                if (pct < 0) v.upProgress.isIndeterminate = true else { v.upProgress.isIndeterminate = false; v.upProgress.progress = pct }
+                v.upPct.text = activity.getString(R.string.update_downloading, pct.coerceAtLeast(0))
+            }, onDone = { ok ->
+                if (ok) { v.upPct.text = activity.getString(R.string.update_installing); runCatching { dialog.dismiss() } }
+                else { v.upButtons.visibility = android.view.View.VISIBLE; v.upProgressBox.visibility = android.view.View.GONE; dialog.setCancelable(!u.force); v.upNow.requestFocus() }
+            })
+        }
+        dialog.window?.setLayout(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog.show()
+        v.upNow.requestFocus()
+    }
+
+    private fun download(activity: Activity, u: AppUpdate, onProgress: (Int) -> Unit, onDone: (Boolean) -> Unit) {
         if (downloading) return
         downloading = true
         val app = activity.applicationContext
-        val progress = runCatching {
-            AlertDialog.Builder(activity, R.style.Theme_Galaxy_Dialog)
-                .setTitle(R.string.update_title)
-                .setMessage(activity.getString(R.string.update_downloading, 0))
-                .setCancelable(false)
-                .show()
-        }.getOrNull()
         GalaxyApp.scope.launch {
             val file = File(app.externalCacheDir ?: app.cacheDir, "GalaxyTvStick-update.apk")
             val ok = runCatching {
@@ -67,7 +83,7 @@ object Updater {
                         val body = r.body ?: error("vid")
                         val total = body.contentLength()
                         var done = 0L
-                        var lastPct = -1
+                        var lastPct = -2
                         file.outputStream().use { out ->
                             val buf = ByteArray(64 * 1024)
                             val input = body.byteStream()
@@ -77,9 +93,9 @@ object Updater {
                                 out.write(buf, 0, n)
                                 done += n
                                 val pct = if (total > 0) ((done * 100) / total).toInt() else -1
-                                if (pct != lastPct && pct >= 0) {
+                                if (pct != lastPct) {
                                     lastPct = pct
-                                    withContext(Dispatchers.Main) { runCatching { progress?.setMessage(app.getString(R.string.update_downloading, pct)) } }
+                                    withContext(Dispatchers.Main) { runCatching { onProgress(pct) } }
                                 }
                             }
                         }
@@ -88,7 +104,7 @@ object Updater {
             }
             withContext(Dispatchers.Main) {
                 downloading = false
-                runCatching { progress?.dismiss() }
+                runCatching { onDone(ok.isSuccess) }
                 if (ok.isSuccess) install(activity, file)
                 else Toast.makeText(app, app.getString(R.string.update_failed, ok.exceptionOrNull()?.message ?: ""), Toast.LENGTH_LONG).show()
             }

@@ -175,6 +175,10 @@
     <string name="set_about_title">About</string>
     <string name="disclaimer">Galaxy TV Stick is a media player only. It does not include or provide any channels, movies or content.</string>
     <string name="set_about_fmt">Galaxy TV Stick\nVersion: %1$s\nDevice: %2$s\nAndroid: %3$s</string>
+    <string name="update_whats_new">What\'s new</string>
+    <string name="update_version_fmt">Version %1$s  ·  you have %2$s</string>
+    <string name="update_default_notes">Speed improvements and fixes.</string>
+    <string name="update_installing">Installing…</string>
     <string name="update_title">New version available</string>
     <string name="update_msg">Version %1$s of Galaxy TV Stick is available. Press \"Update\" to install it. Your settings stay as they are.</string>
     <string name="update_msg_force">You must install version %1$s to keep using Galaxy TV Stick. Press \"Update\".</string>

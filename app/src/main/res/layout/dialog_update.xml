@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ekran mizajou (style TiviMate): icon, vèsyon, sa ki nouvo, ba pwogresyon, bouton -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="600dp" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:padding="28dp" android:background="@drawable/bg_dialog">
+
+    <ImageView android:id="@+id/upIcon" android:layout_width="96dp" android:layout_height="96dp"
+        android:src="@mipmap/ic_launcher_gx" android:importantForAccessibility="no"/>
+
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:layout_marginStart="24dp" android:orientation="vertical">
+
+        <TextView android:id="@+id/upTitle" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/update_title" android:textColor="@color/text" android:textSize="24sp" android:textStyle="bold"/>
+        <TextView android:id="@+id/upVersion" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:textColor="@color/accent2" android:textSize="15sp"/>
+
+        <TextView android:id="@+id/upNotesTitle" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="@string/update_whats_new" android:textColor="@color/text" android:textSize="15sp" android:textStyle="bold"/>
+        <TextView android:id="@+id/upNotes" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" android:textColor="@color/text_dim" android:textSize="14sp" android:lineSpacingExtra="2dp" android:maxLines="7" android:ellipsize="end"/>
+
+        <LinearLayout android:id="@+id/upProgressBox" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="18dp" android:orientation="vertical" android:visibility="gone">
+            <ProgressBar android:id="@+id/upProgress" style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent" android:layout_height="8dp" android:max="100"
+                android:progressTint="@color/accent" android:progressBackgroundTint="#33FFFFFF"/>
+            <TextView android:id="@+id/upPct" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="6dp" android:textColor="@color/text_dim" android:textSize="13sp"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/upButtons" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="22dp" android:orientation="horizontal">
+            <Button android:id="@+id/upNow" android:layout_width="wrap_content" android:layout_height="52dp"
+                android:minWidth="160dp" android:background="@drawable/bg_button" android:paddingStart="28dp" android:paddingEnd="28dp"
+                android:text="@string/update_now" android:textAllCaps="false" android:textColor="@color/text" android:textSize="17sp" android:textStyle="bold"/>
+            <Button android:id="@+id/upLater" android:layout_width="wrap_content" android:layout_height="52dp"
+                android:minWidth="130dp" android:layout_marginStart="14dp" android:background="@drawable/bg_button" android:paddingStart="28dp" android:paddingEnd="28dp"
+                android:text="@string/update_later" android:textAllCaps="false" android:textColor="@color/text" android:textSize="17sp"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
