@@ -664,7 +664,7 @@ class EpgActivity : AppCompatActivity() {
 
     private fun showSettings() {
         val cfg = PanelState.config
-        val exp = cfg.accountExpiry.replace("T", " ").ifBlank { providerExpiry ?: "—" }
+        val exp = fmtExpiry(cfg.accountExpiry.ifBlank { providerExpiry.orEmpty() }).ifBlank { "—" }
         val version = com.galaxytvstick.app.BuildConfig.VERSION_NAME
         menuDialog(R.string.home_settings, listOf(
             getString(R.string.set_customer, cfg.accountName.ifBlank { "—" }) to {
@@ -720,6 +720,25 @@ class EpgActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    /** Dat ekspirasyon an fòma Ameriken: 11/10/2026 2:30 PM (12 è). */
+    private fun fmtExpiry(raw: String): String {
+        val v = raw.trim()
+        if (v.isEmpty()) return ""
+        val utc = v.endsWith("Z", true)
+        val clean = v.removeSuffix("Z").removeSuffix("z").substringBefore('.').replace(Regex("[+-]\\d{2}:?\\d{2}$"), "")
+        val patterns = listOf("yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM-dd")
+        for (p in patterns) {
+            val inF = java.text.SimpleDateFormat(p, java.util.Locale.US).apply {
+                isLenient = false
+                if (utc) timeZone = java.util.TimeZone.getTimeZone("UTC")
+            }
+            val d = runCatching { inF.parse(clean) }.getOrNull() ?: continue
+            val out = if (p == "yyyy-MM-dd") "MM/dd/yyyy" else "MM/dd/yyyy h:mm a"
+            return java.text.SimpleDateFormat(out, java.util.Locale.US).format(d)
+        }
+        return v
     }
 
     /** Lang app la kounye a: sa kliyan an chwazi, sinon lang TV a (Kreyòl si pa youn nan 4 yo). */
