@@ -27,7 +27,7 @@ jobs:
       - name: Build debug APK
         run: |
           set -o pipefail
-          gradle assembleDebug --no-daemon 2>&1 | tee build.log
+          gradle assembleRelease --no-daemon 2>&1 | tee build.log
 
       # Lè bati a echwe: mete erè yo kòm "annotations" pou yo ka li san telechaje jounal la
       - name: Report build errors
@@ -46,7 +46,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: GalaxyTvStick-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
       # Lyen piblik ki pa janm chanje, pou telechaje APK a sou Fire Stick la (app "Downloader"):
@@ -56,7 +56,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk GalaxyTvStick.apk
+          cp app/build/outputs/apk/release/app-release.apk GalaxyTvStick.apk
           gh release delete apk-latest --yes --cleanup-tag || true
           sleep 3
           # Ti fichye vèsyon an: panel la li l pou konnen dènye vèsyon an (san limit API GitHub)

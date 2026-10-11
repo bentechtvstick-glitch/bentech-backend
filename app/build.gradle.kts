@@ -41,7 +41,10 @@ android {
             signingConfig = signingConfigs.getByName("galaxy")
         }
         release {
-            isMinifyEnabled = false
+            // Vèsyon "release": app la pi rapid sou TV a (pa "debuggable"), pi piti, epi li enstale pi vit
+            signingConfig = signingConfigs.getByName("galaxy")
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
