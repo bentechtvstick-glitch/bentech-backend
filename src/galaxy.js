@@ -1109,7 +1109,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const s = settings();
     const build = Number(s.updatePushBuild) || 0;
     if (!build) return null;
-    return { build, version: `1.0.${build}`, url: APK_LINK, force: !!s.updateForce, pushAt: String(s.updatePushAt || "") };
+    return { build, version: `1.0.${build}`, url: APK_LINK, force: !!s.updateForce, pushAt: String(s.updatePushAt || ""), notes: String(s.updateNotes || "") };
   }
 
   app.get("/api/galaxy/app-update", authenticate, async (req, res) => {
@@ -1127,7 +1127,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     else {
       const l = await latestBuild(true);
       if (!l.build) return res.status(502).json({ error: "Pa ka jwenn dènye vèsyon app la kounye a. Eseye ankò nan yon ti moman." });
-      s.updatePushBuild = l.build; s.updatePushAt = new Date().toISOString(); s.updateForce = !!req.body?.force;
+      s.updatePushBuild = l.build; s.updatePushAt = new Date().toISOString(); s.updateForce = !!req.body?.force; s.updateNotes = String(req.body?.notes || "").slice(0, 600);
     }
     await db.write();
     syncTvs();

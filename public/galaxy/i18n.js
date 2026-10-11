@@ -890,6 +890,8 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Ap chèche lis chanèl yo kay founisè a…": ["Fetching the channel list from the provider…", "Récupération de la liste chez le fournisseur…", "Obteniendo la lista del proveedor…"],
     "Lis la mete ajou: {0} chanèl.": ["List updated: {0} channels.", "Liste mise à jour : {0} chaînes.", "Lista actualizada: {0} canales."],
     "Lis la gen {0} chanèl. Si TV a gen plis, louvri app la sou TV a: li voye lis konplè a bay panel la.": ["The list has {0} channels. If the TV has more, open the app on the TV: it sends the full list to the panel.", "La liste contient {0} chaînes. Si la TV en a plus, ouvrez l’app sur la TV : elle envoie la liste complète au panel.", "La lista tiene {0} canales. Si la TV tiene más, abra la app en la TV: envía la lista completa al panel."],
+    "Sa ki nouvo (kliyan an ap wè l sou TV a)": ["What's new (customers see it on the TV)", "Nouveautés (le client les voit sur la TV)", "Novedades (el cliente las ve en la TV)"],
+    "Egz: Chanèl yo chanje pi vit. Gid TV a pi rapid.": ["E.g.: Faster channel switching. Faster TV guide.", "Ex. : Changement de chaîne plus rapide. Guide TV plus rapide.", "Ej.: Cambio de canal más rápido. Guía de TV más rápida."],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],

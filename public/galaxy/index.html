@@ -953,6 +953,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <div class="card">
         <div class="cardhead"><div><h2>📲 Mizajou app la</h2><p class="sub">Voye dènye vèsyon app la bay TV yo. Kliyan an wè yon mesaj epi li peze "Mete ajou".</p></div><button class="btn small" id="upRefresh" type="button">Rafrechi</button></div>
         <div class="kpis" id="upKpis"></div>
+        <div class="field" style="margin-top:12px"><label for="upNotes">Sa ki nouvo (kliyan an ap wè l sou TV a)</label><textarea id="upNotes" rows="3" maxlength="600" placeholder="Egz: Chanèl yo chanje pi vit. Gid TV a pi rapid."></textarea></div>
         <div class="inline" style="margin-top:12px"><label class="sw"><input type="checkbox" id="upForce"><i></i></label><label for="upForce">Obligatwa: kliyan an pa ka kontinye san l pa mete ajou</label></div>
         <div class="btns" style="justify-content:flex-start;margin-top:12px"><button class="btn primary" id="upSend" type="button">Voye mizajou bay tout TV</button><button class="btn" id="upCancel" type="button">Sispann pwopoze l</button><span class="msg" id="upMsg"></span></div>
       </div>
@@ -2303,7 +2304,7 @@ $("#upRefresh").addEventListener("click", async () => {
 });
 $("#upSend").addEventListener("click", async () => {
   if (!confirm(t("Voye dènye vèsyon app la bay tout TV yo?"))) return;
-  try { const r = await api("POST", "/galaxy/app-update", { force: $("#upForce").checked }); setMsg($("#upMsg"), t("Vèsyon 1.0.{0} voye bay tout TV yo.", r.pushedBuild), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
+  try { const r = await api("POST", "/galaxy/app-update", { force: $("#upForce").checked, notes: $("#upNotes").value.trim() }); setMsg($("#upMsg"), t("Vèsyon 1.0.{0} voye bay tout TV yo.", r.pushedBuild), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
 });
 $("#upCancel").addEventListener("click", async () => {
   try { await api("POST", "/galaxy/app-update", { cancel: true }); setMsg($("#upMsg"), t("TV yo p ap pwopoze mizajou a ankò."), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
