@@ -250,7 +250,19 @@ class EpgActivity : AppCompatActivity() {
         if (sig == lastFilterSig) return
         lastFilterSig = sig
         if (ChannelStore.rawChannels.isEmpty()) return
-        ChannelStore.applyPanel(cfg)
+        refreshLists(cfg)
+    }
+
+    /** Rekalkile lis chanèl la (règ panel, lòd A→Z, kontwòl paran) epi mete gid la ajou an silans, san rechaje app la. */
+    private fun refreshLists(cfg: com.galaxytvstick.app.data.PanelConfig = PanelState.config) {
+        if (ChannelStore.rawChannels.isEmpty()) return
+        lifecycleScope.launch {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { ChannelStore.applyPanel(cfg) }
+            applyLists()
+        }
+    }
+
+    private fun applyLists() {
         catAdapter.items = ChannelLists.categories(this)
         catAdapter.notifyDataSetChanged()
         val special = selectedCat == CAT_CATCHUP || selectedCat == ChannelLists.CAT_ALL || selectedCat == ChannelLists.CAT_FAV || selectedCat == ChannelLists.CAT_EVENTS
@@ -674,8 +686,8 @@ class EpgActivity : AppCompatActivity() {
             getString(R.string.set_sort, getString(if (prefs.sortAz) R.string.sort_az else R.string.sort_server)) to {
                 prefs.sortAz = !prefs.sortAz
                 ChannelStore.sortAz = prefs.sortAz
-                startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
-                finish()
+                refreshLists()
+                showSettings()
             },
             getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off) to { parentalControl() },
             getString(R.string.set_autostart, onOff(prefs.autoStart)) to { prefs.autoStart = !prefs.autoStart; showSettings() },
@@ -757,9 +769,8 @@ class EpgActivity : AppCompatActivity() {
         fun setParental(on: Boolean) {
             prefs.parentalOn = on
             ChannelStore.hideAdult = on
-            android.widget.Toast.makeText(this, if (on) R.string.parental_now_on else R.string.parental_now_off, android.widget.Toast.LENGTH_LONG).show()
-            startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
-            finish()
+            refreshLists()
+            showSettings()
         }
         if (prefs.parentalOn) {
             askPin(R.string.parental_enter_pin) { pin ->
