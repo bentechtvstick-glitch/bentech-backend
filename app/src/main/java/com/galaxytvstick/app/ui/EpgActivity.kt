@@ -413,6 +413,12 @@ class EpgActivity : AppCompatActivity() {
                 adapter.notifyDataSetChanged()
                 if (zone == 0) focusStartRow()
                 b.rows.post { fillMissing() }
+            } else if (!EpgRepository.isLoaded) {
+                // Pa gen gid sou aparèy la (premye fwa): pa fè kliyan an tann gwo fichye a.
+                // Chaje gid chanèl ki sou ekran an youn pa youn touswit; gwo fichye a ap rive an aryè plan.
+                b.progress.visibility = View.GONE
+                if (zone == 0) focusStartRow()
+                b.rows.post { fillMissing(now = true) }
             }
             val result = runCatching { EpgRepository.ensureLoaded(api, channels) }
             b.progress.visibility = View.GONE
@@ -486,18 +492,17 @@ class EpgActivity : AppCompatActivity() {
     private var fillJob: kotlinx.coroutines.Job? = null
 
     /** Chanèl ki sou ekran an ki pa gen pwogram nan gwo fichye gid la: mande sèvè a youn pa youn. */
-    private fun fillMissing() {
-        if (!EpgRepository.isLoaded) return
+    private fun fillMissing(now: Boolean = false) {
         fillJob?.cancel()
         fillJob = lifecycleScope.launch {
-            delay(400)
+            delay(if (now) 0 else 250)
             val lm = b.rows.layoutManager as LinearLayoutManager
             val first = lm.findFirstVisibleItemPosition().coerceAtLeast(0)
             val last = lm.findLastVisibleItemPosition().coerceAtLeast(first)
             val need = (first..last).mapNotNull { channels.getOrNull(it) }.filter { EpgRepository.needsSingle(it) }
             if (need.isEmpty()) return@launch
             // 4 demann alafwa olye youn pa youn
-            val gate = kotlinx.coroutines.sync.Semaphore(4)
+            val gate = kotlinx.coroutines.sync.Semaphore(6)
             val any = kotlinx.coroutines.coroutineScope {
                 need.map { ch -> async { gate.withPermit { EpgRepository.loadSingle(api, ch) } } }.awaitAll().any { it }
             }
