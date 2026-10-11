@@ -8,7 +8,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.galaxytvstick.app"
+        applicationId = "com.galaxytvstick.tv"
         minSdk = 22
         targetSdk = 34
         // Chak bati sou GitHub gen yon nimewo pi wo, pou nouvo APK a ka enstale sou ansyen an

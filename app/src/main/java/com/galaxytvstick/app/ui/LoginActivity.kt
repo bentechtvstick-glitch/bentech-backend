@@ -31,6 +31,7 @@ class LoginActivity : AppCompatActivity() {
     companion object {
         /** true = pa konekte otomatikman (egz: kliyan an fèk dekonekte). */
         const val EXTRA_NO_AUTO = "no_auto"
+        private var oldAsked = false
         private const val POLL_MS = 5_000L
     }
 
@@ -54,6 +55,7 @@ class LoginActivity : AppCompatActivity() {
         prefs = Prefs(this)
         panel = PanelApi(prefs)
         noAuto = intent.getBooleanExtra(EXTRA_NO_AUTO, false)
+        askRemoveOldApp()
 
         // Si yon playlist deja konekte, ale dirèk nan chanèl yo
         if (prefs.account != null && !noAuto) {
@@ -210,6 +212,21 @@ class LoginActivity : AppCompatActivity() {
                 showError(getString(R.string.error_network, it.message ?: ""))
                 setStatus("", loading = false) // pa ekri "Choose a playlist" sou ekran an
             }
+        }
+    }
+
+    /**
+     * Ansyen vèsyon app la (ansyen non entèn "com.galaxytvstick.app") toujou sou TV a?
+     * Mande kliyan an retire l, pou pa gen 2 Galaxy TV sou ekran an. (Yon fwa chak fwa app la louvri.)
+     */
+    private fun askRemoveOldApp() {
+        val old = "com.galaxytvstick.app"
+        if (packageName == old || oldAsked) return
+        val installed = runCatching { packageManager.getPackageInfo(old, 0); true }.getOrDefault(false)
+        if (!installed) return
+        oldAsked = true
+        runCatching {
+            startActivity(Intent(Intent.ACTION_DELETE, android.net.Uri.parse("package:$old")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
     }
 

@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Mizajou app la: louvri enstalatè a ak APK app la telechaje a -->
@@ -11,6 +12,11 @@
     <!-- Mache sou Fire Stick / Android TV, men tou sou aparèy san ekran touch -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <!-- Pou nouvo app la ka wè (epi mande retire) ansyen vèsyon an ki te gen ansyen non entèn nan -->
+    <queries>
+        <package android:name="com.galaxytvstick.app" />
+    </queries>
 
     <application
         android:name=".GalaxyApp"
