@@ -279,7 +279,7 @@ class VodActivity : AppCompatActivity() {
                 finish()
             }
             "reload", "restart" -> {
-                startActivity(Intent(this, if (cmd.type == "reload") MainActivity::class.java else LoginActivity::class.java)
+                startActivity(Intent(this, if (cmd.type == "reload") MainActivity::class.java else LoginActivity::class.java).putExtra(MainActivity.EXTRA_USE_CACHE, false)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
                 finish()
             }

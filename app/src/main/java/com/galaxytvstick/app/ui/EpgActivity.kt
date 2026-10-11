@@ -777,7 +777,7 @@ class EpgActivity : AppCompatActivity() {
             "play" -> ChannelStore.all.firstOrNull { it.streamId == cmd.channelId }?.let { openFull(it) }
             "reload", "restart" -> {
                 startActivity(
-                    Intent(this, if (cmd.type == "reload") MainActivity::class.java else LoginActivity::class.java)
+                    Intent(this, if (cmd.type == "reload") MainActivity::class.java else LoginActivity::class.java).putExtra(MainActivity.EXTRA_USE_CACHE, false)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 )
                 finish()

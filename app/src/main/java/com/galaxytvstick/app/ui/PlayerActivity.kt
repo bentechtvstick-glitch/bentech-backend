@@ -1037,7 +1037,7 @@ class PlayerActivity : AppCompatActivity() {
     /** Rechaje chanèl yo san chanje playlist (Force Refresh panel la). */
     private fun reloadPlaylist() {
         startActivity(
-            Intent(this, MainActivity::class.java)
+            Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_USE_CACHE, false)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         )
         finish()

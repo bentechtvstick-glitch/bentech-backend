@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         prefs = Prefs(this)
         val account = prefs.account ?: run { toActivation(); return }
 
-        useCache = intent.getBooleanExtra(EXTRA_USE_CACHE, false)
+        useCache = intent.getBooleanExtra(EXTRA_USE_CACHE, true) // toujou louvri ak lis ki sove a (pi rapid); "Try again" ak "reload" rechaje sou sèvè a
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
         b.playlistName.visibility = View.GONE // non playlist la pa parèt sou ekran
@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
             val cached = if (useCache) withContext(Dispatchers.IO) { ChannelCache.read(applicationContext, account) } else null
             useCache = false // "Eseye ankò" toujou rechaje sou sèvè a
             if (cached != null) {
-                withTimeoutOrNull(2_500) { cfgJob.await() }?.let { PanelState.config = it }
+                withTimeoutOrNull(400) { cfgJob.await() }?.let { PanelState.config = it } // pa fè TV a tann: gid la aplike règ panel la lè yo rive
                 ChannelStore.rawCategories = cached.categories
                 ChannelStore.rawChannels = cached.channels
                 ChannelStore.applyPanel(PanelState.config)
