@@ -343,6 +343,24 @@ class XtreamApi(private val account: Account) {
     }
 
     /** Tout EPG yon chanèl, ak pwogram ki pase yo (pou catch-up). Tit yo an base64. */
+    /** Gid kout yon chanèl (kounye a + pwochen pwogram yo): repons piti, rapid — pou gid la parèt touswit. */
+    suspend fun shortEpg(streamId: Int, limit: Int = 30): List<Program> {
+        val o = JSONObject(get(apiUrl("get_short_epg", mapOf("stream_id" to streamId.toString(), "limit" to limit.toString()))))
+        val arr = o.optJSONArray("epg_listings") ?: return emptyList()
+        return (0 until arr.length()).mapNotNull { i ->
+            val e = arr.optJSONObject(i) ?: return@mapNotNull null
+            var start = e.optLong("start_timestamp", 0L) * 1000
+            var end = e.optLong("stop_timestamp", 0L) * 1000
+            if (start <= 0) start = parseEpgTime(e.optString("start"))
+            if (end <= 0) end = parseEpgTime(e.optString("end").ifBlank { e.optString("stop") })
+            if (start <= 0 || end <= start) null else Program(start, end, b64(e.optString("title")), b64(e.optString("description")))
+        }.sortedBy { it.start }
+    }
+
+    private fun parseEpgTime(v: String): Long = runCatching {
+        java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.parse(v)!!.time
+    }.getOrDefault(0L)
+
     suspend fun archiveEpg(streamId: Int): List<Program> {
         val o = JSONObject(get(apiUrl("get_simple_data_table", mapOf("stream_id" to streamId.toString()))))
         val arr = o.optJSONArray("epg_listings") ?: return emptyList()

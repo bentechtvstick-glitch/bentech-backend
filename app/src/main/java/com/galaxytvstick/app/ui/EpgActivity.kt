@@ -431,6 +431,8 @@ class EpgActivity : AppCompatActivity() {
                 b.progress.visibility = View.GONE
                 if (zone == 0) focusStartRow()
                 b.rows.post { fillMissing(now = true) }
+                // Kite gid chanèl ki sou ekran an fini anvan gwo fichye a kòmanse (Fire Stick la pa gen anpil fòs)
+                delay(300); kotlinx.coroutines.withTimeoutOrNull(6_000) { fillJob?.join() }
             }
             val result = runCatching { EpgRepository.ensureLoaded(api, channels) }
             b.progress.visibility = View.GONE

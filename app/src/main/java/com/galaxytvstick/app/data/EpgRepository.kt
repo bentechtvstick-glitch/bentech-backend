@@ -50,7 +50,9 @@ object EpgRepository {
     suspend fun loadSingle(api: XtreamApi, ch: Channel): Boolean {
         if (!singleTried.add(ch.streamId)) return false
         val now = System.currentTimeMillis()
-        val list = runCatching { api.archiveEpg(ch.streamId) }.getOrDefault(emptyList())
+        // Gid kout la an premye (rapid); gwo tablo achiv la sèlman si sèvè a pa bay gid kout
+        val list = (runCatching { api.shortEpg(ch.streamId) }.getOrDefault(emptyList())
+            .ifEmpty { runCatching { api.archiveEpg(ch.streamId) }.getOrDefault(emptyList()) })
             .filter { it.end > now - KEEP_BEFORE_MS && it.start < now + KEEP_AFTER_MS }
             .map { if (it.desc.length > MAX_DESC) it.copy(desc = it.desc.take(MAX_DESC)) else it }
         if (list.isEmpty()) return false
