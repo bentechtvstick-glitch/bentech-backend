@@ -1426,7 +1426,7 @@ document.addEventListener("click", (e) => { const g = e.target.closest("[data-go
 const PLANS = ["Trial", "1 Month", "3 Months", "6 Months", "12 Months"];
 const CRUD = {
   cust: { upper: 1, col: "customers", id: "id", title: "Kliyan yo", sub: "Kliyan yo, plan yo ak dat ekspirasyon. Ak \"Plan otomatik\" limen, plan ak ekspirasyon an soti nan founisè playlist la poukont yo.", auto: () => "C-" + (1000 + Math.floor(Math.random() * 9000)),
-    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS, def: () => "1 Month" }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "datetime" }, { k: "autoPlan", l: "Plan otomatik (founisè)", type: "bool", def: () => true }] },
+    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS, def: () => "1 Month" }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "datetime" }, { k: "autoPlan", l: "Plan otomatik (founisè)", type: "bool", def: () => true }, { k: "mac", l: "TV kliyan an (MAC)", dev: 1 }] },
   prof: { col: "channel-profiles", id: "name", title: "Channel Profiles", sub: "Pakè chanèl. Kantite chanèl la se limit TV a.",
     fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }, { k: "customers", l: "Kliyan", type: "number" }, { k: "tags", l: "Tags" }] },
   langs: { col: "languages", id: "name", title: "Lang yo", sub: "Lang chanèl yo.", fields: [{ k: "name", l: "Name", req: 1 }, { k: "code", l: "Kòd" }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }] },
@@ -1444,6 +1444,7 @@ async function openCrud(name) {
   $("#crudFormCard").hidden = true; $("#crudSearch").value = ""; caps.crud = CAP;
   if (C.fields.some((f) => f.ref)) crud.refs.customers = await list("customers").catch(() => []);
   if (C.fields.some((f) => f.list)) crud.refs.providers = await list("providers").catch(() => []);
+  if (C.fields.some((f) => f.dev)) crud.refs.devices = await api("GET", "/galaxy/devices").catch(() => []);
   await loadCrud();
 }
 async function loadCrud() {
@@ -1492,6 +1493,9 @@ function openCrudForm(item) {
     if (f.type === "bool") input = `<div class="inline"><label class="sw"><input type="checkbox" id="${id}"${v ? " checked" : ""}><i></i></label></div>`;
     else if (f.opts) input = `<select id="${id}">${(v && !f.opts.includes(v) ? [v, ...f.opts] : f.opts).map((o) => `<option${o === v ? " selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
     else if (f.ref) { const names = (crud.refs[f.ref] || []).map((c) => c.name); input = `<select id="${id}"><option value="">—</option>${(v && !names.includes(v) ? [v, ...names] : names).map((n) => `<option${n === v ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`; }
+    else if (f.dev) { const devs = (crud.refs.devices || []).filter((d) => d.galaxy !== false && d.mac); const nm = String(item?.name || "").toUpperCase();
+      const cur = v || devs.find((d) => nm && String(d.customer || "").toUpperCase() === nm)?.mac || "";
+      input = `<select id="${id}"><option value="">${esc(t("— Okenn —"))}</option>${devs.map((d) => `<option value="${esc(d.mac)}"${d.mac === cur ? " selected" : ""}>${esc(d.mac)} · ${esc(d.deviceName || "")}${d.customer && String(d.customer).toUpperCase() !== nm ? " (" + esc(d.customer) + ")" : ""}</option>`).join("")}</select>`; }
     else if (f.type === "password") input = `<input type="password" id="${id}" autocomplete="new-password" placeholder="${item && item.hasPassword ? esc(t("•••••• (pa chanje)")) : ""}">`;
     else if (f.list) input = `<input type="text" id="${id}" list="${id}_l" value="${esc(v ?? "")}"><datalist id="${id}_l">${(crud.refs[f.list] || []).filter((x) => x.url).map((x) => `<option value="${esc(x.url)}">${esc(x.name || "")}</option>`).join("")}</datalist>`;
     else if (f.type === "datetime") input = `<input type="datetime-local" id="${id}" value="${esc(!v ? "" : /^\d{4}-\d{2}-\d{2}$/.test(v) ? v + "T23:59" : String(v).replace(" ", "T").slice(0, 16))}">`;
@@ -1531,6 +1535,8 @@ $("#crudForm").addEventListener("submit", async (e) => {
   try {
     if (crud.editing != null) await api("PUT", `/${C.col}/${encodeURIComponent(crud.editing)}`, body);
     else { if (crud.items.some((it) => String(it[C.id]) === String(body[C.id]))) return setMsg($("#crudMsg"), t("Gen yon lòt eleman ki gen menm {0} an.", t(C.fields.find((f) => f.k === C.id)?.l || C.id))); await api("POST", `/${C.col}`, body); }
+    // Kliyan: konekte l ak TV li chwazi a (konsa li parèt touswit nan paj aparèy la)
+    if (C.fields.some((f) => f.dev) && body.mac) await api("PATCH", `/galaxy/devices/${encodeURIComponent(body.mac)}`, { customer: body.name }).catch(() => {});
     toast("Sove"); $("#crudFormCard").hidden = true; crud.editing = null; loadCrud();
   } catch (err) { setMsg($("#crudMsg"), err.message); }
 });
