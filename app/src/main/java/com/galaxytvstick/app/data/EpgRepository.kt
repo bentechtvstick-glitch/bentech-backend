@@ -193,7 +193,12 @@ object EpgRepository {
         client.newCall(req).execute().use { r ->
             if (!r.isSuccessful) throw IOException("EPG HTTP ${r.code}")
             val body = r.body ?: throw IOException("EPG vid")
-            return parse(body.byteStream(), wanted, keepPast)
+            // Lyen EPG .xml.gz (konprese): dekonprese l pandan l ap li
+            val raw = java.io.BufferedInputStream(body.byteStream(), 1 shl 16)
+            raw.mark(4)
+            val gz = raw.read() == 0x1f && raw.read() == 0x8b
+            raw.reset()
+            return parse(if (gz) java.util.zip.GZIPInputStream(raw, 1 shl 16) else raw, wanted, keepPast)
         }
     }
 
