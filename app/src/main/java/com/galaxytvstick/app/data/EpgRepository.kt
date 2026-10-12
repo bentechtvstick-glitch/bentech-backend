@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import okhttp3.Request
 import org.xmlpull.v1.XmlPullParser
 import java.io.IOException
@@ -99,9 +100,19 @@ object EpgRepository {
     private fun cacheKey(api: XtreamApi) = api.xmltvUrl().hashCode().toString()
 
     /** Chaje gid ki sou disk la (si li pou menm playlist la epi li gen mwens pase 24 è). Retounen true si li chaje l. */
-    suspend fun loadDisk(api: XtreamApi): Boolean = mutex.withLock {
-        if (isLoaded) return@withLock true
-        readDisk(cacheKey(api))
+    suspend fun loadDisk(api: XtreamApi): Boolean {
+        if (isLoaded) return true
+        // Si gwo fichye a ap telechaje deja (kòmanse depi app la louvri), pa tann li: li kopi disk la touswit
+        if (!mutex.tryLock()) return readDisk(cacheKey(api))
+        try { return isLoaded || readDisk(cacheKey(api)) } finally { mutex.unlock() }
+    }
+
+    /**
+     * Kòmanse gid la depi app la ap chaje chanèl yo (jan TiviMate fè), pou l pare lè kliyan an rive nan gid la.
+     * Si gid la deja sou disk la ak ase fre, sa pa fè anyen anplis.
+     */
+    fun prefetch(api: XtreamApi, channels: List<Channel>) {
+        com.galaxytvstick.app.GalaxyApp.scope.launch { runCatching { ensureLoaded(api, channels) } }
     }
 
     private suspend fun readDisk(key: String): Boolean = withContext(Dispatchers.IO) {
@@ -163,10 +174,9 @@ object EpgRepository {
                 // Maks 2 jou nan XMLTV (memwa Fire Stick); jou ki pi lwen yo chaje lè kliyan an ale la (loadArchive)
                 if (c.tvArchive) keepPast[id] = maxOf(keepPast[id] ?: 0L, c.archiveDays.coerceIn(1, 2) * 86_400_000L)
             }
-            archive.clear()
-            single.clear()
-            singleTried.clear()
+            // Pa efase gid chanèl pa chanèl yo ANVAN telechajman an: yo rete sou ekran an jiskaske gwo fichye a fini
             val result = withContext(Dispatchers.IO) { download(api.xmltvUrl(), wanted, keepPast) }
+            archive.clear()
             programs = result
             loadedAt = System.currentTimeMillis()
             val key = cacheKey(api); val at = loadedAt

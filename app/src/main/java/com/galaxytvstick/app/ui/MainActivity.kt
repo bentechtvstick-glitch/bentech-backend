@@ -111,6 +111,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun openTv() {
         val all = ChannelStore.all
+        // Gid TV a kòmanse chaje touswit an aryè plan (jan TiviMate fè pandan l ap trete playlist la)
+        prefs.account?.let { if (all.isNotEmpty()) com.galaxytvstick.app.data.EpgRepository.prefetch(XtreamApi(it), all) }
         if (all.isEmpty()) {
             b.progress.visibility = View.GONE
             b.status.text = ""
