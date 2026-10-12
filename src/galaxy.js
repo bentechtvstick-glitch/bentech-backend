@@ -455,7 +455,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       channelNames: eff.channelNames,
       // Règ pakè a pa NON (app la aplike yo sou pwòp lis konplè li): konsa gwoup / chanèl panel la poko konnen yo kache tou
       pkgRules: pkgRules(device),
-      playlists: playlists.map(({ id, name, server, username, password }) => ({ id, name, server, username, password })),
+      playlists: playlists.map(({ id, name, server, username, password, type, epgUrl }) => ({ id, name, server, username: username || "", password: password || "", type: plType({ type }), epgUrl: epgUrl || "" })),
       ticker,
       chyrons,
       // Pou ansyen vèsyon app la: premye chyron aktif la
@@ -512,8 +512,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       ...rest,
       deviceKey: mac ? d.deviceKey || "" : undefined,
       galaxy: !!mac,
-      playlists: mac ? playlistsOf(mac).map(({ id, name, server, username, createdAt, restored }) => ({
-        id, name, server, username, createdAt, restored: !!restored,
+      playlists: mac ? playlistsOf(mac).map(({ id, name, server, username, createdAt, restored, type, epgUrl }) => ({
+        id, name, server, username, createdAt, restored: !!restored, type: type || "xtream", epgUrl: epgUrl || "",
       })) : [],
       channelCount: mac ? channelsOf(mac).length : 0,
     };
@@ -596,6 +596,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   const liveListCache = new Map();
   /** Chèche lis chanèl yon playlist dirèk kay founisè a (10 min nan memwa). */
   async function fetchLive(pl, fresh = false) {
+    if (plType(pl) !== "xtream") throw new Error("Playlist sa a pa Xtream: se TV a ki voye lis chanèl la.");
     const key = `${pl.server}|${pl.username}|${pl.password}`;
     const hit = liveListCache.get(key);
     if (hit && Date.now() - hit.at < 600_000 && !fresh) return hit.data;
@@ -838,7 +839,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const customer = customerOf(device);
     if (!customer || customer.autoPlan === false) return null;
     const pl = playlistsOf(device.mac)[0];
-    if (!pl) return null;
+    if (!pl || plType(pl) !== "xtream") return null; // M3U / Stalker: pa gen API Xtream pou plan an
     // Plan an poko parèt: re-eseye chak 2 minit (pa tann 6 è) jiskaske founisè a reponn
     const every = customer.plan ? SYNC_EVERY_MS : 2 * 60 * 1000;
     if (!force && customer.providerSyncAt && Date.now() - Date.parse(customer.providerSyncAt) < every) return null;
@@ -897,6 +898,41 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     return { get, host, base };
   }
 
+  const plType = (pl) => (pl?.type === "m3u" || pl?.type === "stalker" ? pl.type : "xtream");
+
+  /** Tès yon lis M3U (lyen): li kòmansman lis la epi li konte chanèl ak gwoup yo. */
+  async function m3uTest(pl) {
+    const url = String(pl.server || "").trim();
+    if (!/^https?:\/\//i.test(url)) return { ok: false, error: "Mete lyen M3U a (li kòmanse ak http:// oswa https://)." };
+    let host; try { host = new URL(url).hostname; } catch { return { ok: false, error: "Lyen M3U a pa valid." }; }
+    if (isPrivateHost(host)) return { ok: false, error: "Adrès sa a pa otorize." };
+    const t0 = Date.now(); const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 25000);
+    try {
+      const r = await fetch(url, { signal: ctl.signal, redirect: "follow", headers: { "User-Agent": "Mozilla/5.0 (Linux; Android 9; AFTKA) GalaxyTVStick/1.0" } });
+      if (!r.ok) return { ok: false, error: `Sèvè a reponn HTTP ${r.status}.`, ms: Date.now() - t0 };
+      const reader = r.body.getReader(); const dec = new TextDecoder(); let text = "", n = 0;
+      while (text.length < 3_000_000) { const { done, value } = await reader.read(); if (done) break; text += dec.decode(value, { stream: true }); n++; }
+      try { await reader.cancel(); } catch {}
+      if (!/#EXTM3U/i.test(text.slice(0, 2000))) return { ok: false, error: "Lyen sa a pa bay yon lis M3U.", ms: Date.now() - t0 };
+      const groups = new Map(); let count = 0;
+      for (const m of text.matchAll(/#EXTINF[^\n]*/g)) { count++; const g = /group-title="([^"]*)"/i.exec(m[0])?.[1] || ""; if (g) groups.set(g, 1); }
+      const partial = text.length >= 3_000_000;
+      return { ok: true, ms: Date.now() - t0, status: "M3U", expDate: null, maxConnections: 0, activeConnections: 0,
+        liveChannels: partial ? `${count}+` : count, liveCategories: partial ? `${groups.size}+` : groups.size,
+        categories: [...groups.keys()].slice(0, 12), server: { url: host, port: "", timezone: "" } };
+    } catch (e) {
+      return { ok: false, error: e.name === "AbortError" ? "Sèvè a pran twòp tan pou l reponn." : (e.message || "Tès la echwe."), ms: Date.now() - t0 };
+    } finally { clearTimeout(tm); }
+  }
+
+  /** Tès nenpòt kalite playlist (Xtream, M3U, Stalker). */
+  async function playlistTest(pl) {
+    const t = plType(pl);
+    if (t === "m3u") return m3uTest(pl);
+    if (t === "stalker") return { ok: true, status: "Stalker", ms: 0, expDate: null, maxConnections: 0, activeConnections: 0, liveChannels: null, liveCategories: null, categories: [], server: { url: String(pl.server || ""), port: "", timezone: "" } };
+    return xtreamTest(pl);
+  }
+
   async function xtreamTest(pl) {
     const cl = xtreamClient(pl);
     if (cl.error) return { ok: false, error: cl.error };
@@ -929,7 +965,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
   /** Bouton "Teste" nan fòm Ajoute Playlist la (anvan w sove l). */
   app.post("/api/galaxy/xtream/test", authenticate, async (req, res) => {
-    res.json(await xtreamTest(req.body || {}));
+    res.json(await playlistTest(req.body || {}));
   });
 
   /** Teste yon playlist ki deja sou yon aparèy (ak password ki sove a). */
@@ -938,7 +974,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (!device) return;
     const pl = playlistsOf(device.mac).find((p) => p.id === req.params.id);
     if (!pl) return res.status(404).json({ ok: false, error: "Playlist pa jwenn" });
-    const out = await xtreamTest(pl);
+    const out = await playlistTest(pl);
     if (out.ok) { await syncCustomerFromProvider(device, { force: true }); syncTvs(); }
     auditLog("playlist-test", `Playlist "${pl.name}" on ${device.mac}: ${out.ok ? out.status : out.error}`, admin(req));
     res.json(out);
@@ -955,22 +991,31 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   app.post("/api/galaxy/devices/:mac/playlists", authenticate, async (req, res) => {
     const device = loadDevice(req, res);
     if (!device) return;
-    const { name, server = "", username, password, deviceKey } = req.body || {};
-    if (!String(name || "").trim() || !String(username || "").trim() || !String(password || "").trim()) {
+    const { name, server = "", username, password, deviceKey, epgUrl = "" } = req.body || {};
+    const type = plType(req.body || {});
+    if (!String(name || "").trim()) return res.status(400).json({ ok: false, error: "Non playlist la obligatwa" });
+    if (type === "xtream" && (!String(username || "").trim() || !String(password || "").trim())) {
       return res.status(400).json({ ok: false, error: "Non playlist, username ak password obligatwa" });
+    }
+    if (type !== "xtream" && !/^https?:\/\//i.test(String(server).trim())) {
+      return res.status(400).json({ ok: false, error: type === "m3u" ? "Mete lyen M3U a (http:// oswa https://)." : "Mete adrès pòtal la (http://…)." });
     }
     if (server && !/^https?:\/\/|^[\w.-]+(:\d+)?(\/.*)?$/i.test(String(server).trim())) {
       return res.status(400).json({ ok: false, error: "Adrès sèvè a pa valid" });
     }
+    if (epgUrl && !/^https?:\/\//i.test(String(epgUrl).trim())) return res.status(400).json({ ok: false, error: "Lyen EPG a dwe kòmanse ak http:// oswa https://" });
     if (deviceKey && device.deviceKey && String(deviceKey).trim() !== device.deviceKey) {
       return res.status(403).json({ ok: false, error: "Device Key la pa matche ak aparèy sa a" });
     }
     const playlist = {
       id: crypto.randomUUID(),
       name: String(name).trim(),
-      server: server ? normServer(server) : "",
-      username: String(username).trim(),
-      password: String(password).trim(),
+      type,
+      // M3U: lyen an rete jan l ye (pa retire get.php…); Xtream/Stalker: adrès sèvè a netwaye
+      server: type === "m3u" ? String(server).trim() : type === "stalker" ? String(server).trim().replace(/\/+$/, "") : server ? normServer(server) : "",
+      username: String(username || "").trim(),
+      password: String(password || "").trim(),
+      epgUrl: String(epgUrl || "").trim(),
       createdAt: new Date().toISOString(),
     };
     playlistsOf(device.mac).push(playlist);
@@ -992,8 +1037,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     for (const k of ["name", "server", "username", "password"]) {
       if (req.body?.[k] !== undefined && String(req.body[k]).trim() !== "") pl[k] = String(req.body[k]).trim();
     }
+    if (req.body?.type !== undefined) pl.type = plType(req.body);
+    if (req.body?.epgUrl !== undefined) pl.epgUrl = String(req.body.epgUrl || "").trim();
     if (req.body?.server === "") pl.server = "";
-    if (pl.server) pl.server = normServer(pl.server);
+    if (pl.server && plType(pl) === "xtream") pl.server = normServer(pl.server);
     await db.write();
     await syncCustomerFromProvider(device, { force: true });
     syncTvs();

@@ -564,11 +564,13 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <form id="plForm" autocomplete="off" style="display:flex;flex-direction:column;gap:12px">
               <div class="label">Ajoute Playlist</div>
               <div class="field"><label for="plName">Non Playlist</label><input type="text" id="plName" placeholder="Egz: Salon"></div>
-              <div class="field"><label for="plServer">Sèvè (DNS)</label><input type="text" id="plServer" placeholder="http://dns.example.com:8080"></div>
-              <div class="row2">
-                <div class="field"><label for="plUser">Username</label><input type="text" id="plUser"></div>
-                <div class="field"><label for="plPass">Password</label><input type="text" id="plPass"></div>
+              <div class="field"><label for="plType">Kalite playlist</label><select id="plType"><option value="xtream">Xtream Codes (sèvè + username + password)</option><option value="m3u">Lis M3U / M3U8 (yon lyen)</option><option value="stalker">Stalker Portal (MAC)</option></select></div>
+              <div class="field"><label for="plServer" id="plServerL">Sèvè (DNS)</label><input type="text" id="plServer" placeholder="http://dns.example.com:8080"></div>
+              <div class="row2" id="plCreds">
+                <div class="field"><label for="plUser" id="plUserL">Username</label><input type="text" id="plUser"></div>
+                <div class="field" id="plPassF"><label for="plPass">Password</label><input type="text" id="plPass"></div>
               </div>
+              <div class="field"><label for="plEpg">Lyen EPG / gid TV (XMLTV) — opsyonèl</label><input type="text" id="plEpg" placeholder="https://…/epg.xml(.gz)"></div>
               <div class="msg" id="plMsg"></div>
               <div id="plTest"></div>
               <div class="btns"><button class="btn" type="button" id="plTestBtn" style="margin-right:auto">⚡ Teste playlist la</button><button class="btn" type="button" id="plCancel">Cancel</button><button class="btn primary" type="submit">Submit</button></div>
@@ -1181,7 +1183,7 @@ function renderDevice() {
   $("#dvMac").textContent = dev.mac; $("#dvKey").textContent = dev.deviceKey || t("— (ap tann TV a)"); $("#dvModel").textContent = dev.model ? `${devType(dev.model)} · ${dev.model}` : "—";
   $("#dvVersion").textContent = dev.appVersion || "—"; $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : ""; $("#dvBlocked").checked = !!dev.blocked; $("#dvLimit").value = dev.limit ?? 1;
   $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${String(c.name).toUpperCase() === String(dev.customer || "").toUpperCase() ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
-  $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow"><b>${esc(p.name)}</b> <span class="note">· ${esc(p.username)}${p.server ? " · " + esc(p.server) : ""}</span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
+  $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span> <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
 }
 function renderRemoteChannels() {
   const cur = devLive?.live?.channel?.id;
@@ -1254,15 +1256,29 @@ $("#plForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const msg = $("#plMsg"), btn = e.submitter || $('#plForm button[type="submit"]');
   const say = (text, ok) => { setMsg(msg, text, ok); msg.scrollIntoView({ block: "nearest", behavior: "smooth" }); toast(text); };
   if (!dev) return say("Chwazi yon aparèy nan lis la an premye.");
-  const body = { name: $("#plName").value.trim(), server: $("#plServer").value.trim(), username: $("#plUser").value.trim(), password: $("#plPass").value.trim(), deviceKey: dev.deviceKey };
-  if (!body.name || !body.username || !body.password) return say("Non playlist, username ak password obligatwa.");
+  const type = $("#plType").value;
+  const body = { type, name: $("#plName").value.trim(), server: $("#plServer").value.trim(), username: type === "m3u" ? "" : $("#plUser").value.trim(), password: type === "xtream" ? $("#plPass").value.trim() : "", epgUrl: $("#plEpg").value.trim(), deviceKey: dev.deviceKey };
+  if (!body.name) return say("Non playlist la obligatwa.");
+  if (type === "xtream" && (!body.username || !body.password)) return say("Non playlist, username ak password obligatwa.");
+  if (type === "m3u" && !/^https?:\/\//i.test(body.server)) return say("Mete lyen M3U a (http:// oswa https://).");
+  if (type === "stalker" && (!/^https?:\/\//i.test(body.server) || !/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i.test(body.username))) return say("Mete adrès pòtal la ak MAC la (egz: 00:1A:79:12:34:56).");
   if (btn.disabled) return; const label = btn.textContent; btn.disabled = true; btn.textContent = t("Ap sove…");
   try { const r = await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/playlists`, body); dev = { ...dev, ...r.device }; renderDevice();
-    say(t("Playlist \"{0}\" ajoute. L ap parèt sou TV a nan kèk segonn.", r.playlist?.name || body.name), true); ["#plName", "#plUser", "#plPass"].forEach((x) => ($(x).value = "")); loadDevices(); }
+    say(t("Playlist \"{0}\" ajoute. L ap parèt sou TV a nan kèk segonn.", r.playlist?.name || body.name), true); ["#plName", "#plUser", "#plPass", "#plEpg"].forEach((x) => ($(x).value = "")); loadDevices(); }
   catch (err) { say(err.message || "Sèvè a pa reponn."); }
   btn.disabled = false; btn.textContent = label;
 });
-$("#plCancel").addEventListener("click", () => { ["#plName", "#plServer", "#plUser", "#plPass"].forEach((s) => ($(s).value = "")); setMsg($("#plMsg"), ""); $("#plTest").innerHTML = ""; });
+// Kalite playlist la chanje sa fòm nan mande (Xtream: sèvè+user+pass · M3U: yon lyen · Stalker: pòtal + MAC)
+function plTypeUi() {
+  const ty = $("#plType").value;
+  $("#plServerL").textContent = t(ty === "m3u" ? "Lyen M3U / M3U8" : ty === "stalker" ? "Adrès pòtal la (Portal URL)" : "Sèvè (DNS)");
+  $("#plServer").placeholder = ty === "m3u" ? "https://…/playlist.m3u" : ty === "stalker" ? "http://portal.example.com:8080/c/" : "http://dns.example.com:8080";
+  $("#plCreds").hidden = ty === "m3u"; $("#plPassF").hidden = ty !== "xtream";
+  $("#plUserL").textContent = t(ty === "stalker" ? "MAC (00:1A:79:…)" : "Username");
+  $("#plUser").placeholder = ty === "stalker" ? "00:1A:79:12:34:56" : "";
+}
+$("#plType").addEventListener("change", plTypeUi);
+$("#plCancel").addEventListener("click", () => { ["#plName", "#plServer", "#plUser", "#plPass", "#plEpg"].forEach((s) => ($(s).value = "")); setMsg($("#plMsg"), ""); $("#plTest").innerHTML = ""; });
 // ---- Tès playlist (sèvè a kontakte sèvè IPTV a an vre) ----
 function renderPlTest(r, name) {
   if (!r) return `<div class="pltest busy"><span class="spin"></span>${esc(t("Ap teste playlist la…"))}</div>`;
@@ -1279,7 +1295,7 @@ function renderPlTest(r, name) {
     <div class="note">${esc(r.server?.url || "")}${r.server?.port ? ":" + esc(r.server.port) : ""}${r.server?.timezone ? " · " + esc(r.server.timezone) : ""}</div></div>`;
 }
 $("#plTestBtn").addEventListener("click", async () => {
-  const body = { server: $("#plServer").value.trim(), username: $("#plUser").value.trim(), password: $("#plPass").value.trim() };
+  const body = { type: $("#plType").value, server: $("#plServer").value.trim(), username: $("#plUser").value.trim(), password: $("#plPass").value.trim() };
   $("#plTest").innerHTML = renderPlTest(null);
   try { $("#plTest").innerHTML = renderPlTest(await api("POST", "/galaxy/xtream/test", body), $("#plName").value.trim()); }
   catch (err) { $("#plTest").innerHTML = renderPlTest({ ok: false, error: err.message }); }
