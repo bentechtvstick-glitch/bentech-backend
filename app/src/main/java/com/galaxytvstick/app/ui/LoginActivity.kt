@@ -169,13 +169,13 @@ class LoginActivity : AppCompatActivity() {
     private fun connect(pl: PanelPlaylist) {
         if (connecting) return
         val label = pl.name.ifBlank { pl.username }
-        val serverRaw = pl.server.ifBlank { BuildConfig.DEFAULT_SERVER }
-        if (serverRaw.isBlank()) {
+        // Xtream, lis M3U oswa pòtal Stalker
+        val account = pl.toAccount(BuildConfig.DEFAULT_SERVER)
+        if (account == null) {
             failedIds += pl.id
             showError(getString(R.string.error_no_server, label))
             return
         }
-        val account = Account(XtreamApi.normalizeServer(serverRaw), pl.username.trim(), pl.password.trim(), label, pl.id)
         login(account, label) { failedIds += pl.id }
     }
 

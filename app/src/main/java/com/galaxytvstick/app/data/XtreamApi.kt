@@ -138,6 +138,8 @@ class XtreamApi(private val account: Account) {
     }
 
     private suspend fun get(url: String): String = withContext(Dispatchers.IO) {
+        // Lis M3U / pòtal Stalker: pa gen API Xtream (gid chanèl pa chanèl, fim, seri, catch-up…)
+        if (!account.isXtream) throw IOException("Pa disponib pou kalite playlist sa a.")
         val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
         http.newCall(req).execute().use { r ->
             if (!r.isSuccessful) throw IOException("Sèvè a reponn HTTP ${r.code}")
@@ -147,6 +149,8 @@ class XtreamApi(private val account: Account) {
 
     /** Retounen true si username/password la bon. */
     suspend fun login(): Boolean {
+        if (account.isM3u) return withContext(Dispatchers.IO) { M3u.check(account.server) }
+        if (account.isStalker) return withContext(Dispatchers.IO) { Stalker.forAccount(account).handshake() }
         val json = JSONObject(get(apiUrl(null)))
         val info = json.optJSONObject("user_info") ?: return false
         return info.optInt("auth", 0) == 1
@@ -384,7 +388,10 @@ class XtreamApi(private val account: Account) {
             ?: Regex("""\((19|20)\d{2}\)""").find(name)?.value?.trim('(', ')') ?: ""
 
     /** Gid EPG konplè a nan fòma XMLTV. */
-    fun xmltvUrl(): String = "${account.server}/xmltv.php".toHttpUrl().newBuilder()
+    fun xmltvUrl(): String = account.epgUrl?.takeIf { it.isNotBlank() }
+        ?: if (account.isM3u) M3u.headerEpg[account.server].orEmpty()
+        else if (account.isStalker) ""
+        else "${account.server}/xmltv.php".toHttpUrl().newBuilder()
         .addQueryParameter("username", account.username)
         .addQueryParameter("password", account.password)
         .build().toString()

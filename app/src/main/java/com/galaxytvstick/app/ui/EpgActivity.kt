@@ -120,6 +120,8 @@ class EpgActivity : AppCompatActivity() {
         catAdapter.items = ChannelLists.categories(this)
         catAdapter.notifyDataSetChanged()
 
+        // Lis M3U / pòtal Stalker: pa gen fim, seri ni catch-up Xtream
+        if (prefs.account?.isXtream == false) listOf(b.menuMovies, b.menuSeries, b.menuCatchup).forEach { it.visibility = View.GONE }
         b.menuSearch.setOnClickListener { startActivity(Intent(this, SearchActivity::class.java)) }
         b.menuTv.setOnClickListener { pendingCat = if (selectedCat == CAT_CATCHUP || selectedCat == ChannelLists.CAT_FAV) ChannelLists.CAT_ALL else selectedCat; resetWindow(); focusGrid() }
         b.menuMovies.setOnClickListener { startActivity(Intent(this, VodActivity::class.java).putExtra(VodActivity.EXTRA_KIND, "movie")) }
@@ -233,10 +235,22 @@ class EpgActivity : AppCompatActivity() {
                 b.preview.player = it
                 it.addListener(previewListener)
             }
-        p.setMediaItem(PlayerActivity.buildItem(api, ch))
-        p.prepare()
-        p.playWhenReady = true
+        val cmd = ch.directUrl?.takeIf { it.startsWith(com.galaxytvstick.app.data.Stalker.PREFIX) }
+        if (cmd == null) { p.setMediaItem(PlayerActivity.buildItem(api, ch)); p.prepare(); p.playWhenReady = true; return }
+        // Pòtal Stalker: mande lyen videyo a anvan
+        val seq = ++previewSeq
+        val acc = prefs.account ?: return
+        lifecycleScope.launch {
+            val url = runCatching {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.galaxytvstick.app.data.Stalker.forAccount(acc).createLink(cmd.removePrefix(com.galaxytvstick.app.data.Stalker.PREFIX))
+                }
+            }.getOrNull() ?: return@launch
+            if (seq != previewSeq || player !== p) return@launch
+            p.setMediaItem(PlayerActivity.buildItem(api, ch.copy(directUrl = url))); p.prepare(); p.playWhenReady = true
+        }
     }
+    private var previewSeq = 0
 
     // ------------------------------------------------------------ Panel la chanje lis la
 
@@ -710,11 +724,11 @@ class EpgActivity : AppCompatActivity() {
         menuDialog(R.string.set_playlist_title, list.map { pl ->
             ((if (pl.id == cur) "✓  " else "     ") + pl.name.ifBlank { pl.username }) to {
                 if (pl.id != cur) {
-                    val server = pl.server.ifBlank { com.galaxytvstick.app.BuildConfig.DEFAULT_SERVER }
-                    if (server.isBlank()) {
+                    val account = pl.toAccount(com.galaxytvstick.app.BuildConfig.DEFAULT_SERVER)
+                    if (account == null) {
                         android.widget.Toast.makeText(this, getString(R.string.error_no_server, pl.name), android.widget.Toast.LENGTH_LONG).show()
                     } else {
-                        prefs.account = com.galaxytvstick.app.data.Account(com.galaxytvstick.app.data.XtreamApi.normalizeServer(server), pl.username.trim(), pl.password.trim(), pl.name.ifBlank { pl.username }, pl.id)
+                        prefs.account = account
                         prefs.lastChannelId = -1
                         startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
                         finish()
@@ -849,7 +863,7 @@ class EpgActivity : AppCompatActivity() {
     /** OK sou yon chanèl: premye fwa li jwe nan ti apèsi a; OK ankò sou menm chanèl la louvri l plen ekran. */
     private fun select(ch: Channel) {
         if (previewCh?.streamId == ch.streamId && previewCh?.directUrl == ch.directUrl) { openFull(ch); return }
-        if (ch.directUrl == null) prefs.lastChannelId = ch.streamId
+        if (ch.streamId > 0) prefs.lastChannelId = ch.streamId
         handler.removeCallbacks(startPreviewLater)
         previewRetries = 0
         startPreview(ch)

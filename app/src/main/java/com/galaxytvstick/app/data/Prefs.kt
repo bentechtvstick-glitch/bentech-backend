@@ -19,19 +19,23 @@ class Prefs(context: Context) {
             return Account(
                 server, user, pass,
                 name = sp.getString("pl_name", null),
-                playlistId = sp.getString("pl_id", null)
+                playlistId = sp.getString("pl_id", null),
+                type = sp.getString("pl_type", null) ?: "xtream",
+                epgUrl = sp.getString("pl_epg", null)
             )
         }
         set(value) {
             sp.edit().apply {
                 if (value == null) {
-                    remove("server"); remove("user"); remove("pass"); remove("pl_name"); remove("pl_id")
+                    remove("server"); remove("user"); remove("pass"); remove("pl_name"); remove("pl_id"); remove("pl_type"); remove("pl_epg")
                 } else {
                     putString("server", value.server)
                     putString("user", value.username)
                     putString("pass", value.password)
                     putString("pl_name", value.name)
                     putString("pl_id", value.playlistId)
+                    putString("pl_type", value.type)
+                    putString("pl_epg", value.epgUrl)
                 }
             }.apply()
         }

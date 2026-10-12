@@ -226,7 +226,8 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
         val ad = prerollAd
-        if (ad != null && ad.type == "video") {
+        val stalkerCh = channels.getOrNull(index)?.directUrl?.startsWith(com.galaxytvstick.app.data.Stalker.PREFIX) == true
+        if (ad != null && ad.type == "video" && !stalkerCh) {
             playPreroll(ad)
         } else {
             if (ad != null && ad.type == "image") showImageAd(ad)
@@ -462,9 +463,7 @@ class PlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(stallWatch)
         handler.postDelayed({
             if (index == at && !adPlaying && player === p) {
-                p.setMediaItem(channelItem(ch, mode, alt))
-                p.prepare()
-                p.playWhenReady = true
+                setChannel(p, ch, mode, alt)
             }
         }, minOf(500L * reconnects, 4_000L))
         return true
@@ -481,17 +480,34 @@ class PlayerActivity : AppCompatActivity() {
         repairStage = stage
         index = i
         val ch = channels[index]
-        if (ch.directUrl == null) { prefs.lastChannelId = ch.streamId; prefs.pushRecent(ch.streamId) } // pa relanse yon evènman ki ka fini
+        if (ch.streamId > 0) { prefs.lastChannelId = ch.streamId; prefs.pushRecent(ch.streamId) } // pa relanse yon evènman ki ka fini
         hideQuickBar()
         overlay.setWatching(ch.name, ChannelStore.categories.firstOrNull { it.id == ch.categoryId }?.name.orEmpty())
         b.errorText.visibility = View.GONE
         b.resBadge.visibility = View.GONE
         lastQuality = ""; lastResolution = ""; lastCodec = ""; lastError = ""
         reportStatus()
-        p.setMediaItem(channelItem(ch, mode, alt))
-        p.prepare()
-        p.playWhenReady = true
+        setChannel(p, ch, mode, alt)
         showInfo()
+    }
+
+    /** Mete chanèl la nan player a. Pòtal Stalker: mande lyen videyo a anvan (li chanje chak fwa). */
+    private var resolveSeq = 0
+    private fun setChannel(p: ExoPlayer, ch: Channel, mode: Int, alt: Boolean) {
+        val cmd = ch.directUrl?.takeIf { it.startsWith(com.galaxytvstick.app.data.Stalker.PREFIX) }
+        if (cmd == null) { p.setMediaItem(channelItem(ch, mode, alt)); p.prepare(); p.playWhenReady = true; return }
+        val seq = ++resolveSeq
+        val acc = prefs.account ?: return
+        lifecycleScope.launch {
+            val url = runCatching {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.galaxytvstick.app.data.Stalker.forAccount(acc).createLink(cmd.removePrefix(com.galaxytvstick.app.data.Stalker.PREFIX))
+                }
+            }
+            if (seq != resolveSeq || player !== p) return@launch
+            url.onSuccess { u -> p.setMediaItem(channelItem(ch.copy(directUrl = u), mode, alt)); p.prepare(); p.playWhenReady = true }
+                .onFailure { b.errorText.text = it.message; b.errorText.visibility = View.VISIBLE }
+        }
     }
 
     // ------------------------------------------------------------ Piblisite
@@ -976,8 +992,9 @@ class PlayerActivity : AppCompatActivity() {
                 logout()
                 return
             }
-            if (pl.username != acc.username || pl.password != acc.password ||
-                (pl.server.isNotBlank() && XtreamApi.normalizeServer(pl.server) != acc.server)) {
+            val want = pl.toAccount(BuildConfig.DEFAULT_SERVER)
+            if (want != null && (want.server != acc.server || want.username != acc.username || want.password != acc.password ||
+                    want.type != acc.type || want.epgUrl != acc.epgUrl)) {
                 switchTo(pl)
                 return
             }
@@ -1044,12 +1061,12 @@ class PlayerActivity : AppCompatActivity() {
 
     /** Chanje playlist: sove l epi rechaje chanèl yo. */
     private fun switchTo(pl: PanelPlaylist) {
-        val server = pl.server.ifBlank { BuildConfig.DEFAULT_SERVER }
-        if (server.isBlank()) {
+        val account = pl.toAccount(BuildConfig.DEFAULT_SERVER)
+        if (account == null) {
             android.widget.Toast.makeText(this, getString(R.string.error_no_server, pl.name), android.widget.Toast.LENGTH_LONG).show()
             return
         }
-        prefs.account = Account(XtreamApi.normalizeServer(server), pl.username.trim(), pl.password.trim(), pl.name.ifBlank { pl.username }, pl.id)
+        prefs.account = account
         prefs.lastChannelId = -1
         android.widget.Toast.makeText(this, R.string.switching_playlist, android.widget.Toast.LENGTH_SHORT).show()
         startActivity(

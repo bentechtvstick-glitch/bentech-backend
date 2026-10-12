@@ -20,11 +20,13 @@ object ChannelCache {
     private fun chans(ctx: Context, a: Account) = File(ctx.filesDir, "chans_${key(a)}.json")
 
     private fun bin(ctx: Context, a: Account) = File(ctx.filesDir, "list_${key(a)}.bin")
-    private const val BIN_VERSION = 1
+    private const val BIN_VERSION = 2
 
     fun read(ctx: Context, a: Account): Entry? {
+        if (a.isM3u) runCatching { epgFile(ctx, a).takeIf { it.exists() }?.readText()?.trim()?.takeIf { it.isNotBlank() }?.let { M3u.headerEpg[a.server] = it } }
         // 1) Fichye binè a: plizyè fwa pi rapid pase JSON (kèk santèn milisegonn menm pou 30 000+ chanèl)
         readBin(ctx, a)?.let { return it }
+        if (!a.isXtream) return null
         // 2) Ansyen fichye JSON yo (premye fwa apre mizajou a): li yo epi kreye fichye binè a
         return runCatching {
             val c = cats(ctx, a); val s = chans(ctx, a)
@@ -54,8 +56,8 @@ object ChannelCache {
             repeat(n) {
                 val id = d.readInt(); val num = d.readInt(); val name = d.readUTF()
                 val icon = d.readUTF().ifEmpty { null }; val cat = d.readUTF(); val epg = d.readUTF().ifEmpty { null }
-                val arch = d.readBoolean(); val days = d.readByte().toInt()
-                chans.add(Channel(id, num, name, icon, cat, epg, null, arch, days))
+                val arch = d.readBoolean(); val days = d.readByte().toInt(); val url = d.readUTF().ifEmpty { null }
+                chans.add(Channel(id, num, name, icon, cat, epg, url, arch, days))
             }
             if (chans.isEmpty()) null else Entry(cats, chans, age)
         }
@@ -63,21 +65,35 @@ object ChannelCache {
 
     private fun writeBin(ctx: Context, a: Account, cats: List<Category>, chans: List<Channel>) = runCatching {
         val tmp = File(ctx.filesDir, "list.bin.tmp")
-        val cut = { v: String -> if (v.length > 8000) v.take(8000) else v }
+        val cut = { v: String -> if (v.length > 8000) v.take(8000) else v } // writeUTF: maks 64 KB
         java.io.DataOutputStream(java.io.BufferedOutputStream(tmp.outputStream(), 1 shl 16)).use { o ->
             o.writeInt(BIN_VERSION)
             o.writeInt(cats.size); cats.forEach { o.writeUTF(cut(it.id)); o.writeUTF(cut(it.name)) }
             o.writeInt(chans.size)
             chans.forEach { c ->
                 o.writeInt(c.streamId); o.writeInt(c.num); o.writeUTF(cut(c.name)); o.writeUTF(cut(c.icon.orEmpty()))
-                o.writeUTF(cut(c.categoryId)); o.writeUTF(cut(c.epgChannelId.orEmpty())); o.writeBoolean(c.tvArchive); o.writeByte(c.archiveDays.coerceIn(0, 127))
+                o.writeUTF(cut(c.categoryId)); o.writeUTF(cut(c.epgChannelId.orEmpty())); o.writeBoolean(c.tvArchive); o.writeByte(c.archiveDays.coerceIn(0, 127)); o.writeUTF(cut(c.directUrl.orEmpty()))
             }
         }
         tmp.renameTo(bin(ctx, a))
     }
 
     /** Telechaje lis la sou sèvè playlist la, sove l, epi retounen l. Voye yon erè si sèvè a pa reponn. */
+    private fun epgFile(ctx: Context, a: Account) = File(ctx.filesDir, "m3uepg_${key(a)}.txt")
+
     suspend fun fetch(ctx: Context, a: Account): Entry {
+        // Lis M3U oswa pòtal Stalker: pa gen API Xtream, li lis la dirèkteman
+        if (!a.isXtream) {
+            val (cats, chans) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                if (a.isM3u) M3u.load(a.server).let { r ->
+                    runCatching { if (r.epgUrl != null) epgFile(ctx, a).writeText(r.epgUrl) else epgFile(ctx, a).delete() }
+                    r.categories to r.channels
+                } else Stalker.forAccount(a).loadChannels()
+            }
+            ctx.filesDir.listFiles()?.forEach { if (it.name.startsWith("list_") && !it.name.contains(key(a))) it.delete() }
+            writeBin(ctx, a, cats, chans)
+            return Entry(cats, chans, 0)
+        }
         val api = XtreamApi(a)
         val tc = File(ctx.filesDir, "cats.tmp"); val ts = File(ctx.filesDir, "chans.tmp")
         // Kategori yo ak chanèl yo telechaje an menm tan (pa youn apre lòt)

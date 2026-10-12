@@ -154,8 +154,21 @@ data class PanelPlaylist(
     val name: String,
     val server: String,   // vid = itilize DEFAULT_SERVER app la
     val username: String,
-    val password: String
-)
+    val password: String,
+    val type: String = "xtream",
+    val epgUrl: String = ""
+) {
+    /** Kont app la pou playlist sa a (null si li manke adrès sèvè a). */
+    fun toAccount(defaultServer: String): Account? {
+        val label = name.ifBlank { username.ifBlank { "Playlist" } }
+        val epg = epgUrl.trim().takeIf { it.startsWith("http") }
+        return when (type) {
+            "m3u" -> server.trim().takeIf { it.startsWith("http") }?.let { Account(it, "", "", label, id, "m3u", epg) }
+            "stalker" -> server.trim().takeIf { it.startsWith("http") }?.let { Account(it.trimEnd('/'), username.trim().uppercase(), "", label, id, "stalker", epg) }
+            else -> server.ifBlank { defaultServer }.takeIf { it.isNotBlank() }?.let { Account(XtreamApi.normalizeServer(it), username.trim(), password.trim(), label, id, "xtream", epg) }
+        }
+    }
+}
 
 /**
  * Evènman an dirèk. Li ka lye ak yon chanèl Xtream (channelId oswa channelName),
@@ -418,9 +431,10 @@ data class PanelConfig(
             playlists = o.optJSONArray("playlists").objects().map {
                 PanelPlaylist(
                     it.optString("id"), it.optString("name"), it.optString("server"),
-                    it.optString("username"), it.optString("password")
+                    it.optString("username"), it.optString("password"),
+                    it.optString("type", "xtream").ifBlank { "xtream" }, it.optString("epgUrl")
                 )
-            }.filter { it.id.isNotBlank() && it.username.isNotBlank() },
+            }.filter { it.id.isNotBlank() && (it.username.isNotBlank() || it.type == "m3u") },
             forceRefreshAt = o.optString("forceRefreshAt")
         )
     }

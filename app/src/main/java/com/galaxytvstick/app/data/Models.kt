@@ -7,8 +7,16 @@ data class Account(
     /** Non playlist la jan panel la ba li (egz: "Salon"). */
     val name: String? = null,
     /** ID playlist la nan panel la. null = kont antre manyèlman. */
-    val playlistId: String? = null
-)
+    val playlistId: String? = null,
+    /** "xtream" (sèvè + username + password), "m3u" (server = lyen lis la), "stalker" (server = pòtal, username = MAC). */
+    val type: String = "xtream",
+    /** Lyen EPG XMLTV apa (panel la), si founisè a pa bay gid oswa si l pa bon. */
+    val epgUrl: String? = null
+) {
+    val isXtream get() = type == "xtream"
+    val isM3u get() = type == "m3u"
+    val isStalker get() = type == "stalker"
+}
 
 data class Category(
     val id: String,
