@@ -241,7 +241,7 @@ class EpgActivity : AppCompatActivity() {
     // ------------------------------------------------------------ Panel la chanje lis la
 
     private fun filterSig(c: com.galaxytvstick.app.data.PanelConfig) =
-        listOf(c.hiddenChannels, c.hiddenCategories, c.maxChannels, c.channelNames, c.categoryNames).hashCode()
+        listOf(c.hiddenChannels, c.hiddenCategories, c.maxChannels, c.channelNames, c.categoryNames, c.pkgRules).hashCode()
     private var lastFilterSig = 0
 
     /** Admin nan kache / montre / chanje non chanèl oswa gwoup nan panel la: aplike l touswit nan gid la, san rekòmanse app la. */

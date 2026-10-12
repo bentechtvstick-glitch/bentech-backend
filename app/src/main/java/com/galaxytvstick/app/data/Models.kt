@@ -62,6 +62,19 @@ object ChannelStore {
     /** Aplike règ panel la (hide/show, limit) sou lis sèvè a. */
     fun applyPanel(cfg: PanelConfig) {
         all = cfg.filterChannels(rawChannels)
+        // Pakè chanèl panel la, aplike pa NON sou tout lis la (menm gwoup panel la poko wè yo)
+        cfg.pkgRules?.let { r ->
+            val catName = rawCategories.associate { it.id to it.name.trim().uppercase() }
+            // Non orijinal founisè a (pa non admin nan te chanje a)
+            val rawName = rawChannels.associate { it.streamId to it.name.trim().uppercase() }
+            all = all.filter { c ->
+                val n = rawName[c.streamId] ?: c.name.trim().uppercase()
+                if (n in r.extraChannels) return@filter true
+                val g = catName[c.categoryId].orEmpty()
+                val gHidden = (if (r.only) g !in r.shownGroups else g in r.hiddenGroups) && g !in r.extraGroups
+                !gHidden && n !in r.hiddenChannels
+            }
+        }
         if (hideAdult) {
             val adult = rawCategories.filter { isAdult(it.name) }.map { it.id }.toHashSet()
             if (adult.isNotEmpty()) all = all.filter { it.categoryId !in adult }

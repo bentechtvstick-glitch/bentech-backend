@@ -71,6 +71,13 @@ data class Ticker(
     }
 }
 /** Mizajou app la panel la voye: nimewo bati a (versionCode), lyen APK a, obligatwa oswa non. */
+/** Règ pakè chanèl panel la, pa NON gwoup / chanèl (lèt majiskil, san espas nan bout yo). */
+data class PkgRules(
+    val only: Boolean,
+    val shownGroups: Set<String>, val hiddenGroups: Set<String>, val hiddenChannels: Set<String>,
+    val extraGroups: Set<String>, val extraChannels: Set<String>
+)
+
 data class AppUpdate(val build: Int, val version: String, val url: String, val force: Boolean, val pushAt: String, val notes: String = "")
 data class Chyron(val title: String, val subtitle: String, val logoUrl: String?)
 
@@ -205,6 +212,7 @@ data class PanelConfig(
     /** Non admin nan chanje nan panel la: ID kategori → non, ID chanèl → non. */
     val categoryNames: Map<String, String> = emptyMap(),
     val channelNames: Map<Int, String> = emptyMap(),
+    val pkgRules: PkgRules? = null,
     /** Kont kliyan an nan panel la (vid si aparèy la pa lye ak yon kliyan). */
     val accountName: String = "",
     val accountPlan: String = "",
@@ -398,6 +406,10 @@ data class PanelConfig(
                     imageUrl = it.optStringOrNull("imageUrl"),
                     featured = it.optBoolean("featured", false)
                 )
+            },
+            pkgRules = o.optJSONObject("pkgRules")?.let { r ->
+                fun set(k: String) = r.optJSONArray(k).strings().map { it.trim().uppercase() }.toHashSet()
+                PkgRules(r.optString("mode") == "only", set("shownGroups"), set("hiddenGroups"), set("hiddenChannels"), set("extraGroups"), set("extraChannels"))
             },
             update = o.optJSONObject("update")?.let { u ->
                 AppUpdate(u.optInt("build", 0), u.optString("version"), u.optString("url"), u.optBoolean("force", false), u.optString("pushAt"), u.optString("notes"))
