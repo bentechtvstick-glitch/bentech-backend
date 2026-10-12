@@ -453,6 +453,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       // Non admin nan chanje nan panel la (egz: gwoup "CARIBBEAN" → "HAITI")
       categoryNames: eff.categoryNames,
       channelNames: eff.channelNames,
+      // Règ pakè a pa NON (app la aplike yo sou pwòp lis konplè li): konsa gwoup / chanèl panel la poko konnen yo kache tou
+      pkgRules: pkgRules(device),
       playlists: playlists.map(({ id, name, server, username, password }) => ({ id, name, server, username, password })),
       ticker,
       chyrons,
@@ -746,6 +748,17 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   // Yon pakè sove chwa yo pa NON founisè a (pa ID), pou menm pakè a mache sou tout aparèy ki gen menm gwoup yo.
   const nkey = (v) => String(v ?? "").trim().toUpperCase();
   const pkgCache = new Map();
+  function pkgRules(device) {
+    const p = device.channelProfile ? (data().channelProfiles || []).find((x) => x.name === device.channelProfile) : null;
+    if (!p || p.pkg !== true) return null;
+    const keys = (a) => [...new Set((a || []).map(nkey).filter(Boolean))];
+    return {
+      mode: p.mode === "only" ? "only" : "hide",
+      shownGroups: keys(p.shownGroups), hiddenGroups: keys(p.hiddenGroups), hiddenChannels: keys(p.hiddenChannels),
+      extraGroups: keys(device.extraGroups), extraChannels: keys(device.extraChannels),
+    };
+  }
+
   function effectiveChannels(device) {
     const p = device.channelProfile ? (data().channelProfiles || []).find((x) => x.name === device.channelProfile) : null;
     if (!p || p.pkg !== true) {
