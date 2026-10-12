@@ -712,7 +712,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
                 <div class="field"><label for="brName">Non spot la</label><input type="text" id="brName" maxlength="60" placeholder="Egz: Promo Digicel"></div>
                 <div class="field"><label for="brDur">Dire (segonn, pou imaj)</label><input type="number" id="brDur" value="15" min="3" max="300"></div>
               </div>
-              <div class="field"><label for="brUrl">URL videyo (.mp4, .m3u8) oswa imaj (.png, .jpg)</label><input type="url" id="brUrl" placeholder="https://…/ad.mp4 oswa .png"></div>
+              <div class="field"><label for="brUrl">URL videyo (.mp4, .m3u8) oswa imaj (.png, .jpg)</label><input type="url" id="brUrl" placeholder="https://…/ad.mp4 oswa .png"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="brUrl">📤 Chwazi yon imaj oswa videyo</button><span class="note" data-upmsg="brUrl"></span></div></div>
               <div class="btns"><button class="btn" type="button" id="brPvTest">👁 Teste nan preview a</button><button class="btn primary" type="submit">Ajoute spot</button></div>
             </form>
           </div>
@@ -742,7 +742,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="card"><h2>Lòt piblisite</h2>
           <div class="list" id="adList"></div>
           <form id="adForm" style="display:flex;flex-direction:column;gap:12px">
-            <div class="field"><label for="adUrl">URL</label><input type="text" id="adUrl" placeholder="https://…/ad.mp4 oswa .png"></div>
+            <div class="field"><label for="adUrl">URL</label><input type="text" id="adUrl" placeholder="https://…/ad.mp4 oswa .png"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="adUrl">📤 Chwazi yon imaj oswa videyo</button><span class="note" data-upmsg="adUrl"></span></div></div>
             <div class="row2"><div class="field"><label for="adPlace">Plasman</label><select id="adPlace"><option>preroll</option><option>corner</option><option>fullscreen</option></select></div>
               <div class="field"><label for="adDur">Dire (segonn)</label><input type="number" id="adDur" value="10" min="3"></div></div>
             <div class="btns"><button class="btn primary" type="submit">Ajoute ad</button></div>
@@ -2581,6 +2581,23 @@ let brSaveT = null;
 }));
 $("#mtOn").addEventListener("change", (e) => putSettings({ maintenanceMode: e.target.checked, maintenanceMessage: $("#mtMsg").value.trim() }, e.target.checked ? "Tout TV yo an mentenans" : "Mentenans fini"));
 $("#forceRefresh").addEventListener("click", () => putSettings({ forceRefreshAt: new Date().toISOString() }, "Tout TV yo ap rechaje"));
+// Telechaje yon imaj / videyo piblisite dirèk nan panel la: lyen an mete tèt li nan bwat URL la
+const upInput = Object.assign(document.createElement("input"), { type: "file", accept: "image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm", hidden: true });
+document.body.appendChild(upInput); let upTarget = null;
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-upload]"); if (!b) return; upTarget = b.dataset.upload; upInput.value = ""; upInput.click(); });
+upInput.addEventListener("change", async () => {
+  const f = upInput.files[0], id = upTarget; if (!f || !id) return;
+  const msg = document.querySelector(`[data-upmsg="${id}"]`), btn = document.querySelector(`[data-upload="${id}"]`);
+  if (f.size > 80 * 1024 * 1024) { msg.textContent = t("Fichye a twò gwo (maks 80 MB)."); return; }
+  btn.disabled = true; msg.textContent = t("Ap telechaje… {0} MB", (f.size / 1048576).toFixed(1));
+  try {
+    const r = await fetch(API + "/galaxy/media", { method: "POST", headers: { "Content-Type": f.type || "application/octet-stream", Authorization: "Bearer " + token }, body: f });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || t("Erè {0}", r.status));
+    $("#" + id).value = d.url; msg.textContent = "✓ " + t("Fichye a sou panel la. Peze bouton Ajoute a.");
+  } catch (err) { msg.textContent = err.message; }
+  btn.disabled = false;
+});
 $("#adForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const url = $("#adUrl").value.trim(); if (!/^https?:\/\//.test(url)) return toast("Mete yon URL ki kòmanse ak https://");
   await api("POST", "/media-ads", { url, type: /\.(mp4|m3u8|webm)(\?|$)/i.test(url) ? "video" : "image", placement: $("#adPlace").value, durationSec: +$("#adDur").value || 10, skipAfterSec: 5, status: "Active" });

@@ -48,7 +48,7 @@ app.use(gzipJson());
 
 // Nenpòt chanjman admin nan fè nan panel la (kliyan, pakè, grafik, reglaj…): TV ki konekte yo mete yo ajou touswit.
 // (Demann TV yo li menm voye — /api/devices/… — ak tès yo pa konte.)
-const NO_SYNC = /^\/api\/(devices\/|auth\/|galaxy\/xtream\/test|galaxy\/devices\/[^/]+\/(playlists\/[^/]+\/test|commands)|galaxy\/backup|galaxy\/storage)/;
+const NO_SYNC = /^\/api\/(devices\/|auth\/|galaxy\/xtream\/test|galaxy\/devices\/[^/]+\/(playlists\/[^/]+\/test|commands)|galaxy\/backup|galaxy\/storage|galaxy\/media)/;
 app.use((req, res, next) => {
   if (req.method !== "GET" && req.method !== "OPTIONS" && req.path.startsWith("/api/") && !NO_SYNC.test(req.path)) {
     res.on("finish", () => { if (res.statusCode < 400) syncTvs(); });
@@ -97,6 +97,34 @@ function authenticate(req, res, next) {
     return res.status(401).json({ ok: false, error: "Token expired or invalid" });
   }
 }
+
+// ---------- Imaj / videyo piblisite yo (panel la telechaje yo dirèk, pa bezwen yon lòt sit) ----------
+const MEDIA_DIR = path.join(path.dirname(DB_FILE), "media");
+try { fs.mkdirSync(MEDIA_DIR, { recursive: true }); } catch {}
+const MEDIA_TYPES = { "image/png": "png", "image/jpeg": "jpg", "image/jpg": "jpg", "image/gif": "gif", "image/webp": "webp", "video/mp4": "mp4", "video/webm": "webm" };
+const MEDIA_MAX = 80 * 1024 * 1024;
+app.use("/media", express.static(MEDIA_DIR, { maxAge: "30d", immutable: true }));
+app.post("/api/galaxy/media", authenticate, (req, res) => {
+  const type = String(req.headers["content-type"] || "").split(";")[0].trim().toLowerCase();
+  const ext = MEDIA_TYPES[type];
+  if (!ext) return res.status(400).json({ error: "Fichye sa a pa aksepte. Chwazi yon imaj (PNG, JPG) oswa yon videyo MP4." });
+  const len = Number(req.headers["content-length"] || 0);
+  if (len > MEDIA_MAX) return res.status(413).json({ error: "Fichye a twò gwo (maks 80 MB)." });
+  const name = `${Date.now().toString(36)}-${nanoid(8)}.${ext}`;
+  const file = path.join(MEDIA_DIR, name);
+  const out = fs.createWriteStream(file);
+  let size = 0, failed = false;
+  const src = req.raw && typeof req.raw.pipe === "function" ? req.raw : req; // (shim tès la)
+  src.on("data", (c) => { size += c.length; if (size > MEDIA_MAX && !failed) { failed = true; src.unpipe(out); out.destroy(); fs.rm(file, () => {}); res.status(413).json({ error: "Fichye a twò gwo (maks 80 MB)." }); } });
+  src.pipe(out);
+  out.on("finish", () => {
+    if (failed) return;
+    if (size < 100) { fs.rm(file, () => {}); return res.status(400).json({ error: "Fichye a vid." }); }
+    const proto = String(req.headers["x-forwarded-proto"] || req.protocol || "https").split(",")[0];
+    res.json({ ok: true, url: `${proto}://${req.headers.host}/media/${name}`, size });
+  });
+  out.on("error", (e) => { if (!failed) { failed = true; res.status(500).json({ error: "Pa ka sove fichye a: " + e.message }); } });
+});
 
 // ---------- auth routes ----------
 
