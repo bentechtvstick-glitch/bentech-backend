@@ -195,9 +195,35 @@ class EpgActivity : AppCompatActivity() {
         lifecycleScope.launch { runCatching { com.galaxytvstick.app.data.PanelApi(prefs).status(body) } }
     }
 
+    /**
+     * Tankou TiviMate: si kliyan an kite gid la san manyen remòt la pandan 3 minit,
+     * chanèl ki nan ti fenèt la louvri plen ekran (konsa Fire Stick la pa al dòmi sou gid la).
+     */
+    private val idleFullscreen = Runnable {
+        val ch = previewCh
+        if (ch != null && player != null && !isFinishing && hasWindowFocus()) openFull(ch)
+        else armIdle()
+    }
+    private fun armIdle() {
+        handler.removeCallbacks(idleFullscreen)
+        handler.postDelayed(idleFullscreen, 3 * 60_000L)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) // pa kite Fire Stick la etenn ekran an sou gid la
+        armIdle()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(idleFullscreen)
+    }
+
     override fun onStop() {
         super.onStop()
         overlay.stop()
+        handler.removeCallbacks(idleFullscreen)
         handler.removeCallbacks(startPreviewLater)
         handler.removeCallbacks(applyPendingCat)
         player?.release()
@@ -577,6 +603,7 @@ class EpgActivity : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN) armIdle() // kliyan an la: rekòmanse 3 minit yo
         if (event.action == KeyEvent.ACTION_DOWN && b.overlay.blocker.visibility != View.VISIBLE) {
             // Bouton ≡ (oswa Settings) sou remòt la: louvri Reglaj
             if (event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_SETTINGS) {
