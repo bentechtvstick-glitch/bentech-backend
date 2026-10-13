@@ -934,6 +934,7 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Anbilans": ["Ambulance", "Ambulance", "Ambulancia"],
     "Efase kliyan \"{0}\" tou": ["Also delete customer \"{0}\"", "Supprimer aussi le client \"{0}\"", "Eliminar también el cliente \"{0}\""],
     "Aparèy la ak kliyan \"{0}\" efase": ["Device and customer \"{0}\" deleted", "Appareil et client \"{0}\" supprimés", "Dispositivo y cliente \"{0}\" eliminados"],
+    "Lyen .m3u8, oswa yon lyen YouTube <b>live</b> (app 1.0.86+).": ["An .m3u8 link, or a YouTube <b>live</b> link (app 1.0.86+).", "Un lien .m3u8, ou un lien YouTube <b>en direct</b> (app 1.0.86+).", "Un enlace .m3u8, o un enlace de YouTube <b>en vivo</b> (app 1.0.86+)."],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],
