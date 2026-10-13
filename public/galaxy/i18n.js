@@ -907,6 +907,7 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Non playlist la obligatwa.": ["Playlist name is required.", "Le nom de la playlist est obligatoire.", "El nombre de la lista es obligatorio."],
     "Mete lyen M3U a (http:// oswa https://).": ["Enter the M3U link (http:// or https://).", "Saisissez le lien M3U (http:// ou https://).", "Ingrese el enlace M3U (http:// o https://)."],
     "Mete adrès pòtal la ak MAC la (egz: 00:1A:79:12:34:56).": ["Enter the portal URL and the MAC (e.g. 00:1A:79:12:34:56).", "Saisissez l’URL du portail et la MAC (ex. 00:1A:79:12:34:56).", "Ingrese la URL del portal y la MAC (ej. 00:1A:79:12:34:56)."],
+    "📤 Chwazi yon imaj": ["📤 Choose an image", "📤 Choisir une image", "📤 Elegir una imagen"],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],
