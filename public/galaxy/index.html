@@ -319,6 +319,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .chy.pos-bottom-center .chy-body,.chy.pos-top-center .chy-body{text-align:center;border-left:0;border-bottom:4px solid var(--acc);justify-content:center;padding:8px 26px 9px}
 .chy-stk{flex:none;line-height:1;display:inline-block}
 .carchip{padding:4px 8px}.carchip .gfx-car{height:18px}.carchip .gfx-car *{animation:none!important}
+.delcust{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#ffb4b4;cursor:pointer;white-space:nowrap}.delcust input{width:16px;height:16px;accent-color:#e53935}
 .carcols{display:inline-flex;gap:6px;align-items:center;padding:0 6px}.carcol{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.5);cursor:pointer;padding:0}.carcol:hover,.carcol:focus{border-color:#fff;transform:scale(1.15)}
 .chy-run{align-self:stretch;position:relative;overflow:hidden;min-width:220px;line-height:1}
 .cyrun{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line2,#2a3150);display:flex;flex-direction:column;gap:8px}
@@ -1270,13 +1271,17 @@ $("#dvSave").addEventListener("click", async () => {
 $("#dvResetKey").addEventListener("click", () => confirmIn("#dvConfirm", t("TV a ap resevwa yon nouvo Device Key pwochen fwa l konekte. Itilize sa sèlman si kliyan an chanje aparèy oswa reyenstale sistèm nan."), t("Reyinisyalize"), async () => {
   try { await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { resetDeviceKey: true }); selectDevice(dev.mac); } catch (err) { setMsg($("#dvMsg"), err.message); }
 }));
-$("#dvDelete").addEventListener("click", () => confirmIn("#dvConfirm", t("Aparèy la ak tout playlist li yo ap efase. TV a ap retounen sou ekran aktivasyon an."), t("Efase"), async () => {
-  try { await api("DELETE", `/galaxy/devices/${encodeURIComponent(dev.mac)}`); dev = null; $("#deviceView").hidden = true; $("#mac").value = ""; loadDevices(); toast("Aparèy la efase"); } catch (err) { setMsg($("#dvMsg"), err.message); }
-}));
-function confirmIn(sel, text, yes, fn) {
-  const box = $(sel); box.innerHTML = `<div class="confirm"><span>${esc(text)}</span><button class="btn small" data-no type="button">${t("Non")}</button><button class="btn small danger" data-yes type="button">${esc(yes)}</button></div>`;
-  $("[data-no]", box).onclick = () => (box.innerHTML = ""); $("[data-yes]", box).onclick = () => { box.innerHTML = ""; fn(); };
+$("#dvDelete").addEventListener("click", () => confirmIn("#dvConfirm", t("Aparèy la ak tout playlist li yo ap efase. TV a ap retounen sou ekran aktivasyon an."), t("Efase"), async (delC) => {
+  try { const r = await api("DELETE", delPath(dev.mac, delC)); dev = null; $("#deviceView").hidden = true; $("#mac").value = ""; loadDevices(); delToast(r); } catch (err) { setMsg($("#dvMsg"), err.message); }
+}, delCustHtml(dev?.customer)));
+function confirmIn(sel, text, yes, fn, extra = "") {
+  const box = $(sel); box.innerHTML = `<div class="confirm"><span>${esc(text)}</span>${extra}<button class="btn small" data-no type="button">${t("Non")}</button><button class="btn small danger" data-yes type="button">${esc(yes)}</button></div>`;
+  $("[data-no]", box).onclick = () => (box.innerHTML = ""); $("[data-yes]", box).onclick = () => { const delC = !!box.querySelector("[data-delcust]")?.checked; box.innerHTML = ""; fn(delC); };
 }
+/** Kaz "Efase kliyan an tou" lè w ap efase yon TV ki gen yon kliyan. */
+const delCustHtml = (name) => name ? `<label class="delcust"><input type="checkbox" data-delcust> ${esc(t("Efase kliyan \"{0}\" tou", name))}</label>` : "";
+const delPath = (mac, delC) => `/galaxy/devices/${encodeURIComponent(mac)}${delC ? "?customer=1" : ""}`;
+const delToast = (r) => toast(r && r.customerDeleted ? t("Aparèy la ak kliyan \"{0}\" efase", r.customerDeleted) : t("Aparèy la efase"));
 
 // playlist
 $("#plForm").addEventListener("submit", async (e) => {
@@ -1410,9 +1415,10 @@ $("#devTable").addEventListener("click", async (e) => {
   }
   if (act === "delete") {
     $$("#devTable .confirmrow").forEach((r) => r.remove());
-    row.insertAdjacentHTML("afterend", `<tr class="confirmrow"><td colspan="8"><div class="confirm"><span>${esc(t("Efase aparèy {0}? Tout playlist li yo ap efase.", label))}</span><button class="btn small" data-no type="button">${t("Non")}</button><button class="btn small red" data-yes type="button">${t("Efase l")}</button></div></td></tr>`);
+    const dc = mac ? devicesCache.find((d) => d.mac === mac)?.customer : "";
+    row.insertAdjacentHTML("afterend", `<tr class="confirmrow"><td colspan="9"><div class="confirm"><span>${esc(t("Efase aparèy {0}? Tout playlist li yo ap efase.", label))}</span>${delCustHtml(dc)}<button class="btn small" data-no type="button">${t("Non")}</button><button class="btn small red" data-yes type="button">${t("Efase l")}</button></div></td></tr>`);
     const c = row.nextElementSibling; $("[data-no]", c).onclick = () => c.remove();
-    $("[data-yes]", c).onclick = async () => { try { await api("DELETE", path.del); if (dev && dev.mac === mac) { dev = null; $("#deviceView").hidden = true; $("#mac").value = ""; } toast("Aparèy la efase"); loadDevices(); } catch (err) { toast(err.message); } };
+    $("[data-yes]", c).onclick = async () => { const delC = !!c.querySelector("[data-delcust]")?.checked; try { const r = await api("DELETE", mac ? delPath(mac, delC) : path.del); if (dev && dev.mac === mac) { dev = null; $("#deviceView").hidden = true; $("#mac").value = ""; } delToast(r); loadDevices(); } catch (err) { toast(err.message); } };
   }
 });
 /** Konekte yon aparèy DVC (ansyen panel la) ak TV Galaxy ki gen MAC la: kopye non, kliyan ak limit, epi retire DVC a. */

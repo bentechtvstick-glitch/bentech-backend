@@ -585,13 +585,21 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const device = loadDevice(req, res);
     if (!device) return;
     const mac = device.mac;
+    // ?customer=1 → efase kliyan TV a tou (sèlman si okenn lòt TV pa sèvi ak li)
+    let custGone = "";
+    if (req.query.customer === "1") {
+      const c = customerOf(device);
+      const others = c && data().devices.some((d) => d !== device && d.customer && (same(d.customer, c.name) || d.customer === c.id));
+      if (c && !others) { data().customers = (data().customers || []).filter((x) => x !== c); custGone = c.name || c.id || ""; }
+    }
     data().devices = data().devices.filter((d) => d !== device);
     delete data().devicePlaylists[mac];
     delete data().deviceChannels[mac];
     pruneChannelLists();
     if (!data().deletedDevices.includes(mac)) data().deletedDevices.push(mac);
     await db.write();
-    auditLog("device-delete", `Device ${mac} deleted`, admin(req));
+    auditLog("device-delete", `Device ${mac} deleted${custGone ? ` (customer ${custGone} deleted too)` : ""}`, admin(req));
+    if (custGone) return res.json({ ok: true, customerDeleted: custGone });
     res.status(204).end();
   });
 

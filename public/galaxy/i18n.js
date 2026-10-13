@@ -932,6 +932,8 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Kamyon": ["Truck", "Camion", "Camión"],
     "Lapolis": ["Police", "Police", "Policía"],
     "Anbilans": ["Ambulance", "Ambulance", "Ambulancia"],
+    "Efase kliyan \"{0}\" tou": ["Also delete customer \"{0}\"", "Supprimer aussi le client \"{0}\"", "Eliminar también el cliente \"{0}\""],
+    "Aparèy la ak kliyan \"{0}\" efase": ["Device and customer \"{0}\" deleted", "Appareil et client \"{0}\" supprimés", "Dispositivo y cliente \"{0}\" eliminados"],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],
