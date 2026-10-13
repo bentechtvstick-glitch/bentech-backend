@@ -82,6 +82,9 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     const mac = device.mac;
     const b = req.body || {};
     const prev = live.get(mac);
+    // TV a voye vèsyon app li chak fwa: panel la toujou montre vèsyon ki enstale kounye a (apre yon mizajou)
+    const av = String(b.appVersion || "").trim().slice(0, 20);
+    if (/^\d+\.\d+\.\d+/.test(av) && device.appVersion !== av) { device.appVersion = av; db.write().catch(() => {}); }
     const ch = b.channel && typeof b.channel === "object"
       ? {
           id: Number(b.channel.id) || 0,

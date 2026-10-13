@@ -266,6 +266,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     }
 
     device.lastSeenAt = new Date().toISOString();
+    // App 1.0.89+ voye vèsyon li nan chak demann konfig
+    const av = String(req.get("X-App-Version") || "").trim().slice(0, 20);
+    if (/^\d+\.\d+\.\d+/.test(av)) device.appVersion = av;
     touchWrite();
 
     const now = Math.floor(Date.now() / 1000);
