@@ -2385,7 +2385,7 @@ let gxWx = null, gxSaveT = null, gxTickT = null, gxFullT = null, gxWxT = null;
 const gxEls = () => $$('main[data-pane="gfx"] [data-g]');
 // ---- Preview yo: bouton "Agrandi" pou wè yo gwo ----
 $$(".gx-prevcard, .cy-prevcard").forEach((card) => {
-  const head = card.querySelector(".cardhead"); if (!head || head.querySelector(".pvbigbtn")) return;
+  const head = card.querySelector(".cardhead, .brpv-head"); if (!head || head.querySelector(".pvbigbtn")) return;
   const b = document.createElement("button"); b.type = "button"; b.className = "btn small pvbigbtn"; b.textContent = "⛶ " + t("Agrandi");
   b.addEventListener("click", () => {
     const on = !card.classList.contains("pvbig");
@@ -2427,6 +2427,11 @@ function pvBgUpload() {
 }
 try { const sv = JSON.parse(localStorage.getItem("galaxy_pvbg") || "null"); if (sv?.v) setPvBg(sv.v, sv.v === "custom" ? sv.img : undefined); } catch {}
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.querySelector(".pvbig")) document.querySelector(".pvbig .pvbigbtn")?.click(); });
+// Klike sou fon nwa a, oswa ale nan yon lòt modil: apèsi agrandi a fèmen poukont li (paj la pa janm bloke)
+document.addEventListener("click", (e) => {
+  const big = document.querySelector(".pvbig"); if (!big) return;
+  if (!big.contains(e.target)) { big.querySelector(".pvbigbtn")?.click(); if (!e.target.closest("[data-tab]")) { e.preventDefault(); e.stopPropagation(); } }
+}, true);
 // ---- Kaz drapo pou scoreboard la: tout drapo yo, ak non peyi a, epi rechèch ----
 const SB_FLAGS = (() => { const g = (window.GALAXY_SYMBOLS?.groups || []).find((x) => x[1] === "Flags"); return g ? g[2].filter((f) => /^[\u{1F1E6}-\u{1F1FF}]{2}$/u.test(f)) : []; })();
 const sbFlagCode = (f) => [...f].map((c) => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 65)).join("");
