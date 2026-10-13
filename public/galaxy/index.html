@@ -322,6 +322,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .delcust{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#ffb4b4;cursor:pointer;white-space:nowrap}.delcust input{width:16px;height:16px;accent-color:#e53935}
 .sig{display:inline-flex;align-items:flex-end;gap:2px;height:14px;margin:0 8px;flex:none;vertical-align:middle;cursor:help}.sig i{width:3px;border-radius:1px;background:rgba(255,255,255,.18)}.sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:7px}.sig i:nth-child(3){height:10px}.sig i:nth-child(4){height:13px}
 .sig.s4 i{background:#22c55e}.sig.s3 i:nth-child(-n+3){background:#84cc16}.sig.s2 i:nth-child(-n+2){background:#eab308}.sig.s1 i:nth-child(1){background:#f97316}.sig.s0 i{background:rgba(239,68,68,.35)}.sig.s0 i:nth-child(1){background:#ef4444}
+.custtv{display:inline-flex;align-items:center;gap:5px;font-size:12px;margin-left:6px;white-space:nowrap;color:#9AA3C7}.custtv i{width:8px;height:8px;border-radius:50%;background:#6b7280}.custtv.on{color:#4ade80}.custtv.on i{background:#22c55e;box-shadow:0 0 6px #22c55e}.custtv.none{opacity:.6}
 .sig.sig-l{margin:0 6px 0 0}
 .sigleg{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.sigleg .sig{margin:0 4px 0 10px}
 .carcols{display:inline-flex;gap:6px;align-items:center;padding:0 6px}.carcol{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.5);cursor:pointer;padding:0}.carcol:hover,.carcol:focus{border-color:#fff;transform:scale(1.15)}
@@ -1522,11 +1523,23 @@ async function loadCrud() {
   } catch (err) { crud.items = []; toast(err.message); }
   renderCrud();
 }
-function cellHtml(f, v) {
+function cellHtml(f, v, it) {
   if (f.type === "bool") return v ? `<span class="pill p-on">${t("Wi")}</span>` : `<span class="pill p-off">${t("Non")}</span>`;
+  // Kliyan: estati a + si TV li konekte kounye a
+  // Kliyan: MAC TV a, menm si se nan paj Aparèy la yo te konekte l
+  if (crud.name === "cust" && f.k === "mac" && it && !v) { const up = (x) => String(x || "").trim().toUpperCase(); const d = (crud.refs?.devices || []).find((x) => x.mac && x.customer && (up(x.customer) === up(it.name) || x.customer === it.id)); return d ? `<span class="mono">${esc(d.mac)}</span>` : "—"; }
+  if (crud.name === "cust" && f.k === "status" && it) return (v ? `<span class="pill ${pillClass(v)}">${esc(v)}</span>` : "—") + custTvHtml(it);
   if (f.pill && v) return `<span class="pill ${pillClass(v)}">${esc(v)}</span>`;
   if (f.type === "datetime") return esc(fmtExp(v)) || "—";
   return esc(v ?? "") || "—";
+}
+/** TV kliyan an: 🟢 konekte / ⚪ pa konekte / pa gen TV. */
+function custTvHtml(c) {
+  const up = (x) => String(x || "").trim().toUpperCase();
+  const d = (crud.refs?.devices || []).find((x) => x.mac && ((c.mac && up(x.mac) === up(c.mac)) || (x.customer && (up(x.customer) === up(c.name) || x.customer === c.id))));
+  if (!d) return ` <span class="custtv none" title="${esc(t("Pa gen TV konekte ak kliyan sa a"))}">${esc(t("Pa gen TV"))}</span>`;
+  const on = String(d.status).toLowerCase() === "online";
+  return ` <span class="custtv ${on ? "on" : "off"}" title="${esc(d.mac)}${d.lastSeen ? " · " + esc(d.lastSeen) : ""}"><i></i>${esc(t(on ? "TV konekte" : "TV pa konekte"))}</span>`;
 }
 // Paj ki ekri an MAJISKIL (Kliyan yo): tout chan tèks yo, sof imèl la
 const isUpper = (C, f) => !!C.upper && !f.noUpper && !f.opts && !f.ref && !f.list && !f.type;
@@ -1536,7 +1549,7 @@ function renderCrud() {
   $("#crudCount").textContent = t("{0} eleman", rows.length);
   const cols = C.fields.filter((f) => !f.hide);
   $("#crudTable").innerHTML = rows.length ? `<table><thead><tr>${cols.map((f) => `<th>${esc(t(f.l))}</th>`).join("")}${C.readonly ? "" : `<th>${t("Aksyon")}</th>`}</tr></thead><tbody>` +
-    capRows("crud", rows).map((it) => `<tr class="${C.readonly ? "" : "click"}" data-row="${esc(it[C.id] ?? "")}">${cols.map((f) => `<td${isUpper(C, f) ? ' class="up"' : ""}>${cellHtml(f, it[f.k])}</td>`).join("")}${C.readonly ? "" : `<td class="acts"><button class="btn small purple" data-edit type="button">${t("Modifye")}</button><button class="btn small red" data-del-row type="button">${t("Efase l")}</button></td>`}</tr>`).join("") + `</tbody></table>` + moreHtml("crud", rows.length)
+    capRows("crud", rows).map((it) => `<tr class="${C.readonly ? "" : "click"}" data-row="${esc(it[C.id] ?? "")}">${cols.map((f) => `<td${isUpper(C, f) ? ' class="up"' : ""}>${cellHtml(f, it[f.k], it)}</td>`).join("")}${C.readonly ? "" : `<td class="acts"><button class="btn small purple" data-edit type="button">${t("Modifye")}</button><button class="btn small red" data-del-row type="button">${t("Efase l")}</button></td>`}</tr>`).join("") + `</tbody></table>` + moreHtml("crud", rows.length)
     : `<div class="empty">${t("Pa gen anyen isit la ankò.")}</div>`;
 }
 /** Dat ekspirasyon pou yon plan, apati kounye a: "Trial" = 24 è, "N Month(s)" = N mwa. Fòma datetime-local. */
