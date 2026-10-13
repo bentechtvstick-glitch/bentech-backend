@@ -245,6 +245,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        healthFlush()
         overlay.stop()
         handler.removeCallbacksAndMessages(null)
         cancelAdBreak()
@@ -310,11 +311,11 @@ class PlayerActivity : AppCompatActivity() {
             val onChannel = !adPlaying && player?.currentMediaItem?.mediaId == "channel"
             handler.removeCallbacks(stallWatch)
             if (onChannel) when (state) {
-                Player.STATE_READY -> { playedOk = true; readyAt = System.currentTimeMillis() }
+                Player.STATE_READY -> { playedOk = true; readyAt = System.currentTimeMillis(); if (hStartMs < 0 && hCh != null) hStartMs = android.os.SystemClock.elapsedRealtime() - hStartAt }
                 // Sèvè a fèmen koneksyon an (yon chanèl an dirèk pa janm "fini" vre)
                 Player.STATE_ENDED -> reconnect()
                 // Bloke sou "ap chaje" twò lontan: relanse koneksyon an
-                Player.STATE_BUFFERING -> if (playedOk) handler.postDelayed(stallWatch, 12_000)
+                Player.STATE_BUFFERING -> if (playedOk) { handler.postDelayed(stallWatch, 12_000); hStalls++ }
             }
         }
 
@@ -385,6 +386,7 @@ class PlayerActivity : AppCompatActivity() {
 
     /** Mesaj erè: yon fraz klè an gwo, detay teknik la an piti epi pal anba l. */
     private fun showPlayError(message: String, detail: String) {
+        hFail = true
         val text = android.text.SpannableString(message + "\n" + detail)
         val from = message.length + 1
         text.setSpan(android.text.style.RelativeSizeSpan(0.5f), from, text.length, 0)
@@ -472,7 +474,7 @@ class PlayerActivity : AppCompatActivity() {
     private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0, alt: Boolean = XtreamApi.preferAlt, stage: Int = 0) {
         val p = player ?: return
         // Nouvo chanèl (pa yon re-eseye): kontè rekoneksyon an rekòmanse
-        if (attempt == 0 && stage == 0) { playedOk = false; reconnects = 0; readyAt = 0L }
+        if (attempt == 0 && stage == 0) { playedOk = false; reconnects = 0; readyAt = 0L; healthBegin(channels[i]) }
         handler.removeCallbacks(stallWatch)
         attempts = attempt
         curMode = mode
@@ -489,6 +491,37 @@ class PlayerActivity : AppCompatActivity() {
         reportStatus()
         setChannel(p, ch, mode, alt)
         showInfo()
+    }
+
+    // ---- Sante chanèl la (pou panel la): konbyen tan li pran pou l kòmanse, konbyen fwa li koupe, si l pa mache ----
+    private var hCh: Channel? = null
+    private var hStartAt = 0L
+    private var hStartMs = -1L
+    private var hStalls = 0
+    private var hFail = false
+
+    private fun healthBegin(ch: Channel) {
+        healthFlush()
+        hCh = ch; hStartAt = android.os.SystemClock.elapsedRealtime(); hStartMs = -1L; hStalls = 0; hFail = false
+    }
+
+    /** Voye mezi chanèl ki t ap jwe a bay panel la (an aryè plan, kliyan an pa wè anyen). */
+    private fun healthFlush() {
+        val ch = hCh ?: return
+        hCh = null
+        if (ch.streamId <= 0) return // evènman ak lyen pa l: pa yon chanèl founisè a
+        val elapsed = android.os.SystemClock.elapsedRealtime() - hStartAt
+        val started = hStartMs >= 0
+        // Kliyan an chanje chanèl anvan l te gen tan kòmanse (zapping): pa mezire anyen
+        if (!started && !hFail && elapsed < 10_000) return
+        val fail = !started
+        val watchSec = if (started) ((elapsed - hStartMs) / 1000).coerceAtLeast(0) else 0
+        val body = org.json.JSONObject()
+            .put("id", ch.streamId).put("name", ch.name)
+            .put("startMs", if (started) hStartMs else -1).put("stalls", hStalls)
+            .put("watchSec", watchSec).put("fail", fail)
+        val api = com.galaxytvstick.app.data.PanelApi(prefs)
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch { runCatching { api.health(body) } }
     }
 
     /** Mete chanèl la nan player a. Pòtal Stalker: mande lyen videyo a anvan (li chanje chak fwa). */

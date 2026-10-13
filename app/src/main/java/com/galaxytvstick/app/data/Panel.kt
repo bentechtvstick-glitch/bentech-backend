@@ -545,6 +545,15 @@ class PanelApi(private val prefs: Prefs) {
         )
     }
 
+    /** Mezi yon chanèl (vitès, koupi, erè) pou siy sante a nan panel la. */
+    suspend fun health(body: JSONObject) {
+        call(
+            Request.Builder().url("$base/devices/${enc(deviceId)}/health")
+                .header("X-Device-Key", prefs.deviceKey)
+                .post(body.toString().toRequestBody(jsonType)).build()
+        )
+    }
+
     suspend fun status(body: JSONObject) {
         call(
             Request.Builder().url("$base/devices/${enc(deviceId)}/status")
