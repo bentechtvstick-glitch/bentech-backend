@@ -933,6 +933,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <div class="card"><div class="list" id="popupList"></div>
         <form id="popupForm" style="display:flex;flex-direction:column;gap:12px">
           <div class="row2"><div class="field"><label for="popTitle">Tit</label><input type="text" id="popTitle" data-emoji></div><div class="field"><label for="popMsg">Mesaj</label><input type="text" id="popMsg" data-emoji></div></div>
+          <div class="field"><label for="popImg">Imaj (opsyonèl)</label><input type="url" id="popImg" placeholder="https://…/pwomo.png"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="popImg">📤 Chwazi yon imaj</button><span class="note" data-upmsg="popImg"></span></div></div>
           <div class="row2"><div class="field"><label for="popStart">Kòmanse</label><input type="datetime-local" id="popStart"></div><div class="field"><label for="popEnd">Fini</label><input type="datetime-local" id="popEnd"></div></div>
           <div class="btns"><button class="btn primary" type="submit">Ajoute pop-up</button></div>
         </form></div>
@@ -1926,8 +1927,8 @@ $("#bannerForm").addEventListener("submit", async (e) => { e.preventDefault(); c
 const localIso = (v) => v || "";
 $("#popupForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const title = $("#popTitle").value.trim(); if (!title) return toast("Mete yon tit.");
-  await api("POST", "/popups", { title, message: $("#popMsg").value.trim(), active: "Yes", start: localIso($("#popStart").value), end: localIso($("#popEnd").value) });
-  ["#popTitle", "#popMsg"].forEach((s) => ($(s).value = "")); loadMessages();
+  await api("POST", "/popups", { title, message: $("#popMsg").value.trim(), imageUrl: $("#popImg").value.trim() || undefined, active: "Yes", start: localIso($("#popStart").value), end: localIso($("#popEnd").value) });
+  ["#popTitle", "#popMsg", "#popImg"].forEach((s) => ($(s).value = "")); loadMessages();
 });
 async function putSettings(patch, msg) { settings = await api("PUT", "/settings", patch); toast(msg); if (tab === "msg") loadMessages(); if (tab === "sys") loadSystem(); }
 $("#bcSend").addEventListener("click", () => { const v = $("#bcText").value.trim(); if (!v) return toast("Ekri mesaj la."); putSettings({ emergencyActive: true, emergencyText: v, emergencySeverity: $("#bcLevel").value }, "Broadcast voye bay tout TV"); });
