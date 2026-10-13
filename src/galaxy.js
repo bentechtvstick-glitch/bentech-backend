@@ -905,6 +905,61 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     return true;
   }
 
+  // ---- Sante chanèl yo: TV yo mezire chak chanèl kliyan yo gade (vitès, koupi, erè) ----
+  /** Kle founisè a (adrès sèvè playlist la): menm chanèl, menm founisè → menm mezi pou tout TV yo. */
+  const healthHost = (mac) => {
+    const pl = playlistsOf(mac)[0];
+    if (!pl) return "";
+    try { return new URL(normServer(pl.server) || String(pl.server || "")).host.toLowerCase(); } catch { return ""; }
+  };
+  /** Mwayèn ki bliye dousman ansyen mezi yo (dènye yo konte plis). */
+  const ema = (old, v, k = 0.3) => (old == null ? v : old * (1 - k) + v * k);
+  /** 0 = pa mache · 1 = fèb · 2 = mwayen · 3 = bon · 4 = fò. */
+  function healthScore(h) {
+    if (!h || !h.n) return null;
+    if (h.fail >= 0.5) return 0;
+    const st = h.start ?? 99999, cut = h.cuts ?? 0; // cuts = koupi pa 10 minit
+    if (st <= 1500 && cut < 0.5 && h.fail < 0.15) return 4;
+    if (st <= 3000 && cut < 1.5 && h.fail < 0.3) return 3;
+    if (st <= 6000 && cut < 4) return 2;
+    return 1;
+  }
+
+  app.post("/api/devices/:mac/health", (req, res) => {
+    ensure();
+    const device = findDevice(normMac(req.params.mac));
+    if (!device) return res.status(404).json({ ok: false });
+    if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) return res.status(403).json({ ok: false });
+    const b = req.body || {};
+    const id = Math.floor(Number(b.id) || 0), host = healthHost(device.mac);
+    if (id <= 0 || !host) return res.json({ ok: true });
+    const all = (data().channelHealth ??= {}), byHost = (all[host] ??= {});
+    const h = (byHost[id] ??= { n: 0 });
+    const fail = b.fail ? 1 : 0, startMs = Number(b.startMs), watch = Math.max(0, Number(b.watchSec) || 0), stalls = Math.max(0, Number(b.stalls) || 0);
+    h.n = (h.n || 0) + 1;
+    h.fail = ema(h.fail, fail);
+    if (!fail && startMs >= 0) h.start = Math.round(ema(h.start, Math.min(startMs, 60000)));
+    // Koupi pa 10 minit (sèlman si kliyan an gade omwen 1 minit, pou yon sèl koupi pa twò lou)
+    if (!fail && watch >= 60) h.cuts = Math.round(ema(h.cuts, (stalls / watch) * 600) * 100) / 100;
+    h.name = String(b.name || h.name || "").slice(0, 120);
+    h.at = Date.now();
+    // Pa kite lis la grandi san fen: retire chanèl pa gen mezi depi 30 jou
+    if (Math.random() < 0.01) for (const [k, v] of Object.entries(byHost)) if (Date.now() - (v.at || 0) > 30 * 86400000) delete byHost[k];
+    touchWrite();
+    res.json({ ok: true });
+  });
+
+  /** Panel la: sante chanèl playlist TV sa a { streamId: { s, start, cuts, fail, n, at } }. */
+  app.get("/api/galaxy/devices/:mac/health", authenticate, (req, res) => {
+    ensure();
+    const device = findDevice(normMac(req.params.mac));
+    if (!device) return res.json({});
+    const byHost = data().channelHealth?.[healthHost(device.mac)] || {};
+    const out = {};
+    for (const [id, h] of Object.entries(byHost)) out[id] = { s: healthScore(h), start: h.start ?? null, cuts: h.cuts ?? null, fail: Math.round((h.fail || 0) * 100), n: h.n, at: h.at };
+    res.json(out);
+  });
+
   /** App la voye dat ekspirasyon kont lan kay founisè a (exp = segonn Unix, 0 = san limit). */
   app.post("/api/devices/:mac/expiry", async (req, res) => {
     ensure();
