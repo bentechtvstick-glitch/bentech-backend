@@ -278,6 +278,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     syncCustomerFromProvider(device).then((c) => { if (c) syncTvs(); }).catch(() => {});
     // Dat TV a te voye a (si sèvè a pa ka kontakte founisè a), oswa dat la fin pase → kliyan an "Expired"
     if (applyProviderExp(device)) touchWrite();
+    if (activateCustomer(device)) { touchWrite(); syncTvs(); }
 
     // ---- Estati ----
     const customer = device.customer
@@ -599,7 +600,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (b.resetDeviceKey) device.deviceKey = ""; // pwochen fwa app la anrejistre, li pran nouvo kle a
     await db.write();
     auditLog("device-update", `Device ${device.mac} updated`, admin(req));
-    if (b.customer !== undefined) await syncCustomerFromProvider(device, { force: true });
+    if (b.customer !== undefined) await syncCustomerFromProvider(device, { force: true }); if (activateCustomer(device)) await db.write();
     syncTvs();
     res.json(adminDevice(device));
   });
@@ -978,6 +979,25 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     res.json(out);
   });
 
+  /**
+   * TV kliyan an konfigire (li gen yon playlist) → kliyan an "Active", sof si li sispann (Suspended)
+   * oswa dat ekspirasyon li fin pase (lè sa a li "Expired"). Retounen true si estati a chanje.
+   */
+  function activateCustomer(device) {
+    const c = customerOf(device);
+    if (!c || !device?.mac) return false;
+    const cur = String(c.status || "");
+    if (cur.toLowerCase() === "suspended") return false;
+    const exp = c.expiry ? toEpochSec(c.expiry, tz(), true) : 0;
+    let next = cur;
+    if (exp > 0 && exp < Date.now() / 1000) next = "Expired";
+    else if (playlistsOf(device.mac).length) next = "Active";
+    if (next === cur) return false;
+    c.status = next;
+    auditLog("customer-status", `Customer ${c.name || c.id}: ${cur || "—"} → ${next} (TV ${device.mac})`, "system");
+    return true;
+  }
+
   /** App la voye dat ekspirasyon kont lan kay founisè a (exp = segonn Unix, 0 = san limit). */
   app.post("/api/devices/:mac/expiry", async (req, res) => {
     ensure();
@@ -1102,7 +1122,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const pl = playlistsOf(device.mac).find((p) => p.id === req.params.id);
     if (!pl) return res.status(404).json({ ok: false, error: "Playlist pa jwenn" });
     const out = await playlistTest(pl);
-    if (out.ok) { await syncCustomerFromProvider(device, { force: true }); syncTvs(); }
+    if (out.ok) { await syncCustomerFromProvider(device, { force: true }); if (activateCustomer(device)) await db.write(); syncTvs(); }
     auditLog("playlist-test", `Playlist "${pl.name}" on ${device.mac}: ${out.ok ? out.status : out.error}`, admin(req));
     res.json(out);
   });
@@ -1150,7 +1170,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     data().deletedDevices = data().deletedDevices.filter((m) => m !== device.mac);
     await db.write();
     auditLog("playlist-add", `Playlist "${playlist.name}" added to ${device.mac}`, admin(req));
-    await syncCustomerFromProvider(device, { force: true });
+    await syncCustomerFromProvider(device, { force: true }); if (activateCustomer(device)) await db.write();
     syncTvs();
     const { password: _pw, ...safe } = playlist;
     res.status(201).json({ ok: true, playlist: safe, device: adminDevice(device) });
@@ -1169,7 +1189,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (req.body?.server === "") pl.server = "";
     if (pl.server && plType(pl) === "xtream") pl.server = normServer(pl.server);
     await db.write();
-    await syncCustomerFromProvider(device, { force: true });
+    await syncCustomerFromProvider(device, { force: true }); if (activateCustomer(device)) await db.write();
     syncTvs();
     auditLog("playlist-update", `Playlist "${pl.name}" updated on ${device.mac}`, admin(req));
     res.json(adminDevice(device));
