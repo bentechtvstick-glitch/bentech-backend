@@ -258,6 +258,15 @@ main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
 /* Ti reflè sou ekran an pou l sanble yon vrè TV */
 .cystage::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.06),transparent 38%);z-index:9}
 .pvbigbtn{margin-left:auto}
+/* Fon apèsi yo (admin nan chwazi l; estad la pa defo) */
+.pvbgsel{margin-left:auto;width:auto!important;padding:5px 8px!important;font-size:12px}
+.pvbgsel + .pvbigbtn{margin-left:8px}
+body[data-pvbg="news"] .cytv{background:radial-gradient(ellipse at 28% 22%,#2a5bd7 0,transparent 55%),radial-gradient(ellipse at 82% 72%,#b5172f 0,transparent 50%),linear-gradient(180deg,#0b1d4a,#05070f)!important}
+body[data-pvbg="movie"] .cytv{background:radial-gradient(ellipse at 70% 30%,#7a3b1d 0,transparent 55%),linear-gradient(135deg,#1b0f2e,#2d1515 55%,#0a0a0a)!important}
+body[data-pvbg="nature"] .cytv{background:linear-gradient(180deg,#5aa9e6 0%,#a7d8f0 52%,#4c9a3f 53%,#1f5f22 100%)!important}
+body[data-pvbg="white"] .cytv{background:linear-gradient(180deg,#f4f6fa,#d9dee8)!important}
+body[data-pvbg="black"] .cytv{background:#000!important}
+body[data-pvbg="custom"] .cytv{background:#000 var(--pvbg-img) center/cover no-repeat!important}
 .pvbig{position:fixed!important;inset:3vh 3vw;z-index:90;overflow:auto;display:flex;flex-direction:column;justify-content:flex-start;top:3vh!important;background:rgba(6,8,14,.96)!important;backdrop-filter:blur(6px)}
 .pvbig .cystage{width:min(calc(94vw - 80px),calc(74vh * 16 / 9))!important;max-width:none!important;margin:14px auto 18px!important;flex:none}
 body.pvbig-on::before{content:"";position:fixed;inset:0;z-index:89;background:rgba(0,0,0,.6)}
@@ -2385,8 +2394,35 @@ $$(".gx-prevcard, .cy-prevcard").forEach((card) => {
     b.textContent = on ? "✕ " + t("Fèmen") : "⛶ " + t("Agrandi");
     $$(".pvbigbtn").forEach((x) => { if (x !== b) x.textContent = "⛶ " + t("Agrandi"); });
   });
-  head.style.display = "flex"; head.style.alignItems = "center"; head.appendChild(b);
+  // Chwazi fon apèsi a (pou wè grafik yo sou yon imaj ki sanble ak sa kliyan an ap gade)
+  const sel = document.createElement("select"); sel.className = "pvbgsel"; sel.title = t("Fon apèsi a");
+  sel.innerHTML = [["stadium", "🏟️ " + t("Estad")], ["news", "📰 " + t("Nouvèl")], ["movie", "🎬 " + t("Fim")], ["nature", "🌳 " + t("Lanati")], ["white", "⬜ " + t("Blan")], ["black", "⬛ " + t("Nwa")], ["custom", "🖼️ " + t("Imaj pa m…")]]
+    .map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join("");
+  sel.addEventListener("change", () => { if (sel.value === "custom") { pvBgUpload(); return; } setPvBg(sel.value); });
+  head.style.display = "flex"; head.style.alignItems = "center"; head.appendChild(sel); head.appendChild(b);
 });
+function setPvBg(v, img) {
+  document.body.dataset.pvbg = v;
+  if (img) document.body.style.setProperty("--pvbg-img", `url("${img.replace(/"/g, "%22")}")`);
+  $$(".pvbgsel").forEach((x) => (x.value = v));
+  try { localStorage.setItem("galaxy_pvbg", JSON.stringify({ v, img: img || (v === "custom" ? JSON.parse(localStorage.getItem("galaxy_pvbg") || "{}").img : "") })); } catch {}
+}
+// "Imaj pa m": chwazi yon imaj sou aparèy la (rete nan navigatè a sèlman, pa voye l sou sèvè a)
+function pvBgUpload() {
+  const f = Object.assign(document.createElement("input"), { type: "file", accept: "image/*" });
+  f.addEventListener("change", () => {
+    const file = f.files[0]; if (!file) { setPvBg(document.body.dataset.pvbg || "stadium"); return; }
+    const r = new FileReader();
+    r.onload = () => { const im = new Image(); im.onload = () => {
+      // Redwi imaj la (960 px) pou l pa plen memwa navigatè a
+      const c = document.createElement("canvas"); const k = Math.min(1, 960 / im.width); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); setPvBg("custom", c.toDataURL("image/jpeg", 0.85)); };
+      im.src = r.result; };
+    r.readAsDataURL(file);
+  });
+  f.click();
+}
+try { const sv = JSON.parse(localStorage.getItem("galaxy_pvbg") || "null"); if (sv?.v) setPvBg(sv.v, sv.v === "custom" ? sv.img : undefined); } catch {}
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.querySelector(".pvbig")) document.querySelector(".pvbig .pvbigbtn")?.click(); });
 // ---- Kaz drapo pou scoreboard la: tout drapo yo, ak non peyi a, epi rechèch ----
 const SB_FLAGS = (() => { const g = (window.GALAXY_SYMBOLS?.groups || []).find((x) => x[1] === "Flags"); return g ? g[2].filter((f) => /^[\u{1F1E6}-\u{1F1FF}]{2}$/u.test(f)) : []; })();
