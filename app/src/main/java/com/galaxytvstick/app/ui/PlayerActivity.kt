@@ -311,7 +311,7 @@ class PlayerActivity : AppCompatActivity() {
             val onChannel = !adPlaying && player?.currentMediaItem?.mediaId == "channel"
             handler.removeCallbacks(stallWatch)
             if (onChannel) when (state) {
-                Player.STATE_READY -> { playedOk = true; readyAt = System.currentTimeMillis(); if (hStartMs < 0 && hCh != null) hStartMs = android.os.SystemClock.elapsedRealtime() - hStartAt }
+                Player.STATE_READY -> { playedOk = true; readyAt = System.currentTimeMillis(); healthStarted() }
                 // Sèvè a fèmen koneksyon an (yon chanèl an dirèk pa janm "fini" vre)
                 Player.STATE_ENDED -> reconnect()
                 // Bloke sou "ap chaje" twò lontan: relanse koneksyon an
@@ -386,7 +386,7 @@ class PlayerActivity : AppCompatActivity() {
 
     /** Mesaj erè: yon fraz klè an gwo, detay teknik la an piti epi pal anba l. */
     private fun showPlayError(message: String, detail: String) {
-        hFail = true
+        healthFailed()
         val text = android.text.SpannableString(message + "\n" + detail)
         val from = message.length + 1
         text.setSpan(android.text.style.RelativeSizeSpan(0.5f), from, text.length, 0)
@@ -494,34 +494,55 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     // ---- Sante chanèl la (pou panel la): konbyen tan li pran pou l kòmanse, konbyen fwa li koupe, si l pa mache ----
+    // Voye touswit: "start" lè l kòmanse jwe, "fail" lè l pa mache, "watch" (koupi yo) lè kliyan an kite chanèl la.
     private var hCh: Channel? = null
     private var hStartAt = 0L
     private var hStartMs = -1L
     private var hStalls = 0
     private var hFail = false
+    private var hFailSent = false
 
     private fun healthBegin(ch: Channel) {
         healthFlush()
-        hCh = ch; hStartAt = android.os.SystemClock.elapsedRealtime(); hStartMs = -1L; hStalls = 0; hFail = false
+        hCh = ch; hStartAt = android.os.SystemClock.elapsedRealtime(); hStartMs = -1L; hStalls = 0; hFail = false; hFailSent = false
     }
 
-    /** Voye mezi chanèl ki t ap jwe a bay panel la (an aryè plan, kliyan an pa wè anyen). */
+    private fun healthSend(ch: Channel, kind: String, fill: org.json.JSONObject.() -> Unit) {
+        if (ch.streamId <= 0) return // evènman ak lyen pa l: pa yon chanèl founisè a
+        val body = org.json.JSONObject().put("id", ch.streamId).put("name", ch.name).put("kind", kind).apply(fill)
+        val api = com.galaxytvstick.app.data.PanelApi(prefs)
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch { runCatching { api.health(body) } }
+    }
+
+    /** Chanèl la fèk kòmanse jwe: voye vitès la touswit. */
+    private fun healthStarted() {
+        val ch = hCh ?: return
+        if (hStartMs >= 0) return
+        hStartMs = android.os.SystemClock.elapsedRealtime() - hStartAt
+        healthSend(ch, "start") { put("startMs", hStartMs) }
+    }
+
+    /** Chanèl la pa mache (mesaj erè a parèt). */
+    private fun healthFailed() {
+        val ch = hCh ?: return
+        hFail = true
+        if (hStartMs >= 0 || hFailSent) return
+        hFailSent = true
+        healthSend(ch, "fail") { put("fail", true) }
+    }
+
+    /** Kliyan an kite chanèl la: voye konbyen fwa li te koupe (si l gade omwen 1 minit). */
     private fun healthFlush() {
         val ch = hCh ?: return
         hCh = null
-        if (ch.streamId <= 0) return // evènman ak lyen pa l: pa yon chanèl founisè a
         val elapsed = android.os.SystemClock.elapsedRealtime() - hStartAt
-        val started = hStartMs >= 0
-        // Kliyan an chanje chanèl anvan l te gen tan kòmanse (zapping): pa mezire anyen
-        if (!started && !hFail && elapsed < 10_000) return
-        val fail = !started
-        val watchSec = if (started) ((elapsed - hStartMs) / 1000).coerceAtLeast(0) else 0
-        val body = org.json.JSONObject()
-            .put("id", ch.streamId).put("name", ch.name)
-            .put("startMs", if (started) hStartMs else -1).put("stalls", hStalls)
-            .put("watchSec", watchSec).put("fail", fail)
-        val api = com.galaxytvstick.app.data.PanelApi(prefs)
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch { runCatching { api.health(body) } }
+        if (hStartMs < 0) {
+            // Li pa janm kòmanse: konte l kòm "pa mache" si kliyan an te tann omwen 10 s
+            if (!hFailSent && elapsed >= 10_000) healthSend(ch, "fail") { put("fail", true) }
+            return
+        }
+        val watchSec = ((elapsed - hStartMs) / 1000).coerceAtLeast(0)
+        if (watchSec >= 60) healthSend(ch, "watch") { put("stalls", hStalls); put("watchSec", watchSec) }
     }
 
     /** Mete chanèl la nan player a. Pòtal Stalker: mande lyen videyo a anvan (li chanje chak fwa). */
