@@ -75,6 +75,8 @@
 .gfx-car .cw{transform-box:fill-box;transform-origin:center;animation:gfxCarWheel .4s linear infinite}
 .gfx-car .cs line{animation:gfxCarSpeed .33s linear infinite}.gfx-car .cs line:nth-child(2){animation-delay:-.11s}.gfx-car .cs line:nth-child(3){animation-delay:-.22s}
 @keyframes gfxCarBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-.7px)}}
+.gfx-car .vb{animation:gfxVB .5s steps(1) infinite}.gfx-car .vb1{animation-delay:-.25s}
+@keyframes gfxVB{0%{fill:#E53935}50%{fill:#1E88E5}}
 @keyframes gfxCarWheel{to{transform:rotate(-360deg)}}
 @keyframes gfxCarSpeed{from{transform:translateX(0);opacity:.8}to{transform:translateX(6px);opacity:0}}
 @media (prefers-reduced-motion:reduce){.fx{animation:none!important}}`;
@@ -82,21 +84,25 @@
     const st = document.createElement("style"); st.id = "gfx-css"; st.textContent = css; document.head.appendChild(st);
   }
 
-  /** Machin desine (pa yon imoji): "car:E50914" → koulè a. Menm desen ak app TV a (ui/CarFx.kt). */
-  const carColor = (s) => { const m = /^car:#?([0-9a-f]{6})$/i.exec(String(s || "").trim()); return m ? "#" + m[1] : null; };
-  function carSvg(color) {
-    const wheel = (cx) => `<g class="cw"><circle cx="${cx}" cy="31" r="8" fill="#111"/><circle cx="${cx}" cy="31" r="4.6" fill="#C9CED6"/>`
-      + [0, 60, 120].map((a) => `<line x1="${cx - 4.4}" y1="31" x2="${cx + 4.4}" y2="31" stroke="#555" stroke-width="1.4" stroke-linecap="round" transform="rotate(${a} ${cx} 31)"/>`).join("")
-      + `<circle cx="${cx}" cy="31" r="1.5" fill="#555"/></g>`;
-    return `<svg class="gfx-car" viewBox="0 0 122 44" aria-hidden="true"><ellipse cx="56" cy="41" rx="46" ry="2.5" fill="rgba(0,0,0,.35)"/>`
-      + `<g class="cs" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><line x1="109" y1="12" x2="116" y2="12"/><line x1="109" y1="20" x2="115" y2="20"/><line x1="109" y1="27" x2="114" y2="27"/></g>`
-      + `<g class="cb"><path fill="${color}" d="M8 31C4 31 3 28 3.5 25L5 21C6 18.5 9 17.5 13 17L30 15L40 6C42 4.5 44 4 47 4L72 4C75 4 77 5 79 7L88 15L101 16.5C105 17 107 19 107 23L107 28C107 30 106 31 103 31Z"/>`
-      + `<path fill="#BFE6FF" opacity=".9" d="M33 15L42 7.5L55 7.5L55 15ZM59 15L59 7.5L72 7.5C74 7.5 75 8 76 9L82 15Z"/>`
-      + `<rect x="3.5" y="21" width="5" height="3" rx="1" fill="#FFE066"/><rect x="104" y="19" width="3" height="4" fill="#FF3B3B"/>`
-      + `<path d="M8 22L104 22" stroke="rgba(255,255,255,.25)"/><path d="M57 16L57 29" stroke="rgba(0,0,0,.25)"/></g>`
-      + wheel(26) + wheel(86) + `</svg>`;
+  /** Machin desine (pa yon imoji): "car:E50914", "bus:FFC107"… → kalite + koulè. Menm desen ak app TV a (ui/CarFx.kt, menm SPEC). */
+  const VEH = {"car":{"w":108,"wheels":[26,86],"parts":[["B",1,"M8 31C4 31 3 28 3.5 25L5 21C6 18.5 9 17.5 13 17L30 15L40 6C42 4.5 44 4 47 4L72 4C75 4 77 5 79 7L88 15L101 16.5C105 17 107 19 107 23L107 28C107 30 106 31 103 31Z"],["#BFE6FF",0.9,"M33 15L42 7.5L55 7.5L55 15ZM59 15L59 7.5L72 7.5C74 7.5 75 8 76 9L82 15Z"],["#FFE066",1,"M4.5 21H8.5V24H3.5Z"],["#FF3B3B",1,"M104 19H107V23H104Z"],["#FFFFFF",0.25,"M8 21.5H104V22.5H8Z"],["#000000",0.25,"M56.5 16H57.5V29H56.5Z"]]},"race":{"w":111,"wheels":[26,88],"parts":[["B",1,"M6 31C3 31 2 29 2.5 27L4 24C5 22 8 21 12 20.5L34 18L46 11C48 10 50 9.5 53 9.5L70 9.5C74 9.5 77 11 80 13L92 18L104 17L107 14L111 14L111 28C111 30 110 31 107 31Z"],["#BFE6FF",0.9,"M40 18L49 12.5L60 12.5L60 18ZM63 18L63 12.5L70 12.5C73 12.5 75 13.5 77 15L80 18Z"],["#FFFFFF",0.85,"M5 24H108V26H5Z"],["#FFE066",1,"M3.5 24.5H8.5V27H3.5Z"],["#FF3B3B",1,"M107 19H111V23H107Z"]]},"bus":{"w":141,"wheels":[28,116],"parts":[["B",1,"M6 31C3 31 2 29 2 27L2 6C2 3 4 1 7 1L136 1C139 1 140 3 140 6L140 28C140 30 139 31 137 31Z"],["#BFE6FF",0.9,"M4 4H15V17H4ZM32 4H45V15H32ZM47 4H60V15H47ZM62 4H75V15H62ZM77 4H90V15H77ZM92 4H105V15H92ZM107 4H120V15H107ZM122 4H135V15H122Z"],["#000000",0.28,"M18 4H28V29H18Z"],["#FFFFFF",0.6,"M2 19H140V21.5H2Z"],["#FFE066",1,"M2 23H6V26H2Z"],["#FF3B3B",1,"M137 20H140V25H137Z"]]},"truck":{"w":140,"wheels":[20,100,122],"parts":[["#ECEFF1",1,"M35 2L136 2C138 2 139 3 139 5L139 29C139 30 138 31 137 31L35 31Z"],["B",1,"M7 31C4 31 3 29 3 27L3 18C3 16 4 14 6 13L10 7C11 5 13 4 16 4L30 4C32 4 33 5 33 7L33 31Z"],["B",1,"M35 22H139V25H35Z"],["#BFE6FF",0.9,"M8 14L12 7.5L28 7.5L28 14Z"],["#FFE066",1,"M3 21H7V24H3Z"],["#FF3B3B",1,"M136 24H139V29H136Z"]]},"police":{"w":108,"wheels":[26,86],"parts":[["B",1,"M8 31C4 31 3 28 3.5 25L5 21C6 18.5 9 17.5 13 17L30 15L40 6C42 4.5 44 4 47 4L72 4C75 4 77 5 79 7L88 15L101 16.5C105 17 107 19 107 23L107 28C107 30 106 31 103 31Z"],["#FFFFFF",0.95,"M30 21H84V30H30Z"],["#BFE6FF",0.9,"M33 15L42 7.5L55 7.5L55 15ZM59 15L59 7.5L72 7.5C74 7.5 75 8 76 9L82 15Z"],["#111111",1,"M48 3H64V4.5H48Z"],["#FFE066",1,"M4.5 21H8.5V24H3.5Z"],["#FF3B3B",1,"M104 19H107V23H104Z"],["#FFFFFF",0.25,"M8 21.5H104V22.5H8Z"],["#000000",0.25,"M56.5 16H57.5V29H56.5Z"]],"blink":["M49 0H56V3.5H49Z","M56 0H63V3.5H56Z"]},"ambulance":{"w":108,"wheels":[24,88],"parts":[["B",1,"M7 31C4 31 3 29 3 27L3 19C3 17 4 15 6 14L14 6C15 4.5 17 4 20 4L104 4C106 4 107 5 107 7L107 28C107 30 106 31 104 31Z"],["#BFE6FF",0.9,"M8 15L15 8L28 8L28 15Z"],["#E53935",1,"M3 19H107V22H3Z"],["#E53935",1,"M62 7h5v4h4v5h-4v4h-5v-4h-4v-5h4Z"],["#FFE066",1,"M3 23H7V26H3Z"],["#FF3B3B",1,"M104 20H107V25H104Z"]],"blink":["M28 0.5H34V4H28Z","M34 0.5H40V4H34Z"]}};
+  const VEH_DEF = {"car": "E50914", "race": "FFC107", "bus": "FFC107", "truck": "1565C0", "police": "222222", "ambulance": "F5F5F5"};
+  const vehOf = (s) => { const m = /^(car|race|bus|truck|police|ambulance):#?([0-9a-f]{6})$/i.exec(String(s || "").trim()); return m ? { type: m[1].toLowerCase(), color: "#" + m[2] } : null; };
+  const carColor = (s) => vehOf(s)?.color || null;
+  function vehSvg(type, color) {
+    const v = VEH[type] || VEH.car, w = v.w, cy = 31;
+    const wheel = (cx) => `<g class="cw"><circle cx="${cx}" cy="${cy}" r="8" fill="#111"/><circle cx="${cx}" cy="${cy}" r="4.6" fill="#C9CED6"/>`
+      + [0, 60, 120].map((a) => `<line x1="${cx - 4.4}" y1="${cy}" x2="${cx + 4.4}" y2="${cy}" stroke="#555" stroke-width="1.4" stroke-linecap="round" transform="rotate(${a} ${cx} ${cy})"/>`).join("")
+      + `<circle cx="${cx}" cy="${cy}" r="1.5" fill="#555"/></g>`;
+    const parts = v.parts.map(([f, o, d]) => `<path fill="${f === "B" ? color : f}"${o < 1 ? ` opacity="${o}"` : ""} d="${d}"/>`).join("")
+      + (v.blink || []).map((d, i) => `<path class="vb vb${i}" d="${d}"/>`).join("");
+    return `<svg class="gfx-car" viewBox="0 0 ${w + 14} 44" aria-hidden="true"><ellipse cx="${w / 2}" cy="41" rx="${w / 2 - 6}" ry="2.5" fill="rgba(0,0,0,.35)"/>`
+      + `<g class="cs" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><line x1="${w + 2}" y1="12" x2="${w + 9}" y2="12"/><line x1="${w + 2}" y1="20" x2="${w + 8}" y2="20"/><line x1="${w + 2}" y1="27" x2="${w + 7}" y2="27"/></g>`
+      + `<g class="cb">${parts}</g>` + v.wheels.map(wheel).join("") + `</svg>`;
   }
+  const carSvg = (color) => vehSvg("car", color);
   const CAR_COLORS = [["Wouj", "E50914"], ["Ble", "1565C0"], ["Jòn", "FFC107"], ["Vèt", "00C853"], ["Nwa", "222222"], ["Blan", "F5F5F5"], ["Mov", "7C4DFF"]];
+  const VEH_NAMES = { car: "Machin", race: "Machin kous", bus: "Otobis", truck: "Kamyon", police: "Lapolis", ambulance: "Anbilans" };
 
   /** Mete yon "runner" (egz: 🏎️💨) k ap travèse ba a. dir = "left" (dwat → gòch) oswa "right". */
   function runner(box, r, dir, pxPerSec) {
@@ -107,8 +113,8 @@
     const toRight = dir === "right";
     // Imoji machin yo gade agoch: nou vire yo lè yo kouri adwat (flip envèse sa)
     const flip = toRight !== !!r.flip;
-    const car = carColor(r.emoji);
-    el.innerHTML = car ? `<span class="${flip ? "flip" : ""}">${carSvg(car)}</span>`
+    const car = vehOf(r.emoji);
+    el.innerHTML = car ? `<span class="${flip ? "flip" : ""}">${vehSvg(car.type, car.color)}</span>`
       : `<span class="${flip ? "flip" : ""}"><span class="fx fx-${first(r.emoji)}">${esc(r.emoji)}</span></span>`;
     box.appendChild(el);
     const W = box.clientWidth, w = el.offsetWidth || 40;
@@ -117,5 +123,5 @@
     el.style.animation = `gfxRunL ${Math.max(1.5, (W + w) / pxPerSec)}s linear infinite`;
   }
 
-  window.GalaxyFx = { fxOf, html, first, runner, GROUPS, carColor, carSvg, CAR_COLORS };
+  window.GalaxyFx = { fxOf, html, first, runner, GROUPS, carColor, carSvg, vehOf, vehSvg, VEH_DEF, VEH_NAMES, CAR_COLORS };
 })();

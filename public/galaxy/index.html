@@ -319,6 +319,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .chy.pos-bottom-center .chy-body,.chy.pos-top-center .chy-body{text-align:center;border-left:0;border-bottom:4px solid var(--acc);justify-content:center;padding:8px 26px 9px}
 .chy-stk{flex:none;line-height:1;display:inline-block}
 .carchip{padding:4px 8px}.carchip .gfx-car{height:18px}.carchip .gfx-car *{animation:none!important}
+.carcols{display:inline-flex;gap:6px;align-items:center;padding:0 6px}.carcol{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.5);cursor:pointer;padding:0}.carcol:hover,.carcol:focus{border-color:#fff;transform:scale(1.15)}
 .chy-run{align-self:stretch;position:relative;overflow:hidden;min-width:220px;line-height:1}
 .cyrun{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line2,#2a3150);display:flex;flex-direction:column;gap:8px}
 .chy-logo{width:44px;height:44px;border-radius:6px;object-fit:contain;background:rgba(255,255,255,.1);flex:none}
@@ -2153,6 +2154,7 @@ const CY_STICKERS = ["🇭🇹", "🔴", "⚽", "🏆", "🏎️", "🔥", "📢
 $("#cyStickers").innerHTML = CY_STICKERS.map((x) => `<button type="button" class="chip" data-stk="${esc(x)}">${window.GalaxyFx ? GalaxyFx.html(x) : esc(x)}</button>`).join("") + `<button type="button" class="chip" data-stk="">${esc(t("Okenn"))}</button>`;
 $("#cyRunPresets").innerHTML = carChips("cyrun") + ["🏎️💨", "🚗💨", "🚓", "🚑", "🏍️💨", "🚚", "🚌", "🚀", "✈️", "🐎", "⚽", "🇭🇹"].map((x) => `<button type="button" class="chip" data-cyrun="${esc(x)}">${window.GalaxyFx ? GalaxyFx.html(x) : esc(x)}</button>`).join("");
 $("#cyRunPresets").addEventListener("click", (e) => { const b = e.target.closest("[data-cyrun]"); if (!b) return; $("#cyRun").value = b.dataset.cyrun; $("#cyRunOn").checked = true; cyLabels(); cyPreview(false); });
+$("#cyRunPresets").addEventListener("pickveh", (e) => { $("#cyRun").value = e.detail; $("#cyRunOn").checked = true; cyLabels(); cyPreview(false); });
 $("#cyStickers").addEventListener("click", (e) => { const b = e.target.closest("[data-stk]"); if (!b) return; $("#cySticker").value = b.dataset.stk; cyPreview(true); });
 $("#cyForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const c = cyRead();
@@ -2282,9 +2284,22 @@ const FX_LEGEND = [["🇭🇹", "Drapo flote"], ["🏎️", "Machin kouri"], ["�
 function renderFxLegend() { $("#tkFxLegend").innerHTML = FX_LEGEND.map(([e, n]) => `<div>${window.GalaxyFx ? GalaxyFx.html(e) : esc(e)}<span>${esc(t(n))}</span></div>`).join(""); }
 renderFxLegend();
 const RUN_PRESETS = ["🏎️💨", "🚗💨", "🚓", "🚑", "🏍️💨", "🚚", "🚀", "✈️", "🚁", "🐎", "🏃", "⚽", "🇭🇹", "🦅", "🐬", "🎉"];
-function carChips(attr) { return (window.GalaxyFx ? GalaxyFx.CAR_COLORS : []).map(([n, c]) => `<button type="button" class="chip carchip" data-${attr}="car:${c}" title="${esc(t("Machin desine"))} — ${esc(t(n))}">${GalaxyFx.carSvg("#" + c)}</button>`).join(""); }
+/** Machin desine yo: yon bouton pou chak kalite (machin, otobis, kamyon…), epi koulè yo chanje koulè sa ki chwazi a. */
+function carChips(attr) {
+  const F = window.GalaxyFx; if (!F) return "";
+  return Object.entries(F.VEH_DEF).map(([k, c]) => `<button type="button" class="chip carchip" data-${attr}="${k}:${c}" title="${esc(t(F.VEH_NAMES[k]))}">${F.vehSvg(k, "#" + c)}</button>`).join("")
+    + `<span class="carcols" data-colfor="${attr}">${F.CAR_COLORS.map(([n, c]) => `<button type="button" class="carcol" data-col="${c}" title="${esc(t(n))}" style="background:#${c}"></button>`).join("")}</span>`;
+}
+/** Klike yon koulè: chanje koulè machin desine ki nan chan an (oswa pran yon machin si se te yon imoji). */
+document.addEventListener("click", (e) => {
+  const b = e.target.closest(".carcol"); if (!b) return;
+  const attr = b.parentElement.dataset.colfor, inp = $(attr === "run" ? "#tkRun" : "#cyRun");
+  const v = window.GalaxyFx?.vehOf(inp.value), type = v ? v.type : "car";
+  b.closest(".chips").dispatchEvent(new CustomEvent("pickveh", { detail: `${type}:${b.dataset.col}` }));
+});
 $("#tkRunPresets").innerHTML = carChips("run") + RUN_PRESETS.map((x) => `<button type="button" class="chip" data-run="${esc(x)}">${window.GalaxyFx ? GalaxyFx.html(x) : esc(x)}</button>`).join("");
 $("#tkRunPresets").addEventListener("click", (e) => { const b = e.target.closest("[data-run]"); if (!b) return; $("#tkRun").value = b.dataset.run; $("#tkRunOn").checked = true; updateTkLabels(); renderTkPreview(); scheduleTkSave(); });
+$("#tkRunPresets").addEventListener("pickveh", (e) => { $("#tkRun").value = e.detail; $("#tkRunOn").checked = true; updateTkLabels(); renderTkPreview(); scheduleTkSave(); });
 
 // ------------------------------------------------------------ Evènman
 async function loadEvents() {
