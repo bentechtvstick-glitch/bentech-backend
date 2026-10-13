@@ -941,7 +941,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) return res.status(403).json({ ok: false });
     const b = req.body || {};
     const id = Math.floor(Number(b.id) || 0), host = healthHost(device.mac);
-    if (id <= 0 || !host) return res.json({ ok: true });
+    // Dyagnostik pou panel la: kilè TV sa a te voye dènye mezi a
+    device.healthAt = new Date().toISOString(); device.healthCount = (device.healthCount || 0) + 1;
+    device.healthLast = id <= 0 ? "id" : !host ? "host" : "ok";
+    if (id <= 0 || !host) { touchWrite(); return res.json({ ok: true }); }
     const all = (data().channelHealth ??= {}), byHost = (all[host] ??= {});
     const h = (byHost[id] ??= { n: 0 });
     const fail = b.fail ? 1 : 0, startMs = Number(b.startMs), watch = Math.max(0, Number(b.watchSec) || 0), stalls = Math.max(0, Number(b.stalls) || 0);

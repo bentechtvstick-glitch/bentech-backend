@@ -1665,8 +1665,11 @@ async function loadChannels() {
   chHealthUi();
   // Siy sante yo bezwen app 1.0.88+ sou TV a
   const av = String(dev.appVersion || "").split(".").map(Number), oldApp = !dev.appVersion || (av[0] * 1e6 + (av[1] || 0) * 1e3 + (av[2] || 0)) < 1000088;
-  $("#chHealthNote").hidden = !oldApp;
-  $("#chHealthNote").textContent = t("TV sa a gen app {0}. Mete l ajou nan 1.0.88 oswa pi nouvo pou ti ba siyal 📶 yo kòmanse mache.", dev.appVersion || "?");
+  $("#chHealthNote").hidden = false;
+  const nMes = Object.values(chState.health).filter((h) => h.s != null).length;
+  $("#chHealthNote").textContent = oldApp ? t("TV sa a gen app {0}. Mete l ajou nan 1.0.88 oswa pi nouvo pou ti ba siyal 📶 yo kòmanse mache.", dev.appVersion || "?")
+    : dev.healthAt ? t("📶 Dènye mezi TV sa a voye: {0} ({1} an tout). {2} chanèl gen siy.", ago(Date.parse(dev.healthAt)), dev.healthCount || 0, nMes)
+    : t("📶 TV sa a (app {0}) poko voye okenn mezi. Louvri yon chanèl plen ekran sou TV a, tann li kòmanse, epi rechaje paj sa a.", dev.appVersion);
   chComputeDups(); chDupUi();
   $("#chProfile").innerHTML = `<option value="">${t("Tout chanèl")}</option>` + profiles.map((p) => `<option value="${esc(p.name)}"${p.name === dev.channelProfile ? " selected" : ""}>${p.pkg ? "📦 " : ""}${esc(p.name)}${p.channels ? " " + t("({0} chanèl)", p.channels) : ""}</option>`).join("");
   $("#chMax").value = dev.maxChannels || 0; $("#chBody").hidden = false; setMsg($("#chMsg"), ""); chLoadState();
