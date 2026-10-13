@@ -266,17 +266,13 @@ class EpgActivity : AppCompatActivity() {
                 b.preview.player = it
                 it.addListener(previewListener)
             }
-        val cmd = ch.directUrl?.takeIf { it.startsWith(com.galaxytvstick.app.data.Stalker.PREFIX) }
+        val cmd = ch.directUrl?.takeIf { com.galaxytvstick.app.data.StreamResolver.needsResolve(it) }
         if (cmd == null) { p.setMediaItem(PlayerActivity.buildItem(api, ch)); p.prepare(); p.playWhenReady = true; return }
-        // Pòtal Stalker: mande lyen videyo a anvan
+        // Pòtal Stalker oswa paj YouTube live: chèche vre lyen videyo a anvan
         val seq = ++previewSeq
         val acc = prefs.account ?: return
         lifecycleScope.launch {
-            val url = runCatching {
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    com.galaxytvstick.app.data.Stalker.forAccount(acc).createLink(cmd.removePrefix(com.galaxytvstick.app.data.Stalker.PREFIX))
-                }
-            }.getOrNull() ?: return@launch
+            val url = runCatching { com.galaxytvstick.app.data.StreamResolver.resolve(acc, cmd) }.getOrNull() ?: return@launch
             if (seq != previewSeq || player !== p) return@launch
             p.setMediaItem(PlayerActivity.buildItem(api, ch.copy(directUrl = url))); p.prepare(); p.playWhenReady = true
         }

@@ -226,7 +226,7 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
         val ad = prerollAd
-        val stalkerCh = channels.getOrNull(index)?.directUrl?.startsWith(com.galaxytvstick.app.data.Stalker.PREFIX) == true
+        val stalkerCh = com.galaxytvstick.app.data.StreamResolver.needsResolve(channels.getOrNull(index)?.directUrl)
         if (ad != null && ad.type == "video" && !stalkerCh) {
             playPreroll(ad)
         } else {
@@ -494,19 +494,16 @@ class PlayerActivity : AppCompatActivity() {
     /** Mete chanèl la nan player a. Pòtal Stalker: mande lyen videyo a anvan (li chanje chak fwa). */
     private var resolveSeq = 0
     private fun setChannel(p: ExoPlayer, ch: Channel, mode: Int, alt: Boolean) {
-        val cmd = ch.directUrl?.takeIf { it.startsWith(com.galaxytvstick.app.data.Stalker.PREFIX) }
+        // Pòtal Stalker oswa paj YouTube live: chèche vre lyen videyo a anvan
+        val cmd = ch.directUrl?.takeIf { com.galaxytvstick.app.data.StreamResolver.needsResolve(it) }
         if (cmd == null) { p.setMediaItem(channelItem(ch, mode, alt)); p.prepare(); p.playWhenReady = true; return }
         val seq = ++resolveSeq
         val acc = prefs.account ?: return
         lifecycleScope.launch {
-            val url = runCatching {
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    com.galaxytvstick.app.data.Stalker.forAccount(acc).createLink(cmd.removePrefix(com.galaxytvstick.app.data.Stalker.PREFIX))
-                }
-            }
+            val url = runCatching { com.galaxytvstick.app.data.StreamResolver.resolve(acc, cmd) }
             if (seq != resolveSeq || player !== p) return@launch
             url.onSuccess { u -> p.setMediaItem(channelItem(ch.copy(directUrl = u), mode, alt)); p.prepare(); p.playWhenReady = true }
-                .onFailure { b.errorText.text = it.message; b.errorText.visibility = View.VISIBLE }
+                .onFailure { showPlayError(getString(R.string.stream_unavailable), "v${BuildConfig.VERSION_NAME} · ${it.message}"); lastError = it.message.orEmpty(); reportStatus() }
         }
     }
 
