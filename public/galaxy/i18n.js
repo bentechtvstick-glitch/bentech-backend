@@ -955,6 +955,7 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "fèb": ["weak", "faible", "débil"],
     "pa mache": ["not working", "ne marche pas", "no funciona"],
     "poko gen done": ["no data yet", "pas encore de données", "aún sin datos"],
+    "TV sa a gen app {0}. Mete l ajou nan 1.0.88 oswa pi nouvo pou ti ba siyal 📶 yo kòmanse mache.": ["This TV has app {0}. Update it to 1.0.88 or newer so the 📶 signal bars start working.", "Cette TV a l'app {0}. Mettez-la à jour en 1.0.88 ou plus pour que les barres 📶 fonctionnent.", "Este TV tiene la app {0}. Actualícela a 1.0.88 o superior para que las barras 📶 funcionen."],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],

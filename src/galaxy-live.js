@@ -10,7 +10,7 @@ import express from "express";
 import { deviceIndex, gzipStatic } from "./perf.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { normMac } from "./galaxy.js";
+import { normMac, plHost, healthView } from "./galaxy.js";
 
 const ONLINE_MS = 75_000;           // TV a "online" si li pale ak sèvè a nan dènye 75 segonn yo
 const COMMAND_TTL_MS = 2 * 60_000;  // yon kòmand TV a pa resevwa nan 2 minit anile
@@ -161,6 +161,11 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       configured: (db.data.devicePlaylists?.[mac] || []).length > 0,
       live: live.get(mac) || null,
       pendingCommands: pendingFor(mac).length,
+      // Sante chanèl TV a ap gade a (📶)
+      health: (() => {
+        const id = live.get(mac)?.channel?.id, pl = (db.data.devicePlaylists?.[mac] || [])[0];
+        return id && pl ? healthView(db.data.channelHealth?.[plHost(pl.server)]?.[id]) : null;
+      })(),
     };
   };
 

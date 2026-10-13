@@ -322,6 +322,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .delcust{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#ffb4b4;cursor:pointer;white-space:nowrap}.delcust input{width:16px;height:16px;accent-color:#e53935}
 .sig{display:inline-flex;align-items:flex-end;gap:2px;height:14px;margin:0 8px;flex:none;vertical-align:middle;cursor:help}.sig i{width:3px;border-radius:1px;background:rgba(255,255,255,.18)}.sig i:nth-child(1){height:4px}.sig i:nth-child(2){height:7px}.sig i:nth-child(3){height:10px}.sig i:nth-child(4){height:13px}
 .sig.s4 i{background:#22c55e}.sig.s3 i:nth-child(-n+3){background:#84cc16}.sig.s2 i:nth-child(-n+2){background:#eab308}.sig.s1 i:nth-child(1){background:#f97316}.sig.s0 i{background:rgba(239,68,68,.35)}.sig.s0 i:nth-child(1){background:#ef4444}
+.sig.sig-l{margin:0 6px 0 0}
 .sigleg{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.sigleg .sig{margin:0 4px 0 10px}
 .carcols{display:inline-flex;gap:6px;align-items:center;padding:0 6px}.carcol{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.5);cursor:pointer;padding:0}.carcol:hover,.carcol:focus{border-color:#fff;transform:scale(1.15)}
 .chy-run{align-self:stretch;position:relative;overflow:hidden;min-width:220px;line-height:1}
@@ -619,6 +620,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="inline" style="margin-top:6px"><button class="btn small" id="chReload" type="button">🔄 Rechaje lis chanèl yo</button><button class="btn small" id="chDupBtn" type="button">🔁 Chanèl doub</button><button class="btn small" id="chWeakBtn" type="button">📶 Chanèl fèb</button><button class="btn small red" id="chDupHide" type="button" hidden>Kache doub yo (kenbe youn)</button><span class="note" id="chDupNote"></span></div>
         <p class="note">Etenn bouton yon gwoup pou kache tout chanèl li yo ak yon sèl klik. Klike sou non gwoup la pou wè chanèl li yo. Kreyon an (✎) chanje non yon gwoup oswa yon chanèl.</p>
         <p class="note sigleg"><span>📶 = sante chanèl la, selon sa TV kliyan yo mezire lè yo gade l:</span> <span class="sig s4"><i></i><i></i><i></i><i></i></span> fò <span class="sig s3"><i></i><i></i><i></i><i></i></span> bon <span class="sig s2"><i></i><i></i><i></i><i></i></span> mwayen <span class="sig s1"><i></i><i></i><i></i><i></i></span> fèb <span class="sig s0"><i></i><i></i><i></i><i></i></span> pa mache <span class="sig"><i></i><i></i><i></i><i></i></span> poko gen done</p>
+        <div class="pkgnote" id="chHealthNote" hidden></div>
         <p class="note" id="chCount"></p>
         <div class="chlist" id="chList"></div>
       </div>
@@ -1177,7 +1179,7 @@ function renderLive() {
       ${screenHtml(d, false)}
       <div class="meta"><div class="n"><span>${esc(d.deviceName && d.deviceName !== d.model ? d.deviceName : d.model ? devType(d.model) : t("Aparèy"))}</span>${d.blocked ? `<span class="pill p-bad">${t("Bloke")}</span>` : d.configured === false ? `<span class="pill p-off">${t("Pa konfigire")}</span>` : d.online ? `<span class="pill p-on">${t("Online")}</span>` : `<span class="pill p-off">${t("Offline")}</span>`}</div>
         <div class="m">${esc(d.mac)}</div>
-        <div class="note">${d.customer ? esc(d.customer) + " · " : ""}${d.online && d.live?.channel ? esc(t("Sou chanèl sa a depi {0}", ago(d.live.since))) : d.live?.playlistName ? esc(t("Playlist: {0}", d.live.playlistName)) : ""}</div></div>
+        <div class="note">${d.online && d.live?.channel ? sigHtml(d.health).replace('class="sig', 'class="sig sig-l') : ""}${d.customer ? esc(d.customer) + " · " : ""}${d.online && d.live?.channel ? esc(t("Sou chanèl sa a depi {0}", ago(d.live.since))) : d.live?.playlistName ? esc(t("Playlist: {0}", d.live.playlistName)) : ""}</div></div>
     </button>`).join("") + moreHtml("live", items.length) : `<div class="empty">${onlyOn ? t("Pa gen TV online kounye a.") : t("Pa gen aparèy.")}</div>`);
 }
 $("#liveFilter").addEventListener("input", () => { caps.live = CAP; renderLive(); });
@@ -1661,6 +1663,10 @@ async function loadChannels() {
   dev = fresh;
   chState = { chs, profiles, open: new Set(), edit: null, dupOnly: false, health: health || {}, weakOnly: false };
   chHealthUi();
+  // Siy sante yo bezwen app 1.0.88+ sou TV a
+  const av = String(dev.appVersion || "").split(".").map(Number), oldApp = !dev.appVersion || (av[0] * 1e6 + (av[1] || 0) * 1e3 + (av[2] || 0)) < 1000088;
+  $("#chHealthNote").hidden = !oldApp;
+  $("#chHealthNote").textContent = t("TV sa a gen app {0}. Mete l ajou nan 1.0.88 oswa pi nouvo pou ti ba siyal 📶 yo kòmanse mache.", dev.appVersion || "?");
   chComputeDups(); chDupUi();
   $("#chProfile").innerHTML = `<option value="">${t("Tout chanèl")}</option>` + profiles.map((p) => `<option value="${esc(p.name)}"${p.name === dev.channelProfile ? " selected" : ""}>${p.pkg ? "📦 " : ""}${esc(p.name)}${p.channels ? " " + t("({0} chanèl)", p.channels) : ""}</option>`).join("");
   $("#chMax").value = dev.maxChannels || 0; $("#chBody").hidden = false; setMsg($("#chMsg"), ""); chLoadState();

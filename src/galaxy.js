@@ -25,6 +25,26 @@ export function normMac(value = "") {
 }
 
 /** "2 min ago" / "Online" kalkile an dirèk apati lastSeenAt. */
+// ---- Sante chanèl yo (pataje ak galaxy-live.js) ----
+/** Adrès founisè a (host) pou yon sèvè playlist: kle mezi sante chanèl yo. */
+export function plHost(server) {
+  const s = String(server || "").trim();
+  if (!s) return "";
+  try { return new URL(/^[a-z][\w+.-]*:\/\//i.test(s) ? s : "http://" + s).host.toLowerCase(); } catch { return ""; }
+}
+/** 0 = pa mache · 1 = fèb · 2 = mwayen · 3 = bon · 4 = fò · null = poko gen done. */
+export function healthScore(h) {
+  if (!h || !h.n) return null;
+  if (h.fail >= 0.5) return 0;
+  const st = h.start ?? 99999, cut = h.cuts ?? 0; // cuts = koupi pa 10 minit
+  if (st <= 1500 && cut < 0.5 && h.fail < 0.15) return 4;
+  if (st <= 3000 && cut < 1.5 && h.fail < 0.3) return 3;
+  if (st <= 6000 && cut < 4) return 2;
+  return 1;
+}
+/** Sa panel la montre pou yon chanèl. */
+export const healthView = (h) => (h ? { s: healthScore(h), start: h.start ?? null, cuts: h.cuts ?? null, fail: Math.round((h.fail || 0) * 100), n: h.n, at: h.at } : null);
+
 export function presentDevice(d) {
   if (!d || !d.lastSeenAt) return d;
   const ms = Date.now() - Date.parse(d.lastSeenAt);
@@ -909,21 +929,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   /** Kle founisè a (adrès sèvè playlist la): menm chanèl, menm founisè → menm mezi pou tout TV yo. */
   const healthHost = (mac) => {
     const pl = playlistsOf(mac)[0];
-    if (!pl) return "";
-    try { return new URL(normServer(pl.server) || String(pl.server || "")).host.toLowerCase(); } catch { return ""; }
+    return pl ? plHost(pl.server) : "";
   };
   /** Mwayèn ki bliye dousman ansyen mezi yo (dènye yo konte plis). */
   const ema = (old, v, k = 0.3) => (old == null ? v : old * (1 - k) + v * k);
-  /** 0 = pa mache · 1 = fèb · 2 = mwayen · 3 = bon · 4 = fò. */
-  function healthScore(h) {
-    if (!h || !h.n) return null;
-    if (h.fail >= 0.5) return 0;
-    const st = h.start ?? 99999, cut = h.cuts ?? 0; // cuts = koupi pa 10 minit
-    if (st <= 1500 && cut < 0.5 && h.fail < 0.15) return 4;
-    if (st <= 3000 && cut < 1.5 && h.fail < 0.3) return 3;
-    if (st <= 6000 && cut < 4) return 2;
-    return 1;
-  }
 
   app.post("/api/devices/:mac/health", (req, res) => {
     ensure();
@@ -936,9 +945,12 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const all = (data().channelHealth ??= {}), byHost = (all[host] ??= {});
     const h = (byHost[id] ??= { n: 0 });
     const fail = b.fail ? 1 : 0, startMs = Number(b.startMs), watch = Math.max(0, Number(b.watchSec) || 0), stalls = Math.max(0, Number(b.stalls) || 0);
-    h.n = (h.n || 0) + 1;
-    h.fail = ema(h.fail, fail);
-    if (!fail && startMs >= 0) h.start = Math.round(ema(h.start, Math.min(startMs, 60000)));
+    // App 1.0.88+: "start" (li kòmanse), "fail" (li pa mache), "watch" (koupi yo lè kliyan an kite chanèl la)
+    if (b.kind !== "watch") {
+      h.n = (h.n || 0) + 1;
+      h.fail = ema(h.fail, fail);
+      if (!fail && startMs >= 0) h.start = Math.round(ema(h.start, Math.min(startMs, 60000)));
+    }
     // Koupi pa 10 minit (sèlman si kliyan an gade omwen 1 minit, pou yon sèl koupi pa twò lou)
     if (!fail && watch >= 60) h.cuts = Math.round(ema(h.cuts, (stalls / watch) * 600) * 100) / 100;
     h.name = String(b.name || h.name || "").slice(0, 120);
@@ -956,7 +968,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (!device) return res.json({});
     const byHost = data().channelHealth?.[healthHost(device.mac)] || {};
     const out = {};
-    for (const [id, h] of Object.entries(byHost)) out[id] = { s: healthScore(h), start: h.start ?? null, cuts: h.cuts ?? null, fail: Math.round((h.fail || 0) * 100), n: h.n, at: h.at };
+    for (const [id, h] of Object.entries(byHost)) out[id] = healthView(h);
     res.json(out);
   });
 
