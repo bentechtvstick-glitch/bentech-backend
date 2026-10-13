@@ -70,10 +70,33 @@
 .gfx-runner{position:absolute;top:50%;left:0;pointer-events:none;z-index:2;white-space:nowrap;will-change:transform}
 .gfx-runner>.flip{display:inline-block;transform:scaleX(-1)}
 @keyframes gfxRunL{from{transform:translate(var(--from),-50%)}to{transform:translate(var(--to),-50%)}}
+.gfx-car{display:block;height:1.15em;width:auto;overflow:visible}
+.gfx-car .cb{animation:gfxCarBob .3s ease-in-out infinite}
+.gfx-car .cw{transform-box:fill-box;transform-origin:center;animation:gfxCarWheel .4s linear infinite}
+.gfx-car .cs line{animation:gfxCarSpeed .33s linear infinite}.gfx-car .cs line:nth-child(2){animation-delay:-.11s}.gfx-car .cs line:nth-child(3){animation-delay:-.22s}
+@keyframes gfxCarBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-.7px)}}
+@keyframes gfxCarWheel{to{transform:rotate(-360deg)}}
+@keyframes gfxCarSpeed{from{transform:translateX(0);opacity:.8}to{transform:translateX(6px);opacity:0}}
 @media (prefers-reduced-motion:reduce){.fx{animation:none!important}}`;
   if (typeof document !== "undefined" && !document.getElementById("gfx-css")) {
     const st = document.createElement("style"); st.id = "gfx-css"; st.textContent = css; document.head.appendChild(st);
   }
+
+  /** Machin desine (pa yon imoji): "car:E50914" → koulè a. Menm desen ak app TV a (ui/CarFx.kt). */
+  const carColor = (s) => { const m = /^car:#?([0-9a-f]{6})$/i.exec(String(s || "").trim()); return m ? "#" + m[1] : null; };
+  function carSvg(color) {
+    const wheel = (cx) => `<g class="cw"><circle cx="${cx}" cy="31" r="8" fill="#111"/><circle cx="${cx}" cy="31" r="4.6" fill="#C9CED6"/>`
+      + [0, 60, 120].map((a) => `<line x1="${cx - 4.4}" y1="31" x2="${cx + 4.4}" y2="31" stroke="#555" stroke-width="1.4" stroke-linecap="round" transform="rotate(${a} ${cx} 31)"/>`).join("")
+      + `<circle cx="${cx}" cy="31" r="1.5" fill="#555"/></g>`;
+    return `<svg class="gfx-car" viewBox="0 0 122 44" aria-hidden="true"><ellipse cx="56" cy="41" rx="46" ry="2.5" fill="rgba(0,0,0,.35)"/>`
+      + `<g class="cs" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><line x1="109" y1="12" x2="116" y2="12"/><line x1="109" y1="20" x2="115" y2="20"/><line x1="109" y1="27" x2="114" y2="27"/></g>`
+      + `<g class="cb"><path fill="${color}" d="M8 31C4 31 3 28 3.5 25L5 21C6 18.5 9 17.5 13 17L30 15L40 6C42 4.5 44 4 47 4L72 4C75 4 77 5 79 7L88 15L101 16.5C105 17 107 19 107 23L107 28C107 30 106 31 103 31Z"/>`
+      + `<path fill="#BFE6FF" opacity=".9" d="M33 15L42 7.5L55 7.5L55 15ZM59 15L59 7.5L72 7.5C74 7.5 75 8 76 9L82 15Z"/>`
+      + `<rect x="3.5" y="21" width="5" height="3" rx="1" fill="#FFE066"/><rect x="104" y="19" width="3" height="4" fill="#FF3B3B"/>`
+      + `<path d="M8 22L104 22" stroke="rgba(255,255,255,.25)"/><path d="M57 16L57 29" stroke="rgba(0,0,0,.25)"/></g>`
+      + wheel(26) + wheel(86) + `</svg>`;
+  }
+  const CAR_COLORS = [["Wouj", "E50914"], ["Ble", "1565C0"], ["Jòn", "FFC107"], ["Vèt", "00C853"], ["Nwa", "222222"], ["Blan", "F5F5F5"], ["Mov", "7C4DFF"]];
 
   /** Mete yon "runner" (egz: 🏎️💨) k ap travèse ba a. dir = "left" (dwat → gòch) oswa "right". */
   function runner(box, r, dir, pxPerSec) {
@@ -84,7 +107,9 @@
     const toRight = dir === "right";
     // Imoji machin yo gade agoch: nou vire yo lè yo kouri adwat (flip envèse sa)
     const flip = toRight !== !!r.flip;
-    el.innerHTML = `<span class="${flip ? "flip" : ""}"><span class="fx fx-${first(r.emoji)}">${esc(r.emoji)}</span></span>`;
+    const car = carColor(r.emoji);
+    el.innerHTML = car ? `<span class="${flip ? "flip" : ""}">${carSvg(car)}</span>`
+      : `<span class="${flip ? "flip" : ""}"><span class="fx fx-${first(r.emoji)}">${esc(r.emoji)}</span></span>`;
     box.appendChild(el);
     const W = box.clientWidth, w = el.offsetWidth || 40;
     el.style.setProperty("--from", (toRight ? -w : W) + "px");
@@ -92,5 +117,5 @@
     el.style.animation = `gfxRunL ${Math.max(1.5, (W + w) / pxPerSec)}s linear infinite`;
   }
 
-  window.GalaxyFx = { fxOf, html, first, runner, GROUPS };
+  window.GalaxyFx = { fxOf, html, first, runner, GROUPS, carColor, carSvg, CAR_COLORS };
 })();
