@@ -80,7 +80,7 @@ class TickerView @JvmOverloads constructor(
     private var runnerFx = Fx.DRIVE
     private var runnerX = Float.NaN
     /** Koulè machin desine a (runner = "car:RRGGBB"), oswa null pou yon imoji. */
-    private var runnerCar: Int? = null
+    private var runnerCar: CarFx.Vehicle? = null
     private var runnerPx = 3f
 
     fun setTicker(t: Ticker, parseColor: (String, Int) -> Int) {
@@ -225,7 +225,7 @@ class TickerView @JvmOverloads constructor(
         val car = runnerCar
         if (car != null) {
             val ch = minOf(runnerPaint.textSize * 1.2f, h * 0.92f)
-            val rw = ch * CarFx.RATIO
+            val rw = ch * car.ratio
             val toRight = t.direction == "right"
             if (runnerX.isNaN()) runnerX = if (toRight) -rw else areaW
             canvas.save()

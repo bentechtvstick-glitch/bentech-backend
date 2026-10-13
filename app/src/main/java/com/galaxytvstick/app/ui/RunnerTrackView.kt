@@ -56,7 +56,7 @@ class RunnerTrackView(
     override fun onDraw(canvas: Canvas) {
         val w = width.toFloat(); if (w <= 0f) return
         val carH = height * 0.92f
-        val rw = if (car != null) carH * CarFx.RATIO else layout.width.toFloat()
+        val rw = if (car != null) carH * car.ratio else layout.width.toFloat()
         val now = SystemClock.uptimeMillis()
         if (x.isNaN()) { x = if (toRight) -rw else w; last = now }
         val dt = (now - last).coerceIn(0L, 100L); last = now
