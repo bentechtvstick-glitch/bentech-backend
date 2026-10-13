@@ -462,7 +462,8 @@ class PanelApi(private val prefs: Prefs) {
     private val jsonType = "application/json; charset=utf-8".toMediaType()
 
     private suspend fun call(req: Request): String = withContext(Dispatchers.IO) {
-        XtreamApi.http.newCall(req).execute().use { r ->
+        // Vèsyon app la nan chak demann: panel la toujou konnen vèsyon ki enstale sou TV a
+        XtreamApi.http.newCall(req.newBuilder().header("X-App-Version", BuildConfig.VERSION_NAME).build()).execute().use { r ->
             if (!r.isSuccessful) throw IOException("Panel HTTP ${r.code}")
             r.body?.string() ?: ""
         }
