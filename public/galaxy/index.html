@@ -562,6 +562,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="kv"><span>Device Key</span><b class="mono" id="dvKey" style="font-size:18px;letter-spacing:.12em"></b></div>
             <div class="kv"><span>Modèl</span><span id="dvModel"></span></div>
             <div class="kv"><span>Vèsyon app</span><span id="dvVersion"></span></div>
+            <div class="kv"><span>Ekspirasyon</span><span id="dvExp"></span></div>
             <div class="field"><label for="dvName">Non aparèy la</label><input type="text" id="dvName"></div>
             <div class="field"><label for="dvCity">Vil (pou meteyo sou TV sa a)</label><input type="text" id="dvCity" maxlength="30" placeholder="Egz: Miami"><span class="note" id="dvGeo"></span></div>
             <div class="row2"><div class="field"><label for="dvCustomer">Kliyan</label><select id="dvCustomer"></select></div>
@@ -1207,7 +1208,7 @@ async function selectDevice(mac, jump) {
 }
 function renderDevice() {
   $("#dvMac").textContent = dev.mac; $("#dvKey").textContent = dev.deviceKey || t("— (ap tann TV a)"); $("#dvModel").textContent = dev.model ? `${devType(dev.model)} · ${dev.model}` : "—";
-  $("#dvVersion").textContent = dev.appVersion || "—"; $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : ""; $("#dvBlocked").checked = !!dev.blocked; $("#dvLimit").value = dev.limit ?? 1;
+  $("#dvVersion").textContent = dev.appVersion || "—"; $("#dvExp").innerHTML = devExpHtml(dev); $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : ""; $("#dvBlocked").checked = !!dev.blocked; $("#dvLimit").value = dev.limit ?? 1;
   $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${String(c.name).toUpperCase() === String(dev.customer || "").toUpperCase() ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
   $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span> <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
 }
@@ -1365,6 +1366,7 @@ const shortId = (d) => d.galaxy ? (d.deviceId && d.deviceId !== d.mac ? d.device
 async function loadDevices() {
   let devices; try { devices = await api("GET", "/galaxy/devices"); setDot("#hDb", true, "Database Online", "Database Offline"); }
   catch { setDot("#hDb", false, "Database Online", "Database Offline"); return; }
+  customers = await list("customers").catch(() => customers); // pou kolòn Ekspirasyon an
   devicesCache = devices; updateBell(); renderDevTable();
 }
 function renderDevTable() {
@@ -1372,14 +1374,14 @@ function renderDevTable() {
   const devices = q ? all.filter((d) => [d.mac, d.deviceId, d.deviceName, d.customer, d.model, ...(d.playlists || []).map((p) => p.name)].join(" ").toLowerCase().includes(q)) : all;
   $("#devCount").textContent = t("{0} eleman", devices.length);
   const on = new Map((liveData?.devices || []).map((d) => [d.mac, d]));
-  setHtml($("#devTable"), devices.length ? `<table><thead><tr><th>${t("MAC Address")}</th><th>Device ID</th><th>${t("Tip")}</th><th>${t("Estati")}</th><th>${t("Provider")}</th><th>${t("Dènye fwa")}</th><th>${t("Limit")}</th><th>${t("Aksyon")}</th></tr></thead><tbody>` +
+  setHtml($("#devTable"), devices.length ? `<table><thead><tr><th>${t("MAC Address")}</th><th>Device ID</th><th>${t("Tip")}</th><th>${t("Estati")}</th><th>${t("Provider")}</th><th>${t("Ekspirasyon")}</th><th>${t("Dènye fwa")}</th><th>${t("Limit")}</th><th>${t("Aksyon")}</th></tr></thead><tbody>` +
     capRows("dev", devices).map((d) => {
       const l = d.galaxy ? on.get(d.mac) : null;
       const online = l ? l.online : String(d.status).toLowerCase() === "online";
       const st = d.blocked ? `<span class="st-block">${t("Bloke")}</span>` : !(d.playlists || []).length ? `<span class="st-off" title="${esc(t("Pa konfigire"))}">—</span>` : `<span class="${online ? "st-on" : "st-off"}">${t(online ? "Online" : "Offline")}</span>`;
       const key = d.galaxy ? `data-mac="${esc(d.mac)}"` : `data-id="${esc(d.deviceId)}"`;
       return `<tr class="click${dev && d.galaxy && dev.mac === d.mac ? " sel" : ""}" ${key}><td class="mono">${d.galaxy ? esc(d.mac) : "-"}</td><td>${esc(shortId(d))}</td><td>${esc(d.model ? devType(d.model) : (d.type || "Android TV"))}</td><td>${st}</td>
-        <td>${d.playlists.map((p) => esc(p.name)).join(", ") || t("Pa konfigire")}</td><td>${esc(d.lastSeen || "—")}</td><td>${esc(d.limit ?? 1)}</td>
+        <td>${d.playlists.map((p) => esc(p.name)).join(", ") || t("Pa konfigire")}</td><td>${d.galaxy ? devExpHtml(d) : "—"}</td><td>${esc(d.lastSeen || "—")}</td><td>${esc(d.limit ?? 1)}</td>
         <td class="acts"><button class="btn purple" data-act="provider" type="button">${t("Ajoute provider")}</button><button class="btn ${d.blocked ? "red" : "green"}" data-act="${d.blocked ? "activate" : "block"}" type="button" title="${esc(t(d.blocked ? "Klike pou aktive aparèy la" : "Klike pou dezaktive aparèy la"))}">${t(d.blocked ? "Dezaktive" : "Aktif")}</button><button class="btn red" data-act="delete" type="button">${t("Efase l")}</button></td></tr>`;
     }).join("") + `</tbody></table>` + moreHtml("dev", devices.length)
     : `<div class="empty">${q ? t("Pa gen anyen ki koresponn.") : t("Pa gen aparèy Galaxy ankò. Louvri app la sou yon TV pou l parèt isit la.")}</div>`);
@@ -1443,6 +1445,17 @@ const today = () => new Date().toISOString().slice(0, 10);
 const expDate = (d) => new Date(/^\d{4}-\d{2}-\d{2}$/.test(d) ? d + "T23:59:59" : String(d).replace(" ", "T"));
 const daysLeft = (d) => { if (!d) return null; const x = (expDate(d) - new Date()) / 86400000; return Number.isNaN(x) ? null : x < 0 ? -1 : Math.ceil(x); };
 const fmtExp = (d) => String(d || "").replace("T", " ");
+/** Ekspirasyon yon TV: dat kliyan li a, sinon dat founisè a TV a te voye. HTML ak yon ti pill. */
+function devExpHtml(d) {
+  const c = d.customer ? (customers || []).find((x) => String(x.name).toUpperCase() === String(d.customer).toUpperCase() || x.id === d.customer) : null;
+  let txt = "", left = null;
+  if (c && c.expiry) { txt = fmtExp(c.expiry); left = daysLeft(c.expiry); }
+  else if (d.providerExp > 0) { const dt = new Date(d.providerExp * 1000); txt = dt.toLocaleString(lang === "ht" ? "fr" : lang, { dateStyle: "short", timeStyle: "short" }); const x = (dt - new Date()) / 86400000; left = x < 0 ? -1 : Math.ceil(x); }
+  else if (d.providerExp === 0) return `<span class="note">${esc(t("Pa gen dat (illimite)"))}</span>`;
+  if (!txt) return "—";
+  const pill = left === null ? "" : left < 0 ? ` <span class="pill p-bad">${esc(t("Ekspire"))}</span>` : left <= 14 ? ` <span class="pill p-warn">${esc(t("{0} jou", left))}</span>` : "";
+  return esc(txt) + pill;
+}
 async function loadDashboard() {
   const [dash, custs, audit] = await Promise.all([
     api("GET", "/dashboard").catch(() => ({})), list("customers").catch(() => []), api("GET", "/audit-logs").catch(() => []),

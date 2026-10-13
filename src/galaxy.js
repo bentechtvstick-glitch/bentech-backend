@@ -253,6 +253,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const playlists = playlistsOf(mac);
     // Chak 6 è: reverifye plan/ekspirasyon kliyan an kay founisè a (an aryè plan, TV a pa tann)
     syncCustomerFromProvider(device).then((c) => { if (c) syncTvs(); }).catch(() => {});
+    // Dat TV a te voye a (si sèvè a pa ka kontakte founisè a), oswa dat la fin pase → kliyan an "Expired"
+    if (applyProviderExp(device)) touchWrite();
 
     // ---- Estati ----
     const customer = device.customer
@@ -873,6 +875,46 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       return customer;
     } catch { return null; } finally { syncing.delete(key); }
   }
+
+  /**
+   * TV a li menm voye dat ekspirasyon founisè a (TV a toujou ka kontakte founisè a, menm lè l bloke sèvè cloud yo).
+   * Si TV a gen yon kliyan ak "Plan otomatik", kliyan an pran dat sa a. Retounen true si kliyan an chanje.
+   */
+  function applyProviderExp(device) {
+    const customer = customerOf(device);
+    if (!customer || customer.autoPlan === false || device.providerExp == null) return false;
+    const exp = Number(device.providerExp) || 0;
+    const nowSec = Date.now() / 1000;
+    const status = String(customer.status || "").toLowerCase() === "suspended" ? customer.status
+      : (exp > 0 && exp < nowSec) || String(device.providerStatus || "").toLowerCase() === "expired" ? "Expired" : "Active";
+    const expiry = exp > 0 ? localStamp(exp) : "";
+    if (Number(customer.providerExp || 0) === exp && customer.expiry === expiry && customer.status === status && (customer.plan || !(exp > 0))) return false;
+    if (!customer.plan && exp > 0) customer.plan = planForDays(Math.max(0, exp - nowSec) / 86400);
+    customer.providerExp = exp;
+    customer.expiry = expiry;
+    customer.status = status;
+    if (device.providerStatus) customer.providerStatus = device.providerStatus;
+    return true;
+  }
+
+  /** App la voye dat ekspirasyon kont lan kay founisè a (exp = segonn Unix, 0 = san limit). */
+  app.post("/api/devices/:mac/expiry", async (req, res) => {
+    ensure();
+    const device = findDevice(normMac(req.params.mac));
+    if (!device) return res.status(404).json({ ok: false });
+    if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) return res.status(403).json({ ok: false, error: "Device Key pa bon" });
+    const b = req.body || {};
+    const exp = Math.max(0, Math.floor(Number(b.exp) || 0));
+    const st = String(b.status || "").slice(0, 30);
+    const changed = device.providerExp !== exp || (device.providerStatus || "") !== st;
+    device.providerExp = exp;
+    device.providerStatus = st;
+    device.providerExpAt = new Date().toISOString();
+    const cust = applyProviderExp(device);
+    if (changed || cust) await db.write();
+    if (cust) syncTvs();
+    res.json({ ok: true });
+  });
 
   function xtreamClient({ server, username, password }) {
     const base = normServer(server);
