@@ -26,7 +26,7 @@
 .ttv-list button{flex:none;display:flex;align-items:center;gap:10px;text-align:left;border:0;border-radius:9px;background:#1B2240;color:#fff;font:inherit;font-size:16px;padding:0 12px;height:40px;cursor:pointer;white-space:nowrap;overflow:hidden}
 .ttv-list button:hover{background:#2a3566}.ttv-list button.on{background:#3558f6}
 .ttv-list button img{width:46px;height:30px;object-fit:contain;flex:none}.ttv-list button i{font-style:normal;color:#00E5FF;min-width:44px;font-variant-numeric:tabular-nums}
-.ttv-list button span{overflow:hidden;text-overflow:ellipsis}.ttv-list .more{font-size:13px;color:#9AA3C7;padding:6px 2px;flex:none}
+.ttv-list button span{overflow:hidden;text-overflow:ellipsis}.ttv-list button .sig{margin-left:auto;margin-right:2px}.ttv-list .more{font-size:13px;color:#9AA3C7;padding:6px 2px;flex:none}
 .ttv-screen{cursor:pointer}
 .ttv-vid{background:#000}.ttv-vid video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
 .ttv-vmsg{inset:auto!important;left:50%!important;bottom:90px!important;transform:translateX(-50%);background:rgba(0,0,0,.78);border-radius:12px;padding:10px 20px;font-size:18px;text-align:center;max-width:760px}
@@ -234,8 +234,14 @@
       if (!playing() || T.brk || !T.chs.length) return; T.listOpen = true; T.cat = T.cat && T.cats.some((c) => c.id === T.cat) ? T.cat : cur()?.categoryId || T.cats[0]?.id || "";
       const box = $(".ttv-list"), rows = T.chs.filter((x) => x.categoryId === T.cat), shown = rows.slice(0, 400), id = cur()?.id;
       box.innerHTML = `<div class="col cats"><h4>${esc(t("Kategori"))}</h4>${T.cats.map((c) => `<button type="button" data-cat="${esc(c.id)}"${c.id === T.cat ? ' class="on"' : ""}><span>${esc(c.name)}</span></button>`).join("")}</div>
-        <div class="col chs"><h4>${esc(t("{0} chanèl", rows.length))}</h4>${shown.map((x) => `<button type="button" data-ch="${x.id}"${x.id === id ? ' class="on"' : ""}><i>${x.num}</i>${x.icon ? `<img src="${esc(x.icon)}" alt="" loading="lazy" onerror="this.remove()">` : ""}<span>${esc(x.name)}</span></button>`).join("")}${rows.length > shown.length ? `<div class="more">${esc(t("{0} sou {1} afiche", shown.length, rows.length))}</div>` : ""}</div>`;
+        <div class="col chs"><h4>${esc(t("{0} chanèl", rows.length))}</h4>${shown.map((x) => `<button type="button" data-ch="${x.id}"${x.id === id ? ' class="on"' : ""}><i>${x.num}</i>${x.icon ? `<img src="${esc(x.icon)}" alt="" loading="lazy" onerror="this.remove()">` : ""}<span>${esc(x.name)}</span>${D.sigHtml && T.health ? D.sigHtml(T.health[x.id]) : ""}</button>`).join("")}${rows.length > shown.length ? `<div class="more">${esc(t("{0} sou {1} afiche", shown.length, rows.length))}</div>` : ""}</div>`;
       box.hidden = false; box.querySelector(".chs .on")?.scrollIntoView({ block: "center" });
+      // Sante chanèl yo (📶): chèche l chak 30 s pou pa chaje sèvè a
+      if (D.sigHtml && (!T.healthAt || Date.now() - T.healthAt > 30000)) {
+        T.healthAt = Date.now(); const token = D.getToken ? D.getToken() : "";
+        fetch(`${API}/galaxy/devices/${M}/health`, { headers: token ? { Authorization: "Bearer " + token } : {} }).then((r) => r.ok ? r.json() : null)
+          .then((h) => { if (!h) return; T.health = h; if (T.listOpen) { const sc = box.querySelector(".chs")?.scrollTop; openList(); const c = box.querySelector(".chs"); if (c && sc != null) c.scrollTop = sc; } }).catch(() => {});
+      }
     }
     function closeList() { T.listOpen = false; $(".ttv-list").hidden = true; }
     $(".ttv-screen").addEventListener("click", (e) => {
