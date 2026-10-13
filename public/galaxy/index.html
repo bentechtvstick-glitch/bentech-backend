@@ -2389,7 +2389,10 @@ $$(".gx-prevcard, .cy-prevcard").forEach((card) => {
   const b = document.createElement("button"); b.type = "button"; b.className = "btn small pvbigbtn"; b.textContent = "⛶ " + t("Agrandi");
   b.addEventListener("click", () => {
     const on = !card.classList.contains("pvbig");
-    $$(".pvbig").forEach((x) => x.classList.remove("pvbig"));
+    $$(".pvbig").forEach((x) => { x.classList.remove("pvbig"); x.__home?.replaceWith(x); x.__home = null; });
+    // Paj yo gen "container query": yon kat "fixed" ladan yo rete kole nan paj la (anba fon nwa a).
+    // Deplase kat la dirèk nan <body> pandan l agrandi, epi remete l nan plas li apre.
+    if (on) { const home = document.createComment("pv"); card.replaceWith(home); card.__home = home; document.body.appendChild(card); }
     card.classList.toggle("pvbig", on); document.body.classList.toggle("pvbig-on", on);
     b.textContent = on ? "✕ " + t("Fèmen") : "⛶ " + t("Agrandi");
     $$(".pvbigbtn").forEach((x) => { if (x !== b) x.textContent = "⛶ " + t("Agrandi"); });
