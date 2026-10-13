@@ -79,6 +79,8 @@ class TickerView @JvmOverloads constructor(
     private var runnerLayout: StaticLayout? = null
     private var runnerFx = Fx.DRIVE
     private var runnerX = Float.NaN
+    /** Koulè machin desine a (runner = "car:RRGGBB"), oswa null pou yon imoji. */
+    private var runnerCar: Int? = null
     private var runnerPx = 3f
 
     fun setTicker(t: Ticker, parseColor: (String, Int) -> Int) {
@@ -159,6 +161,7 @@ class TickerView @JvmOverloads constructor(
             runnerPaint.set(textPaint); runnerPaint.textSize = textPaint.textSize * 1.25f
             runnerLayout = t.runner?.let { layoutOf(emoji(it.emoji), runnerPaint) }
             runnerFx = t.runner?.let { EmojiFx.first(it.emoji) } ?: Fx.DRIVE
+            runnerCar = CarFx.parse(t.runner?.emoji)
             runnerX = Float.NaN
             offset = Float.NaN
         }
@@ -218,6 +221,22 @@ class TickerView @JvmOverloads constructor(
                 x += w
             }
         }
+        // Runner: machin desine (wou k ap vire) ki travèse ba a
+        val car = runnerCar
+        if (car != null) {
+            val ch = minOf(runnerPaint.textSize * 1.2f, h * 0.92f)
+            val rw = ch * CarFx.RATIO
+            val toRight = t.direction == "right"
+            if (runnerX.isNaN()) runnerX = if (toRight) -rw else areaW
+            canvas.save()
+            canvas.translate(left + runnerX, (h - ch) / 2f)
+            if (toRight != (t.runner?.flip == true)) canvas.scale(-1f, 1f, rw / 2f, 0f)
+            CarFx.draw(canvas, ch, car)
+            canvas.restore()
+            runnerX += if (toRight) runnerPx else -runnerPx
+            if (toRight && runnerX > areaW) runnerX = -rw
+            if (!toRight && runnerX < -rw) runnerX = areaW
+        } else
         // Runner (egz: 🏎️💨) ki travèse ba a, pi vit pase tèks la
         runnerLayout?.let { r ->
             val rw = r.width.toFloat()

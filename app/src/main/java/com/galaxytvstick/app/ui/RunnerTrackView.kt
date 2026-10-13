@@ -35,6 +35,8 @@ class RunnerTrackView(
     private val mirror = toRight != flip
     private val pxPerMs = speed.coerceIn(1, 10) * 20f * density / 1000f
     private var x = Float.NaN
+    /** Koulè machin desine a si runner = "car:RRGGBB". */
+    private val car = CarFx.parse(emoji)
     private var last = 0L
 
     init {
@@ -53,7 +55,8 @@ class RunnerTrackView(
 
     override fun onDraw(canvas: Canvas) {
         val w = width.toFloat(); if (w <= 0f) return
-        val rw = layout.width.toFloat()
+        val carH = height * 0.92f
+        val rw = if (car != null) carH * CarFx.RATIO else layout.width.toFloat()
         val now = SystemClock.uptimeMillis()
         if (x.isNaN()) { x = if (toRight) -rw else w; last = now }
         val dt = (now - last).coerceIn(0L, 100L); last = now
@@ -62,10 +65,16 @@ class RunnerTrackView(
         if (!toRight && x < -rw) x = w
         canvas.save()
         canvas.clipRect(0f, 0f, w, height.toFloat())
-        canvas.translate(x, (height - layout.height) / 2f)
-        if (mirror) canvas.scale(-1f, 1f, rw / 2f, 0f)
-        paint.alpha = EmojiFx.transform(canvas, fx, rw, layout.height.toFloat(), density, now)
-        layout.draw(canvas)
+        if (car != null) {
+            canvas.translate(x, (height - carH) / 2f)
+            if (mirror) canvas.scale(-1f, 1f, rw / 2f, 0f)
+            CarFx.draw(canvas, carH, car, now)
+        } else {
+            canvas.translate(x, (height - layout.height) / 2f)
+            if (mirror) canvas.scale(-1f, 1f, rw / 2f, 0f)
+            paint.alpha = EmojiFx.transform(canvas, fx, rw, layout.height.toFloat(), density, now)
+            layout.draw(canvas)
+        }
         canvas.restore()
         if (isAttachedToWindow && visibility == VISIBLE) postInvalidateOnAnimation()
     }
