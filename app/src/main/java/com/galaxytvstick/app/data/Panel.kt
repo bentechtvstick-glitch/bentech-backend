@@ -105,7 +105,13 @@ data class ChyronItem(
     /** Gwo imoji anime bò kote chyron an (egz: 🇭🇹 k ap flote). */
     val sticker: String = "",
     /** Imoji nan tèks yo bouje. */
-    val animateEmoji: Boolean = true
+    val animateEmoji: Boolean = true,
+    /** Machin k ap kouri sou chyron an (egz: 🏎️💨); vid = okenn. */
+    val runner: String = "",
+    val runnerSpeed: Int = 6,
+    /** "right" = gòch → dwat, "left" = dwat → gòch. */
+    val runnerDir: String = "right",
+    val runnerFlip: Boolean = false
 )
 
 /** Banner imaj (imageUrl) oswa tèks (text). */
@@ -334,7 +340,11 @@ data class PanelConfig(
                     nameSize = it.optInt("nameSize", 26).coerceIn(10, 60),
                     titleSize = it.optInt("titleSize", 16).coerceIn(8, 40),
                     sticker = it.optString("sticker").trim(),
-                    animateEmoji = it.optBoolean("animateEmoji", true)
+                    animateEmoji = it.optBoolean("animateEmoji", true),
+                    runner = it.optString("runner").trim(),
+                    runnerSpeed = it.optInt("runnerSpeed", 6).coerceIn(1, 10),
+                    runnerDir = if (it.optString("runnerDir") == "left") "left" else "right",
+                    runnerFlip = it.optBoolean("runnerFlip", false)
                 )
             }.filter { it.headline.isNotBlank() || it.name.isNotBlank() || it.title.isNotBlank() }
                 // Ansyen backend: sèlman "chyron" (tit + sou-tit)

@@ -146,6 +146,12 @@ class ChyronView @JvmOverloads constructor(
                 setPadding(dp(12f), dp(3f), dp(12f), dp(3f))
             }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         }
+        // Machin k ap kouri (egz: 🏎️💨) sou yon ti wout ki gen menm lajè ak chyron an
+        if (c.runner.isNotBlank()) {
+            root.addView(RunnerTrackView(context, c.runner, c.nameSize * 1.05f, c.runnerSpeed, c.runnerDir != "left", c.runnerFlip).apply {
+                minimumWidth = dp(220f)
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, c.nameSize * 1.3f, dm).toInt()))
+        }
         if (c.name.isNotBlank() || c.title.isNotBlank() || c.logoUrl != null || c.sticker.isNotBlank()) {
             val body = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
