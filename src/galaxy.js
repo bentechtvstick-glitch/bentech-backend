@@ -420,6 +420,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
         titleSize: num(c.titleSize, 16, 8, 40),
         sticker: String(c.sticker || "").trim().slice(0, 32), // gwo imoji anime bò kote chyron an (egz: 🇭🇹 k ap flote)
         animateEmoji: c.animateEmoji !== false,
+        runner: String(c.runner || "").trim().slice(0, 32), // machin k ap kouri sou chyron an (egz: 🏎️💨)
+        runnerSpeed: num(c.runnerSpeed, 6, 1, 10),
+        runnerDir: c.runnerDir === "left" ? "left" : "right",
+        runnerFlip: !!c.runnerFlip,
       }))
       .filter((c) => c.headline || c.name || c.title);
     // Ansyen paramèt (chyronActive/chyronTitle) toujou mache si pa gen chyron nan lis la

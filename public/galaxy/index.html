@@ -318,6 +318,8 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .chy.pos-bottom-right .chy-body,.chy.pos-top-right .chy-body{border-left:0;border-right:5px solid var(--acc);padding:8px 14px 9px 22px;text-align:right;flex-direction:row-reverse}
 .chy.pos-bottom-center .chy-body,.chy.pos-top-center .chy-body{text-align:center;border-left:0;border-bottom:4px solid var(--acc);justify-content:center;padding:8px 26px 9px}
 .chy-stk{flex:none;line-height:1;display:inline-block}
+.chy-run{align-self:stretch;position:relative;overflow:hidden;min-width:220px;line-height:1}
+.cyrun{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line2,#2a3150);display:flex;flex-direction:column;gap:8px}
 .chy-logo{width:44px;height:44px;border-radius:6px;object-fit:contain;background:rgba(255,255,255,.1);flex:none}
 .chy-txt{min-width:0}
 .chy-name{font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -881,6 +883,18 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
               <div class="field"><label for="cySticker">Sticker anime (opsyonèl)</label><input type="text" id="cySticker" maxlength="32" data-emoji placeholder="🇭🇹"></div>
             </div>
             <div class="chips" id="cyStickers"></div>
+            <div class="cyrun">
+              <div class="inline"><label class="sw"><input type="checkbox" id="cyRunOn"><i></i></label><label for="cyRunOn"><b>Machin k ap kouri sou chyron an</b></label></div>
+              <div class="chips" id="cyRunPresets"></div>
+              <div class="row2">
+                <div class="field"><label for="cyRun">Imoji a (oswa plizyè)</label><input type="text" id="cyRun" maxlength="32" data-emoji placeholder="🏎️💨"></div>
+                <div class="field"><label for="cyRunSpeed">Vitès li <b id="cyRunSpeedV"></b></label><input type="range" id="cyRunSpeed" min="1" max="10" value="6"></div>
+              </div>
+              <div class="row2">
+                <div class="field"><label>Direksyon</label><div class="seg full" id="cyRunDir" role="radiogroup" aria-label="Direksyon"><button type="button" data-v="right" class="on">Gòch → Dwat</button><button type="button" data-v="left">Dwat → Gòch</button></div></div>
+                <div class="inline" style="align-self:end"><label class="sw"><input type="checkbox" id="cyRunFlip"><i></i></label><label for="cyRunFlip">Vire l (miwa) si l ap gade move bò</label></div>
+              </div>
+            </div>
           </div>
           <div class="cysec">
             <div class="cysec-h"><span class="cysec-n">2</span><h2>Pozisyon ak tan</h2></div>
@@ -2062,7 +2076,7 @@ $("#tkSave").addEventListener("click", async () => {
 
 // ------------------------------------------------------------ Chyron / Lower third
 const CY_DEF = { headline: "", name: "", title: "", logoUrl: "", status: "Active", position: "bottom-left", animation: "slide", duration: 10, opacity: 92,
-  bgColor: "#0B1630", textColor: "#FFFFFF", accentColor: "#E50914", headlineSize: 14, nameSize: 26, titleSize: 16, sticker: "", animateEmoji: true };
+  bgColor: "#0B1630", textColor: "#FFFFFF", accentColor: "#E50914", headlineSize: 14, nameSize: 26, titleSize: 16, sticker: "", animateEmoji: true, runner: "", runnerSpeed: 6, runnerDir: "right", runnerFlip: false };
 const CY_THEMES = [["Nouvèl", "#0B1630", "#FFFFFF", "#E50914"], ["Espò", "#04261A", "#FFFFFF", "#00C853"], ["Lò", "#141414", "#FFFFFF", "#D4A017"], ["Galaxy", "#1A0F3D", "#FFFFFF", "#7C4DFF"], ["Klè", "#FFFFFF", "#101828", "#1565C0"]];
 const CY_POS = { "bottom-left": "Anba agoch", "bottom-center": "Anba nan mitan", "bottom-right": "Anba adwat", "top-left": "Anlè agoch", "top-center": "Anlè nan mitan", "top-right": "Anlè adwat" };
 const CY_ANIM = { slide: "Glise", fade: "Parèt dousman", wipe: "Bale", none: "Okenn" };
@@ -2078,6 +2092,8 @@ function cyRead() {
     bgColor: $("#cyBg").value.toUpperCase(), textColor: $("#cyText").value.toUpperCase(), accentColor: $("#cyAccent").value.toUpperCase(),
     headlineSize: clampN($("#cyHS").value, 14, 8, 40), nameSize: clampN($("#cyNS").value, 26, 10, 60), titleSize: clampN($("#cyTS").value, 16, 8, 40),
     sticker: $("#cySticker").value.trim(), animateEmoji: $("#cyAnimE").checked,
+    runner: $("#cyRunOn").checked ? $("#cyRun").value.trim() : "", runnerSpeed: clampN($("#cyRunSpeed").value, 6, 1, 10),
+    runnerDir: segVal("cyRunDir") || "right", runnerFlip: $("#cyRunFlip").checked,
   };
 }
 function cyFill(c) {
@@ -2088,10 +2104,12 @@ function cyFill(c) {
   $("#cyBg").value = hex6(c.bgColor); $("#cyText").value = hex6(c.textColor); $("#cyAccent").value = hex6(c.accentColor);
   $("#cyHS").value = c.headlineSize; $("#cyNS").value = c.nameSize; $("#cyTS").value = c.titleSize;
   $("#cySticker").value = c.sticker || ""; $("#cyAnimE").checked = c.animateEmoji !== false;
+  $("#cyRunOn").checked = !!c.runner; if (c.runner) $("#cyRun").value = c.runner; else if (!$("#cyRun").value) $("#cyRun").value = "🏎️💨";
+  $("#cyRunSpeed").value = c.runnerSpeed || 6; setSeg("cyRunDir", c.runnerDir === "left" ? "left" : "right"); $("#cyRunFlip").checked = !!c.runnerFlip;
   cyLabels();
 }
 function cyLabels() {
-  $("#cyOpV").textContent = $("#cyOp").value + "%";
+  $("#cyOpV").textContent = $("#cyOp").value + "%"; $("#cyRunSpeedV").textContent = $("#cyRunSpeed").value;
   for (const [i, v] of [["cyHS", "cyHSV"], ["cyNS", "cyNSV"], ["cyTS", "cyTSV"]]) $("#" + v).textContent = $("#" + i).value + " px";
   for (const [i, v] of [["cyBg", "cyBgV"], ["cyText", "cyTextV"], ["cyAccent", "cyAccentV"]]) $("#" + v).textContent = $("#" + i).value;
   $("#cySubmit").textContent = t(cyEdit ? "Mete chyron an ajou" : "Kreye chyron"); $("#cyCancel").hidden = !cyEdit;
@@ -2105,6 +2123,7 @@ function cyHtml(c, anim) {
   const stk = c.sticker ? `<span class="chy-stk" style="font-size:${Math.round(c.nameSize * 1.5)}px"><span class="fx fx-${F ? F.first(c.sticker) : "bounce"}">${esc(c.sticker)}</span></span>` : "";
   return `<div class="chy pos-${esc(c.position)}${a}" style="--acc:${esc(c.accentColor)};color:${esc(c.textColor)}">`
     + (c.headline ? `<div class="chy-head" style="font-size:${c.headlineSize}px">${h(c.headline)}</div>` : "")
+    + (c.runner ? `<div class="chy-run" style="height:${Math.round(c.nameSize * 1.3)}px;font-size:${Math.round(c.nameSize * 1.05)}px"></div>` : "")
     + (body ? `<div class="chy-body" style="background:${rgba(hex6(c.bgColor), c.opacity)}">${stk}${c.logoUrl ? `<img class="chy-logo" src="${esc(c.logoUrl)}" alt="">` : ""}<div class="chy-txt">`
       + (c.name ? `<div class="chy-name" style="font-size:${c.nameSize}px">${h(c.name)}</div>` : "")
       + (c.title ? `<div class="chy-title" style="font-size:${c.titleSize}px">${h(c.title)}</div>` : "") + `</div></div>` : "")
@@ -2117,18 +2136,22 @@ function cyPreview(anim) {
   tv.querySelector(".chy")?.remove();
   tv.insertAdjacentHTML("beforeend", cyHtml(c, anim));
   tv.querySelector(".chy").style.opacity = c.status === "Inactive" ? ".45" : "";
+  const run = tv.querySelector(".chy-run");
+  if (run && window.GalaxyFx) GalaxyFx.runner(run, { emoji: c.runner, flip: c.runnerFlip }, c.runnerDir, c.runnerSpeed * 20);
 }
 const cyScale = () => { const st = $("#cyStage"); if (st && st.clientWidth) $("#cyTv").style.transform = `scale(${st.clientWidth / 960})`; };
 if (window.ResizeObserver) new ResizeObserver(cyScale).observe($("#cyStage"));
-["cyStatus", "cyPos", "cyAnim"].forEach((id) => $("#" + id).addEventListener("click", (e) => { const b = e.target.closest("[data-v]"); if (!b) return; setSeg(id, b.dataset.v); cyPreview(id !== "cyStatus"); }));
+["cyStatus", "cyPos", "cyAnim", "cyRunDir"].forEach((id) => $("#" + id).addEventListener("click", (e) => { const b = e.target.closest("[data-v]"); if (!b) return; setSeg(id, b.dataset.v); cyPreview(id !== "cyStatus"); }));
 $("#cyForm").addEventListener("input", () => { cyLabels(); cyPreview(false); });
 $("#cyReplay").addEventListener("click", () => cyPreview(true));
 $("#cyThemes").innerHTML = CY_THEMES.map(([n, bg, tx, ac]) => `<button type="button" class="chip" data-cyth="${esc(bg)}|${esc(tx)}|${esc(ac)}"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${ac};margin-right:6px;box-shadow:0 0 0 2px ${bg}"></span>${esc(t(n))}</button>`).join("");
 $("#cyThemes").addEventListener("click", (e) => { const b = e.target.closest("[data-cyth]"); if (!b) return; const [bg, tx, ac] = b.dataset.cyth.split("|"); $("#cyBg").value = bg.toLowerCase(); $("#cyText").value = tx.toLowerCase(); $("#cyAccent").value = ac.toLowerCase(); cyLabels(); cyPreview(true); });
-function cyReset() { cyEdit = null; const keep = cyRead(); cyFill({ ...keep, headline: "", name: "", title: "", logoUrl: "", sticker: "", status: "Active" }); setMsg($("#cyMsg"), ""); renderCyList(); cyPreview(false); }
+function cyReset() { cyEdit = null; const keep = cyRead(); cyFill({ ...keep, headline: "", name: "", title: "", logoUrl: "", sticker: "", runner: "", status: "Active" }); setMsg($("#cyMsg"), ""); renderCyList(); cyPreview(false); }
 $("#cyCancel").addEventListener("click", cyReset);
 const CY_STICKERS = ["🇭🇹", "🔴", "⚽", "🏆", "🏎️", "🔥", "📢", "🎤", "❤️", "⭐", "🚨", "🎉"];
 $("#cyStickers").innerHTML = CY_STICKERS.map((x) => `<button type="button" class="chip" data-stk="${esc(x)}">${window.GalaxyFx ? GalaxyFx.html(x) : esc(x)}</button>`).join("") + `<button type="button" class="chip" data-stk="">${esc(t("Okenn"))}</button>`;
+$("#cyRunPresets").innerHTML = ["🏎️💨", "🚗💨", "🚓", "🚑", "🏍️💨", "🚚", "🚌", "🚀", "✈️", "🐎", "⚽", "🇭🇹"].map((x) => `<button type="button" class="chip" data-cyrun="${esc(x)}">${window.GalaxyFx ? GalaxyFx.html(x) : esc(x)}</button>`).join("");
+$("#cyRunPresets").addEventListener("click", (e) => { const b = e.target.closest("[data-cyrun]"); if (!b) return; $("#cyRun").value = b.dataset.cyrun; $("#cyRunOn").checked = true; cyLabels(); cyPreview(false); });
 $("#cyStickers").addEventListener("click", (e) => { const b = e.target.closest("[data-stk]"); if (!b) return; $("#cySticker").value = b.dataset.stk; cyPreview(true); });
 $("#cyForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const c = cyRead();
@@ -2148,7 +2171,7 @@ function renderCyList() {
       <label class="sw"><input type="checkbox" data-cytg="${esc(c.id)}"${act ? " checked" : ""} aria-label="${esc(t("Estati"))}"><i></i></label>
       <div class="bar" style="background:${acc}"></div>
       <div class="main">${c.headline ? `<span class="hl" style="background:${acc}">${esc(c.headline)}</span>` : ""}
-        <div class="nm">${c.sticker ? esc(c.sticker) + " " : ""}${esc(c.name || "")}${c.title ? `<span>${c.name ? " — " : ""}${esc(c.title)}</span>` : ""}</div>
+        <div class="nm">${c.runner ? esc(c.runner) + " " : ""}${c.sticker ? esc(c.sticker) + " " : ""}${esc(c.name || "")}${c.title ? `<span>${c.name ? " — " : ""}${esc(c.title)}</span>` : ""}</div>
         <div class="meta"><span>${esc(t(CY_POS[c.position] || CY_POS["bottom-left"]))}</span><span>${esc(t(CY_ANIM[c.animation] || "Glise"))}</span><span>${+c.duration ? esc(c.duration) + " s" : esc(t("toutan"))}</span><span>${esc(c.opacity ?? 92)}%</span></div></div>
       <span class="st">${act ? `<span class="pill p-on">${t("Active")}</span>` : `<span class="pill p-off">${t("Inactive")}</span>`}</span>
       <div class="acts"><button class="btn small purple" type="button" data-cyedit="${esc(c.id)}">${t("Modifye")}</button><button class="btn small" type="button" data-cydup="${esc(c.id)}">${t("Kopye")}</button><button class="btn small red" type="button" data-cydel="${esc(c.id)}">${t("Efase l")}</button></div>

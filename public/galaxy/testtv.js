@@ -169,6 +169,7 @@
     }
     function cyShow(list, bottom) { const c = list[T.cy.i % list.length], box = $(".ttv-cy"); box.innerHTML = D.cyHtml(c, true);
       const e = box.firstElementChild; if (e && c.position.startsWith("bottom")) e.style.bottom = bottom + "px";
+      const run = box.querySelector(".chy-run"); if (run && FX) FX.runner(run, { emoji: c.runner, flip: c.runnerFlip }, c.runnerDir, (c.runnerSpeed || 6) * 20);
       const stay = c.duration > 0 ? c.duration * 1000 : list.length > 1 ? 15000 : 0;
       if (stay) T.cy.timer = setTimeout(() => { box.innerHTML = ""; T.cy.i = (T.cy.i + 1) % list.length; T.cy.timer = setTimeout(() => { if (T.cy.sig === JSON.stringify(list)) cyShow(list, bottom); }, c.duration > 0 ? 20000 : 400); }, stay); }
 
