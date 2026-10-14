@@ -196,8 +196,20 @@ class EpgActivity : AppCompatActivity() {
         overlay.start()
         // Tann yon ti moman pou player plen ekran an lage koneksyon l anvan (playlist ki pèmèt 1 sèl ekran)
         ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId }?.let { previewCh = it }
-        // Premye fwa: preview a kòmanse prèske touswit. Lè kliyan an tounen soti nan player plen ekran an, tann li lage koneksyon an.
-        handler.postDelayed(startPreviewLater, if (firstStart) 150 else 700)
+        // Tounen soti nan gwo ekran an: pran menm player a ki t ap jwe chanèl la → pa rekonekte, pa rejwe anyen
+        val handed = previewCh?.let { PlayerHandoff.take(it.streamId) }
+        if (handed != null) {
+            player?.release()
+            player = handed.first
+            previewFactory = handed.second
+            b.preview.player = handed.first
+            handed.first.addListener(previewListener)
+            handed.first.playWhenReady = true
+            b.previewLogo.visibility = View.GONE
+        } else {
+            // Premye fwa: preview a kòmanse prèske touswit. Lè kliyan an tounen soti nan player plen ekran an, tann li lage koneksyon an.
+            handler.postDelayed(startPreviewLater, if (firstStart) 150 else 700)
+        }
         firstStart = false
         // Di panel la kliyan an ap gade gid la
         val last = ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId }

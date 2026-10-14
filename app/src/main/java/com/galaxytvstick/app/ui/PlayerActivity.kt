@@ -964,6 +964,7 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun openGuide() {
         hideChannelOverlay()
+        handOffToGuide()
         startActivity(Intent(this, EpgActivity::class.java))
         @Suppress("DEPRECATION") overridePendingTransition(0, 0) // san animasyon: gid la parèt touswit
     }
@@ -1209,7 +1210,26 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     /** BACK pandan w ap gade TV: tounen sou ekran akèy la. */
+    /**
+     * Retounen sou gid la: bay ti fenèt gid la menm player a k ap jwe chanèl la (pa rekonekte).
+     * San sa, ti fenèt la te kòmanse yon nouvo koneksyon e sèvè a te rejwe kèk segonn ki te deja pase.
+     */
+    private fun handOffToGuide() {
+        val p = player ?: return
+        val ch = channels.getOrNull(index) ?: return
+        if (adPlaying || inBreak || ch.streamId <= 0 || p.currentMediaItem?.mediaId != "channel" || p.playerError != null) return
+        if (p.playbackState != Player.STATE_READY && p.playbackState != Player.STATE_BUFFERING) return
+        healthFlush()
+        handler.removeCallbacks(stallWatch)
+        p.removeListener(listener)
+        p.removeAnalyticsListener(analytics)
+        b.playerView.player = null
+        PlayerHandoff.put(p, dataSourceFactory, ch.streamId)
+        player = null
+    }
+
     private fun goHome() {
+        handOffToGuide()
         if (isTaskRoot) startActivity(Intent(this, EpgActivity::class.java))
         finish()
     }
