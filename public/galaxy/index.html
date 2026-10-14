@@ -326,6 +326,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .sig.sig-l{margin:0 6px 0 0}
 .sigleg{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.sigleg .sig{margin:0 4px 0 10px}
 .limitbox{display:flex;flex-direction:column;gap:2px;padding:8px 0}.limitbox b{font-size:18px}
+.confirm.custmsg{flex-wrap:wrap;background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.35)}.custmsg>span{flex:1 1 100%}.custmsg input{flex:1 1 260px;min-width:0;max-width:640px}
 .carcols{display:inline-flex;gap:6px;align-items:center;padding:0 6px}.carcol{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.5);cursor:pointer;padding:0}.carcol:hover,.carcol:focus{border-color:#fff;transform:scale(1.15)}
 .chy-run{align-self:stretch;position:relative;overflow:hidden;min-width:220px;line-height:1}
 .cyrun{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line2,#2a3150);display:flex;flex-direction:column;gap:8px}
@@ -1567,7 +1568,7 @@ function renderCrud() {
   $("#crudCount").textContent = t("{0} eleman", rows.length);
   const cols = C.fields.filter((f) => !f.hide);
   $("#crudTable").innerHTML = rows.length ? `<table><thead><tr>${cols.map((f) => `<th>${esc(t(f.l))}</th>`).join("")}${C.readonly ? "" : `<th>${t("Aksyon")}</th>`}</tr></thead><tbody>` +
-    capRows("crud", rows).map((it) => `<tr class="${C.readonly ? "" : "click"}" data-row="${esc(it[C.id] ?? "")}">${cols.map((f) => `<td${isUpper(C, f) ? ' class="up"' : ""}>${cellHtml(f, it[f.k], it)}</td>`).join("")}${C.readonly ? "" : `<td class="acts"><button class="btn small purple" data-edit type="button">${t("Modifye")}</button><button class="btn small red" data-del-row type="button">${t("Efase l")}</button></td>`}</tr>`).join("") + `</tbody></table>` + moreHtml("crud", rows.length)
+    capRows("crud", rows).map((it) => `<tr class="${C.readonly ? "" : "click"}" data-row="${esc(it[C.id] ?? "")}">${cols.map((f) => `<td${isUpper(C, f) ? ' class="up"' : ""}>${cellHtml(f, it[f.k], it)}</td>`).join("")}${C.readonly ? "" : `<td class="acts">${crud.name === "cust" ? `<button class="btn small green" data-msg-row type="button" title="${esc(t("Voye yon mesaj sou tout TV kliyan sa a"))}">💬 ${t("Mesaj")}</button>` : ""}<button class="btn small purple" data-edit type="button">${t("Modifye")}</button><button class="btn small red" data-del-row type="button">${t("Efase l")}</button></td>`}</tr>`).join("") + `</tbody></table>` + moreHtml("crud", rows.length)
     : `<div class="empty">${t("Pa gen anyen isit la ankò.")}</div>`;
 }
 /** Dat ekspirasyon pou yon plan, apati kounye a: "Trial" = 24 è, "N Month(s)" = N mwa. Fòma datetime-local. */
@@ -1646,10 +1647,31 @@ function confirmDelete(where, id) {
   $("[data-no]", where).onclick = () => (where.innerHTML = "");
   $("[data-yes]", where).onclick = async () => { try { await api("DELETE", `/${C.col}/${encodeURIComponent(id)}`); toast("Efase"); $("#crudFormCard").hidden = true; loadCrud(); } catch (err) { toast(err.message); } };
 }
+/** Voye yon mesaj sou ekran tout TV yon kliyan (menm kòmand ak "Kontwòl a distans" nan paj Aparèy la). */
+function custMessage(where, c) {
+  const ds = custDevices(c);
+  if (!ds.length) { where.innerHTML = `<div class="confirm"><span>${esc(t("Kliyan sa a pa gen okenn TV konekte ak li."))}</span><button class="btn small" data-no type="button">OK</button></div>`; $("[data-no]", where).onclick = () => where.closest("tr").remove(); return; }
+  const on = ds.filter((d) => tvOnline(d.mac)).length;
+  where.innerHTML = `<div class="confirm custmsg"><span>💬 ${esc(t("Mesaj pou {0} ({1} TV · {2} konekte)", c.name, ds.length, on))}</span>
+    <input type="text" class="grow" data-emoji maxlength="500" placeholder="${esc(t("Egz: Bonjou, abònman w ap fini demen."))}">
+    <button class="btn small" data-no type="button">${t("Anile")}</button><button class="btn small green" data-yes type="button">${t("Voye")}</button></div>`;
+  const inp = $("input", where); inp.focus();
+  $("[data-no]", where).onclick = () => where.closest("tr").remove();
+  const send = async () => {
+    const text = inp.value.trim(); if (!text) { inp.focus(); return; }
+    let ok = 0;
+    for (const d of ds) { try { await api("POST", `/galaxy/devices/${encodeURIComponent(d.mac)}/commands`, { type: "message", text }); ok++; } catch {} }
+    where.closest("tr").remove();
+    toast(t("Mesaj la voye bay {0} TV. TV ki pa konekte yo ap resevwa l si yo konekte nan 2 minit.", ok));
+  };
+  $("[data-yes]", where).onclick = send;
+  inp.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+}
 $("#crudDelete").addEventListener("click", () => confirmDelete($("#crudConfirm"), crud.editing));
 $("#crudTable").addEventListener("click", (e) => {
   const row = e.target.closest("tr[data-row]"); const C = CRUD[crud.name]; if (!row || C.readonly) return;
   const item = crud.items.find((it) => String(it[C.id]) === row.dataset.row);
+  if (e.target.closest("[data-msg-row]") && item) { $$("#crudTable .confirmrow").forEach((r) => r.remove()); row.insertAdjacentHTML("afterend", `<tr class="confirmrow"><td colspan="${C.fields.length + 1}"></td></tr>`); return custMessage(row.nextElementSibling.firstElementChild, item); }
   if (e.target.closest("[data-del-row]")) { $$("#crudTable .confirmrow").forEach((r) => r.remove()); row.insertAdjacentHTML("afterend", `<tr class="confirmrow"><td colspan="${C.fields.length + 1}"></td></tr>`); return confirmDelete(row.nextElementSibling.firstElementChild, row.dataset.row); }
   if (item) openCrudForm(item);
 });
