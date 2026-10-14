@@ -32,6 +32,13 @@
     <com.galaxytvstick.app.ui.TickerView android:id="@+id/ticker" android:layout_width="match_parent" android:layout_height="40dp"
         android:layout_gravity="bottom" android:visibility="gone"/>
 
+    <!-- Avètisman: plan kliyan an prèske fini (parèt dousman, rete kèk segonn, disparèt) -->
+    <TextView android:id="@+id/expiryNotice" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal" android:layout_marginTop="28dp" android:maxWidth="640dp"
+        android:background="@drawable/bg_expiry_notice" android:paddingStart="24dp" android:paddingEnd="24dp"
+        android:paddingTop="12dp" android:paddingBottom="12dp" android:gravity="center" android:textColor="#FFFFFF"
+        android:textSize="18sp" android:alpha="0" android:elevation="10dp" android:visibility="gone"/>
+
     <!-- Aparèy bloke / abònman ekspire / mentenans -->
     <LinearLayout android:id="@+id/blocker" android:layout_width="match_parent" android:layout_height="match_parent"
         android:background="@color/bg" android:clickable="true" android:focusable="true" android:gravity="center"

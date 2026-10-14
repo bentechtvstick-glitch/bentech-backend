@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Avètisman "plan an prèske fini": fon fonse, kad jòn zoranj -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#EB14101E"/><stroke android:width="2dp" android:color="#F59E0B"/><corners android:radius="14dp"/>
+</shape>

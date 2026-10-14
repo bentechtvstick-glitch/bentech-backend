@@ -219,6 +219,9 @@ data class Graphics(
     val weather: GfxWeather? = null, val countdown: GfxCountdown? = null, val ident: GfxIdent? = null, val bumper: GfxBumper? = null
 )
 
+/** Avètisman ekspirasyon: tèks la, konbyen jou ki rete, chak konbyen minit pou repete l, konbyen segonn li rete. */
+data class ExpiryNotice(val text: String, val daysLeft: Int, val repeatMin: Int, val showSec: Int)
+
 data class PanelConfig(
     /** false = sèvè a pa konnen aparèy sa a (egz: li pèdi done li yo). */
     val known: Boolean,
@@ -236,6 +239,8 @@ data class PanelConfig(
     val accountName: String = "",
     val accountPlan: String = "",
     val accountExpiry: String = "",
+    /** Mesaj "plan an prèske fini" (null = pa montre anyen). */
+    val expiryNotice: ExpiryNotice? = null,
     val ticker: Ticker?,
     val chyron: Chyron?,
     /** Tout chyron aktif yo (vèsyon pwofesyonèl la). */
@@ -292,6 +297,9 @@ data class PanelConfig(
             accountName = o.optJSONObject("account")?.optString("name").orEmpty(),
             accountPlan = o.optJSONObject("account")?.optString("plan").orEmpty(),
             accountExpiry = o.optJSONObject("account")?.optString("expiry").orEmpty(),
+            expiryNotice = o.optJSONObject("expiryNotice")?.let {
+                ExpiryNotice(it.optString("text"), it.optInt("daysLeft"), it.optInt("repeatMin", 120).coerceIn(15, 1440), it.optInt("showSec", 12).coerceIn(4, 60))
+            }?.takeIf { it.text.isNotBlank() },
             channelNames = o.optJSONObject("channelNames").stringMap().mapNotNull { (k, v) -> k.toIntOrNull()?.let { it to v } }.toMap(),
             ticker = o.optJSONObject("ticker")?.takeIf { it.optBoolean("enabled", true) }?.let {
                 Ticker(

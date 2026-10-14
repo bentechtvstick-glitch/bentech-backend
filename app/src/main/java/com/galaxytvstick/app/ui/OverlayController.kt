@@ -24,6 +24,9 @@ object PanelState {
     var config: PanelConfig = PanelConfig.OFFLINE
 }
 
+/** Dènye fwa avètisman ekspirasyon an te parèt (pou tout app la: pa repete l chak fwa ekran an chanje). */
+private var lastNoticeAt = 0L
+
 /**
  * Montre sa panel BenTech la voye: ticker, chyron, banner, ads nan kwen,
  * pop-up, broadcast, epi bloke ekran an si admin nan bloke aparèy la.
@@ -123,6 +126,7 @@ class OverlayController(
         v.chyron.stop()
         v.gfx.stop()
         adJob?.cancel(); adKey = null
+        noticeJob?.cancel(); v.expiryNotice.visibility = View.GONE
     }
 
     /** Chanèl kliyan an ap gade plen ekran (non, non gwoup): règ "kache / anlè" ticker a depann de li. */
@@ -188,6 +192,31 @@ class OverlayController(
         startBanners(cfg)
         startCornerAds(cfg)
         showMessages(cfg)
+        showExpiryNotice(cfg)
+    }
+
+    // ------------------------------------------------------------ Plan an prèske fini
+
+    private var noticeJob: Job? = null
+
+    /** Mesaj ki parèt dousman anlè ekran an, rete kèk segonn, epi disparèt; li repete chak X minit. */
+    private fun showExpiryNotice(cfg: PanelConfig) {
+        val n = cfg.expiryNotice
+        if (n == null) { noticeJob?.cancel(); v.expiryNotice.visibility = View.GONE; return }
+        if (noticeJob?.isActive == true) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (lastNoticeAt != 0L && now - lastNoticeAt < n.repeatMin * 60_000L) return
+        noticeJob = scope.launch {
+            delay(3_000) // kite ekran an fin parèt anvan
+            lastNoticeAt = android.os.SystemClock.elapsedRealtime()
+            val t = v.expiryNotice
+            t.text = n.text
+            t.alpha = 0f
+            t.visibility = View.VISIBLE
+            t.animate().alpha(1f).setDuration(900).start()
+            delay(n.showSec * 1000L)
+            t.animate().alpha(0f).setDuration(1200).withEndAction { t.visibility = View.GONE }.start()
+        }
     }
 
     // ------------------------------------------------------------ Banner
