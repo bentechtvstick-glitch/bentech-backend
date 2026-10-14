@@ -234,8 +234,9 @@ class PlayerActivity : AppCompatActivity() {
             playPreroll(ad)
         } else {
             if (ad != null && ad.type == "image") showImageAd(ad)
-            playChannel(index)
+            playChannel(index, adopt = adopted)
         }
+        adopted = false
         prerollAd = null // yon sèl fwa pa ouvèti
         handler.postDelayed(breakScheduler, 20_000)
         lastFrames = -1; frozenTicks = 0
@@ -258,8 +259,23 @@ class PlayerActivity : AppCompatActivity() {
 
     // ------------------------------------------------------------ Player 8K
 
+    /** true = player a soti nan gid la e li deja ap jwe chanèl la (pa rekonekte). */
+    private var adopted = false
+
     private fun initPlayer() {
         if (player != null) return
+
+        // Gid la te deja ap jwe chanèl sa a nan ti fenèt la: pran menm player a → gwo ekran an parèt touswit
+        channels.getOrNull(index)?.streamId?.let { id -> PlayerHandoff.take(id) }?.let { (p, f) ->
+            dataSourceFactory = f
+            player = p
+            b.playerView.player = p
+            p.addListener(listener)
+            p.addAnalyticsListener(analytics)
+            p.volume = 1f
+            adopted = true
+            return
+        }
 
         // Menm konstriksyon egzak ak ti fenèt videyo gid la (EpgActivity), ki jwe san pwoblèm sou menm aparèy la:
         // player estanda Google la, san okenn reglaj espesyal sou kalite, memwa oswa dekodè.
@@ -273,18 +289,20 @@ class PlayerActivity : AppCompatActivity() {
             .build().also { p ->
                 b.playerView.player = p
                 p.addListener(listener)
-                // Pou dyagnostik: ki dekodè k ap travay, ak konbyen imaj li sote
-                p.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
-                    override fun onVideoDecoderInitialized(
-                        eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
-                        decoderName: String, initializedTimestampMs: Long, initializationDurationMs: Long
-                    ) { videoDecoder = decoderName; droppedFrames = 0 }
-
-                    override fun onDroppedVideoFrames(
-                        eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, droppedFrames: Int, elapsedMs: Long
-                    ) { this@PlayerActivity.droppedFrames += droppedFrames }
-                })
+                p.addAnalyticsListener(analytics)
             }
+    }
+
+    // Pou dyagnostik: ki dekodè k ap travay, ak konbyen imaj li sote
+    private val analytics = object : androidx.media3.exoplayer.analytics.AnalyticsListener {
+        override fun onVideoDecoderInitialized(
+            eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
+            decoderName: String, initializedTimestampMs: Long, initializationDurationMs: Long
+        ) { videoDecoder = decoderName; droppedFrames = 0 }
+
+        override fun onDroppedVideoFrames(
+            eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime, droppedFrames: Int, elapsedMs: Long
+        ) { this@PlayerActivity.droppedFrames += droppedFrames }
     }
 
     private val listener = object : Player.Listener {
@@ -474,7 +492,7 @@ class PlayerActivity : AppCompatActivity() {
         return true
     }
 
-    private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0, alt: Boolean = XtreamApi.preferAlt, stage: Int = 0) {
+    private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0, alt: Boolean = XtreamApi.preferAlt, stage: Int = 0, adopt: Boolean = false) {
         val p = player ?: return
         // Nouvo chanèl (pa yon re-eseye): kontè rekoneksyon an rekòmanse
         if (attempt == 0 && stage == 0) { playedOk = false; reconnects = 0; readyAt = 0L; healthBegin(channels[i]) }
@@ -492,7 +510,12 @@ class PlayerActivity : AppCompatActivity() {
         b.resBadge.visibility = View.GONE
         lastQuality = ""; lastResolution = ""; lastCodec = ""; lastError = ""
         reportStatus()
-        setChannel(p, ch, mode, alt)
+        if (adopt && p.currentMediaItem?.mediaId == "channel") {
+            // Videyo a deja ap jwe (soti nan gid la): pa rekonekte, pa mezire vitès li (sa pa ta vre)
+            hCh = null
+            if (p.playbackState == Player.STATE_READY) { playedOk = true; readyAt = System.currentTimeMillis() }
+            p.playWhenReady = true
+        } else setChannel(p, ch, mode, alt)
         showInfo()
     }
 

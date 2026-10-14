@@ -265,7 +265,7 @@ class EpgActivity : AppCompatActivity() {
         val p = player ?: ExoPlayer.Builder(this)
             .setLoadControl(PlayerActivity.loadControl())
             .setMediaSourceFactory(
-                DefaultMediaSourceFactory(OkHttpDataSource.Factory(XtreamApi.http).setUserAgent(XtreamApi.USER_AGENT))
+                DefaultMediaSourceFactory(OkHttpDataSource.Factory(XtreamApi.http).setUserAgent(XtreamApi.USER_AGENT).also { previewFactory = it })
             )
             .build().also {
                 player = it
@@ -286,6 +286,7 @@ class EpgActivity : AppCompatActivity() {
     private val settingsMenu by lazy { SettingsMenu(this, prefs) { refreshLists() } }
     private fun showSettings() = settingsMenu.show()
     private var previewSeq = 0
+    private var previewFactory: OkHttpDataSource.Factory? = null
     private var firstStart = true
 
     // ------------------------------------------------------------ Panel la chanje lis la
@@ -724,7 +725,14 @@ class EpgActivity : AppCompatActivity() {
 
     private fun openFull(ch: Channel) {
         handler.removeCallbacks(startPreviewLater)
-        player?.release()
+        // Ti fenèt la deja ap jwe chanèl sa a: bay gwo ekran an menm player a (pa rekonekte → touswit)
+        val p = player
+        if (p != null && previewCh?.streamId == ch.streamId && p.playerError == null &&
+            (p.playbackState == Player.STATE_READY || p.playbackState == Player.STATE_BUFFERING)) {
+            p.removeListener(previewListener)
+            b.preview.player = null
+            PlayerHandoff.put(p, previewFactory, ch.streamId)
+        } else p?.release()
         player = null
         ChannelStore.current = channels.ifEmpty { ChannelStore.all }
         startActivity(
