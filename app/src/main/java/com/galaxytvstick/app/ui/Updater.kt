@@ -159,6 +159,22 @@ object Updater {
         }
     }
 
+    /** Enstale APK a ak PackageInstaller. Retounen false si aparèy la pa sipòte l (lè sa a nou sèvi ak ACTION_VIEW). */
+    private fun installSession(ctx: android.content.Context, file: File): Boolean = runCatching {
+        val installer = ctx.packageManager.packageInstaller
+        val params = android.content.pm.PackageInstaller.SessionParams(android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+        // Android 12+: mizajou app la li menm te enstale → pa bezwen konfimasyon
+        if (Build.VERSION.SDK_INT >= 31) params.setRequireUserAction(android.content.pm.PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+        val id = installer.createSession(params)
+        installer.openSession(id).use { s ->
+            s.openWrite("base.apk", 0, file.length()).use { out -> file.inputStream().use { it.copyTo(out) }; s.fsync(out) }
+            val flags = android.app.PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) android.app.PendingIntent.FLAG_MUTABLE else 0)
+            val pi = android.app.PendingIntent.getBroadcast(ctx, id, Intent(ctx, com.galaxytvstick.app.UpdateReceiver::class.java), flags)
+            s.commit(pi.intentSender)
+        }
+        true
+    }.getOrDefault(false)
+
     private fun install(activity: Activity, file: File) {
         val ctx = activity.applicationContext
         // Fire OS / Android 8+: fòk aparèy la otorize app la enstale APK (yon sèl fwa).
@@ -171,6 +187,9 @@ object Updater {
             }.isSuccess
             if (opened) return
         }
+        // 1) Enstalatè sistèm nan dirèkteman (PackageInstaller): yon sèl ti konfimasyon, oswa okenn sou Android 12+
+        if (installSession(ctx, file)) return
+        // 2) Si sa pa mache: ansyen fason an (ekran enstalasyon Android la)
         val uri: Uri = if (Build.VERSION.SDK_INT >= 24) FileProvider.getUriForFile(ctx, "${BuildConfig.APPLICATION_ID}.files", file)
         else { file.setReadable(true, false); Uri.fromFile(file) }
         val intent = Intent(Intent.ACTION_VIEW)

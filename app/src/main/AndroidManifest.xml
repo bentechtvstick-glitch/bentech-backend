@@ -93,6 +93,13 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Mizajou app la: rezilta enstalasyon an, epi relouvri app la apre mizajou a -->
+        <receiver android:name=".UpdateReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <receiver android:name=".BootReceiver" android:enabled="true" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
