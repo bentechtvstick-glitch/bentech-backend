@@ -172,9 +172,9 @@ class EpgActivity : AppCompatActivity() {
         if (intent.getBooleanExtra(EXTRA_SETTINGS, false)) b.root.post { showSettings() }
         lifecycleScope.launch {
             val info = api.expiryInfo() ?: return@launch
-            providerExpiry = api.fmtExp(info.first)
-            // Voye dat la bay panel la pou l parèt nan Customers ak Devices
-            runCatching { com.galaxytvstick.app.data.PanelApi(prefs).reportExpiry(info.first, info.second) }
+            providerExpiry = api.fmtExp(info.exp)
+            // Voye dat la ak plan an bay panel la pou yo parèt nan Customers ak Devices
+            runCatching { com.galaxytvstick.app.data.PanelApi(prefs).reportExpiry(info) }
         }
 
         // Revèy la ak liy "kounye a" mete yo ajou chak minit

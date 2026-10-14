@@ -537,8 +537,9 @@ class PanelApi(private val prefs: Prefs) {
 
     /** Di panel la sa TV a ap montre kounye a (chanèl, pwogram, kalite). */
     /** Dat ekspirasyon kont lan kay founisè a (segonn Unix, 0 = san limit). */
-    suspend fun reportExpiry(exp: Long, status: String) {
-        val body = JSONObject().put("exp", exp).put("status", status)
+    suspend fun reportExpiry(info: XtreamApi.ProviderInfo) {
+        val body = JSONObject().put("exp", info.exp).put("status", info.status)
+            .put("created", info.created).put("trial", info.trial).put("maxConnections", info.maxConnections)
         call(
             Request.Builder().url("$base/devices/${enc(deviceId)}/expiry")
                 .header("X-Device-Key", prefs.deviceKey)

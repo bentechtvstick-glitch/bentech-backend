@@ -157,12 +157,21 @@ class XtreamApi(private val account: Account) {
     }
 
     /** Dat ekspirasyon kont lan kay founisè a (yyyy-MM-dd), oswa null si li pa di l / san limit. */
-    suspend fun expiryDate(): String? = expiryInfo()?.let { fmtExp(it.first) }
+    suspend fun expiryDate(): String? = expiryInfo()?.let { fmtExp(it.exp) }
 
-    /** (exp_date an segonn Unix, 0 = san limit; estati founisè a), oswa null si founisè a pa reponn. */
-    suspend fun expiryInfo(): Pair<Long, String>? = runCatching {
+    /** Kont lan kay founisè a: dat ekspirasyon, estati, dat kreyasyon, esè — pou panel la jwenn plan an. */
+    data class ProviderInfo(val exp: Long, val status: String, val created: Long, val trial: Boolean, val maxConnections: Int)
+
+    /** Enfòmasyon kont lan kay founisè a, oswa null si founisè a pa reponn. exp/created an segonn Unix, 0 = pa gen. */
+    suspend fun expiryInfo(): ProviderInfo? = runCatching {
         val u = JSONObject(get(apiUrl(null))).optJSONObject("user_info") ?: return@runCatching null
-        (u.optString("exp_date").toLongOrNull() ?: 0L).coerceAtLeast(0L) to u.optString("status")
+        ProviderInfo(
+            exp = (u.optString("exp_date").toLongOrNull() ?: 0L).coerceAtLeast(0L),
+            status = u.optString("status"),
+            created = (u.optString("created_at").toLongOrNull() ?: 0L).coerceAtLeast(0L),
+            trial = u.optString("is_trial") == "1",
+            maxConnections = u.optString("max_connections").toIntOrNull() ?: 0
+        )
     }.getOrNull()
 
     fun fmtExp(exp: Long): String? =
