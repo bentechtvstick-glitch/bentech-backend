@@ -1128,7 +1128,7 @@ function openTab(name) {
   $$("[data-pane]").forEach((p) => (p.hidden = p.dataset.pane !== pane));
   if (name === "dash") loadDashboard();
   if (CRUD[name]) openCrud(name);
-  if (name === "live") loadLive();
+  if (name === "live" || name === "cust") loadLive();
   if (name === "dev") loadDevices();
   if (name === "ch") loadChannels();
   if (["bc", "tk", "cy", "bn", "pp"].includes(name)) loadMessages();
@@ -1170,6 +1170,7 @@ async function loadLive() {
   $("#hTv").className = "hdot " + (liveData.online ? "on" : ""); $("#hTvT").textContent = t("TV online: {0}", liveData.online);
   $("#stOnline").textContent = liveData.online; $("#stWatching").textContent = liveData.watching; $("#stTotal").textContent = liveData.devices.length;
   if (tab === "live") renderLive();
+  if (tab === "cust") updCustTv();
 }
 function renderLive() {
   if (!liveData) return;
@@ -1538,8 +1539,17 @@ function custTvHtml(c) {
   const up = (x) => String(x || "").trim().toUpperCase();
   const d = (crud.refs?.devices || []).find((x) => x.mac && ((c.mac && up(x.mac) === up(c.mac)) || (x.customer && (up(x.customer) === up(c.name) || x.customer === c.id))));
   if (!d) return ` <span class="custtv none" title="${esc(t("Pa gen TV konekte ak kliyan sa a"))}">${esc(t("Pa gen TV"))}</span>`;
-  const on = String(d.status).toLowerCase() === "online";
-  return ` <span class="custtv ${on ? "on" : "off"}" title="${esc(d.mac)}${d.lastSeen ? " · " + esc(d.lastSeen) : ""}"><i></i>${esc(t(on ? "TV konekte" : "TV pa konekte"))}</span>`;
+  const on = tvOnline(d.mac);
+  return ` <span class="custtv ${on ? "on" : "off"}" data-ctv="${esc(d.mac)}" title="${esc(d.mac)}"><i></i>${esc(t(on ? "TV konekte" : "TV pa konekte"))}</span>`;
+}
+/** Menm règ ak paj Live TV a: TV a konekte kounye a (app la louvri e l ap pale ak sèvè a). */
+function tvOnline(mac) {
+  const l = (liveData?.devices || []).find((x) => x.mac === mac);
+  return !!(l && l.online && l.configured !== false && !l.blocked);
+}
+/** Mete siy TV yo ajou nan paj Customers la chak fwa done Live yo chanje (chak 5 s). */
+function updCustTv() {
+  $$("[data-ctv]").forEach((el) => { const on = tvOnline(el.dataset.ctv); el.className = "custtv " + (on ? "on" : "off"); el.lastChild.textContent = t(on ? "TV konekte" : "TV pa konekte"); });
 }
 // Paj ki ekri an MAJISKIL (Kliyan yo): tout chan tèks yo, sof imèl la
 const isUpper = (C, f) => !!C.upper && !f.noUpper && !f.opts && !f.ref && !f.list && !f.type;
