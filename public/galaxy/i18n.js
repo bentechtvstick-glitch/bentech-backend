@@ -962,6 +962,7 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Pa gen TV": ["No TV", "Pas de TV", "Sin TV"],
     "TV konekte": ["TV online", "TV en ligne", "TV en línea"],
     "TV pa konekte": ["TV offline", "TV hors ligne", "TV sin conexión"],
+    "TV {0} poko konekte: li ap konekte ak kliyan an poukont li depi TV a louvri app la.": ["TV {0} is not connected yet: it will be linked to this customer automatically as soon as the TV opens the app.", "La TV {0} n'est pas encore connectée : elle sera liée à ce client automatiquement dès qu'elle ouvre l'app.", "El TV {0} aún no está conectado: se vinculará a este cliente automáticamente cuando abra la app."],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],

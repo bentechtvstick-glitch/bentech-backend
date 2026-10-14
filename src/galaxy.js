@@ -184,6 +184,20 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   // =========================================================================
 
   /** App la anrejistre tèt li. Si l te gentan gen yon playlist e sèvè a pèdi done yo, li restore l. */
+  /**
+   * Kliyan ki te kreye ak MAC TV a ANVAN TV a te konekte: konekte yo kounye a.
+   * (Fòm kliyan an mete MAC la, men TV a pa t egziste toujou → panel la pa t ka konekte yo.)
+   * Retounen true si TV a fèk konekte ak yon kliyan.
+   */
+  function linkCustomerByMac(device) {
+    if (!device?.mac || device.customer) return false;
+    const c = (data().customers || []).find((x) => x.mac && normMac(x.mac) === device.mac);
+    if (!c) return false;
+    device.customer = c.name || c.id;
+    auditLog("device-link", `TV ${device.mac} linked to customer ${device.customer} (MAC on customer)`, "system");
+    return true;
+  }
+
   app.post("/api/devices/register", async (req, res) => {
     ensure();
     const b = req.body || {};
@@ -245,6 +259,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     device.appVersion = b.appVersion || device.appVersion || "";
     if (b.xtreamUser) device.xtreamUser = b.xtreamUser;
     device.lastSeenAt = nowIso;
+    if (linkCustomerByMac(device)) { activateCustomer(device); syncTvs(); }
     await db.write();
     res.json({ ok: true });
   });
@@ -277,6 +292,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     // Chak 6 è: reverifye plan/ekspirasyon kliyan an kay founisè a (an aryè plan, TV a pa tann)
     syncCustomerFromProvider(device).then((c) => { if (c) syncTvs(); }).catch(() => {});
     // Dat TV a te voye a (si sèvè a pa ka kontakte founisè a), oswa dat la fin pase → kliyan an "Expired"
+    if (linkCustomerByMac(device)) { touchWrite(); syncTvs(); }
     if (applyProviderExp(device)) touchWrite();
     if (activateCustomer(device)) { touchWrite(); syncTvs(); }
 
@@ -569,11 +585,15 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
   app.get("/api/galaxy/devices/lookup", authenticate, (req, res) => {
     const device = loadDevice(req, res);
+    if (device && linkCustomerByMac(device)) { activateCustomer(device); touchWrite(); syncTvs(); }
     if (device) res.json(adminDevice(device));
   });
 
   app.get("/api/galaxy/devices", authenticate, (req, res) => {
     ensure();
+    let linked = false;
+    for (const d of data().devices) if (linkCustomerByMac(d)) { activateCustomer(d); linked = true; }
+    if (linked) { touchWrite(); syncTvs(); }
     // Tout aparèy yo: TV Galaxy yo (ak MAC) ak aparèy ki te deja nan panel la (DVC-…)
     res.json(data().devices.map(adminDevice));
   });

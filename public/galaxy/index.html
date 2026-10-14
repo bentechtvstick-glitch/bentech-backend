@@ -1626,7 +1626,9 @@ $("#crudForm").addEventListener("submit", async (e) => {
     if (crud.editing != null) await api("PUT", `/${C.col}/${encodeURIComponent(crud.editing)}`, body);
     else { if (crud.items.some((it) => String(it[C.id]) === String(body[C.id]))) return setMsg($("#crudMsg"), t("Gen yon lòt eleman ki gen menm {0} an.", t(C.fields.find((f) => f.k === C.id)?.l || C.id))); await api("POST", `/${C.col}`, body); }
     // Kliyan: konekte l ak TV li chwazi a (konsa li parèt touswit nan paj aparèy la)
-    if (C.fields.some((f) => f.dev) && body.mac) await api("PATCH", `/galaxy/devices/${encodeURIComponent(body.mac)}`, { customer: body.name }).catch(() => {});
+    // Konekte TV a ak kliyan an. Si TV a poko konekte ak panel la, sèvè a ap konekte yo poukont li lè TV a parèt.
+    if (C.fields.some((f) => f.dev) && body.mac) await api("PATCH", `/galaxy/devices/${encodeURIComponent(body.mac)}`, { customer: body.name })
+      .catch(() => toast(t("TV {0} poko konekte: li ap konekte ak kliyan an poukont li depi TV a louvri app la.", body.mac)));
     toast("Sove"); $("#crudFormCard").hidden = true; crud.editing = null; loadCrud();
   } catch (err) { setMsg($("#crudMsg"), err.message); }
 });
