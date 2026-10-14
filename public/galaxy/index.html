@@ -1530,19 +1530,25 @@ function cellHtml(f, v, it) {
   if (f.type === "bool") return v ? `<span class="pill p-on">${t("Wi")}</span>` : `<span class="pill p-off">${t("Non")}</span>`;
   // Kliyan: estati a + si TV li konekte kounye a
   // Kliyan: MAC TV a, menm si se nan paj Aparèy la yo te konekte l
-  if (crud.name === "cust" && f.k === "mac" && it && !v) { const up = (x) => String(x || "").trim().toUpperCase(); const d = (crud.refs?.devices || []).find((x) => x.mac && x.customer && (up(x.customer) === up(it.name) || x.customer === it.id)); return d ? `<span class="mono">${esc(d.mac)}</span>` : "—"; }
+  if (crud.name === "cust" && f.k === "mac" && it) { const ds = custDevices(it); return ds.length ? ds.map((d) => `<div class="mono">${esc(d.mac)}</div>`).join("") : (v ? `<span class="mono">${esc(v)}</span>` : "—"); }
   if (crud.name === "cust" && f.k === "status" && it) return (v ? `<span class="pill ${pillClass(v)}">${esc(v)}</span>` : "—") + custTvHtml(it);
   if (f.pill && v) return `<span class="pill ${pillClass(v)}">${esc(v)}</span>`;
   if (f.type === "datetime") return esc(fmtExp(v)) || "—";
   return esc(v ?? "") || "—";
 }
 /** TV kliyan an: 🟢 konekte / ⚪ pa konekte / pa gen TV. */
-function custTvHtml(c) {
+/** Tout TV yon kliyan: TV ki chwazi kliyan an nan paj Aparèy la, plis MAC ki nan fòm kliyan an. */
+function custDevices(c) {
   const up = (x) => String(x || "").trim().toUpperCase();
-  const d = (crud.refs?.devices || []).find((x) => x.mac && ((c.mac && up(x.mac) === up(c.mac)) || (x.customer && (up(x.customer) === up(c.name) || x.customer === c.id))));
-  if (!d) return ` <span class="custtv none" title="${esc(t("Pa gen TV konekte ak kliyan sa a"))}">${esc(t("Pa gen TV"))}</span>`;
-  const on = tvOnline(d.mac);
-  return ` <span class="custtv ${on ? "on" : "off"}" data-ctv="${esc(d.mac)}" title="${esc(d.mac)}"><i></i>${esc(t(on ? "TV konekte" : "TV pa konekte"))}</span>`;
+  return (crud.refs?.devices || []).filter((x) => x.mac && ((c.mac && up(x.mac) === up(c.mac)) || (x.customer && (up(x.customer) === up(c.name) || x.customer === c.id))));
+}
+function custTvHtml(c) {
+  const ds = custDevices(c);
+  if (!ds.length) return ` <span class="custtv none" title="${esc(t("Pa gen TV konekte ak kliyan sa a"))}">${esc(t("Pa gen TV"))}</span>`;
+  // Yon siy pou chak TV (🟢 konekte / ⚪ pa konekte)
+  return ds.map((d) => { const on = tvOnline(d.mac);
+    return ` <span class="custtv ${on ? "on" : "off"}" data-ctv="${esc(d.mac)}" title="${esc(d.mac)}${d.deviceName ? " · " + esc(d.deviceName) : ""}"><i></i>${esc(ds.length > 1 ? "" : t(on ? "TV konekte" : "TV pa konekte"))}</span>`; }).join("")
+    + (ds.length > 1 ? ` <span class="custtv">${esc(t("{0} TV · {1} konekte", ds.length, ds.filter((d) => tvOnline(d.mac)).length))}</span>` : "");
 }
 /** Menm règ ak paj Live TV a: TV a konekte kounye a (app la louvri e l ap pale ak sèvè a). */
 function tvOnline(mac) {
@@ -1551,7 +1557,7 @@ function tvOnline(mac) {
 }
 /** Mete siy TV yo ajou nan paj Customers la chak fwa done Live yo chanje (chak 5 s). */
 function updCustTv() {
-  $$("[data-ctv]").forEach((el) => { const on = tvOnline(el.dataset.ctv); el.className = "custtv " + (on ? "on" : "off"); el.lastChild.textContent = t(on ? "TV konekte" : "TV pa konekte"); });
+  $$("[data-ctv]").forEach((el) => { const on = tvOnline(el.dataset.ctv); el.className = "custtv " + (on ? "on" : "off"); if (el.lastChild.textContent) el.lastChild.textContent = t(on ? "TV konekte" : "TV pa konekte"); });
 }
 // Paj ki ekri an MAJISKIL (Kliyan yo): tout chan tèks yo, sof imèl la
 const isUpper = (C, f) => !!C.upper && !f.noUpper && !f.opts && !f.ref && !f.list && !f.type;

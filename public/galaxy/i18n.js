@@ -967,6 +967,7 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "{0} koneksyon": ["{0} connections", "{0} connexions", "{0} conexiones"],
     "Kantite TV ki ka gade an menm tan ak kont sa a, selon founisè playlist la.": ["How many TVs can watch at the same time with this account, according to the playlist provider.", "Nombre de TV pouvant regarder en même temps avec ce compte, selon le fournisseur.", "Cuántos TV pueden ver al mismo tiempo con esta cuenta, según el proveedor."],
     "Poko konnen: TV a voye l lè l louvri app la (1.0.90+), oswa peze ⚡ Teste sou playlist la.": ["Not known yet: the TV sends it when it opens the app (1.0.90+), or press ⚡ Test on the playlist.", "Pas encore connu : la TV l'envoie à l'ouverture de l'app (1.0.90+), ou appuyez sur ⚡ Tester sur la playlist.", "Aún desconocido: el TV lo envía al abrir la app (1.0.90+), o pulse ⚡ Probar en la playlist."],
+    "{0} TV · {1} konekte": ["{0} TVs · {1} online", "{0} TV · {1} en ligne", "{0} TV · {1} en línea"],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],
     "Gwosè baz done a": ["Database size", "Taille de la base de données", "Tamaño de la base de datos"],
