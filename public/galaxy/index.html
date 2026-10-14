@@ -325,6 +325,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .custtv{display:inline-flex;align-items:center;gap:5px;font-size:12px;margin-left:6px;white-space:nowrap;color:#9AA3C7}.custtv i{width:8px;height:8px;border-radius:50%;background:#6b7280}.custtv.on{color:#4ade80}.custtv.on i{background:#22c55e;box-shadow:0 0 6px #22c55e}.custtv.none{opacity:.6}
 .sig.sig-l{margin:0 6px 0 0}
 .sigleg{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.sigleg .sig{margin:0 4px 0 10px}
+.limitbox{display:flex;flex-direction:column;gap:2px;padding:8px 0}.limitbox b{font-size:18px}
 .carcols{display:inline-flex;gap:6px;align-items:center;padding:0 6px}.carcol{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.5);cursor:pointer;padding:0}.carcol:hover,.carcol:focus{border-color:#fff;transform:scale(1.15)}
 .chy-run{align-self:stretch;position:relative;overflow:hidden;min-width:220px;line-height:1}
 .cyrun{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line2,#2a3150);display:flex;flex-direction:column;gap:8px}
@@ -572,7 +573,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="field"><label for="dvName">Non aparèy la</label><input type="text" id="dvName"></div>
             <div class="field"><label for="dvCity">Vil (pou meteyo sou TV sa a)</label><input type="text" id="dvCity" maxlength="30" placeholder="Egz: Miami"><span class="note" id="dvGeo"></span></div>
             <div class="row2"><div class="field"><label for="dvCustomer">Kliyan</label><select id="dvCustomer"></select></div>
-              <div class="field"><label for="dvLimit">Limit</label><input type="number" min="1" id="dvLimit"></div></div>
+              <div class="field"><label>Limit (founisè a)</label><div class="limitbox"><b id="dvLimit">—</b><span class="note" id="dvLimitNote"></span></div></div></div>
             <div class="kv"><span>Bloke aparèy la</span><label class="sw"><input type="checkbox" id="dvBlocked" aria-label="Bloke aparèy la"><i></i></label></div>
             <div class="btns"><button class="btn small" id="dvResetKey" type="button">Reyinisyalize Device Key</button><button class="btn small red" id="dvDelete" type="button">Efase aparèy la</button><button class="btn small primary" id="dvSave" type="button">Sove</button></div>
             <div id="dvConfirm"></div>
@@ -1217,7 +1218,8 @@ async function selectDevice(mac, jump) {
 }
 function renderDevice() {
   $("#dvMac").textContent = dev.mac; $("#dvKey").textContent = dev.deviceKey || t("— (ap tann TV a)"); $("#dvModel").textContent = dev.model ? `${devType(dev.model)} · ${dev.model}` : "—";
-  $("#dvVersion").textContent = dev.appVersion || "—"; $("#dvExp").innerHTML = devExpHtml(dev); $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : ""; $("#dvBlocked").checked = !!dev.blocked; $("#dvLimit").value = dev.limit ?? 1;
+  $("#dvVersion").textContent = dev.appVersion || "—"; $("#dvExp").innerHTML = devExpHtml(dev); $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : ""; $("#dvBlocked").checked = !!dev.blocked; const lim = Number(dev.providerMaxConn) || 0; $("#dvLimit").textContent = lim ? t("{0} koneksyon", lim) : "—";
+  $("#dvLimitNote").textContent = lim ? t("Kantite TV ki ka gade an menm tan ak kont sa a, selon founisè playlist la.") : t("Poko konnen: TV a voye l lè l louvri app la (1.0.90+), oswa peze ⚡ Teste sou playlist la.");
   $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${String(c.name).toUpperCase() === String(dev.customer || "").toUpperCase() ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
   $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span> <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
 }
@@ -1272,7 +1274,7 @@ $("#dvBlocked").addEventListener("change", async (ev) => {
   } catch (err) { ev.target.checked = !on; setMsg($("#dvMsg"), err.message); }
 });
 $("#dvSave").addEventListener("click", async () => {
-  try { dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { deviceName: $("#dvName").value.trim(), city: $("#dvCity").value.trim(), customer: $("#dvCustomer").value, blocked: $("#dvBlocked").checked, limit: Math.max(1, +$("#dvLimit").value || 1) })) };
+  try { dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { deviceName: $("#dvName").value.trim(), city: $("#dvCity").value.trim(), customer: $("#dvCustomer").value, blocked: $("#dvBlocked").checked })) };
     renderDevice(); setMsg($("#dvMsg"), "Sove. TV a ap aplike l nan pwochen minit lan (oswa klike \"Aplike chanjman yo\").", true); loadDevices(); }
   catch (err) { setMsg($("#dvMsg"), err.message); }
 });
@@ -1394,7 +1396,7 @@ function renderDevTable() {
       const st = d.blocked ? `<span class="st-block">${t("Bloke")}</span>` : !(d.playlists || []).length ? `<span class="st-off" title="${esc(t("Pa konfigire"))}">—</span>` : `<span class="${online ? "st-on" : "st-off"}">${t(online ? "Online" : "Offline")}</span>`;
       const key = d.galaxy ? `data-mac="${esc(d.mac)}"` : `data-id="${esc(d.deviceId)}"`;
       return `<tr class="click${dev && d.galaxy && dev.mac === d.mac ? " sel" : ""}" ${key}><td class="mono">${d.galaxy ? esc(d.mac) : "-"}</td><td>${esc(shortId(d))}</td><td>${esc(d.model ? devType(d.model) : (d.type || "Android TV"))}</td><td>${st}</td>
-        <td>${d.playlists.map((p) => esc(p.name)).join(", ") || t("Pa konfigire")}</td><td>${d.galaxy ? devExpHtml(d) : "—"}</td><td>${esc(d.lastSeen || "—")}</td><td>${esc(d.limit ?? 1)}</td>
+        <td>${d.playlists.map((p) => esc(p.name)).join(", ") || t("Pa konfigire")}</td><td>${d.galaxy ? devExpHtml(d) : "—"}</td><td>${esc(d.lastSeen || "—")}</td><td>${Number(d.providerMaxConn) > 0 ? esc(d.providerMaxConn) : "—"}</td>
         <td class="acts"><button class="btn purple" data-act="provider" type="button">${t("Ajoute provider")}</button><button class="btn ${d.blocked ? "red" : "green"}" data-act="${d.blocked ? "activate" : "block"}" type="button" title="${esc(t(d.blocked ? "Klike pou aktive aparèy la" : "Klike pou dezaktive aparèy la"))}">${t(d.blocked ? "Dezaktive" : "Aktif")}</button><button class="btn red" data-act="delete" type="button">${t("Efase l")}</button></td></tr>`;
     }).join("") + `</tbody></table>` + moreHtml("dev", devices.length)
     : `<div class="empty">${q ? t("Pa gen anyen ki koresponn.") : t("Pa gen aparèy Galaxy ankò. Louvri app la sou yon TV pou l parèt isit la.")}</div>`);

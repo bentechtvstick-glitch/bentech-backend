@@ -910,6 +910,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       customer.providerSyncAt = new Date().toISOString(); // menm si l echwe: pa relanse chak segonn
       const info = await cl.get("").catch(() => null);
       const u = info?.user_info;
+      if (u && Number(u.max_connections) > 0) device.providerMaxConn = Number(u.max_connections);
       if (!u || Number(u.auth) === 0) return null;
       const exp = Number(u.exp_date);
       // Si founisè a pa bay dat kreyasyon an, plan an dedui apati tan ki rete a, pou kaz Plan an pa janm rete vid
@@ -1149,7 +1150,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const pl = playlistsOf(device.mac).find((p) => p.id === req.params.id);
     if (!pl) return res.status(404).json({ ok: false, error: "Playlist pa jwenn" });
     const out = await playlistTest(pl);
-    if (out.ok) { await syncCustomerFromProvider(device, { force: true }); if (activateCustomer(device)) await db.write(); syncTvs(); }
+    if (out.ok) {
+      // Limit koneksyon kont lan selon founisè a (paj Aparèy la montre l)
+      if (Number(out.maxConnections) > 0) { device.providerMaxConn = Number(out.maxConnections); await db.write(); }
+      await syncCustomerFromProvider(device, { force: true }); if (activateCustomer(device)) await db.write(); syncTvs();
+    }
     auditLog("playlist-test", `Playlist "${pl.name}" on ${device.mac}: ${out.ok ? out.status : out.error}`, admin(req));
     res.json(out);
   });
