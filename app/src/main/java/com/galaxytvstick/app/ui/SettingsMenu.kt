@@ -34,8 +34,10 @@ class SettingsMenu(
     private fun onOff(on: Boolean) = a.getString(if (on) R.string.switch_on else R.string.switch_off)
 
     private fun info(title: Int, message: String) {
-        androidx.appcompat.app.AlertDialog.Builder(a, R.style.Theme_Galaxy_Dialog)
-            .setTitle(title).setMessage(message).setPositiveButton(android.R.string.ok, null).show()
+        val d = androidx.appcompat.app.AlertDialog.Builder(a, R.style.Theme_Galaxy_Dialog)
+            .setTitle(title).setMessage(message).setPositiveButton(android.R.string.ok, null).create()
+        glass(d)
+        d.show()
     }
 
 
@@ -84,8 +86,15 @@ class SettingsMenu(
                 setOnClickListener { dialog.dismiss(); action() }
             })
         }
+        glass(dialog)
         dialog.show()
         box.getChildAt(0)?.requestFocus()
+    }
+
+    /** Fon yon ti jan transparan: videyo a / gid la parèt dèyè meni an. */
+    private fun glass(d: android.app.Dialog) {
+        d.window?.setBackgroundDrawableResource(R.drawable.bg_dialog_glass)
+        d.window?.setDimAmount(0.2f)
     }
 
     fun show() {

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fon Settings la: menm koulè ak lòt fenèt yo, men 78% opak pou videyo a parèt yon ti jan dèyè l -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#C714141A"/><stroke android:width="1dp" android:color="#552A2A33"/><corners android:radius="12dp"/>
+</shape>
