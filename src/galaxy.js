@@ -494,6 +494,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       update: appUpdate(),
       // Kont kliyan an, pou ekran akèy app la (non, plan, ekspirasyon)
       account: customer ? { name: customer.name || "", plan: customer.plan || "", expiry: customer.expiry || "" } : null,
+      // Avètisman: plan kliyan an prèske fini (TV a montre l dousman, li rete kèk segonn, li disparèt)
+      expiryNotice: expiryNotice(s, customer, device, now, zone),
       hiddenChannels: eff.hiddenChannels,
       hiddenCategories: eff.hiddenCategories,
       // Non admin nan chanje nan panel la (egz: gwoup "CARIBBEAN" → "HAITI")
@@ -1020,6 +1022,25 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     c.status = next;
     auditLog("customer-status", `Customer ${c.name || c.id}: ${cur || "—"} → ${next} (TV ${device.mac})`, "system");
     return true;
+  }
+
+  /**
+   * Mesaj "plan an prèske fini" pou yon TV: null si li etenn, si pa gen dat, si dat la twò lwen oswa si li deja pase.
+   * Tèks la ka gen {jou}, {dat}, {kontak}, {non}.
+   */
+  function expiryNotice(s, customer, device, now, zone) {
+    if (s.expiryWarnOn === false) return null;
+    const days = Math.min(60, Math.max(1, Number(s.expiryWarnDays) || 3));
+    let exp = customer?.expiry ? toEpochSec(customer.expiry, zone, true) : 0;
+    if (!(exp > 0) && Number(device.providerExp) > 0) exp = Number(device.providerExp);
+    if (!(exp > now) || exp - now > days * 86400) return null;
+    const left = Math.max(1, Math.round((exp - now) / 86400));
+    const date = new Intl.DateTimeFormat("en-US", { timeZone: zone, month: "2-digit", day: "2-digit", year: "numeric" }).format(new Date(exp * 1000));
+    const contact = String(s.expiryWarnContact || "").trim();
+    const tpl = String(s.expiryWarnText || "").trim() || "⏰ Abònman ou ap fini nan {jou} jou ({dat}). Kontakte founisè ou pou renouvle l. {kontak}";
+    const text = tpl.replace(/\{jou\}/gi, String(left)).replace(/\{dat\}/gi, date).replace(/\{kontak\}/gi, contact)
+      .replace(/\{non\}/gi, customer?.name || "").replace(/\s{2,}/g, " ").trim().slice(0, 300);
+    return { text, daysLeft: left, repeatMin: Math.min(1440, Math.max(15, Number(s.expiryWarnEveryMin) || 120)), showSec: 12 };
   }
 
   /** App la voye dat ekspirasyon kont lan kay founisè a (exp = segonn Unix, 0 = san limit). */
