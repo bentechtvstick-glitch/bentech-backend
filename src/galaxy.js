@@ -920,8 +920,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const status = String(customer.status || "").toLowerCase() === "suspended" ? customer.status
       : (exp > 0 && exp < nowSec) || String(device.providerStatus || "").toLowerCase() === "expired" ? "Expired" : "Active";
     const expiry = exp > 0 ? localStamp(exp) : "";
-    if (Number(customer.providerExp || 0) === exp && customer.expiry === expiry && customer.status === status && (customer.plan || !(exp > 0))) return false;
-    if (!customer.plan && exp > 0) customer.plan = planForDays(Math.max(0, exp - nowSec) / 86400);
+    // Plan an: menm règ ak sèvè a (esè → Trial, dire kont lan, renouvèlman) ak enfòmasyon TV a voye yo
+    const u = { exp_date: exp, created_at: Number(device.providerCreated) || 0, is_trial: device.providerTrial ? "1" : "0" };
+    const plan = providerPlan(u, customer) || (!customer.plan && exp > 0 ? planForDays(Math.max(0, exp - nowSec) / 86400) : null) || customer.plan || "";
+    if (Number(customer.providerExp || 0) === exp && customer.expiry === expiry && customer.status === status && (customer.plan || "") === plan) return false;
+    if (plan) customer.plan = plan;
     customer.providerExp = exp;
     customer.expiry = expiry;
     customer.status = status;
@@ -1007,9 +1010,13 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const b = req.body || {};
     const exp = Math.max(0, Math.floor(Number(b.exp) || 0));
     const st = String(b.status || "").slice(0, 30);
-    const changed = device.providerExp !== exp || (device.providerStatus || "") !== st;
+    const changed = device.providerExp !== exp || (device.providerStatus || "") !== st || (b.created != null && device.providerCreated !== Math.floor(Number(b.created) || 0)) || (b.trial != null && !!device.providerTrial !== !!b.trial);
     device.providerExp = exp;
     device.providerStatus = st;
+    // App 1.0.90+: dat kreyasyon, esè, koneksyon → plan otomatik nan Customers
+    if (b.created != null) device.providerCreated = Math.max(0, Math.floor(Number(b.created) || 0));
+    if (b.trial != null) device.providerTrial = !!b.trial;
+    if (b.maxConnections != null) device.providerMaxConn = Math.max(0, Math.floor(Number(b.maxConnections) || 0));
     device.providerExpAt = new Date().toISOString();
     const cust = applyProviderExp(device);
     if (changed || cust) await db.write();
