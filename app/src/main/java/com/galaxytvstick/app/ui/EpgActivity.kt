@@ -173,6 +173,7 @@ class EpgActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val info = api.expiryInfo() ?: return@launch
             providerExpiry = api.fmtExp(info.exp)
+            providerPlan = planOf(info)
             // Voye dat la ak plan an bay panel la pou yo parèt nan Customers ak Devices
             runCatching { com.galaxytvstick.app.data.PanelApi(prefs).reportExpiry(info) }
         }
@@ -675,6 +676,27 @@ class EpgActivity : AppCompatActivity() {
 
     /** Dat ekspirasyon founisè a bay (si panel la pa gen youn pou kliyan an). */
     private var providerExpiry: String? = null
+    /** Plan an selon founisè a (si panel la poko gen youn pou kliyan an). */
+    private var providerPlan: String = ""
+
+    /** Menm règ ak panel la: esè → Trial, sinon dire kont lan (kreyasyon → ekspirasyon). */
+    private fun planOf(i: com.galaxytvstick.app.data.XtreamApi.ProviderInfo): String {
+        if (i.trial) return "Trial"
+        val now = System.currentTimeMillis() / 1000
+        val days = when {
+            i.exp <= 0 -> return ""
+            i.created in 1 until i.exp -> (i.exp - i.created) / 86400.0
+            else -> (i.exp - now).coerceAtLeast(0) / 86400.0
+        }
+        return when {
+            days < 8 -> "Trial"
+            days <= 49 -> "1 Month"
+            days <= 137 -> "3 Months"
+            days <= 274 -> "6 Months"
+            else -> "12 Months"
+        }
+    }
+    private fun planText(cfg: com.galaxytvstick.app.data.PanelConfig) = cfg.accountPlan.ifBlank { providerPlan }
 
     /** Lis chwa ak fokis ble byen vizib (lis AlertDialog estanda a pa montre fokis la sou TV). */
     private fun menuDialog(title: Int, items: List<Pair<String, () -> Unit>>) {
@@ -714,13 +736,13 @@ class EpgActivity : AppCompatActivity() {
             getString(R.string.set_customer, cfg.accountName.ifBlank { "—" }) to {
                 info(R.string.set_expiry_title, getString(R.string.set_customer, cfg.accountName.ifBlank { "—" }))
             },
-            getString(R.string.home_plan_fmt, cfg.accountPlan.ifBlank { "—" }) to {
-                info(R.string.set_expiry_title, getString(R.string.home_plan_fmt, cfg.accountPlan.ifBlank { "—" }))
+            getString(R.string.home_plan_fmt, planText(cfg).ifBlank { "—" }) to {
+                info(R.string.set_expiry_title, getString(R.string.home_plan_fmt, planText(cfg).ifBlank { "—" }))
             },
             getString(R.string.set_expiry, exp) to {
                 info(R.string.set_expiry_title, listOf(
                     cfg.accountName,
-                    if (cfg.accountPlan.isBlank()) "" else getString(R.string.home_plan_fmt, cfg.accountPlan),
+                    if (planText(cfg).isBlank()) "" else getString(R.string.home_plan_fmt, planText(cfg)),
                     getString(R.string.home_exp_fmt, exp)
                 ).filter { it.isNotBlank() }.joinToString("\n"))
             },
