@@ -8,6 +8,8 @@
         <item name="android:textColorPrimary">@color/text</item>
         <item name="android:textColorSecondary">@color/text_dim</item>
         <item name="android:windowFullscreen">true</item>
+        <!-- Pa gen animasyon ant ekran yo: chak ekran parèt touswit (Fire Stick la pa pèdi tan) -->
+        <item name="android:windowAnimationStyle">@null</item>
     </style>
 
     <style name="Theme.Galaxy.Player">

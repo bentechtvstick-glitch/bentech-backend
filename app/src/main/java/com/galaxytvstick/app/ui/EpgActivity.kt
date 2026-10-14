@@ -112,6 +112,9 @@ class EpgActivity : AppCompatActivity() {
         b.rows.layoutManager = LinearLayoutManager(this)
         b.rows.adapter = adapter
         b.rows.itemAnimator = null
+        // Lis gid la: pa rekalkile gwosè li chak fwa, epi kenbe plis liy pare pou desann vit ak remòt la
+        b.rows.setHasFixedSize(true)
+        b.rows.setItemViewCacheSize(24)
         adapter.items = channels
 
         b.categories.layoutManager = LinearLayoutManager(this)
@@ -193,7 +196,9 @@ class EpgActivity : AppCompatActivity() {
         overlay.start()
         // Tann yon ti moman pou player plen ekran an lage koneksyon l anvan (playlist ki pèmèt 1 sèl ekran)
         ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId }?.let { previewCh = it }
-        handler.postDelayed(startPreviewLater, 800)
+        // Premye fwa: preview a kòmanse prèske touswit. Lè kliyan an tounen soti nan player plen ekran an, tann li lage koneksyon an.
+        handler.postDelayed(startPreviewLater, if (firstStart) 150 else 700)
+        firstStart = false
         // Di panel la kliyan an ap gade gid la
         val last = ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId }
         val body = org.json.JSONObject().put("screen", "epg").put("playlistName", prefs.account?.name ?: "")
@@ -279,6 +284,7 @@ class EpgActivity : AppCompatActivity() {
         }
     }
     private var previewSeq = 0
+    private var firstStart = true
 
     // ------------------------------------------------------------ Panel la chanje lis la
 
@@ -444,7 +450,7 @@ class EpgActivity : AppCompatActivity() {
                 if (has) {
                     pendingCat = c.id
                     handler.removeCallbacks(applyPendingCat)
-                    handler.postDelayed(applyPendingCat, 300)
+                    handler.postDelayed(applyPendingCat, 160)
                 }
             }
             h.b.root.setOnClickListener { pendingCat = c.id; focusGrid() }
@@ -551,7 +557,7 @@ class EpgActivity : AppCompatActivity() {
     private fun fillMissing(now: Boolean = false) {
         fillJob?.cancel()
         fillJob = lifecycleScope.launch {
-            delay(if (now) 0 else 250)
+            delay(if (now) 0 else 120)
             val lm = b.rows.layoutManager as LinearLayoutManager
             val first = lm.findFirstVisibleItemPosition().coerceAtLeast(0)
             val last = lm.findLastVisibleItemPosition().coerceAtLeast(first)

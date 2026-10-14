@@ -194,6 +194,9 @@ class PlayerActivity : AppCompatActivity() {
         b.ovCategories.adapter = ovCatAdapter
         b.ovChannels.layoutManager = LinearLayoutManager(this)
         b.ovChannels.adapter = ovChAdapter
+        // Lis chanèl sou videyo a: san animasyon, liy yo rete pare pou remòt la desann vit
+        b.ovCategories.itemAnimator = null; b.ovChannels.itemAnimator = null
+        b.ovChannels.setHasFixedSize(true); b.ovChannels.setItemViewCacheSize(20)
         b.btnGuide.setOnClickListener { openGuide() }
         b.btnMovies.setOnClickListener { openVod("movie") }
         b.btnSeries.setOnClickListener { openVod("series") }
