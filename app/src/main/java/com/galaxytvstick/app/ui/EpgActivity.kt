@@ -175,8 +175,8 @@ class EpgActivity : AppCompatActivity() {
         if (intent.getBooleanExtra(EXTRA_SETTINGS, false)) b.root.post { showSettings() }
         lifecycleScope.launch {
             val info = api.expiryInfo() ?: return@launch
-            providerExpiry = api.fmtExp(info.exp)
-            providerPlan = planOf(info)
+            SettingsMenu.providerExpiry = api.fmtExp(info.exp)
+            SettingsMenu.providerPlan = settingsMenu.planOf(info)
             // Voye dat la ak plan an bay panel la pou yo parèt nan Customers ak Devices
             runCatching { com.galaxytvstick.app.data.PanelApi(prefs).reportExpiry(info) }
         }
@@ -283,6 +283,8 @@ class EpgActivity : AppCompatActivity() {
             p.setMediaItem(PlayerActivity.buildItem(api, ch.copy(directUrl = url))); p.prepare(); p.playWhenReady = true
         }
     }
+    private val settingsMenu by lazy { SettingsMenu(this, prefs) { refreshLists() } }
+    private fun showSettings() = settingsMenu.show()
     private var previewSeq = 0
     private var firstStart = true
 
@@ -673,212 +675,6 @@ class EpgActivity : AppCompatActivity() {
     }
 
     /** Reglaj: rechaje chanèl yo, chanje playlist, enfòmasyon aparèy la, soti. */
-    private fun onOff(on: Boolean) = getString(if (on) R.string.switch_on else R.string.switch_off)
-
-    private fun info(title: Int, message: String) {
-        androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
-            .setTitle(title).setMessage(message).setPositiveButton(android.R.string.ok, null).show()
-    }
-
-    /** Dat ekspirasyon founisè a bay (si panel la pa gen youn pou kliyan an). */
-    private var providerExpiry: String? = null
-    /** Plan an selon founisè a (si panel la poko gen youn pou kliyan an). */
-    private var providerPlan: String = ""
-
-    /** Menm règ ak panel la: esè → Trial, sinon dire kont lan (kreyasyon → ekspirasyon). */
-    private fun planOf(i: com.galaxytvstick.app.data.XtreamApi.ProviderInfo): String {
-        if (i.trial) return "Trial"
-        val now = System.currentTimeMillis() / 1000
-        val days = when {
-            i.exp <= 0 -> return ""
-            i.created in 1 until i.exp -> (i.exp - i.created) / 86400.0
-            else -> (i.exp - now).coerceAtLeast(0) / 86400.0
-        }
-        return when {
-            days < 8 -> "Trial"
-            days <= 49 -> "1 Month"
-            days <= 137 -> "3 Months"
-            days <= 274 -> "6 Months"
-            else -> "12 Months"
-        }
-    }
-    private fun planText(cfg: com.galaxytvstick.app.data.PanelConfig) = cfg.accountPlan.ifBlank { providerPlan }
-
-    /** Lis chwa ak fokis ble byen vizib (lis AlertDialog estanda a pa montre fokis la sou TV). */
-    private fun menuDialog(title: Int, items: List<Pair<String, () -> Unit>>) {
-        val d = resources.displayMetrics.density
-        val box = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding((14 * d).toInt(), (6 * d).toInt(), (14 * d).toInt(), (12 * d).toInt())
-        }
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
-            .setTitle(title)
-            .setView(android.widget.ScrollView(this).apply { addView(box) })
-            .create()
-        for ((label, action) in items) {
-            box.addView(TextView(this).apply {
-                layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (42 * d).toInt()).apply { bottomMargin = (2 * d).toInt() }
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding((16 * d).toInt(), 0, (16 * d).toInt(), 0)
-                text = label
-                textSize = 16f
-                setSingleLine(true)
-                setTextColor(ContextCompat.getColor(context, R.color.text))
-                setBackgroundResource(R.drawable.bg_menu_item)
-                isFocusable = true
-                isClickable = true
-                setOnClickListener { dialog.dismiss(); action() }
-            })
-        }
-        dialog.show()
-        box.getChildAt(0)?.requestFocus()
-    }
-
-    private fun showSettings() {
-        val cfg = PanelState.config
-        val exp = fmtExpiry(cfg.accountExpiry.ifBlank { providerExpiry.orEmpty() }).ifBlank { "—" }
-        val version = com.galaxytvstick.app.BuildConfig.VERSION_NAME
-        menuDialog(R.string.home_settings, listOf(
-            getString(R.string.set_customer, cfg.accountName.ifBlank { "—" }) to {
-                info(R.string.set_expiry_title, getString(R.string.set_customer, cfg.accountName.ifBlank { "—" }))
-            },
-            getString(R.string.home_plan_fmt, planText(cfg).ifBlank { "—" }) to {
-                info(R.string.set_expiry_title, getString(R.string.home_plan_fmt, planText(cfg).ifBlank { "—" }))
-            },
-            getString(R.string.set_expiry, exp) to {
-                info(R.string.set_expiry_title, listOf(
-                    cfg.accountName,
-                    if (planText(cfg).isBlank()) "" else getString(R.string.home_plan_fmt, planText(cfg)),
-                    getString(R.string.home_exp_fmt, exp)
-                ).filter { it.isNotBlank() }.joinToString("\n"))
-            },
-            getString(R.string.set_playlist, prefs.account?.name?.ifBlank { null } ?: prefs.account?.username ?: "—") to { choosePlaylist() },
-            getString(R.string.set_device_info) to { info(R.string.set_device_info, getString(R.string.set_info_fmt, cfg.accountName, prefs.mac, prefs.deviceKey, version)) },
-            getString(R.string.set_language, LANG_NAMES[LANG_CODES.indexOf(currentLang())]) to { chooseLanguage() },
-            getString(R.string.set_sort, getString(if (prefs.sortAz) R.string.sort_az else R.string.sort_server)) to {
-                prefs.sortAz = !prefs.sortAz
-                ChannelStore.sortAz = prefs.sortAz
-                refreshLists()
-                showSettings()
-            },
-            getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off) to { parentalControl() },
-            getString(R.string.set_autostart, onOff(prefs.autoStart)) to { prefs.autoStart = !prefs.autoStart; showSettings() },
-            getString(R.string.set_last_channel, onOff(prefs.startLastChannel)) to { prefs.startLastChannel = !prefs.startLastChannel; showSettings() },
-            getString(R.string.set_update, version) to { Updater.checkNow(this, cfg.update) },
-            getString(R.string.set_about, version) to { info(R.string.set_about_title, getString(R.string.set_about_fmt, version, android.os.Build.MODEL, android.os.Build.VERSION.RELEASE) + "\n\n" + getString(R.string.disclaimer)) },
-            getString(R.string.exit_title) to { finishAffinity() }
-        ))
-    }
-
-    /** Playlist yo panel la bay: chwazi youn (app la rechaje chanèl yo). */
-    private fun choosePlaylist() {
-        val list = PanelState.config.playlists
-        val cur = prefs.account?.playlistId
-        if (list.size <= 1) {
-            info(R.string.set_playlist_title, prefs.account?.name?.ifBlank { null } ?: prefs.account?.username ?: "—")
-            return
-        }
-        menuDialog(R.string.set_playlist_title, list.map { pl ->
-            ((if (pl.id == cur) "✓  " else "     ") + pl.name.ifBlank { pl.username }) to {
-                if (pl.id != cur) {
-                    val account = pl.toAccount(com.galaxytvstick.app.BuildConfig.DEFAULT_SERVER)
-                    if (account == null) {
-                        android.widget.Toast.makeText(this, getString(R.string.error_no_server, pl.name), android.widget.Toast.LENGTH_LONG).show()
-                    } else {
-                        prefs.account = account
-                        prefs.lastChannelId = -1
-                        startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
-                        finish()
-                    }
-                }
-            }
-        })
-    }
-
-    /** Dat ekspirasyon an fòma Ameriken: 11/10/2026 2:30 PM (12 è). */
-    private fun fmtExpiry(raw: String): String {
-        val v = raw.trim()
-        if (v.isEmpty()) return ""
-        val utc = v.endsWith("Z", true)
-        val clean = v.removeSuffix("Z").removeSuffix("z").substringBefore('.').replace(Regex("[+-]\\d{2}:?\\d{2}$"), "")
-        val patterns = listOf("yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM-dd")
-        for (p in patterns) {
-            val inF = java.text.SimpleDateFormat(p, java.util.Locale.US).apply {
-                isLenient = false
-                if (utc) timeZone = java.util.TimeZone.getTimeZone("UTC")
-            }
-            val d = runCatching { inF.parse(clean) }.getOrNull() ?: continue
-            val out = if (p == "yyyy-MM-dd") "MM/dd/yyyy" else "MM/dd/yyyy h:mm a"
-            return java.text.SimpleDateFormat(out, java.util.Locale.US).format(d)
-        }
-        return v
-    }
-
-    /** Lang app la kounye a: sa kliyan an chwazi, sinon lang TV a (Kreyòl si pa youn nan 4 yo). */
-    private fun currentLang(): String {
-        val picked = androidx.appcompat.app.AppCompatDelegate.getApplicationLocales().toLanguageTags().take(2)
-        val sys = java.util.Locale.getDefault().language
-        return listOf(picked, sys).firstOrNull { it in LANG_CODES } ?: "ht"
-    }
-
-    /** Kliyan an chwazi lang app la; ekran yo rechaje nan nouvo lang nan. */
-    private fun chooseLanguage() {
-        val cur = currentLang()
-        menuDialog(R.string.language, LANG_CODES.mapIndexed { i, code ->
-            ((if (code == cur) "✓  " else "     ") + LANG_NAMES[i]) to {
-                if (code != cur) androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
-                    androidx.core.os.LocaleListCompat.forLanguageTags(code)
-                )
-            }
-        })
-    }
-
-    /** Mande yon PIN 4 chif (klavye Fire TV a). */
-    private fun askPin(title: Int, onPin: (String) -> Unit) {
-        val input = android.widget.EditText(this).apply {
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
-            filters = arrayOf(android.text.InputFilter.LengthFilter(4))
-            hint = "••••"
-            gravity = Gravity.CENTER
-            textSize = 26f
-            setTextColor(ContextCompat.getColor(context, R.color.text))
-            setHintTextColor(ContextCompat.getColor(context, R.color.text_dim))
-        }
-        androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
-            .setTitle(title)
-            .setView(input)
-            .setNegativeButton(android.R.string.cancel, null)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                val pin = input.text.toString()
-                if (pin.length == 4) onPin(pin) else android.widget.Toast.makeText(this, R.string.parental_pin_4, android.widget.Toast.LENGTH_LONG).show()
-            }
-            .show()
-        input.requestFocus()
-    }
-
-    /** Kontwòl paran: kache kategori pou granmoun. Limen l = kreye/konfime PIN; etenn li = antre PIN lan. */
-    private fun parentalControl() {
-        fun setParental(on: Boolean) {
-            prefs.parentalOn = on
-            ChannelStore.hideAdult = on
-            refreshLists()
-            showSettings()
-        }
-        if (prefs.parentalOn) {
-            askPin(R.string.parental_enter_pin) { pin ->
-                if (pin == prefs.parentalPin) setParental(false)
-                else android.widget.Toast.makeText(this, R.string.parental_wrong_pin, android.widget.Toast.LENGTH_LONG).show()
-            }
-        } else if (prefs.parentalPin.isEmpty()) {
-            askPin(R.string.parental_new_pin) { pin -> prefs.parentalPin = pin; setParental(true) }
-        } else {
-            askPin(R.string.parental_enter_pin) { pin ->
-                if (pin == prefs.parentalPin) setParental(true)
-                else android.widget.Toast.makeText(this, R.string.parental_wrong_pin, android.widget.Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
     /** Kòmand sèvis kliyan an pandan kliyan an nan gid la. */
     private fun onRemoteCommand(cmd: com.galaxytvstick.app.data.RemoteCommand) {
         when (cmd.type) {

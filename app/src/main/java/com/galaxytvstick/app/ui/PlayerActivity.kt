@@ -201,7 +201,7 @@ class PlayerActivity : AppCompatActivity() {
         b.btnMovies.setOnClickListener { openVod("movie") }
         b.btnSeries.setOnClickListener { openVod("series") }
         b.btnPlaylists.setOnClickListener { showPlaylists() }
-        b.btnSettings.setOnClickListener { showSettings() }
+        b.btnSettings.setOnClickListener { settingsMenu.show() }
         openListOnStart = intent.getBooleanExtra(EXTRA_OPEN_LIST, false)
 
         // Chwazi yon piblisite preroll (videyo oswa imaj plen ekran) si panel la voye youn
@@ -1130,7 +1130,10 @@ class PlayerActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun showSettings() {
+    /** Menm meni Settings ak gid la, men li louvri dirèkteman sou videyo a. */
+    private val settingsMenu by lazy { SettingsMenu(this, prefs) { selectOverlayCategory(ovCategory, focusList = false) } }
+
+    private fun showSettingsOld() {
         val acc = prefs.account
         AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
             .setTitle(R.string.settings)
@@ -1285,7 +1288,7 @@ class PlayerActivity : AppCompatActivity() {
                 KeyEvent.KEYCODE_GUIDE -> { hideQuickBar(); openGuide(); return true }
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_SETTINGS -> {
                     hideQuickBar()
-                    startActivity(Intent(this, EpgActivity::class.java).putExtra(EpgActivity.EXTRA_SETTINGS, true))
+                    settingsMenu.show() // touswit sou videyo a (pa chaje gid la)
                     return true
                 }
             }
@@ -1301,8 +1304,7 @@ class PlayerActivity : AppCompatActivity() {
             KeyEvent.KEYCODE_DPAD_LEFT -> { showChannelOverlay(); return true }
             KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_SETTINGS -> { // bouton ≡ remòt la: Reglaj
                 hideChannelOverlay()
-                startActivity(Intent(this, EpgActivity::class.java).putExtra(EpgActivity.EXTRA_SETTINGS, true))
-                @Suppress("DEPRECATION") overridePendingTransition(0, 0)
+                settingsMenu.show() // touswit sou videyo a, videyo a kontinye jwe dèyè l
                 return true
             }
             KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_TV_INPUT -> { openGuide(); return true }
