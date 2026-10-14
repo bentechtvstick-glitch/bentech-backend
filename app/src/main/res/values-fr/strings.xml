@@ -187,4 +187,7 @@
     <string name="update_downloading">Téléchargement… %1$d%%</string>
     <string name="update_failed">Échec de la mise à jour : %1$s</string>
     <string name="update_allow">Si l’installation ne s’ouvre pas : Settings → My Fire TV → Developer options → Install unknown apps → Galaxy TV Stick → ON.</string>
+    <string name="set_update">Mise à jour de l’app (v%1$s)</string>
+    <string name="update_checking">Recherche d’une nouvelle version…</string>
+    <string name="update_latest">Vous avez déjà la dernière version (%1$s).</string>
 </resources>

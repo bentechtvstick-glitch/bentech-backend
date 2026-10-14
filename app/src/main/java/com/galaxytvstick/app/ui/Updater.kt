@@ -25,18 +25,66 @@ import java.io.File
 object Updater {
     @Volatile private var showing = false
     @Volatile private var downloading = false
+    /** Mizajou ki te deja parèt pandan app la louvri a (pa repete l chak minit). */
+    @Volatile private var promptedPush: String? = null
+    /** APK ki telechaje men ki tann otorizasyon "Install unknown apps" la. */
+    @Volatile private var pendingFile: File? = null
 
     /** Retounen true si yon mesaj mizajou parèt (oswa deja sou ekran an). */
     fun maybePrompt(activity: Activity, u: AppUpdate?, prefs: Prefs): Boolean {
         if (u == null || u.build <= BuildConfig.VERSION_CODE) return false
         if (showing || downloading) return true
-        // Pa obligatwa: yon sèl fwa pou chak "voye" panel la fè
-        if (!u.force && (u.pushAt.isBlank() || u.pushAt == prefs.updatePushSeen)) return false
+        // Kliyan an te otorize enstalasyon an nan Settings: enstale APK ki t ap tann nan touswit
+        pendingFile?.let { f ->
+            if (Build.VERSION.SDK_INT < 26 || activity.packageManager.canRequestPackageInstalls()) {
+                pendingFile = null
+                if (f.exists()) { install(activity, f); return true }
+            }
+        }
+        // Pa obligatwa: li parèt yon fwa chak fwa kliyan an louvri app la (tankou TiviMate), jiskaske l fè mizajou a.
+        // (Anvan: yon sèl fwa pou tout tan — si kliyan an te peze "Later", li pa t janm wè l ankò.)
+        if (!u.force && (u.pushAt.isBlank() || u.pushAt == promptedPush)) return false
         if (activity.isFinishing) return false
         showing = true
+        promptedPush = u.pushAt
         prefs.updatePushSeen = u.pushAt
         runCatching { showDialog(activity, u) }.onFailure { showing = false }
         return true
+    }
+
+    private const val APK_URL = "https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/GalaxyTvStick.apk"
+    private const val VERSION_URL = "https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/version.json"
+
+    /**
+     * Bouton "Mizajou app la" nan Settings: kliyan an tcheke li menm si gen yon nouvo vèsyon,
+     * san l pa tann panel la voye l. Si gen youn, menm fenèt mizajou a parèt.
+     */
+    fun checkNow(activity: Activity, pushed: AppUpdate?) {
+        if (showing || downloading) return
+        val app = activity.applicationContext
+        Toast.makeText(app, R.string.update_checking, Toast.LENGTH_SHORT).show()
+        GalaxyApp.scope.launch {
+            val build = runCatching {
+                XtreamApi.http.newCall(Request.Builder().url("$VERSION_URL?t=${System.currentTimeMillis()}").build()).execute().use { r ->
+                    if (!r.isSuccessful) error("HTTP ${r.code}")
+                    org.json.JSONObject(r.body?.string().orEmpty()).optInt("build")
+                }
+            }
+            withContext(Dispatchers.Main) {
+                val b = build.getOrNull() ?: 0
+                when {
+                    build.isFailure || b <= 0 -> Toast.makeText(app, app.getString(R.string.update_failed, build.exceptionOrNull()?.message ?: ""), Toast.LENGTH_LONG).show()
+                    b <= BuildConfig.VERSION_CODE -> Toast.makeText(app, app.getString(R.string.update_latest, BuildConfig.VERSION_NAME), Toast.LENGTH_LONG).show()
+                    activity.isFinishing -> {}
+                    else -> {
+                        showing = true
+                        // Nòt "Sa ki nouvo" panel la si se menm vèsyon an
+                        val notes = pushed?.takeIf { it.build == b }?.notes.orEmpty()
+                        runCatching { showDialog(activity, AppUpdate(b, "1.0.$b", pushed?.takeIf { it.build == b }?.url ?: APK_URL, false, "manual", notes)) }.onFailure { showing = false }
+                    }
+                }
+            }
+        }
     }
 
     /** Ekran mizajou a (style TiviMate): icon, vèsyon, sa ki nouvo, ba pwogresyon nan menm fenèt la. */
@@ -113,9 +161,15 @@ object Updater {
 
     private fun install(activity: Activity, file: File) {
         val ctx = activity.applicationContext
-        // Fire OS / Android 8+: fòk aparèy la otorize app la enstale APK (yon sèl fwa)
+        // Fire OS / Android 8+: fòk aparèy la otorize app la enstale APK (yon sèl fwa).
+        // Louvri paj otorizasyon an dirèkteman; lè kliyan an tounen, enstalasyon an kontinye poukont li.
         if (Build.VERSION.SDK_INT >= 26 && !ctx.packageManager.canRequestPackageInstalls()) {
+            pendingFile = file
             Toast.makeText(ctx, R.string.update_allow, Toast.LENGTH_LONG).show()
+            val opened = runCatching {
+                activity.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + ctx.packageName)))
+            }.isSuccess
+            if (opened) return
         }
         val uri: Uri = if (Build.VERSION.SDK_INT >= 24) FileProvider.getUriForFile(ctx, "${BuildConfig.APPLICATION_ID}.files", file)
         else { file.setReadable(true, false); Uri.fromFile(file) }

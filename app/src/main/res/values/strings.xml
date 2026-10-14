@@ -210,4 +210,7 @@
     <string name="update_downloading">Ap telechaje… %1$d%%</string>
     <string name="update_failed">Mizajou a pa mache: %1$s</string>
     <string name="update_allow">Si enstalasyon an pa louvri: Settings → My Fire TV → Developer options → Install unknown apps → Galaxy TV Stick → ON.</string>
+    <string name="set_update">Mizajou app la (v%1$s)</string>
+    <string name="update_checking">Ap tcheke si gen yon nouvo vèsyon…</string>
+    <string name="update_latest">Ou gen dènye vèsyon an deja (%1$s).</string>
 </resources>
