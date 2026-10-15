@@ -324,7 +324,12 @@ app.put("/api/settings", guard, async (req, res) => {
 const APK_URL = process.env.APK_URL || "https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/GalaxyTvStick.apk";
 app.get(["/apk", "/galaxy.apk"], (req, res) => res.redirect(302, APK_URL));
 
-app.get("/api/health", (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+// "ok" sèlman si sèvè a gen done (omwen yon TV). App la chwazi adrès panel la ak /health:
+// konsa yon nouvo sèvè vid (demenajman) pa pran TV yo anvan done yo fin remete sou li.
+app.get("/api/health", (req, res) => {
+  const ready = (db.data.devices || []).length > 0 || process.env.ALWAYS_READY === "1";
+  res.json({ ok: ready, ready, time: new Date().toISOString() });
+});
 
 app.get("/", (req, res) => {
   res.json({
