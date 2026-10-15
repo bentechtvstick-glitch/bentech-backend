@@ -45,6 +45,15 @@ app.use(cors());
 // Yon playlist ka gen plizyè milye chanèl: app TV a voye lis la nan yon sèl demann
 app.use(express.json({ limit: "40mb" }));
 app.use(gzipJson());
+// Demenajman: yon sèvè ki poko gen done (nouvo sèvè vid) refize TV yo (503).
+// App la (1.0.100+) wè erè a, li reverifye adrès panel la, epi li tounen sou ansyen sèvè a (Render) poukont li.
+// Paj panel la ak login/restore admin nan toujou mache, pou n ka remete done yo.
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/devices/") && !(db.data.devices || []).some((d) => d.mac) && process.env.ALWAYS_READY !== "1") {
+    return res.status(503).json({ ok: false, error: "Server is being set up. Try again later." });
+  }
+  next();
+});
 
 // Nenpòt chanjman admin nan fè nan panel la (kliyan, pakè, grafik, reglaj…): TV ki konekte yo mete yo ajou touswit.
 // (Demann TV yo li menm voye — /api/devices/… — ak tès yo pa konte.)
@@ -327,7 +336,7 @@ app.get(["/apk", "/galaxy.apk"], (req, res) => res.redirect(302, APK_URL));
 // "ok" sèlman si sèvè a gen done (omwen yon TV). App la chwazi adrès panel la ak /health:
 // konsa yon nouvo sèvè vid (demenajman) pa pran TV yo anvan done yo fin remete sou li.
 app.get("/api/health", (req, res) => {
-  const ready = (db.data.devices || []).length > 0 || process.env.ALWAYS_READY === "1";
+  const ready = (db.data.devices || []).some((d) => d.mac) || process.env.ALWAYS_READY === "1";
   res.json({ ok: ready, ready, time: new Date().toISOString() });
 });
 
