@@ -135,6 +135,73 @@ app.post("/api/galaxy/media", authenticate, (req, res) => {
   out.on("error", (e) => { if (!failed) { failed = true; res.status(500).json({ error: "Pa ka sove fichye a: " + e.message }); } });
 });
 
+// ---------- Demenajman: kopye imaj/videyo piblisite yo depi ansyen sèvè a (Render) ----------
+// Apre yon restore, done yo gen lyen ".../media/<non>" ki la sou ansyen sèvè a sèlman.
+// Sèvè sa a telechaje chak fichye ki manke, sove l nan MEDIA_DIR, epi chanje lyen an pou l pwente sou li menm.
+const OLD_MEDIA_BASE = (process.env.OLD_MEDIA_BASE || "https://bentech-backend.onrender.com").replace(/\/+$/, "");
+const MEDIA_URL_RE = /^https?:\/\/([^/\s]+)\/media\/([A-Za-z0-9_-]+\.(?:png|jpe?g|gif|webp|mp4|webm))$/;
+let mediaMig = { running: false, last: 0, base: "" };
+async function migrateMedia(base) {
+  if (mediaMig.running) return;
+  mediaMig.running = true; mediaMig.last = Date.now();
+  try {
+    const refs = []; // [obj, key, name]
+    const walk = (o, depth) => {
+      if (!o || typeof o !== "object" || depth > 12) return;
+      for (const k of Object.keys(o)) {
+        const v = o[k];
+        if (typeof v === "string") {
+          const m = v.match(MEDIA_URL_RE);
+          if (m && ((`https://${m[1]}` !== base && `http://${m[1]}` !== base) || !fs.existsSync(path.join(MEDIA_DIR, m[2])))) refs.push([o, k, m[2]]);
+        } else if (v && typeof v === "object") walk(v, depth + 1);
+      }
+    };
+    for (const key of Object.keys(db.data)) if (key !== "auditLogs") walk(db.data[key], 0);
+    if (!refs.length) return;
+    let moved = 0, failed = 0;
+    const done = new Map(); // non → true/false
+    for (const [obj, key, name] of refs) {
+      if (!done.has(name)) {
+        const file = path.join(MEDIA_DIR, name);
+        let ok = fs.existsSync(file);
+        if (!ok) {
+          try {
+            const r = await fetch(`${OLD_MEDIA_BASE}/media/${name}`, { signal: AbortSignal.timeout(120000) });
+            if (r.ok) {
+              const buf = Buffer.from(await r.arrayBuffer());
+              if (buf.length >= 100) { fs.writeFileSync(file + ".part", buf); fs.renameSync(file + ".part", file); ok = true; }
+            }
+          } catch {}
+        }
+        done.set(name, ok);
+      }
+      if (done.get(name)) { obj[key] = `${base}/media/${name}`; moved++; } else failed++;
+    }
+    if (moved) {
+      await db.write();
+      syncTvs();
+      auditLog("media-migrate", `${[...done.values()].filter(Boolean).length} media file(s) copied from the old server (${moved} link(s) updated${failed ? `, ${failed} failed` : ""})`);
+    }
+    console.log(`Media migration: ${moved} link(s) updated, ${failed} failed`);
+  } catch (err) {
+    console.warn("Media migration error:", err.message);
+  } finally {
+    mediaMig.running = false;
+  }
+}
+// Pa janm sou Render li menm (RENDER=true): se sèlman nouvo sèvè a ki rale fichye yo.
+app.use((req, res, next) => {
+  if (!process.env.RENDER && process.env.MEDIA_MIGRATE !== "0" && Date.now() - mediaMig.last > 10 * 60 * 1000 && (db.data.devices || []).some((d) => d.mac)) {
+    const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim().toLowerCase();
+    // Sèlman yon vrè non domèn (pa localhost, pa yon adrès IP)
+    if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(host) && !/^[\d.]+$/.test(host) && !host.endsWith("onrender.com")) {
+      const base = process.env.PUBLIC_URL ? process.env.PUBLIC_URL.replace(/\/+$/, "") : `https://${host}`;
+      migrateMedia(base);
+    }
+  }
+  next();
+});
+
 // ---------- auth routes ----------
 
 app.post("/api/auth/login", (req, res) => {

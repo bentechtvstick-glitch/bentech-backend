@@ -984,6 +984,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="cardhead"><div><h2>⚡ Kapasite ak rapidite</h2><p class="sub">Sante sèvè a ak baz done a an dirèk.</p></div><button class="btn small" id="sysRefresh" type="button">Rafrechi</button></div>
         <div class="kpis" id="sysKpis"></div>
         <div class="field" style="margin-top:14px"><label id="sysCapLabel"></label><div class="sysbar"><i id="sysCapBar"></i></div></div>
+        <div class="field" id="sysDiskWrap" style="margin-top:12px" hidden><label id="sysDiskLabel"></label><div class="sysbar"><i id="sysDiskBar"></i></div></div>
         <p class="note" id="sysNote" style="margin:10px 0 0"></p>
         <div class="btns" style="justify-content:flex-start;margin-top:12px"><button class="btn" id="sysStorageBtn" type="button">Kisa ki pran plas?</button></div>
         <div id="sysStorage" hidden style="margin-top:12px"></div>
@@ -2443,6 +2444,7 @@ $("#evForm").addEventListener("submit", async (e) => {
 
 // ------------------------------------------------------------ Sistèm
 const fmtBytes = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : n >= 1024 ? Math.round(n / 1024) + " KB" : (n || 0) + " B");
+const fmtGb = (n) => (n >= 1073741824 ? (n / 1073741824).toFixed(n >= 10737418240 ? 0 : 1) + " GB" : fmtBytes(n));
 const fmtUp = (s) => { const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60); return d ? t("{0}j {1}h", d, h) : h ? `${h}h ${m}min` : `${m} min`; };
 async function loadSysStats() {
   const t0 = performance.now(); let y; try { y = await api("GET", "/galaxy/system"); } catch { $("#sysKpis").innerHTML = `<div class="empty">${t("Sèvè a pa reponn.")}</div>`; return; }
@@ -2450,7 +2452,16 @@ async function loadSysStats() {
   const k = (label, v, sub) => `<div class="kpi"><span class="k">${esc(t(label))}</span><span class="v">${esc(v)}</span>${sub ? `<span class="note">${esc(sub)}</span>` : ""}</div>`;
   $("#sysKpis").innerHTML = k("Repons sèvè a", ping + " ms") + k("Gwosè baz done a", y.dbBytes ? fmtBytes(y.dbBytes) : "—", y.dbBytes ? t("Sove an {0} ms", y.dbWriteMs) : t("Poko gen chanjman depi sèvè a limen"))
     + k("Aparèy", n(y.devices), t("{0} online", n(y.online))) + k("Playlist", n(y.playlists)) + k("Chanèl an memwa", n(y.channels), t("{0} lis", n(y.channelLists)))
-    + k("Kliyan yo", n(y.customers)) + k("Memwa sèvè a", y.memoryMb + " MB") + k("Sèvè a limen depi", fmtUp(y.uptimeSec), y.node);
+    + k("Kliyan yo", n(y.customers)) + k("Memwa sèvè a", y.memoryMb + " MB", y.memTotalMb ? t("{0} ki lib sou {1}", fmtGb(y.memFreeMb * 1048576), fmtGb(y.memTotalMb * 1048576)) : "")
+    + (y.diskTotal ? k("Disk sèvè a", fmtGb(y.diskTotal), t("{0} ki lib", fmtGb(y.diskFree))) : "")
+    + k("Sèvè a limen depi", fmtUp(y.uptimeSec), y.node + (y.cpus ? " · " + t("{0} CPU", y.cpus) : ""));
+  // Disk sèvè a (kote done yo, imaj ak videyo yo sove)
+  $("#sysDiskWrap").hidden = !y.diskTotal;
+  if (y.diskTotal) {
+    const used = y.diskTotal - (y.diskFree || 0), dp = Math.min(100, Math.round((used / y.diskTotal) * 100)), db2 = $("#sysDiskBar");
+    db2.style.width = Math.max(1, dp) + "%"; db2.className = dp >= 90 ? "bad" : dp >= 75 ? "warn" : "";
+    $("#sysDiskLabel").textContent = t("Disk sèvè a: {0} itilize sou {1} ({2}%)", fmtGb(used), fmtGb(y.diskTotal), dp);
+  }
   // Limit pratik yon baz done JSON: ~50 MB anvan ekriti yo kòmanse lou
   const pct = Math.min(100, Math.round(((y.dbBytes || 0) / (50 * 1048576)) * 100)), bar = $("#sysCapBar");
   bar.style.width = Math.max(1, pct) + "%"; bar.className = pct >= 85 ? "bad" : pct >= 60 ? "warn" : "";

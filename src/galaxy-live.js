@@ -9,6 +9,8 @@
 import express from "express";
 import { deviceIndex, gzipStatic } from "./perf.js";
 import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { normMac, plHost, healthView } from "./galaxy.js";
 
@@ -291,6 +293,13 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   app.use(gzipStatic("/galaxy", publicDir)); // HTML/JS konprese + kenbe nan memwa
   app.use("/galaxy", express.static(publicDir, { maxAge: "1h" }));
 
+  /** Kapasite disk sèvè a (kote baz done a ye): total, sa ki rete. */
+  const diskInfo = () => {
+    try {
+      const st = fs.statfsSync(path.dirname(path.resolve(process.env.DB_FILE || "./db.json")));
+      return { diskTotal: st.blocks * st.bsize, diskFree: st.bavail * st.bsize };
+    } catch { return {}; }
+  };
   /** Sante sistèm nan: gwosè baz done a, memwa, vitès ekriti, konbyen eleman. */
   app.get("/api/galaxy/system", authenticate, (req, res) => {
     const d = db.data, mem = process.memoryUsage(), perf = db.perf || {};
@@ -303,6 +312,8 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       memoryMb: Math.round(mem.rss / 1048576), heapMb: Math.round(mem.heapUsed / 1048576),
       dbBytes: perf.lastBytes || 0, dbWriteMs: perf.lastMs || 0, dbWrites: perf.writes || 0, dbWriteErrors: perf.errors || 0, dbLastWriteAt: perf.lastAt || null, dbPending: !!perf.pending,
       persistent: !!process.env.DB_FILE && process.env.DB_FILE !== "./db.json",
+      ...diskInfo(),
+      memTotalMb: Math.round(os.totalmem() / 1048576), memFreeMb: Math.round(os.freemem() / 1048576), cpus: os.cpus().length,
       devices: count(d.devices), online, connected: [...waiters.values()].filter((s) => s.size).length,
       playlists: Object.values(d.devicePlaylists || {}).reduce((n, l) => n + count(l), 0), channelLists: count(d.channelLists), channels,
       customers: count(d.customers), auditLogs: count(d.auditLogs),
