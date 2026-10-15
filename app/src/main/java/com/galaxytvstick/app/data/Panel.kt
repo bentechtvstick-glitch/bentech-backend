@@ -5,6 +5,7 @@ import com.galaxytvstick.app.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Response
@@ -462,18 +463,59 @@ data class PanelConfig(
 // Kliyan HTTP pou backend panel la
 // ---------------------------------------------------------------------------
 
+/**
+ * Adrès panel la. App la eseye pwòp domèn nou an an premye (panel.galaxytvstick.net), epi Render si domèn nan pa reponn.
+ * Konsa nou ka deplase sèvè a (egz: Render → Hetzner) san TV yo pa pèdi panel la: se sèlman DNS domèn nan ki chanje.
+ */
+object PanelHost {
+    val CANDIDATES = listOf("https://panel.galaxytvstick.net/api", BuildConfig.PANEL_URL.trimEnd('/')).distinct()
+    @Volatile var base: String = ""
+    @Volatile private var checking = false
+    @Volatile private var checkedAt = 0L
+
+    fun init(prefs: Prefs) {
+        if (base.isEmpty()) base = prefs.panelBase.takeIf { it in CANDIDATES } ?: CANDIDATES.last()
+        if (System.currentTimeMillis() - checkedAt > 10 * 60_000L) check(prefs)
+    }
+
+    /** Teste adrès yo youn apre lòt (/health) an aryè plan, epi kenbe premye a ki reponn. */
+    fun check(prefs: Prefs) {
+        if (checking) return
+        checking = true
+        com.galaxytvstick.app.GalaxyApp.scope.launch(Dispatchers.IO) {
+            try {
+                val quick = XtreamApi.http.newBuilder().callTimeout(4, java.util.concurrent.TimeUnit.SECONDS).build()
+                for (c in CANDIDATES) {
+                    val ok = runCatching {
+                        quick.newCall(Request.Builder().url("$c/health").build()).execute().use { r -> r.isSuccessful && (r.body?.string() ?: "").contains("\"ok\":true") }
+                    }.getOrDefault(false)
+                    if (ok) { base = c; prefs.panelBase = c; break }
+                }
+                checkedAt = System.currentTimeMillis()
+            } finally { checking = false }
+        }
+    }
+}
+
 class PanelApi(private val prefs: Prefs) {
 
     private val deviceId get() = prefs.deviceId
 
-    private val base = BuildConfig.PANEL_URL.trimEnd('/')
+    init { PanelHost.init(prefs) }
+    private val base get() = PanelHost.base
     private val jsonType = "application/json; charset=utf-8".toMediaType()
 
     private suspend fun call(req: Request): String = withContext(Dispatchers.IO) {
         // Vèsyon app la nan chak demann: panel la toujou konnen vèsyon ki enstale sou TV a
-        XtreamApi.http.newCall(req.newBuilder().header("X-App-Version", BuildConfig.VERSION_NAME).build()).execute().use { r ->
-            if (!r.isSuccessful) throw IOException("Panel HTTP ${r.code}")
-            r.body?.string() ?: ""
+        try {
+            XtreamApi.http.newCall(req.newBuilder().header("X-App-Version", BuildConfig.VERSION_NAME).build()).execute().use { r ->
+                if (!r.isSuccessful) throw IOException("Panel HTTP ${r.code}")
+                r.body?.string() ?: ""
+            }
+        } catch (e: IOException) {
+            // Panel la pa reponn sou adrès sa a (rezo, DNS, sèvè deplase…): reverifye ki adrès ki mache
+            if (e.message?.startsWith("Panel HTTP 4") != true) PanelHost.check(prefs)
+            throw e
         }
     }
 

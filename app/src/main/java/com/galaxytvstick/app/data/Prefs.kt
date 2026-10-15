@@ -11,6 +11,11 @@ class Prefs(context: Context) {
     private val appContext = context.applicationContext
     private val sp = appContext.getSharedPreferences("galaxy_prefs", Context.MODE_PRIVATE)
 
+    /** Dènye adrès panel la ki te reponn (domèn galaxytvstick.net oswa Render). */
+    var panelBase: String
+        get() = sp.getString("panel_base", "") ?: ""
+        set(v) { sp.edit().putString("panel_base", v).apply() }
+
     var account: Account?
         get() {
             val server = sp.getString("server", null) ?: return null
