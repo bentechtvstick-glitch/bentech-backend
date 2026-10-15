@@ -270,7 +270,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const mac = normMac(req.params.mac);
     const device = findDevice(mac);
     const s = settings();
-    const refreshSec = Number(s.appRefreshSec) || 30;
+    // TV yo resevwa chanjman panel la touswit pa siyal "sync" la (long-poll); demann konfig sa a se sèlman yon sekou.
+    // 120 s olye 30 s: 4 fwa mwens trafik sou Render (bandwidth la peye), san okenn reta pou kliyan an.
+    const refreshSec = Number(s.appRefreshSec) || 120;
 
     if (!device) {
       // known:false → app la pa chanje anyen, li jis re-anrejistre tèt li
