@@ -982,7 +982,7 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Repete chak (minit)": ["Repeat every (minutes)", "Répéter toutes les (minutes)", "Repetir cada (minutos)"],
     "Kontak ou (telefòn, WhatsApp…)": ["Your contact (phone, WhatsApp…)", "Votre contact (téléphone, WhatsApp…)", "Su contacto (teléfono, WhatsApp…)"],
     "Mesaj la": ["The message", "Le message", "El mensaje"],
-    "{jou} = konbyen jou ki rete · {dat} = dat li fini · {kontak} = kontak ou · {non} = non kliyan an": ["{jou} = days left · {dat} = end date · {kontak} = your contact · {non} = customer name", "{jou} = jours restants · {dat} = date de fin · {kontak} = votre contact · {non} = nom du client", "{jou} = días restantes · {dat} = fecha de fin · {kontak} = su contacto · {non} = nombre del cliente"],
+    "{days} = konbyen jou ki rete · {date} = dat li fini · {contact} = kontak ou · {name} = non kliyan an": ["{days} = days left · {date} = end date · {contact} = your contact · {name} = customer name", "{days} = jours restants · {date} = date de fin · {contact} = votre contact · {name} = nom du client", "{days} = días restantes · {date} = fecha de fin · {contact} = su contacto · {name} = nombre del cliente"],
     "Jan l ap parèt sou TV a:": ["How it will look on the TV:", "Aperçu sur la TV :", "Cómo se verá en el TV:"],
     "Sèvè a pa reponn.": ["The server is not responding.", "Le serveur ne répond pas.", "El servidor no responde."],
     "Repons sèvè a": ["Server response", "Réponse du serveur", "Respuesta del servidor"],

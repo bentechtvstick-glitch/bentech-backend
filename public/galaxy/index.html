@@ -1000,7 +1000,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="field"><label for="ewContact">Kontak ou (telefòn, WhatsApp…)</label><input type="text" id="ewContact" maxlength="80" placeholder="Egz: WhatsApp 305-555-1234"></div>
         </div>
         <div class="field"><label for="ewText">Mesaj la</label><input type="text" id="ewText" data-emoji maxlength="250"></div>
-        <p class="note" style="margin:4px 0 0">{jou} = konbyen jou ki rete · {dat} = dat li fini · {kontak} = kontak ou · {non} = non kliyan an</p>
+        <p class="note" style="margin:4px 0 0">{days} = konbyen jou ki rete · {date} = dat li fini · {contact} = kontak ou · {name} = non kliyan an</p>
         <div class="ewprev" id="ewPrev"></div>
         <div class="btns" style="justify-content:flex-start"><button class="btn primary small" id="ewSave" type="button">Sove</button></div>
       </div>
@@ -2521,10 +2521,10 @@ async function loadStorage() {
 $("#sysStorageBtn").addEventListener("click", loadStorage);
 $("#sysPurgeSave").addEventListener("click", async () => { const v = Math.max(0, Math.min(3650, Math.floor(+$("#sysPurge").value || 0))); await putSettings({ autoPurgeDays: v }, "Sove"); if (!$("#sysStorage").hidden) loadStorage(); });
 // Avètisman "plan an prèske fini": menm tèks ak sa sèvè a voye bay TV a
-const EW_DEFAULT = "⏰ Abònman ou ap fini nan {jou} jou ({dat}). Kontakte founisè ou pou renouvle l. {kontak}";
+const EW_DEFAULT = "⏰ Your subscription ends in {days} days ({date}). Contact your provider to renew. {contact}";
 function ewPreview() {
   const d = new Date(Date.now() + 2 * 86400000), dat = `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`;
-  const txt = ($("#ewText").value.trim() || EW_DEFAULT).replace(/\{jou\}/gi, "2").replace(/\{dat\}/gi, dat).replace(/\{kontak\}/gi, $("#ewContact").value.trim()).replace(/\{non\}/gi, "JEAN").replace(/\s{2,}/g, " ").trim();
+  const txt = ($("#ewText").value.trim() || EW_DEFAULT).replace(/\{(days|jou)\}/gi, "2").replace(/\{(date|dat)\}/gi, dat).replace(/\{(contact|kontak)\}/gi, $("#ewContact").value.trim()).replace(/\{(name|non)\}/gi, "JEAN").replace(/\s{2,}/g, " ").trim();
   $("#ewPrev").innerHTML = `<span class="note">${esc(t("Jan l ap parèt sou TV a:"))}</span><div class="ewbox">${esc(txt)}</div>`;
 }
 ["ewText", "ewContact"].forEach((id) => $("#" + id).addEventListener("input", ewPreview));
@@ -2538,7 +2538,7 @@ async function loadSystem() { loadAppUpdate();
   settings = await api("GET", "/settings").catch(() => ({}));
   $("#mtOn").checked = !!settings.maintenanceMode; $("#mtMsg").value = settings.maintenanceMessage || "";
   $("#ewOn").checked = settings.expiryWarnOn !== false; $("#ewDays").value = settings.expiryWarnDays || 3; $("#ewEvery").value = settings.expiryWarnEveryMin || 120;
-  $("#ewContact").value = settings.expiryWarnContact || ""; $("#ewText").value = settings.expiryWarnText || EW_DEFAULT; ewPreview();
+  $("#ewContact").value = settings.expiryWarnContact || ""; $("#ewText").value = (settings.expiryWarnText && settings.expiryWarnText !== "⏰ Abònman ou ap fini nan {jou} jou ({dat}). Kontakte founisè ou pou renouvle l. {kontak}") ? settings.expiryWarnText : EW_DEFAULT; ewPreview();
   $("#frLast").textContent = settings.forceRefreshAt ? t("Dènye fwa: {0}", new Date(settings.forceRefreshAt).toLocaleString(lang)) : "";
 }
 let brSpots = [], adStats = {};

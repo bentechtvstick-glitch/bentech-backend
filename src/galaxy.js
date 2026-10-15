@@ -1026,7 +1026,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
   /**
    * Mesaj "plan an prèske fini" pou yon TV: null si li etenn, si pa gen dat, si dat la twò lwen oswa si li deja pase.
-   * Tèks la ka gen {jou}, {dat}, {kontak}, {non}.
+   * Tèks la ka gen {days}, {date}, {contact}, {name} (oswa {jou}, {dat}, {kontak}, {non}).
    */
   function expiryNotice(s, customer, device, now, zone) {
     if (s.expiryWarnOn === false) return null;
@@ -1037,9 +1037,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const left = Math.max(1, Math.round((exp - now) / 86400));
     const date = new Intl.DateTimeFormat("en-US", { timeZone: zone, month: "2-digit", day: "2-digit", year: "numeric" }).format(new Date(exp * 1000));
     const contact = String(s.expiryWarnContact || "").trim();
-    const tpl = String(s.expiryWarnText || "").trim() || "⏰ Abònman ou ap fini nan {jou} jou ({dat}). Kontakte founisè ou pou renouvle l. {kontak}";
-    const text = tpl.replace(/\{jou\}/gi, String(left)).replace(/\{dat\}/gi, date).replace(/\{kontak\}/gi, contact)
-      .replace(/\{non\}/gi, customer?.name || "").replace(/\s{2,}/g, " ").trim().slice(0, 300);
+    // Angle pa defo (menm lang ak panel la); ti mo kreyòl yo ({jou}, {dat}, {kontak}, {non}) toujou mache tou
+    const saved = String(s.expiryWarnText || "").trim();
+    const tpl = (saved === "⏰ Abònman ou ap fini nan {jou} jou ({dat}). Kontakte founisè ou pou renouvle l. {kontak}" ? "" : saved) || "⏰ Your subscription ends in {days} days ({date}). Contact your provider to renew. {contact}";
+    const text = tpl.replace(/\{(days|jou)\}/gi, String(left)).replace(/\{(date|dat)\}/gi, date).replace(/\{(contact|kontak)\}/gi, contact)
+      .replace(/\{(name|non)\}/gi, customer?.name || "").replace(/\s{2,}/g, " ").trim().slice(0, 300);
     return { text, daysLeft: left, repeatMin: Math.min(1440, Math.max(15, Number(s.expiryWarnEveryMin) || 120)), showSec: 12 };
   }
 
