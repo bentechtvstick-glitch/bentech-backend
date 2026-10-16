@@ -190,7 +190,7 @@ class SearchActivity : AppCompatActivity() {
         }
         adapter.items = out
         adapter.notifyDataSetChanged()
-        b.empty.visibility = if (q.isNotEmpty() && out.isEmpty()) View.VISIBLE else View.GONE
+        b.empty.visibility = if (whole.isNotEmpty() && out.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun open(r: Res) {
