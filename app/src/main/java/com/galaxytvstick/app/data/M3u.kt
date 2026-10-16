@@ -21,8 +21,8 @@ object M3u {
         val req = Request.Builder().url(url).header("User-Agent", XtreamApi.USER_AGENT).build()
         val client = XtreamApi.http.newBuilder().readTimeout(90, java.util.concurrent.TimeUnit.SECONDS).build()
         client.newCall(req).execute().use { r ->
-            if (!r.isSuccessful) throw IOException("Sèvè a reponn HTTP ${r.code}")
-            val reader = (r.body ?: throw IOException("Lis la vid")).charStream().buffered(1 shl 16)
+            if (!r.isSuccessful) throw IOException("Server replied HTTP ${r.code}")
+            val reader = (r.body ?: throw IOException("Empty list")).charStream().buffered(1 shl 16)
             val cats = LinkedHashMap<String, Category>()
             val chans = ArrayList<Channel>()
             val used = HashSet<Int>()
@@ -36,7 +36,7 @@ object M3u {
                 if (line.isEmpty()) return@forEachLine
                 if (first) {
                     first = false
-                    if (!line.startsWith("#EXTM3U", true)) throw IOException("Lyen sa a pa bay yon lis M3U.")
+                    if (!line.startsWith("#EXTM3U", true)) throw IOException("This link is not an M3U list.")
                     val a = attrRx.findAll(line).associate { it.groupValues[1].lowercase() to it.groupValues[2] }
                     epg = (a["url-tvg"] ?: a["x-tvg-url"])?.split(',')?.firstOrNull()?.trim()?.takeIf { it.startsWith("http") }
                     return@forEachLine
@@ -74,7 +74,7 @@ object M3u {
                     }
                 }
             }
-            if (chans.isEmpty()) throw IOException("Pa gen chanèl nan lis M3U a.")
+            if (chans.isEmpty()) throw IOException("No channels in the M3U list.")
             epg?.let { headerEpg[url] = it }
             return Result(cats.values.toList(), chans, epg)
         }
@@ -95,7 +95,7 @@ object M3u {
     fun check(url: String): Boolean {
         val req = Request.Builder().url(url).header("User-Agent", XtreamApi.USER_AGENT).build()
         XtreamApi.http.newCall(req).execute().use { r ->
-            if (!r.isSuccessful) throw IOException("Sèvè a reponn HTTP ${r.code}")
+            if (!r.isSuccessful) throw IOException("Server replied HTTP ${r.code}")
             val buf = CharArray(512)
             val n = (r.body ?: return false).charStream().read(buf)
             return n > 0 && String(buf, 0, n).trimStart('﻿', ' ', '\n', '\r').startsWith("#EXTM3U", true)

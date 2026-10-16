@@ -386,7 +386,7 @@ class PlayerActivity : AppCompatActivity() {
                         // Gade sa sèvè a reponn vre (egz: yon paj web olye yon videyo) pou bay bon mesaj la
                         val pr = api.probe(if (direct) ch.directUrl!! else api.streamUrl(ch, "ts", false))
                         val diag = "v${BuildConfig.VERSION_NAME} · $code · ${pr.summary}" +
-                            (if (direct) "" else " · lòt sèvè: " + (if (api.altBase != null) "wi, eseye" else "okenn") + " · lòt User-Agent: okenn pa mache")
+                            (if (direct) "" else " · alt server: " + (if (api.altBase != null) "yes, tried" else "none") + " · alt User-Agent: none worked")
                         val msg = when {
                             pr.blockedByNetwork -> R.string.stream_blocked_network
                             pr.kind == "error" -> R.string.stream_no_network
@@ -462,9 +462,9 @@ class PlayerActivity : AppCompatActivity() {
                         // Relanse 3 fwa nan 3 minit pa ranje l: di sa klèman, ak detay pou jwenn kòz la
                         val f = p.videoFormat
                         val soft = videoDecoder.startsWith("OMX.google", true) || videoDecoder.startsWith("c2.android", true)
-                        val diag = "v${BuildConfig.VERSION_NAME} · imaj kole · dekodè: $videoDecoder${if (soft) " (lojisyèl)" else ""} · " +
+                        val diag = "v${BuildConfig.VERSION_NAME} · frozen picture · decoder: $videoDecoder${if (soft) " (software)" else ""} · " +
                             "${f?.width}x${f?.height} ${f?.sampleMimeType?.substringAfter('/')} ${f?.frameRate?.takeIf { it > 0 }?.toInt() ?: "?"}fps " +
-                            "${(f?.bitrate ?: -1).takeIf { it > 0 }?.let { "${it / 1000}kbps" } ?: ""} · imaj sote: $droppedFrames · fason: $curMode"
+                            "${(f?.bitrate ?: -1).takeIf { it > 0 }?.let { "${it / 1000}kbps" } ?: ""} · dropped frames: $droppedFrames · mode: $curMode"
                         showPlayError(getString(R.string.stream_unsupported), diag)
                         lastError = diag
                         reportStatus()

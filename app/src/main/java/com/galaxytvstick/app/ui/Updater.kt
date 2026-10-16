@@ -128,7 +128,7 @@ object Updater {
                 XtreamApi.http.newBuilder().readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).build()
                     .newCall(Request.Builder().url(u.url).build()).execute().use { r ->
                         if (!r.isSuccessful) error("HTTP ${r.code}")
-                        val body = r.body ?: error("vid")
+                        val body = r.body ?: error("empty")
                         val total = body.contentLength()
                         var done = 0L
                         var lastPct = -2
@@ -147,7 +147,7 @@ object Updater {
                                 }
                             }
                         }
-                        if (file.length() < 1_000_000) error("fichye a twò piti")
+                        if (file.length() < 1_000_000) error("file too small")
                     }
             }
             withContext(Dispatchers.Main) {

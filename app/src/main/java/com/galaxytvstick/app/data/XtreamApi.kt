@@ -139,11 +139,11 @@ class XtreamApi(private val account: Account) {
 
     private suspend fun get(url: String): String = withContext(Dispatchers.IO) {
         // Lis M3U / pòtal Stalker: pa gen API Xtream (gid chanèl pa chanèl, fim, seri, catch-up…)
-        if (!account.isXtream) throw IOException("Pa disponib pou kalite playlist sa a.")
+        if (!account.isXtream) throw IOException("Not available for this playlist type.")
         val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
         http.newCall(req).execute().use { r ->
-            if (!r.isSuccessful) throw IOException("Sèvè a reponn HTTP ${r.code}")
-            r.body?.string() ?: throw IOException("Sèvè a voye yon repons vid")
+            if (!r.isSuccessful) throw IOException("Server replied HTTP ${r.code}")
+            r.body?.string() ?: throw IOException("Server sent an empty reply")
         }
     }
 
@@ -237,8 +237,8 @@ class XtreamApi(private val account: Account) {
         val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
         val client = http.newBuilder().readTimeout(90, TimeUnit.SECONDS).build()
         client.newCall(req).execute().use { r ->
-            if (!r.isSuccessful) throw IOException("Sèvè a reponn HTTP ${r.code}")
-            val body = r.body ?: throw IOException("Sèvè a voye yon repons vid")
+            if (!r.isSuccessful) throw IOException("Server replied HTTP ${r.code}")
+            val body = r.body ?: throw IOException("Server sent an empty reply")
             readObjects(body.charStream(), each)
         }
     }
@@ -248,8 +248,8 @@ class XtreamApi(private val account: Account) {
         val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
         val client = http.newBuilder().readTimeout(90, TimeUnit.SECONDS).build()
         client.newCall(req).execute().use { r ->
-            if (!r.isSuccessful) throw IOException("Sèvè a reponn HTTP ${r.code}")
-            val body = r.body ?: throw IOException("Sèvè a voye yon repons vid")
+            if (!r.isSuccessful) throw IOException("Server replied HTTP ${r.code}")
+            val body = r.body ?: throw IOException("Server sent an empty reply")
             file.outputStream().use { out -> body.byteStream().copyTo(out, 64 * 1024) }
         }
     }
@@ -449,10 +449,10 @@ class XtreamApi(private val account: Account) {
                     while (n < buf.size) { val k = ins.read(buf, n, buf.size - n); if (k <= 0) break; n += k
                         if (n >= 376 && buf[0] == 0x47.toByte()) break }
                 }
-                val redirected = if (r.request.url.host != startHost) " (redirije sou yon lòt sèvè)" else ""
+                val redirected = if (r.request.url.host != startHost) " (redirected to another server)" else ""
                 val head = "HTTP ${r.code} $type".trim() + redirected
                 when {
-                    n == 0 -> Probe("empty", "$head · repons vid", r.code)
+                    n == 0 -> Probe("empty", "$head · empty reply", r.code)
                     buf[0] == 0x47.toByte() && (n <= 188 || buf[188] == 0x47.toByte()) -> Probe("ts", "$head · MPEG-TS", r.code)
                     String(buf, 0, minOf(n, 7)) == "#EXTM3U" -> Probe("hls", "$head · HLS", r.code)
                     else -> {
@@ -464,7 +464,7 @@ class XtreamApi(private val account: Account) {
                             all.replace(Regex("(?is)<(script|style|head)[^>]*>.*?</\\1>"), " ").replace(Regex("(?s)<[^>]*>"), " ")
                         )
                         Probe(if (isHtml) "html" else "other",
-                            head + (if (isHtml) " · paj web" else "") + (if (title.isNotBlank()) " \"$title\"" else "") +
+                            head + (if (isHtml) " · web page" else "") + (if (title.isNotBlank()) " \"$title\"" else "") +
                                 (if (body.isNotBlank()) " · " + body.take(110) else ""), r.code,
                             // Routè a (egz: Xfinity "Advanced Security") oswa founisè entènèt la ranplase videyo a ak yon paj avètisman
                             blockedByNetwork = isHtml && Regex("advanced security|potential threat|threat detected|site could be risky|blocked access|site is blocked|access (is )?(denied|blocked|restricted)|web ?filter|parental control|content filter|safe ?browsing", RegexOption.IGNORE_CASE).containsMatchIn("$title $body"))

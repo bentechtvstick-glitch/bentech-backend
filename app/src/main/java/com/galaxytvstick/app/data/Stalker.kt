@@ -46,10 +46,10 @@ class Stalker private constructor(private val portal: String, private val mac: S
             .apply { if (auth && token.isNotBlank()) header("Authorization", "Bearer $token") }
             .build()
         XtreamApi.http.newCall(req).execute().use { r ->
-            if (!r.isSuccessful) throw IOException("Pòtal la reponn HTTP ${r.code}")
+            if (!r.isSuccessful) throw IOException("Portal replied HTTP ${r.code}")
             val text = r.body?.string().orEmpty()
             if (text.contains("Authorization failed", true)) throw IOException("AUTH")
-            return runCatching { JSONObject(text) }.getOrElse { throw IOException("Pòtal la pa bay yon repons Stalker.") }
+            return runCatching { JSONObject(text) }.getOrElse { throw IOException("Portal did not give a Stalker reply.") }
         }
     }
 
@@ -69,7 +69,7 @@ class Stalker private constructor(private val portal: String, private val mac: S
                 return true
             } catch (e: Exception) { last = e }
         }
-        throw IOException(if (last?.message == "AUTH") "Pòtal la refize MAC sa a." else "Pa ka konekte ak pòtal la (${last?.message ?: "pa gen repons"}).")
+        throw IOException(if (last?.message == "AUTH") "Portal refused this MAC." else "Cannot connect to the portal (${last?.message ?: "no reply"}).")
     }
 
     private fun authed(params: Map<String, String>): JSONObject {
@@ -90,7 +90,7 @@ class Stalker private constructor(private val portal: String, private val mac: S
             val id = g.optString("id"); if (id.isNotBlank() && id != "*") catName[id] = g.optString("title").ifBlank { id }
         }
         val js = authed(mapOf("type" to "itv", "action" to "get_all_channels")).optJSONObject("js")
-        val data = js?.optJSONArray("data") ?: throw IOException("Pòtal la pa voye okenn chanèl.")
+        val data = js?.optJSONArray("data") ?: throw IOException("Portal sent no channels.")
         val cats = LinkedHashMap<String, Category>()
         val chans = ArrayList<Channel>(data.length())
         for (i in 0 until data.length()) {
@@ -113,7 +113,7 @@ class Stalker private constructor(private val portal: String, private val mac: S
                 )
             )
         }
-        if (chans.isEmpty()) throw IOException("Pòtal la pa voye okenn chanèl.")
+        if (chans.isEmpty()) throw IOException("Portal sent no channels.")
         return cats.values.toList() to chans
     }
 
@@ -122,7 +122,7 @@ class Stalker private constructor(private val portal: String, private val mac: S
         val js = authed(mapOf("type" to "itv", "action" to "create_link", "cmd" to cmd, "series" to "", "forced_storage" to "undefined", "disable_ad" to "0", "download" to "0")).optJSONObject("js")
         var u = js?.optString("cmd").orEmpty().ifBlank { cmd }.trim()
         for (p in listOf("ffmpeg ", "auto ", "ffrt ")) if (u.startsWith(p, true)) u = u.substring(p.length).trim()
-        if (!u.startsWith("http")) throw IOException("Pòtal la pa bay lyen videyo a.")
+        if (!u.startsWith("http")) throw IOException("Portal did not give the video link.")
         return u
     }
 }
