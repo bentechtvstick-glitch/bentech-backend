@@ -202,7 +202,7 @@ class VodPlayerActivity : AppCompatActivity() {
         p.setMediaItems(items.map { mediaItem(it) }, i, prog?.positionMs ?: 0L)
         p.prepare()
         p.playWhenReady = true
-        b.errorText.visibility = View.GONE
+        hideError()
         updateTitle()
         if (prog != null) Toast.makeText(this, getString(R.string.vod_resumed_at, fmt(prog.positionMs)), Toast.LENGTH_SHORT).show()
         reportStatus()
@@ -242,9 +242,32 @@ class VodPlayerActivity : AppCompatActivity() {
                 p.playWhenReady = true
                 return
             }
-            b.errorText.text = getString(R.string.vod_error_playback, error.errorCodeName)
-            b.errorText.visibility = View.VISIBLE
+            showError("v${BuildConfig.VERSION_NAME} · ${error.errorCodeName}" +
+                (error.cause?.message?.let { " · " + it.replace(Regex("https?://\\S+"), "[link]").take(160) } ?: ""))
         }
+    }
+
+    /** Mesaj senp pou kliyan an + logo Galaxy k ap fade; detay teknik la ale nan panel la (notifikasyon). */
+    private fun showError(detail: String) {
+        b.errorText.text = getString(R.string.vod_trouble)
+        b.errorText.visibility = View.VISIBLE
+        if (b.errorLogo.visibility != View.VISIBLE) { b.errorLogo.alpha = 0f; b.errorLogo.visibility = View.VISIBLE; pulseLogo(true) }
+        val cur = items.getOrNull(index)
+        val body = org.json.JSONObject().put("id", parentId).put("type", kind)
+            .put("name", listOfNotNull(cur?.title, cur?.subtitle?.takeIf { it.isNotBlank() }).joinToString(" · "))
+            .put("detail", detail.take(400))
+        lifecycleScope.launch { runCatching { PanelApi(prefs).alert(body) } }
+    }
+
+    private fun pulseLogo(up: Boolean) {
+        if (b.errorLogo.visibility != View.VISIBLE) return
+        b.errorLogo.animate().alpha(if (up) 0.28f else 0.08f).setDuration(2200).withEndAction { pulseLogo(!up) }.start()
+    }
+
+    private fun hideError() {
+        b.errorText.visibility = View.GONE
+        b.errorLogo.animate().cancel()
+        b.errorLogo.visibility = View.GONE
     }
 
     private fun updateTitle() {

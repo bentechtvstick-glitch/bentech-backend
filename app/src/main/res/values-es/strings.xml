@@ -95,6 +95,7 @@
     <string name="vod_cast">Reparto: %1$s</string>
     <string name="vod_next_episode">SIGUIENTE EPISODIO</string>
     <string name="vod_resumed_at">Continuando en %1$s</string>
+    <string name="vod_trouble">Lo sentimos, tenemos dificultades técnicas con este video. Estamos trabajando para restablecerlo.</string>
     <string name="vod_error_playback">Este video no se puede reproducir (%1$s).</string>
     <string name="epg_catchup_hint">⏪ OK = ver en catch-up</string>
     <string name="catchup_unavailable">Catch-up no disponible para este programa.</string>

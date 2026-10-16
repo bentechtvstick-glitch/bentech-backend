@@ -118,6 +118,7 @@
     <string name="vod_cast">Aktè: %1$s</string>
     <string name="vod_next_episode">PWOCHEN EPIZÒD</string>
     <string name="vod_resumed_at">Kontinye nan %1$s</string>
+    <string name="vod_trouble">Nou regrèt, nou gen yon difikilte teknik ak videyo sa a. N ap travay pou n remete l.</string>
     <string name="vod_error_playback">Videyo sa a pa ka jwe (%1$s).</string>
     <string name="epg_catchup_hint">⏪ OK = gade l an catch-up</string>
     <string name="catchup_unavailable">Chanèl sa a pa gen catch-up pou pwogram sa a.</string>

@@ -95,6 +95,7 @@
     <string name="vod_cast">Acteurs : %1$s</string>
     <string name="vod_next_episode">ÉPISODE SUIVANT</string>
     <string name="vod_resumed_at">Reprise à %1$s</string>
+    <string name="vod_trouble">Nous sommes désolés, nous rencontrons des difficultés techniques avec cette vidéo. Nous travaillons à la rétablir.</string>
     <string name="vod_error_playback">Cette vidéo ne peut pas être lue (%1$s).</string>
     <string name="epg_catchup_hint">⏪ OK = voir en replay</string>
     <string name="catchup_unavailable">Le replay n\'est pas disponible pour ce programme.</string>

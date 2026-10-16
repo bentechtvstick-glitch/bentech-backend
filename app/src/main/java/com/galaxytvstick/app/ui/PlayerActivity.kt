@@ -440,7 +440,7 @@ class PlayerActivity : AppCompatActivity() {
     /** Voye pwoblèm chanèl la bay panel la kòm notifikasyon (ak detay teknik la). */
     private fun reportAlert(ch: Channel?, detail: String) {
         if (ch == null) return
-        val body = org.json.JSONObject().put("id", ch.streamId).put("name", ch.name).put("detail", detail.take(400))
+        val body = org.json.JSONObject().put("id", ch.streamId).put("type", "live").put("name", ch.name).put("detail", detail.take(400))
         val api = com.galaxytvstick.app.data.PanelApi(prefs)
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch { runCatching { api.alert(body) } }
     }

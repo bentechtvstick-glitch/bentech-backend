@@ -37,6 +37,10 @@
             android:maxWidth="360dp" android:singleLine="true" android:ellipsize="end" android:textColor="@color/text" android:textSize="17sp"/>
     </LinearLayout>
 
+    <ImageView android:id="@+id/errorLogo" android:layout_width="560dp" android:layout_height="280dp"
+        android:layout_gravity="center" android:src="@drawable/logo_full" android:scaleType="fitCenter"
+        android:alpha="0.18" android:importantForAccessibility="no" android:visibility="gone"/>
+
     <TextView android:id="@+id/errorText" android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:layout_gravity="center" android:background="@drawable/bg_panel" android:padding="20dp"
         android:maxWidth="600dp" android:gravity="center" android:textColor="@color/text" android:textSize="18sp" android:visibility="gone"/>
