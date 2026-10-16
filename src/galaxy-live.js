@@ -297,7 +297,9 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   const diskInfo = () => {
     try {
       const st = fs.statfsSync(path.dirname(path.resolve(process.env.DB_FILE || "./db.json")));
-      return { diskTotal: st.blocks * st.bsize, diskFree: st.bavail * st.bsize };
+      // "Used" = sa ki vrèman ekri (blocks - bfree). Linux kenbe ~5% disk la pou sistèm nan (bfree - bavail):
+      // nou pa konte pati sa a kòm "itilize" pou chif la pa sanble pi gwo pase sa l ye.
+      return { diskTotal: st.blocks * st.bsize, diskFree: st.bavail * st.bsize, diskUsed: (st.blocks - st.bfree) * st.bsize };
     } catch { return {}; }
   };
   /** Sante sistèm nan: gwosè baz done a, memwa, vitès ekriti, konbyen eleman. */
