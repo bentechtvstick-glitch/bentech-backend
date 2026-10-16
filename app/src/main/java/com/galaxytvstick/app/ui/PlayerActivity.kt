@@ -423,11 +423,11 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    /** Logo a monte/desann dousman (0.08 ↔ 0.28) toutotan mesaj erè a sou ekran an. */
+    /** Logo a monte/desann dousman (0.25 ↔ 0.55) toutotan mesaj erè a sou ekran an. */
     private fun pulseLogo(up: Boolean) {
         val logo = b.errorLogo
         if (logo.visibility != View.VISIBLE) return
-        logo.animate().alpha(if (up) 0.28f else 0.08f).setDuration(2200)
+        logo.animate().alpha(if (up) 0.55f else 0.25f).setDuration(2200)
             .withEndAction { pulseLogo(!up) }.start()
     }
 

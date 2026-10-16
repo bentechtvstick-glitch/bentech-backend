@@ -251,6 +251,7 @@ class VodPlayerActivity : AppCompatActivity() {
     private fun showError(detail: String) {
         b.errorText.text = getString(R.string.vod_trouble)
         b.errorText.visibility = View.VISIBLE
+        b.playerView.hideController() // bouton yo pa kouvri logo a ak mesaj la
         if (b.errorLogo.visibility != View.VISIBLE) { b.errorLogo.alpha = 0f; b.errorLogo.visibility = View.VISIBLE; pulseLogo(true) }
         val cur = items.getOrNull(index)
         val body = org.json.JSONObject().put("id", parentId).put("type", kind)
@@ -261,7 +262,7 @@ class VodPlayerActivity : AppCompatActivity() {
 
     private fun pulseLogo(up: Boolean) {
         if (b.errorLogo.visibility != View.VISIBLE) return
-        b.errorLogo.animate().alpha(if (up) 0.28f else 0.08f).setDuration(2200).withEndAction { pulseLogo(!up) }.start()
+        b.errorLogo.animate().alpha(if (up) 0.55f else 0.25f).setDuration(2200).withEndAction { pulseLogo(!up) }.start()
     }
 
     private fun hideError() {
