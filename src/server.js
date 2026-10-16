@@ -43,6 +43,8 @@ const app = express();
 app.disable?.("x-powered-by");
 app.use(cors());
 // Yon playlist ka gen plizyè milye chanèl: app TV a voye lis la nan yon sèl demann
+// Restore yon kopi done (ak tout lis chanèl yo) ka pi gwo pase 40 MB
+app.use("/api/galaxy/restore", express.json({ limit: "500mb" }));
 app.use(express.json({ limit: "40mb" }));
 app.use(gzipJson());
 // Demenajman: yon sèvè ki poko gen done (nouvo sèvè vid) refize TV yo (503).
