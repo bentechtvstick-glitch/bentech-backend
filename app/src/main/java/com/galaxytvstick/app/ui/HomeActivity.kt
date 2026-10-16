@@ -265,6 +265,11 @@ class HomeActivity : AppCompatActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         // Aparèy bloke / ekspire: ekran blokaj la kouvri tout bagay, remòt la pa louvri anyen
         if (ready && b.overlay.blocker.visibility == View.VISIBLE && event.keyCode != KeyEvent.KEYCODE_BACK) return true
+        // Bouton rechèch / vwa remòt la (Android TV): rechèch vwa
+        if (ready && event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0 &&
+            (event.keyCode == KeyEvent.KEYCODE_SEARCH || event.keyCode == KeyEvent.KEYCODE_VOICE_ASSIST)) {
+            startActivity(Intent(this, SearchActivity::class.java).putExtra(SearchActivity.EXTRA_VOICE, true)); return true
+        }
         return super.dispatchKeyEvent(event)
     }
 

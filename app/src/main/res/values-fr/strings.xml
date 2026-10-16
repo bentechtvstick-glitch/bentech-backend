@@ -147,7 +147,10 @@
     <string name="home_exp_fmt">Expire : %1$s</string>
     <string name="menu_search">Rechercher</string>
     <string name="menu_tv">TV</string>
-    <string name="search_hint">Tapez le nom d\'une chaîne, d\'un film ou d\'une série</string>
+    <string name="search_hint">Dites ou tapez le nom d\'une chaîne, d\'un film ou d\'une série</string>
+    <string name="search_voice_key">🎤 Voix</string>
+    <string name="search_voice_prompt">Parlez maintenant…</string>
+    <string name="search_voice_hold">Maintenez le bouton 🎤 de la télécommande et parlez</string>
     <string name="search_none">Aucun résultat</string>
     <string name="quick_guide">Guide TV</string>
     <string name="quick_channels">Chaînes</string>

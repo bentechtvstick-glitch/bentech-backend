@@ -147,7 +147,10 @@
     <string name="home_exp_fmt">Expires: %1$s</string>
     <string name="menu_search">Search</string>
     <string name="menu_tv">TV</string>
-    <string name="search_hint">Type the name of a channel, movie or show</string>
+    <string name="search_hint">Speak or type the name of a channel, movie or show</string>
+    <string name="search_voice_key">🎤 Voice</string>
+    <string name="search_voice_prompt">Speak now…</string>
+    <string name="search_voice_hold">Hold the 🎤 button on your remote and speak</string>
     <string name="search_none">Nothing found</string>
     <string name="quick_guide">TV guide</string>
     <string name="quick_channels">Channels</string>

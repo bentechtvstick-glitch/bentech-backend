@@ -147,7 +147,10 @@
     <string name="home_exp_fmt">Vence: %1$s</string>
     <string name="menu_search">Buscar</string>
     <string name="menu_tv">TV</string>
-    <string name="search_hint">Escribe el nombre de un canal, película o serie</string>
+    <string name="search_hint">Di o escribe el nombre de un canal, película o serie</string>
+    <string name="search_voice_key">🎤 Voz</string>
+    <string name="search_voice_prompt">Habla ahora…</string>
+    <string name="search_voice_hold">Mantén pulsado el botón 🎤 del control y habla</string>
     <string name="search_none">Sin resultados</string>
     <string name="quick_guide">Guía TV</string>
     <string name="quick_channels">Canales</string>

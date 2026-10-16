@@ -628,6 +628,11 @@ class EpgActivity : AppCompatActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) armIdle() // kliyan an la: rekòmanse 3 minit yo
         if (event.action == KeyEvent.ACTION_DOWN && b.overlay.blocker.visibility != View.VISIBLE) {
+            // Bouton rechèch / vwa remòt la (Android TV): rechèch vwa
+            if (event.keyCode == KeyEvent.KEYCODE_SEARCH || event.keyCode == KeyEvent.KEYCODE_VOICE_ASSIST) {
+                if (event.repeatCount == 0) startActivity(Intent(this, SearchActivity::class.java).putExtra(SearchActivity.EXTRA_VOICE, true))
+                return true
+            }
             // Bouton ≡ (oswa Settings) sou remòt la: louvri Reglaj
             if (event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_SETTINGS) {
                 if (event.repeatCount == 0) showSettings()
