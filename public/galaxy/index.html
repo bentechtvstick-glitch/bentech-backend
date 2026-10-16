@@ -1695,18 +1695,43 @@ $("#crudTable").addEventListener("click", (e) => {
 // ------------------------------------------------------------ Ba anlè: estati, notifikasyon, rechèch, itilizatè
 function setDot(sel, ok, on, off) { const d = $(sel); if (!d) return; d.className = "hdot " + (ok ? "on" : "off"); $(sel + "T").textContent = t(ok ? on : off); }
 async function checkHealth() { let ok = false; try { ok = (await fetch(API + "/health")).ok; } catch {} setDot("#hBackend", ok, "Backend Online", "Backend Offline"); }
+let alertsCache = { items: [], seenAt: 0 };
+async function loadAlerts() {
+  if (!token) return;
+  try { alertsCache = await api("GET", "/galaxy/alerts"); } catch { return; }
+  updateBell();
+}
 function updateBell() {
   const waiting = devicesCache.filter((d) => d.galaxy && !d.blocked && !d.playlists.length);
-  const n = waiting.length;
-  $("#bellCount").hidden = !n; $("#bellCount").textContent = n; $("#navNew").hidden = !n; $("#navNew").textContent = n;
-  $("#bellMenu").innerHTML = `<div class="hd">${esc(t("Nouvo aparèy k ap tann yon playlist"))}</div>` + (n
-    ? waiting.slice(0, 8).map((d) => `<button class="mi" data-new="${esc(d.mac)}" type="button"><span class="mono">${esc(d.mac)}</span><span class="note">${esc(d.deviceName || "")} · ${esc(d.lastSeen || "")}</span></button>`).join("")
-    : `<div class="mi note">${esc(t("Pa gen notifikasyon."))}</div>`);
+  const alerts = alertsCache.items || [], fresh = alerts.filter((a) => a.at > (alertsCache.seenAt || 0));
+  const n = waiting.length + fresh.length;
+  $("#bellCount").hidden = !n; $("#bellCount").textContent = n; $("#navNew").hidden = !waiting.length; $("#navNew").textContent = waiting.length;
+  let h = "";
+  if (waiting.length) h += `<div class="hd">${esc(t("Nouvo aparèy k ap tann yon playlist"))}</div>` + waiting.slice(0, 8).map((d) => `<button class="mi" data-new="${esc(d.mac)}" type="button"><span class="mono">${esc(d.mac)}</span><span class="note">${esc(d.deviceName || "")} · ${esc(d.lastSeen || "")}</span></button>`).join("");
+  if (alerts.length) {
+    h += `<div class="hd" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>⚠ ${esc(t("Pwoblèm chanèl"))}</span><button class="btn small" data-alerts-clear type="button">${esc(t("Efase"))}</button></div>`;
+    h += alerts.slice(0, 15).map((a) => `<div class="mi" style="flex-direction:column;align-items:flex-start;gap:2px;max-width:420px;cursor:default${a.at > (alertsCache.seenAt || 0) ? ";background:rgba(239,68,68,.10)" : ""}">
+      <span><b>${esc(a.channel || "#" + a.channelId)}</b>${a.count > 1 ? ` <span class="note">×${a.count}</span>` : ""}</span>
+      <span class="note"><span class="mono">${esc(a.mac)}</span>${a.device ? " · " + esc(a.device) : ""} · ${esc(new Date(a.at).toLocaleString(lang))}</span>
+      <span class="note mono" style="font-size:11px;word-break:break-word">${esc(a.detail)}</span></div>`).join("");
+  }
+  if (!h) h = `<div class="mi note">${esc(t("Pa gen notifikasyon."))}</div>`;
+  $("#bellMenu").innerHTML = h;
 }
 function toggleMenu(id, e) { e.stopPropagation(); const m = $(id); const open = m.hidden; $$(".menu").forEach((x) => (x.hidden = true)); m.hidden = !open; }
-$("#bellBtn").addEventListener("click", (e) => toggleMenu("#bellMenu", e));
+$("#bellBtn").addEventListener("click", (e) => {
+  toggleMenu("#bellMenu", e);
+  // Ouvri klòch la = notifikasyon yo li (yo rete nan lis la, men yo pa konte ankò)
+  if (!$("#bellMenu").hidden && (alertsCache.items || []).some((a) => a.at > (alertsCache.seenAt || 0))) {
+    api("POST", "/galaxy/alerts/seen", {}).then(() => { alertsCache.seenAt = Date.now(); setTimeout(updateBell, 4000); }).catch(() => {});
+  }
+});
 $("#userBtn").addEventListener("click", (e) => toggleMenu("#userMenu", e));
 document.addEventListener("click", () => $$(".menu").forEach((x) => (x.hidden = true)));
+$("#bellMenu").addEventListener("click", async (e) => {
+  if (e.target.closest("[data-alerts-clear]")) { e.stopPropagation(); try { await api("POST", "/galaxy/alerts/seen", { clear: true }); alertsCache = { items: [], seenAt: Date.now() }; updateBell(); } catch {} return; }
+  if (e.target.closest(".mi:not(button)")) e.stopPropagation();
+});
 $("#bellMenu").addEventListener("click", async (e) => { const b = e.target.closest("[data-new]"); if (!b) return; await selectDevice(b.dataset.new, true); $("#plForm").scrollIntoView({ behavior: "smooth", block: "center" }); $("#plName").focus({ preventScroll: true }); });
 $("#gSearch").addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return; const v = e.target.value.trim(); if (!v) return;
@@ -2867,7 +2892,8 @@ function startApp() {
   if (window.GalaxyTestTv) { $("#ttvBtn").hidden = false; $("#ttvBtn").title = t("Limen oswa etenn yon TV tès ki konekte ak panel sa a");
     if (!ttv) ttv = GalaxyTestTv.init({ API, t, esc, cyHtml, sigHtml, getToken: () => token, openDevice: (mac) => { openTab("dev"); loadDevices().then(() => selectDevice(mac, true)); } });
     if (ttv.wasOn()) ttv.start(); }
-  openTab(tab); loadLive(); loadDevices(); checkHealth();
+  openTab(tab); loadLive(); loadDevices(); checkHealth(); loadAlerts();
+  timers.push(setInterval(() => { if (!document.hidden) loadAlerts(); }, 30000));
   timers.push(setInterval(() => { if (!document.hidden) checkHealth(); }, 30000));
   timers.push(setInterval(() => { if (!document.hidden) loadLive(); }, 5000));
   timers.push(setInterval(() => { if (!document.hidden && tab === "dev" && dev) refreshDevLive(); }, 3000));

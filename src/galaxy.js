@@ -996,6 +996,48 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     res.json({ ok: true });
   });
 
+  /**
+   * Notifikasyon pwoblèm chanèl: TV a voye detay teknik la isit la (kliyan an wè yon mesaj senp sèlman).
+   * Menm TV + menm chanèl nan 30 minit = yon sèl notifikasyon (konte konbyen fwa).
+   */
+  app.post("/api/devices/:mac/alert", (req, res) => {
+    ensure();
+    const device = findDevice(normMac(req.params.mac));
+    if (!device) return res.status(404).json({ ok: false });
+    if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) return res.status(403).json({ ok: false });
+    const b = req.body || {};
+    const list = (data().channelAlerts ??= []);
+    const id = Math.floor(Number(b.id) || 0), now = Date.now();
+    const prev = list.find((a) => a.mac === device.mac && a.channelId === id && now - a.at < 30 * 60000);
+    if (prev) { prev.count = (prev.count || 1) + 1; prev.at = now; prev.detail = String(b.detail || prev.detail).slice(0, 400); }
+    else {
+      list.push({ id: crypto.randomBytes(5).toString("hex"), at: now, mac: device.mac, channelId: id,
+        channel: String(b.name || "").slice(0, 120), detail: String(b.detail || "").slice(0, 400), count: 1 });
+      if (list.length > 300) list.splice(0, list.length - 300);
+    }
+    db.write().catch(() => {});
+    res.json({ ok: true });
+  });
+
+  /** Panel la: notifikasyon pwoblèm chanèl yo (dènye 3 jou). */
+  app.get("/api/galaxy/alerts", authenticate, (req, res) => {
+    ensure();
+    const since = Date.now() - 3 * 86400000;
+    const nameOf = (mac) => { const d = findDevice(mac); return d ? (d.name || d.deviceName || "") : ""; };
+    const items = (data().channelAlerts || []).filter((a) => a.at >= since).sort((a, b) => b.at - a.at).slice(0, 100)
+      .map((a) => ({ ...a, device: nameOf(a.mac), time: new Date(a.at).toISOString() }));
+    res.json({ items, seenAt: data().alertsSeenAt || 0 });
+  });
+
+  /** Panel la: make notifikasyon yo kòm li (oswa efase yo). */
+  app.post("/api/galaxy/alerts/seen", authenticate, async (req, res) => {
+    ensure();
+    if (req.body?.clear) data().channelAlerts = [];
+    data().alertsSeenAt = Date.now();
+    await db.write();
+    res.json({ ok: true });
+  });
+
   /** Panel la: sante chanèl playlist TV sa a { streamId: { s, start, cuts, fail, n, at } }. */
   app.get("/api/galaxy/devices/:mac/health", authenticate, (req, res) => {
     ensure();
