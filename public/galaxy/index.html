@@ -496,8 +496,8 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <button class="btn small" type="button" data-aiq="Poukisa chanèl oswa videyo yo pa mache? Ki sa pou m fè?">Poukisa chanèl yo pa mache?</button>
           <button class="btn small" type="button" data-aiq="Ki TV ki offline oswa ki gen yon ansyen vèsyon app la?">TV ki gen pwoblèm</button>
         </div>
-        <div style="display:flex;gap:8px"><input id="aiQ" type="text" maxlength="1000" placeholder="Ekri kesyon ou la…" style="flex:1"><button class="btn primary" id="aiAsk" type="button">Mande</button></div>
-        <div id="aiAnswer" class="note" style="white-space:pre-wrap;margin-top:12px;font-size:14px;color:var(--text)" hidden></div>
+        <div style="display:flex;gap:8px"><input id="aiQ" type="text" maxlength="1000" placeholder="Ekri kesyon ou la…" style="flex:1"><button class="btn primary" id="aiAsk" type="button">Mande</button><button class="btn" id="aiClear" type="button" hidden>Efase</button></div>
+        <div id="aiAnswer" class="note" style="margin-top:12px;font-size:14px;line-height:1.55;color:var(--text)" hidden></div>
       </div>
       <div class="cols">
         <div class="card"><div class="cardhead"><div><h2>Ap ekspire byento</h2><p class="sub">Kliyan ki ekspire oswa k ap ekspire nan 14 jou.</p></div><button class="btn small" data-goto="cust" type="button">Kliyan yo</button></div><div class="tbl" id="dashExpiring"></div></div>
@@ -1711,14 +1711,29 @@ async function loadAi() {
 }
 async function askAi(q) {
   q = String(q || "").trim(); if (!q) return;
-  const box = $("#aiAnswer"); box.hidden = false; box.textContent = t("Ap reflechi…"); $("#aiAsk").disabled = true;
+  const box = $("#aiAnswer"); box.hidden = false; box.textContent = t("Ap reflechi…"); $("#aiAsk").disabled = true; $("#aiClear").hidden = true;
   try {
     const r = await api("POST", "/galaxy/ai", { question: q, lang });
-    box.textContent = r.answer || "—";
+    box.innerHTML = aiMd(r.answer || "—"); $("#aiClear").hidden = false;
     $("#aiUsage").textContent = t("Mwa sa a: ${0} sou ${1}", Number(r.monthCost).toFixed(2), r.limit);
   } catch (err) { box.textContent = "⚠ " + err.message; }
   $("#aiAsk").disabled = false;
 }
+/** Ti Markdown san danje: **gra**, liy ki kòmanse ak "- " oswa "1. ", tit "#". */
+function aiMd(text) {
+  const inline = (x) => esc(x).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  let h = "", list = "";
+  for (const raw of String(text).split("\n")) {
+    const line = raw.trim(), m = line.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
+    if (m) { if (!list) { h += "<ul style='margin:4px 0 8px 18px;padding:0'>"; list = "ul"; } h += `<li>${inline(m[1])}</li>`; continue; }
+    if (list) { h += "</ul>"; list = ""; }
+    if (!line) continue;
+    const hd = line.match(/^#{1,4}\s+(.*)$/);
+    h += hd ? `<div style="font-weight:700;margin:10px 0 4px">${inline(hd[1])}</div>` : `<div style="margin:4px 0">${inline(line)}</div>`;
+  }
+  return h + (list ? "</ul>" : "");
+}
+$("#aiClear").addEventListener("click", () => { $("#aiAnswer").hidden = true; $("#aiAnswer").innerHTML = ""; $("#aiQ").value = ""; $("#aiClear").hidden = true; });
 $("#aiAsk").addEventListener("click", () => askAi($("#aiQ").value));
 $("#aiQ").addEventListener("keydown", (e) => { if (e.key === "Enter") askAi(e.target.value); });
 document.querySelectorAll("[data-aiq]").forEach((b) => b.addEventListener("click", () => { const q = t(b.dataset.aiq); $("#aiQ").value = q; askAi(q); }));
