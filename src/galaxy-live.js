@@ -310,7 +310,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     res.json({
       uptimeSec: Math.round(process.uptime()), node: process.version,
       memoryMb: Math.round(mem.rss / 1048576), heapMb: Math.round(mem.heapUsed / 1048576),
-      dbBytes: perf.lastBytes || 0, dbWriteMs: perf.lastMs || 0, dbWrites: perf.writes || 0, dbWriteErrors: perf.errors || 0, dbLastWriteAt: perf.lastAt || null, dbPending: !!perf.pending,
+      dbBytes: perf.lastBytes || 0, dbWriteMs: perf.lastMs || 0, dbWrites: perf.writes || 0, dbWriteErrors: perf.errors || 0, dbLastWriteAt: perf.lastAt || null, dbPending: !!perf.pending, chBytes: perf.splitBytes || 0, chFiles: perf.splitFiles || 0,
       persistent: !!process.env.DB_FILE && process.env.DB_FILE !== "./db.json",
       ...diskInfo(),
       memTotalMb: Math.round(os.totalmem() / 1048576), memFreeMb: Math.round(os.freemem() / 1048576), cpus: os.cpus().length,

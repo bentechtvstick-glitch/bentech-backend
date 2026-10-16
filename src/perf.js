@@ -11,10 +11,52 @@ import zlib from "node:zlib";
  * - Si ekriti a pran tan (gwo baz done), delè a alonje poukont li pou sèvè a pa janm bloke.
  * - Lè Render fèmen sèvè a (deploy/restart), dènye chanjman yo ekri anvan l soti.
  */
-export function fastWrites(db, file, { delay = 150 } = {}) {
-  const stats = { writes: 0, lastMs: 0, lastBytes: 0, lastAt: null, errors: 0, pending: false };
+export function fastWrites(db, file, { delay = 150, splitKey = "channelLists" } = {}) {
+  const stats = { writes: 0, lastMs: 0, lastBytes: 0, lastAt: null, errors: 0, pending: false, splitFiles: 0, splitBytes: 0 };
   const tmp = path.join(path.dirname(file), `.${path.basename(file)}.tmp`);
   let dirty = false, timer = null, running = false;
+
+  // ---- Lis chanèl yo sove apa: yon fichye pou chak lis (channels/<hash>.json) ----
+  // Konsa db.json rete piti, e chak chanjman nan panel la pa oblije reekri plizyè MB chanèl.
+  // Yon lis pa janm chanje (non fichye a = hash kontni an): li ekri yon sèl fwa, li efase lè pèsonn pa sèvi avè l.
+  const dir = path.join(path.dirname(file), "channels");
+  const onDisk = new Map(); // hash → bytes
+  const safe = (h) => /^[a-f0-9]{16,64}$/.test(h);
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const legacy = db.data[splitKey] && typeof db.data[splitKey] === "object" ? db.data[splitKey] : {};
+    const lists = {};
+    for (const f of fs.readdirSync(dir)) {
+      const h = f.replace(/\.json$/, "");
+      if (!f.endsWith(".json") || !safe(h)) continue;
+      try { const raw = fs.readFileSync(path.join(dir, f), "utf8"); lists[h] = JSON.parse(raw); onDisk.set(h, raw.length); }
+      catch (err) { console.warn(`Channel list ${f} unreadable:`, err.message); }
+    }
+    // Ansyen fòma (lis yo te anndan db.json): yo pase nan fichye pa yo, epi db.json ap reekri san yo
+    const legacyCount = Object.keys(legacy).length;
+    for (const [h, l] of Object.entries(legacy)) if (!(h in lists)) lists[h] = l;
+    db.data[splitKey] = lists;
+    if (legacyCount) { dirty = true; console.log(`Moving ${legacyCount} channel list(s) out of ${path.basename(file)}`); }
+  } catch (err) {
+    console.warn("Channel list folder unavailable:", err.code || err.message);
+  }
+  const syncSplit = async (sync) => {
+    const lists = db.data[splitKey] || {};
+    for (const [h, l] of Object.entries(lists)) {
+      if (onDisk.has(h) || !safe(h)) continue;
+      const raw = JSON.stringify(l), f = path.join(dir, h + ".json"), t = f + ".tmp";
+      if (sync) { fs.writeFileSync(t, raw); fs.renameSync(t, f); } else { await fs.promises.writeFile(t, raw); await fs.promises.rename(t, f); }
+      onDisk.set(h, raw.length);
+    }
+    for (const h of [...onDisk.keys()]) {
+      if (h in lists) continue;
+      const f = path.join(dir, h + ".json");
+      try { if (sync) fs.rmSync(f, { force: true }); else await fs.promises.rm(f, { force: true }); } catch {}
+      onDisk.delete(h);
+    }
+    stats.splitFiles = onDisk.size; stats.splitBytes = [...onDisk.values()].reduce((a, b) => a + b, 0);
+  };
+  const mainJson = () => JSON.stringify(db.data, (k, v) => (k === splitKey && v && typeof v === "object" && !Array.isArray(v) ? undefined : v));
 
   const schedule = (ms) => { if (!timer && !running) timer = setTimeout(flush, ms); };
   async function flush() {
@@ -24,7 +66,9 @@ export function fastWrites(db, file, { delay = 150 } = {}) {
     const t0 = Date.now();
     let retry = 0;
     try {
-      const json = JSON.stringify(db.data);
+      // Lis chanèl yo an premye: db.json pa janm pwente sou yon lis ki poko sou disk
+      await syncSplit(false);
+      const json = mainJson();
       await fs.promises.writeFile(tmp, json);
       await fs.promises.rename(tmp, file);
       stats.writes++; stats.lastMs = Date.now() - t0; stats.lastBytes = Buffer.byteLength(json); stats.lastAt = new Date().toISOString();
@@ -42,13 +86,15 @@ export function fastWrites(db, file, { delay = 150 } = {}) {
   /** Ekri touswit (lè sèvè a ap fèmen). */
   db.flushSync = () => {
     if (!dirty) return;
-    try { fs.writeFileSync(tmp, JSON.stringify(db.data)); fs.renameSync(tmp, file); dirty = false; stats.pending = false; }
+    try { syncSplit(true).catch((e) => console.error("Channel list flush failed:", e.message)); fs.writeFileSync(tmp, mainJson()); fs.renameSync(tmp, file); dirty = false; stats.pending = false; }
     catch (err) { console.error("DB flush failed:", err.code || err.message); }
   };
   for (const sig of ["SIGTERM", "SIGINT"]) process.once(sig, () => { db.flushSync(); process.exit(0); });
   process.once("beforeExit", () => db.flushSync());
 
   db.perf = stats;
+  if (dirty) schedule(delay);
+  else syncSplit(false).catch(() => {});
   return stats;
 }
 

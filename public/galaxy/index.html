@@ -2451,6 +2451,7 @@ async function loadSysStats() {
   const ping = Math.round(performance.now() - t0), n = (v) => Number(v || 0).toLocaleString(lang);
   const k = (label, v, sub) => `<div class="kpi"><span class="k">${esc(t(label))}</span><span class="v">${esc(v)}</span>${sub ? `<span class="note">${esc(sub)}</span>` : ""}</div>`;
   $("#sysKpis").innerHTML = k("Repons sèvè a", ping + " ms") + k("Gwosè baz done a", y.dbBytes ? fmtBytes(y.dbBytes) : "—", y.dbBytes ? t("Sove an {0} ms", y.dbWriteMs) : t("Poko gen chanjman depi sèvè a limen"))
+    + (y.chFiles ? k("Lis chanèl yo", fmtBytes(y.chBytes), t("{0} lis, sove apa", n(y.chFiles))) : "")
     + k("Aparèy", n(y.devices), t("{0} online", n(y.online))) + k("Playlist", n(y.playlists)) + k("Chanèl an memwa", n(y.channels), t("{0} lis", n(y.channelLists)))
     + k("Kliyan yo", n(y.customers)) + k("Memwa sèvè a", y.memoryMb + " MB", y.memTotalMb ? t("{0} ki lib sou {1}", fmtGb(y.memFreeMb * 1048576), fmtGb(y.memTotalMb * 1048576)) : "")
     + (y.diskTotal ? k("Disk sèvè a", fmtGb(y.diskTotal), t("{0} ki lib", fmtGb(y.diskFree))) : "")
