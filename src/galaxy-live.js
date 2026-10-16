@@ -13,6 +13,7 @@ import fs from "node:fs";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { normMac, plHost, healthView } from "./galaxy.js";
+import { mountAi } from "./ai.js";
 
 const ONLINE_MS = 75_000;           // TV a "online" si li pale ak sèvè a nan dènye 75 segonn yo
 const COMMAND_TTL_MS = 2 * 60_000;  // yon kòmand TV a pa resevwa nan 2 minit anile
@@ -322,6 +323,9 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       tv: ["tickers", "chyrons", "banners", "popups", "liveEvents", "mediaAds"].reduce((n, k) => n + count(d[k]), 0),
     });
   });
+
+  // Asistan AI panel la
+  mountAi(app, db, { authenticate, isOnline });
 
   return { broadcastSync };
 }

@@ -489,6 +489,16 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
     <main data-pane="dash">
       <div class="pagehead"><div><h1>Galaxy TV Stick Control Center</h1><p>Dashboard</p></div></div>
       <div class="kpis" id="dashKpis"></div>
+      <div class="card" id="aiCard" style="margin-bottom:16px">
+        <div class="cardhead"><div><h2>🤖 Asistan AI</h2><p class="sub">Poze l yon kesyon sou TV yo, kliyan yo oswa chanèl ki pa mache yo.</p></div><span class="note" id="aiUsage"></span></div>
+        <div class="btns" style="justify-content:flex-start;flex-wrap:wrap;margin-bottom:8px">
+          <button class="btn small" type="button" data-aiq="Fè m yon rezime eta panel la jodi a: TV, kliyan k ap ekspire, ak pwoblèm yo.">Rezime jodi a</button>
+          <button class="btn small" type="button" data-aiq="Poukisa chanèl oswa videyo yo pa mache? Ki sa pou m fè?">Poukisa chanèl yo pa mache?</button>
+          <button class="btn small" type="button" data-aiq="Ki TV ki offline oswa ki gen yon ansyen vèsyon app la?">TV ki gen pwoblèm</button>
+        </div>
+        <div style="display:flex;gap:8px"><input id="aiQ" type="text" maxlength="1000" placeholder="Ekri kesyon ou la…" style="flex:1"><button class="btn primary" id="aiAsk" type="button">Mande</button></div>
+        <div id="aiAnswer" class="note" style="white-space:pre-wrap;margin-top:12px;font-size:14px;color:var(--text)" hidden></div>
+      </div>
       <div class="cols">
         <div class="card"><div class="cardhead"><div><h2>Ap ekspire byento</h2><p class="sub">Kliyan ki ekspire oswa k ap ekspire nan 14 jou.</p></div><button class="btn small" data-goto="cust" type="button">Kliyan yo</button></div><div class="tbl" id="dashExpiring"></div></div>
         <div class="stack">
@@ -1144,7 +1154,7 @@ function openTab(name) {
   $$(".tab").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
   const pane = CRUD[name] ? "crud" : name;
   $$("[data-pane]").forEach((p) => (p.hidden = p.dataset.pane !== pane));
-  if (name === "dash") loadDashboard();
+  if (name === "dash") { loadDashboard(); loadAi(); }
   if (CRUD[name]) openCrud(name);
   if (name === "live" || name === "cust") loadLive();
   if (name === "dev") loadDevices();
@@ -1692,6 +1702,26 @@ $("#crudTable").addEventListener("click", (e) => {
   if (item) openCrudForm(item);
 });
 
+
+// ------------------------------------------------------------ Asistan AI (Dashboard)
+async function loadAi() {
+  let y; try { y = await api("GET", "/galaxy/ai"); } catch { return; }
+  $("#aiUsage").textContent = y.configured ? t("Mwa sa a: ${0} sou ${1}", y.cost.toFixed(2), y.limit) : t("Poko konfigire (kle AI a manke sou sèvè a)");
+  $("#aiAsk").disabled = !y.configured;
+}
+async function askAi(q) {
+  q = String(q || "").trim(); if (!q) return;
+  const box = $("#aiAnswer"); box.hidden = false; box.textContent = t("Ap reflechi…"); $("#aiAsk").disabled = true;
+  try {
+    const r = await api("POST", "/galaxy/ai", { question: q, lang });
+    box.textContent = r.answer || "—";
+    $("#aiUsage").textContent = t("Mwa sa a: ${0} sou ${1}", Number(r.monthCost).toFixed(2), r.limit);
+  } catch (err) { box.textContent = "⚠ " + err.message; }
+  $("#aiAsk").disabled = false;
+}
+$("#aiAsk").addEventListener("click", () => askAi($("#aiQ").value));
+$("#aiQ").addEventListener("keydown", (e) => { if (e.key === "Enter") askAi(e.target.value); });
+document.querySelectorAll("[data-aiq]").forEach((b) => b.addEventListener("click", () => { const q = t(b.dataset.aiq); $("#aiQ").value = q; askAi(q); }));
 // ------------------------------------------------------------ Ba anlè: estati, notifikasyon, rechèch, itilizatè
 function setDot(sel, ok, on, off) { const d = $(sel); if (!d) return; d.className = "hdot " + (ok ? "on" : "off"); $(sel + "T").textContent = t(ok ? on : off); }
 async function checkHealth() { let ok = false; try { ok = (await fetch(API + "/health")).ok; } catch {} setDot("#hBackend", ok, "Backend Online", "Backend Offline"); }
