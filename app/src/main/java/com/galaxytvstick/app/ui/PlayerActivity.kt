@@ -379,7 +379,7 @@ class PlayerActivity : AppCompatActivity() {
                         }
                     }
                     // Mesaj senp pou kliyan an; detay teknik la an piti anba l (epi nan panel la)
-                    showPlayError(getString(R.string.stream_unavailable), code)
+                    showPlayError(getString(R.string.stream_trouble), code)
                     lastError = code
                     reportStatus()
                     if (ch != null) {
@@ -390,10 +390,10 @@ class PlayerActivity : AppCompatActivity() {
                         val msg = when {
                             pr.blockedByNetwork -> R.string.stream_blocked_network
                             pr.kind == "error" -> R.string.stream_no_network
-                            pr.code == 401 || pr.code == 403 || pr.code == 429 -> R.string.stream_refused
-                            pr.isVideo -> R.string.stream_unsupported
-                            else -> R.string.stream_unavailable
+                            // Pwoblèm bò kote founisè a (chanèl la, kont lan, fòma a): yon mesaj ki rasire kliyan an
+                            else -> R.string.stream_trouble
                         }
+                        reportAlert(ch, diag)
                         if (index == at && b.errorText.visibility == View.VISIBLE) {
                             showPlayError(getString(msg), diag)
                             lastError = diag
@@ -406,14 +406,43 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     /** Mesaj erè: yon fraz klè an gwo, detay teknik la an piti epi pal anba l. */
-    private fun showPlayError(message: String, detail: String) {
+    /**
+     * Mesaj senp pou kliyan an (san okenn detay teknik), ak logo Galaxy la k ap fade dousman dèyè l.
+     * Detay teknik la (`detail`) ale nan panel la sèlman (lastError + notifikasyon).
+     */
+    private fun showPlayError(message: String, @Suppress("UNUSED_PARAMETER") detail: String) {
         healthFailed()
-        val text = android.text.SpannableString(message + "\n" + detail)
-        val from = message.length + 1
-        text.setSpan(android.text.style.RelativeSizeSpan(0.5f), from, text.length, 0)
-        text.setSpan(android.text.style.ForegroundColorSpan(0x99FFFFFF.toInt()), from, text.length, 0)
-        b.errorText.text = text
+        b.errorText.text = message
         b.errorText.visibility = View.VISIBLE
+        val logo = b.errorLogo
+        if (logo.visibility != View.VISIBLE) {
+            logo.animate().cancel()
+            logo.alpha = 0f
+            logo.visibility = View.VISIBLE
+            pulseLogo(true)
+        }
+    }
+
+    /** Logo a monte/desann dousman (0.08 ↔ 0.28) toutotan mesaj erè a sou ekran an. */
+    private fun pulseLogo(up: Boolean) {
+        val logo = b.errorLogo
+        if (logo.visibility != View.VISIBLE) return
+        logo.animate().alpha(if (up) 0.28f else 0.08f).setDuration(2200)
+            .withEndAction { pulseLogo(!up) }.start()
+    }
+
+    private fun hidePlayError() {
+        b.errorText.visibility = View.GONE
+        b.errorLogo.animate().cancel()
+        b.errorLogo.visibility = View.GONE
+    }
+
+    /** Voye pwoblèm chanèl la bay panel la kòm notifikasyon (ak detay teknik la). */
+    private fun reportAlert(ch: Channel?, detail: String) {
+        if (ch == null) return
+        val body = org.json.JSONObject().put("id", ch.streamId).put("name", ch.name).put("detail", detail.take(400))
+        val api = com.galaxytvstick.app.data.PanelApi(prefs)
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch { runCatching { api.alert(body) } }
     }
 
     /** Chanèl la jwe: sonje fason ki mache a (fòm lyen, sèvè videyo, User-Agent) pou pwochen chanèl ak pwochen ouvèti yo. */
@@ -465,7 +494,8 @@ class PlayerActivity : AppCompatActivity() {
                         val diag = "v${BuildConfig.VERSION_NAME} · frozen picture · decoder: $videoDecoder${if (soft) " (software)" else ""} · " +
                             "${f?.width}x${f?.height} ${f?.sampleMimeType?.substringAfter('/')} ${f?.frameRate?.takeIf { it > 0 }?.toInt() ?: "?"}fps " +
                             "${(f?.bitrate ?: -1).takeIf { it > 0 }?.let { "${it / 1000}kbps" } ?: ""} · dropped frames: $droppedFrames · mode: $curMode"
-                        showPlayError(getString(R.string.stream_unsupported), diag)
+                        showPlayError(getString(R.string.stream_trouble), diag)
+                        reportAlert(channels.getOrNull(index), diag)
                         lastError = diag
                         reportStatus()
                     }
@@ -506,7 +536,7 @@ class PlayerActivity : AppCompatActivity() {
         if (ch.streamId > 0) { prefs.lastChannelId = ch.streamId; prefs.pushRecent(ch.streamId) } // pa relanse yon evènman ki ka fini
         hideQuickBar()
         overlay.setWatching(ch.name, ChannelStore.categories.firstOrNull { it.id == ch.categoryId }?.name.orEmpty())
-        b.errorText.visibility = View.GONE
+        hidePlayError()
         b.resBadge.visibility = View.GONE
         lastQuality = ""; lastResolution = ""; lastCodec = ""; lastError = ""
         reportStatus()
@@ -583,7 +613,7 @@ class PlayerActivity : AppCompatActivity() {
             val url = runCatching { com.galaxytvstick.app.data.StreamResolver.resolve(acc, cmd) }
             if (seq != resolveSeq || player !== p) return@launch
             url.onSuccess { u -> p.setMediaItem(channelItem(ch.copy(directUrl = u), mode, alt)); p.prepare(); p.playWhenReady = true }
-                .onFailure { showPlayError(getString(R.string.stream_unavailable), "v${BuildConfig.VERSION_NAME} · ${it.message}"); lastError = it.message.orEmpty(); reportStatus() }
+                .onFailure { val d = "v${BuildConfig.VERSION_NAME} · ${it.message}"; showPlayError(getString(R.string.stream_trouble), d); reportAlert(channels.getOrNull(index), d); lastError = it.message.orEmpty(); reportStatus() }
         }
     }
 
@@ -654,7 +684,7 @@ class PlayerActivity : AppCompatActivity() {
         if (b.overlay.blocker.visibility == View.VISIBLE) return
         hideChannelOverlay()
         b.infoPanel.visibility = View.GONE
-        b.errorText.visibility = View.GONE
+        hidePlayError()
         // Yon nimewo chanèl kliyan an t ap tape pa dwe ranplase piblisite a
         handler.removeCallbacks(commitNumber); numberBuffer = ""; b.numberEntry.visibility = View.GONE
         // Bumper panel la (Grafik TV): youn anvan premye spot la, youn apre dènye a

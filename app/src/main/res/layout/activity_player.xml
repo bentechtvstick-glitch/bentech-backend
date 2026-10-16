@@ -79,9 +79,15 @@
         android:paddingStart="28dp" android:paddingEnd="28dp" android:paddingTop="8dp" android:paddingBottom="8dp"
         android:textColor="@color/text" android:textSize="48sp" android:textStyle="bold" android:visibility="gone"/>
 
+    <!-- Logo Galaxy ki fade dousman dèyè mesaj erè a -->
+    <ImageView android:id="@+id/errorLogo" android:layout_width="560dp" android:layout_height="280dp"
+        android:layout_gravity="center" android:src="@drawable/logo_full" android:scaleType="fitCenter"
+        android:alpha="0.18" android:importantForAccessibility="no" android:visibility="gone"/>
+
     <TextView android:id="@+id/errorText" android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:layout_gravity="center" android:background="@drawable/bg_panel" android:padding="20dp"
-        android:textColor="@color/text" android:textSize="18sp" android:visibility="gone"/>
+        android:textColor="@color/text" android:textSize="18sp" android:visibility="gone"
+        android:maxWidth="720dp" android:gravity="center" android:lineSpacingMultiplier="1.15"/>
 
     <!-- Piblisite preroll -->
     <LinearLayout android:id="@+id/adBox" android:layout_width="wrap_content" android:layout_height="wrap_content"

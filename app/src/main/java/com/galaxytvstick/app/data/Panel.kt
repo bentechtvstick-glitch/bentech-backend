@@ -606,6 +606,15 @@ class PanelApi(private val prefs: Prefs) {
         )
     }
 
+    /** Pwoblèm yon chanèl (ak detay teknik la) pou notifikasyon panel la. */
+    suspend fun alert(body: JSONObject) {
+        call(
+            Request.Builder().url("$base/devices/${enc(deviceId)}/alert")
+                .header("X-Device-Key", prefs.deviceKey)
+                .post(body.toString().toRequestBody(jsonType)).build()
+        )
+    }
+
     suspend fun status(body: JSONObject) {
         call(
             Request.Builder().url("$base/devices/${enc(deviceId)}/status")
