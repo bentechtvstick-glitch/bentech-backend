@@ -1008,10 +1008,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const b = req.body || {};
     const list = (data().channelAlerts ??= []);
     const id = Math.floor(Number(b.id) || 0), now = Date.now();
-    const prev = list.find((a) => a.mac === device.mac && a.channelId === id && now - a.at < 30 * 60000);
+    const type = ["live", "movie", "episode", "catchup"].includes(b.type) ? b.type : "live";
+    const prev = list.find((a) => a.mac === device.mac && a.channelId === id && (a.type || "live") === type && now - a.at < 30 * 60000);
     if (prev) { prev.count = (prev.count || 1) + 1; prev.at = now; prev.detail = String(b.detail || prev.detail).slice(0, 400); }
     else {
-      list.push({ id: crypto.randomBytes(5).toString("hex"), at: now, mac: device.mac, channelId: id,
+      list.push({ id: crypto.randomBytes(5).toString("hex"), at: now, mac: device.mac, channelId: id, type,
         channel: String(b.name || "").slice(0, 120), detail: String(b.detail || "").slice(0, 400), count: 1 });
       if (list.length > 300) list.splice(0, list.length - 300);
     }

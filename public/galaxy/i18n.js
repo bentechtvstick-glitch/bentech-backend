@@ -995,7 +995,7 @@ Object.assign(window.GALAXY_I18N.es, { "TV online": "TV en línea", "Tape MAC ki
     "Memwa sèvè a": ["Server memory", "Mémoire du serveur", "Memoria del servidor"],
     "{0} ki lib sou {1}": ["{0} free of {1}", "{0} libre sur {1}", "{0} libre de {1}"],
     "Disk sèvè a": ["Server disk", "Disque du serveur", "Disco del servidor"],
-    "Pwoblèm chanèl": ["Channel problems", "Problèmes de chaînes", "Problemas de canales"],
+    "Pwoblèm chanèl ak videyo": ["Channel & video problems", "Problèmes de chaînes et vidéos", "Problemas de canales y videos"],
     "{0} lis, sove apa": ["{0} list(s), stored separately", "{0} liste(s), stockées à part", "{0} lista(s), guardadas aparte"],
     "{0} ki lib": ["{0} free", "{0} libre", "{0} libre"],
     "{0} CPU": ["{0} CPU", "{0} CPU", "{0} CPU"],

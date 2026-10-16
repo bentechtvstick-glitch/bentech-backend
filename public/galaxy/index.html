@@ -1709,9 +1709,9 @@ function updateBell() {
   let h = "";
   if (waiting.length) h += `<div class="hd">${esc(t("Nouvo aparèy k ap tann yon playlist"))}</div>` + waiting.slice(0, 8).map((d) => `<button class="mi" data-new="${esc(d.mac)}" type="button"><span class="mono">${esc(d.mac)}</span><span class="note">${esc(d.deviceName || "")} · ${esc(d.lastSeen || "")}</span></button>`).join("");
   if (alerts.length) {
-    h += `<div class="hd" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>⚠ ${esc(t("Pwoblèm chanèl"))}</span><button class="btn small" data-alerts-clear type="button">${esc(t("Efase"))}</button></div>`;
+    h += `<div class="hd" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>⚠ ${esc(t("Pwoblèm chanèl ak videyo"))}</span><button class="btn small" data-alerts-clear type="button">${esc(t("Efase"))}</button></div>`;
     h += alerts.slice(0, 15).map((a) => `<div class="mi" style="flex-direction:column;align-items:flex-start;gap:2px;max-width:420px;cursor:default${a.at > (alertsCache.seenAt || 0) ? ";background:rgba(239,68,68,.10)" : ""}">
-      <span><b>${esc(a.channel || "#" + a.channelId)}</b>${a.count > 1 ? ` <span class="note">×${a.count}</span>` : ""}</span>
+      <span>${({ movie: "🎬 ", episode: "📺 ", catchup: "⏪ " })[a.type] || "📡 "}<b>${esc(a.channel || "#" + a.channelId)}</b>${a.count > 1 ? ` <span class="note">×${a.count}</span>` : ""}</span>
       <span class="note"><span class="mono">${esc(a.mac)}</span>${a.device ? " · " + esc(a.device) : ""} · ${esc(new Date(a.at).toLocaleString(lang))}</span>
       <span class="note mono" style="font-size:11px;word-break:break-word">${esc(a.detail)}</span></div>`).join("");
   }
