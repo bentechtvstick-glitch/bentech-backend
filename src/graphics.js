@@ -150,7 +150,8 @@ export function buildGraphics(g, ctx) {
     const live = m.auto !== false ? weatherNow(place) : null;
     let tempC = null, icon = str(m.icon, 8) || "🌤️", city = live?.city || (typeof place === "string" ? place : place.name) || str(m.city, 30);
     if (live) { tempC = live.tempC; icon = live.icon; }
-    else if (m.temp !== "" && m.temp != null && Number.isFinite(Number(m.temp))) tempC = unit === "F" ? ((Number(m.temp) - 32) * 5) / 9 : Number(m.temp);
+    // Tanperati alamen an sèlman lè "Otomatik" etenn: si l limen epi meteyo a poko rive, pa montre yon fo chif (li parèt nan 1–2 minit)
+    else if (m.auto === false && m.temp !== "" && m.temp != null && Number.isFinite(Number(m.temp))) tempC = unit === "F" ? ((Number(m.temp) - 32) * 5) / 9 : Number(m.temp);
     if (tempC !== null) {
       const t = unit === "F" ? (tempC * 9) / 5 + 32 : tempC;
       out.weather = { city, temp: `${Math.round(t)}°${unit}`, icon, position: pos(m.position, POS6, "top-right") };
