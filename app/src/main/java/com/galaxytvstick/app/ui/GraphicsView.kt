@@ -172,11 +172,7 @@ class GraphicsView @JvmOverloads constructor(
             importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(b.size.toFloat()))
             load(url)
-        } else label(b.text, b.size * 0.6f, Color.WHITE, bold = true).apply {
-            alpha = b.opacity / 100f
-            letterSpacing = 0.04f
-            setShadowLayer(dp(3f).toFloat(), 0f, dp(2f).toFloat(), 0xB3000000.toInt())
-        }
+        } else BugTextView(context, b, dp(1f).toFloat()).apply { alpha = b.opacity / 100f }
     }
 
     private fun scoreboard(s: GfxScoreboard): View {
@@ -406,5 +402,63 @@ class GraphicsView @JvmOverloads constructor(
     companion object {
         private val POSITIONS = setOf("top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right")
         private val WM_CORNERS = arrayOf("top-left", "bottom-right", "top-right", "bottom-left")
+    }
+}
+
+/** Tèks logo bug la ak estil panel la chwazi a (menm rezilta ak preview panel la). */
+private class BugTextView(context: android.content.Context, b: GfxBug, private val dp: Float) : androidx.appcompat.widget.AppCompatTextView(context) {
+    private val style = b.style
+    private val c1 = parseColor(b.color, Color.WHITE)
+    private val c2 = parseColor(b.color2, 0xFF1D4ED8.toInt())
+    private var drawingStroke = false
+
+    init {
+        val px = b.size * 0.6f
+        text = if (b.caps) b.text.uppercase() else b.text
+        setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, px)
+        maxLines = 1
+        letterSpacing = 0.04f
+        val family = when (b.font) { "condensed" -> "sans-serif-condensed"; "black" -> "sans-serif-black"; "serif" -> "serif"; "mono" -> "monospace"; "script" -> "cursive"; else -> "sans-serif" }
+        typeface = android.graphics.Typeface.create(family, if (b.italic) android.graphics.Typeface.BOLD_ITALIC else android.graphics.Typeface.BOLD)
+        setTextColor(c1)
+        includeFontPadding = false
+        when (style) {
+            "glow" -> setShadowLayer((px * 0.5f * dp).coerceAtMost(25f), 0f, 0f, c2)
+            "box" -> {
+                background = android.graphics.drawable.GradientDrawable().apply { setColor(c2); cornerRadius = px * 0.25f * dp }
+                val ph = (px * 0.45f * dp).toInt(); val pv = (px * 0.18f * dp).toInt()
+                setPadding(ph, pv, ph, pv)
+            }
+            "outline", "gradient" -> setShadowLayer(3 * dp, 0f, 2 * dp, 0x99000000.toInt())
+            else -> setShadowLayer(3 * dp, 0f, 2 * dp, 0xB3000000.toInt())
+        }
+        if (style == "outline") setShadowLayer(0f, 0f, 0f, 0) // kontou a ranplase lonbraj la
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        paint.shader = if (style == "gradient") android.graphics.LinearGradient(0f, paddingTop.toFloat(), 0f, (h - paddingBottom).toFloat(), c1, c2, android.graphics.Shader.TileMode.CLAMP) else null
+    }
+
+    // Kontou: desine tèks la yon premye fwa an "stroke" ak dezyèm koulè a, epi an "fill" pa anwo
+    override fun onDraw(canvas: android.graphics.Canvas) {
+        if (style != "outline") { super.onDraw(canvas); return }
+        drawingStroke = true
+        paint.style = android.graphics.Paint.Style.STROKE
+        paint.strokeJoin = android.graphics.Paint.Join.ROUND
+        paint.strokeWidth = (textSize / 7f).coerceAtLeast(2f)
+        setTextColor(c2)
+        super.onDraw(canvas)
+        paint.style = android.graphics.Paint.Style.FILL
+        setTextColor(c1)
+        drawingStroke = false
+        super.onDraw(canvas)
+    }
+
+    // setTextColor nan onDraw pa dwe relanse yon lòt desen (bouk san fen)
+    override fun invalidate() { if (!drawingStroke) super.invalidate() }
+
+    companion object {
+        fun parseColor(s: String, d: Int) = runCatching { Color.parseColor(s) }.getOrDefault(d)
     }
 }

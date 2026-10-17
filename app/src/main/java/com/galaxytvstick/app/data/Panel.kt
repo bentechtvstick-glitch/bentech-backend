@@ -195,7 +195,12 @@ data class LiveEvent(
 
 // ---------------------------------------------------------------- Grafik TV
 /** Ti logo chèn nan nan yon kwen (imaj oswa tèks). [size] = wotè an dp, [opacity] an %. */
-data class GfxBug(val imageUrl: String?, val text: String, val position: String, val size: Int, val opacity: Int)
+data class GfxBug(
+    val imageUrl: String?, val text: String, val position: String, val size: Int, val opacity: Int,
+    /** Estil tèks la: classic, outline, glow, box, gradient · polis: sans, condensed, black, serif, mono, script */
+    val style: String = "classic", val font: String = "sans", val color: String = "#FFFFFF", val color2: String = "#1D4ED8",
+    val italic: Boolean = false, val caps: Boolean = true,
+)
 /** Tèks pal sou imaj la (egz: MAC kliyan an). [move] = chanje kwen chak 30 s. */
 data class GfxWatermark(val text: String, val position: String, val size: Int, val opacity: Int, val move: Boolean)
 data class GfxScoreboard(
@@ -396,7 +401,9 @@ data class PanelConfig(
                 Graphics(
                     bug = g.optJSONObject("bug")?.let {
                         GfxBug(it.optStringOrNull("imageUrl"), it.optString("text"), it.optString("position", "top-right"),
-                            it.optInt("size", 44).coerceIn(16, 160), it.optInt("opacity", 85).coerceIn(10, 100))
+                            it.optInt("size", 44).coerceIn(16, 160), it.optInt("opacity", 85).coerceIn(10, 100),
+                            it.optString("style", "classic"), it.optString("font", "sans"), it.optString("color", "#FFFFFF"),
+                            it.optString("color2", "#1D4ED8"), it.optBoolean("italic", false), it.optBoolean("caps", true))
                     }?.takeIf { it.imageUrl != null || it.text.isNotBlank() },
                     watermark = g.optJSONObject("watermark")?.let {
                         GfxWatermark(it.optString("text"), it.optString("position", "bottom-right"),
