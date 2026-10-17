@@ -411,6 +411,25 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
   main{padding:18px 16px 32px}
   .pagehead h1{font-size:24px}
 }
+/* Nòt admin nan: ti fèy jòn (sticky notes) */
+.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:4px 2px 8px}
+.note-pad{position:relative;background:linear-gradient(180deg,#FFF59D 0,#FFF176 100%);color:#3E3500;border-radius:2px 2px 14px 2px;padding:26px 14px 12px;min-height:150px;display:flex;flex-direction:column;gap:8px;
+  box-shadow:0 1px 1px rgba(0,0,0,.12),0 8px 18px rgba(0,0,0,.28);transform:rotate(-1deg);transition:transform .15s ease,box-shadow .15s ease;
+  background-image:linear-gradient(180deg,#FFF59D 0,#FFF176 100%),repeating-linear-gradient(180deg,transparent 0 23px,rgba(120,100,0,.13) 23px 24px);background-blend-mode:multiply}
+.note-pad:nth-child(even){transform:rotate(1.2deg);background:linear-gradient(180deg,#FFF9C4 0,#FFEE58 100%)}
+.note-pad:nth-child(3n){transform:rotate(-.4deg)}
+.note-pad:hover,.note-pad:focus-within{transform:rotate(0) translateY(-2px);box-shadow:0 2px 2px rgba(0,0,0,.12),0 14px 26px rgba(0,0,0,.32);z-index:1}
+.note-pad::before{content:"";position:absolute;top:-9px;left:50%;width:74px;height:20px;margin-left:-37px;background:rgba(255,255,255,.55);border:1px solid rgba(0,0,0,.06);transform:rotate(-2deg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.note-pad h3{margin:0;font-size:16px;font-weight:800;color:#3E3500;font-family:"Marker Felt","Comic Sans MS","Segoe Print",cursive;word-break:break-word}
+.note-pad .nb{flex:1;font-size:14px;line-height:24px;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Menlo,Consolas,monospace;color:#2B2500}
+.note-pad .nb.hid{letter-spacing:3px;opacity:.7}
+.note-pad .nt-act{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;border-top:1px dashed rgba(90,75,0,.3);padding-top:8px}
+.note-pad .nt-act button{background:rgba(255,255,255,.45);border:1px solid rgba(90,75,0,.25);color:#3E3500;border-radius:8px;padding:4px 9px;font-size:12px;font-weight:700;cursor:pointer}
+.note-pad .nt-act button:hover,.note-pad .nt-act button:focus-visible{background:#fff;outline:none;border-color:#3E3500}
+.note-pad .nt-act button.del{color:#B71C1C}
+.note-pad .lock{position:absolute;top:6px;right:10px;font-size:13px}
+.note-pad .when{font-size:11px;opacity:.6}
+@media (prefers-reduced-motion:reduce){.note-pad,.note-pad:nth-child(n){transform:none;transition:none}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Audiowide&family=Bangers&family=Bebas+Neue&family=Great+Vibes&family=Lobster&family=Orbitron:wght@700&family=Oswald:wght@700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,800;1,800&family=Righteous&family=Russo+One&family=Teko:wght@600&display=swap">
@@ -1048,7 +1067,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       </div>
       <div class="card">
         <div class="cardhead"><div><h2>🗒️ Nòt mwen yo</h2><p class="sub">Kote pou sere enfòmasyon ou bezwen: kòd Downloader app la, enfòmasyon sèvè a, domèn, kontak… Sèlman ou menm ki wè yo nan panel la.</p></div></div>
-        <div class="list" id="ntList"></div>
+        <div class="notes" id="ntList"></div>
         <form id="ntForm" style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
           <div class="field"><label for="ntTitle">Tit</label><input type="text" id="ntTitle" maxlength="120" placeholder="Egz: Kòd Downloader app la"></div>
           <div class="field"><label for="ntBody">Nòt la</label><textarea id="ntBody" rows="3" maxlength="8000" placeholder="Egz: 1234567"></textarea></div>
@@ -2723,10 +2742,11 @@ async function loadNotes() { ntItems = await api("GET", "/galaxy/notes").catch((
 function renderNotes() {
   $("#ntList").innerHTML = ntItems.map((n) => {
     const hide = n.secret && !ntShow.has(n.id);
-    const body = hide ? "••••••••" : esc(n.body).replace(/\n/g, "<br>");
-    return `<div class="li" style="align-items:flex-start"><span class="grow" style="min-width:0"><b>${esc(n.title || t("San tit"))}</b>${n.secret ? ` <span class="pill p-info">🔒</span>` : ""}<br><span class="mono" style="word-break:break-word;white-space:normal">${body}</span></span>
-      <span class="inline" style="flex-wrap:nowrap;gap:6px">${n.secret ? `<button class="btn small" type="button" data-nt-eye="${esc(n.id)}" title="${esc(t("Montre / kache"))}" aria-label="${esc(t("Montre / kache"))}">👁</button>` : ""}<button class="btn small" type="button" data-nt-copy="${esc(n.id)}">${t("Kopye")}</button><button class="btn small" type="button" data-nt-edit="${esc(n.id)}">${t("Modifye")}</button><button class="btn small danger" type="button" data-nt-del="${esc(n.id)}">${t("Efase")}</button></span></div>`;
-  }).join("") || `<div class="empty">${t("Poko gen nòt.")}</div>`;
+    const when = n.updatedAt ? new Date(n.updatedAt).toLocaleDateString(lang) : "";
+    return `<div class="note-pad">${n.secret ? `<span class="lock" title="${esc(t("Kache"))}">🔒</span>` : ""}<h3>${esc(n.title || t("San tit"))}</h3>
+      <div class="nb${hide ? " hid" : ""}">${hide ? "••••••••" : esc(n.body)}</div>${when ? `<div class="when">${esc(when)}</div>` : ""}
+      <div class="nt-act">${n.secret ? `<button type="button" data-nt-eye="${esc(n.id)}" aria-label="${esc(t("Montre / kache"))}">👁</button>` : ""}<button type="button" data-nt-copy="${esc(n.id)}">${t("Kopye")}</button><button type="button" data-nt-edit="${esc(n.id)}">${t("Modifye")}</button><button type="button" class="del" data-nt-del="${esc(n.id)}">${t("Efase")}</button></div></div>`;
+  }).join("") || `<div class="empty" style="grid-column:1/-1">${t("Poko gen nòt.")}</div>`;
 }
 async function saveNotes(list) { ntItems = await api("PUT", "/galaxy/notes", { notes: list }); renderNotes(); }
 function ntReset() { ntEdit = null; $("#ntForm").reset(); $("#ntSave").textContent = t("Ajoute nòt la"); $("#ntCancel").hidden = true; }
