@@ -24,6 +24,7 @@ import com.galaxytvstick.app.data.VodKind
 import com.galaxytvstick.app.data.WatchHistory
 import com.galaxytvstick.app.data.WatchProgress
 import com.galaxytvstick.app.data.XtreamApi
+import com.galaxytvstick.app.data.VodStore
 import com.galaxytvstick.app.databinding.ActivityVodBinding
 import com.galaxytvstick.app.databinding.ItemPosterBinding
 import kotlinx.coroutines.Job
@@ -43,11 +44,6 @@ class VodActivity : AppCompatActivity() {
         private const val CAT_CONTINUE = "__continue"
         private const val CAT_FAV = "__fav"
         private const val CAT_ALL = "__all"
-
-        /** Kenbe lis yo an memwa pandan sesyon an (pa rechaje chak fwa). */
-        private val cache = HashMap<String, List<VodItem>>()
-        private val catCache = HashMap<VodKind, List<Category>>()
-        private var cacheAccount = ""
     }
 
     /** Sa yon kaz nan griy la montre: yon fim/seri oswa yon "Kontinye gade". */
@@ -55,13 +51,16 @@ class VodActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityVodBinding
     private lateinit var prefs: Prefs
-    private lateinit var api: XtreamApi
+    private lateinit var account: com.galaxytvstick.app.data.Account
+    /** Lis konplè a (soti nan VodStore: memwa/disk, mete ajou an silans). */
+    private var data: VodStore.Data? = null
     private lateinit var history: WatchHistory
     private lateinit var overlay: OverlayController
     private var kind = VodKind.MOVIE
     private var selected = CAT_CONTINUE
     private var loadJob: Job? = null
     private var searchJob: Job? = null
+    private var detailPrefetch: Runnable? = null
 
     private val catAdapter = CategoryAdapter { selectCategory(it.id, focusGrid = true) }
     private val gridAdapter = PosterAdapter()
@@ -71,12 +70,8 @@ class VodActivity : AppCompatActivity() {
         b = ActivityVodBinding.inflate(layoutInflater)
         setContentView(b.root)
         prefs = Prefs(this)
-        val account = prefs.account ?: run { finish(); return }
-        api = XtreamApi(account)
+        account = prefs.account ?: run { finish(); return }
         history = WatchHistory(this)
-        // Lòt playlist: pa itilize lis ansyen playlist la
-        val acc = "${account.server}|${account.username}"
-        if (acc != cacheAccount) { cache.clear(); catCache.clear(); cacheAccount = acc }
 
         kind = if (intent.getStringExtra(EXTRA_KIND) == "series") VodKind.SERIES else VodKind.MOVIE
         b.categories.layoutManager = LinearLayoutManager(this)
@@ -123,6 +118,11 @@ class VodActivity : AppCompatActivity() {
         overlay.stop()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if (VodStore.onUpdated === updListener) VodStore.onUpdated = null
+    }
+
     private fun applyKindLabels() {
         b.vodHeader.text = getString(if (kind == VodKind.MOVIE) R.string.movies else R.string.series)
         b.btnSwitch.text = getString(if (kind == VodKind.MOVIE) R.string.series else R.string.movies)
@@ -144,21 +144,38 @@ class VodActivity : AppCompatActivity() {
     }
 
     private fun loadCategories() {
-        catAdapter.items = specialCategories() + (catCache[kind] ?: emptyList())
-        val start = if (history.continueWatching().any { it.kind == kind }) CAT_CONTINUE else null
-        if (catCache[kind] != null) { selectCategory(start ?: catCache[kind]!!.firstOrNull()?.id ?: CAT_ALL, focusGrid = false); focusCategories(); return }
-        showLoading(true)
-        lifecycleScope.launch {
-            val r = runCatching { if (kind == VodKind.MOVIE) api.vodCategories() else api.seriesCategories() }
-            showLoading(false)
-            r.onSuccess { raw ->
-                val cats = if (ChannelStore.hideAdult) raw.filter { !ChannelStore.isAdult(it.name) } else raw
-                if (ChannelStore.hideAdult) adultCats[kind] = raw.filter { ChannelStore.isAdult(it.name) }.map { it.id }.toHashSet()
-                catCache[kind] = cats
-                catAdapter.items = specialCategories() + cats
-                selectCategory(start ?: cats.firstOrNull()?.id ?: CAT_ALL, focusGrid = false)
-                focusCategories()
-            }.onFailure { showMessage(getString(R.string.error_network, it.message ?: "")) }
+        catAdapter.items = specialCategories()
+        val now = VodStore.peek(account, kind)
+        if (now != null) applyData(now, first = true)
+        else lifecycleScope.launch {
+            // Disk la (kèk milisegonn); rezo a sèlman si pa janm gen anyen sou aparèy la
+            val d = VodStore.cached(this@VodActivity, account, kind) ?: run {
+                showLoading(true)
+                val r = runCatching { VodStore.fetch(this@VodActivity, account, kind) }
+                showLoading(false)
+                r.getOrElse { showMessage(getString(R.string.error_network, it.message ?: "")); return@launch }
+            }
+            applyData(d, first = true)
+        }
+        // Mizajou an silans: ekran an pa janm tann li
+        VodStore.onUpdated = updListener
+        VodStore.refresh(this, account, kind)
+    }
+
+    private val updListener: (VodKind) -> Unit = { k -> if (k == kind) runOnUiThread { VodStore.peek(account, kind)?.let { applyData(it, first = false) } } }
+
+    private fun applyData(d: VodStore.Data, first: Boolean) {
+        if (isFinishing || isDestroyed) return
+        data = d
+        val raw = d.categories
+        val cats = if (ChannelStore.hideAdult) raw.filter { !ChannelStore.isAdult(it.name) } else raw
+        adultCats[kind] = if (ChannelStore.hideAdult) raw.filter { ChannelStore.isAdult(it.name) }.map { it.id }.toHashSet() else emptySet()
+        val newCats = specialCategories() + cats
+        if (newCats != catAdapter.items) catAdapter.items = newCats
+        if (first) {
+            val start = if (history.continueWatching().any { it.kind == kind }) CAT_CONTINUE else null
+            selectCategory(start ?: cats.firstOrNull()?.id ?: CAT_ALL, focusGrid = false)
+            focusCategories()
         }
     }
 
@@ -184,26 +201,13 @@ class VodActivity : AppCompatActivity() {
                 show(name, history.rememberedItems(keys).map { Entry(it, null) }, getString(R.string.vod_fav_empty), focusGrid)
             }
             else -> {
-                val cacheKey = "${kind.name}:$id"
-                cache[cacheKey]?.let { show(name, sortNewest(it).map { e -> Entry(e, null) }, getString(R.string.empty_list), focusGrid); return }
-                gridAdapter.items = emptyList()
-                b.gridTitle.text = name
-                showLoading(true)
-                loadJob = lifecycleScope.launch {
-                    val catId = if (id == CAT_ALL) null else id
-                    val r = runCatching { if (kind == VodKind.MOVIE) api.vodStreams(catId) else api.series(catId) }
-                    showLoading(false)
-                    r.onSuccess { rawList ->
-                        val list = noAdult(rawList)
-                        cache[cacheKey] = list
-                        if (selected == id) show(name, sortNewest(list).map { Entry(it, null) }, getString(R.string.empty_list), focusGrid)
-                    }.onFailure { showMessage(getString(R.string.error_network, it.message ?: "")) }
-                }
+                // Pa gen rezo: kategori a se yon filt sou lis konplè a ki deja sou aparèy la
+                val d = data ?: return
+                val list = noAdult(if (id == CAT_ALL) d.items else d.inCategory(id))
+                show(name, list.map { Entry(it, null) }, getString(R.string.empty_list), focusGrid)
             }
         }
     }
-
-    private fun sortNewest(list: List<VodItem>) = list.sortedByDescending { it.added }
 
     private fun show(title: String, entries: List<Entry>, empty: String, focusGrid: Boolean) {
         b.gridTitle.text = if (entries.isEmpty()) title else "$title  ·  ${entries.size}"
@@ -236,14 +240,8 @@ class VodActivity : AppCompatActivity() {
         }
         searchJob = lifecycleScope.launch {
             delay(400)
-            val cacheKey = "${kind.name}:$CAT_ALL"
-            val all = cache[cacheKey] ?: run {
-                showLoading(true)
-                val r = runCatching { if (kind == VodKind.MOVIE) api.vodStreams(null) else api.series(null) }
-                showLoading(false)
-                r.getOrNull()?.let { noAdult(it) }?.also { cache[cacheKey] = it } ?: run { showMessage(getString(R.string.error_network, r.exceptionOrNull()?.message ?: "")); return@launch }
-            }
-            val found = all.filter { norm(it.name).contains(query) }.sortedByDescending { it.added }.take(300)
+            val all = noAdult(data?.items ?: return@launch)
+            val found = all.filter { norm(it.name).contains(query) }.take(300)
             catAdapter.selectedId = null
             show(getString(R.string.vod_search_results, q.trim()), found.map { Entry(it, null) }, getString(R.string.vod_search_none), focusGrid = false)
         }
@@ -329,6 +327,9 @@ class VodActivity : AppCompatActivity() {
             h.b.root.setOnLongClickListener { toggleFavorite(e); true }
             h.b.root.setOnFocusChangeListener { v, has ->
                 v.animate().scaleX(if (has) 1.06f else 1f).scaleY(if (has) 1.06f else 1f).setDuration(120).start()
+                // Remòt la kanpe sou afich la: prepare paj detay la davans
+                detailPrefetch?.let { v.removeCallbacks(it) }
+                if (has && item != null) detailPrefetch = Runnable { VodStore.prefetchDetail(account, item) }.also { v.postDelayed(it, 350) }
             }
         }
 

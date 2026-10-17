@@ -174,7 +174,7 @@ class VodPlayerActivity : AppCompatActivity() {
         if (player != null) return
         val renderers = Renderers.factory(this)
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(20_000, 90_000, 2_500, 5_000)
+            .setBufferDurationsMs(30_000, 90_000, 1_500, 5_000)
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
         val dataSource = OkHttpDataSource.Factory(XtreamApi.http).setUserAgent(XtreamApi.USER_AGENT)

@@ -20,6 +20,7 @@ import com.galaxytvstick.app.data.Prefs
 import com.galaxytvstick.app.data.SeriesDetail
 import com.galaxytvstick.app.data.VodItem
 import com.galaxytvstick.app.data.VodKind
+import com.galaxytvstick.app.data.VodStore
 import com.galaxytvstick.app.data.WatchHistory
 import com.galaxytvstick.app.data.XtreamApi
 import com.galaxytvstick.app.databinding.ActivityVodDetailBinding
@@ -100,31 +101,40 @@ class VodDetailActivity : AppCompatActivity() {
     ).joinToString("\n")
 
     private fun load() {
-        b.progress.visibility = View.VISIBLE
-        lifecycleScope.launch {
-            if (item.kind == VodKind.MOVIE) {
-                val r = runCatching { api.vodInfo(item.id) }
-                b.progress.visibility = View.GONE
-                val d = r.getOrNull()
-                if (d != null) {
-                    b.plot.text = d.plot
-                    b.credits.text = credits(d.director, d.cast)
-                    b.meta.text = meta(item.year.ifBlank { d.releaseDate.take(4) }, if (item.rating > 0) item.rating else d.rating, d.durationSecs, d.genre)
-                    d.backdrop?.let { b.backdrop.load(it) }
-                    if (item.poster == null) d.poster?.let { b.poster.load(it) }
-                }
-                // Menm si detay yo pa vini, fim nan ka jwe
-                movieUrl = api.movieUrl(item.id, d?.ext ?: item.ext.ifBlank { "mp4" })
-                b.btnPlay.isEnabled = true
-                updatePlayButtons()
-                b.btnPlay.requestFocus()
-            } else {
-                val r = runCatching { api.seriesInfo(item.id) }
+        val acc = Prefs(this).account
+        if (item.kind == VodKind.MOVIE) {
+            // Fim nan ka jwe touswit; rezime/afich yo ranpli lè yo rive (pa gen chajman k ap bloke)
+            movieUrl = api.movieUrl(item.id, item.ext.ifBlank { "mp4" })
+            b.btnPlay.isEnabled = true
+            updatePlayButtons()
+            b.btnPlay.requestFocus()
+            val now = VodStore.movieDetailNow(item.id)
+            if (now != null) showMovie(now)
+            else lifecycleScope.launch {
+                val d = (if (acc != null) runCatching { VodStore.movieDetail(acc, item) } else runCatching { api.vodInfo(item.id) }).getOrNull() ?: return@launch
+                showMovie(d)
+            }
+        } else {
+            val now = VodStore.seriesDetailNow(item.id)
+            if (now != null) { showSeries(now); return }
+            b.progress.visibility = View.VISIBLE
+            lifecycleScope.launch {
+                val r = if (acc != null) runCatching { VodStore.seriesDetail(acc, item) } else runCatching { api.seriesInfo(item.id) }
                 b.progress.visibility = View.GONE
                 r.onSuccess { showSeries(it) }
                     .onFailure { b.message.text = getString(R.string.error_network, it.message ?: ""); b.message.visibility = View.VISIBLE }
             }
         }
+    }
+
+    private fun showMovie(d: com.galaxytvstick.app.data.VodDetail) {
+        b.plot.text = d.plot
+        b.credits.text = credits(d.director, d.cast)
+        b.meta.text = meta(item.year.ifBlank { d.releaseDate.take(4) }, if (item.rating > 0) item.rating else d.rating, d.durationSecs, d.genre)
+        d.backdrop?.let { b.backdrop.load(it) }
+        if (item.poster == null) d.poster?.let { b.poster.load(it) }
+        // Si sèvè a bay yon lòt ekstansyon (mkv…), itilize l
+        d.ext?.takeIf { it.isNotBlank() && it != item.ext }?.let { movieUrl = api.movieUrl(item.id, it) }
     }
 
     // ------------------------------------------------------------ Fim

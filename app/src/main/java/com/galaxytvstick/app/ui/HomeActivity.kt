@@ -23,6 +23,7 @@ import com.galaxytvstick.app.data.Prefs
 import com.galaxytvstick.app.data.RemoteCommand
 import com.galaxytvstick.app.data.WatchHistory
 import com.galaxytvstick.app.data.WatchProgress
+import com.galaxytvstick.app.data.VodStore
 import com.galaxytvstick.app.databinding.ActivityHomeBinding
 import com.galaxytvstick.app.databinding.ItemHomeCatBinding
 import com.galaxytvstick.app.databinding.ItemHomeContinueBinding
@@ -65,6 +66,8 @@ class HomeActivity : AppCompatActivity() {
         b = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(b.root)
         ready = true
+        // Prepare Films ak Séries an aryè plan pou yo louvri touswit (san chajman)
+        prefs.account?.let { acc -> lifecycleScope.launch { delay(3000); VodStore.prefetch(this@HomeActivity, acc) } }
 
         b.menuHome.isSelected = true
         b.menuHome.setOnClickListener { b.tileLive.requestFocus() }

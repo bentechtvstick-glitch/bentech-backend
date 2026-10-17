@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.galaxytvstick.app.R
 import com.galaxytvstick.app.data.Channel
 import com.galaxytvstick.app.data.ChannelStore
+import com.galaxytvstick.app.data.VodStore
 import com.galaxytvstick.app.data.Prefs
 import com.galaxytvstick.app.data.VodItem
 import com.galaxytvstick.app.data.VodKind
@@ -68,14 +69,17 @@ class SearchActivity : AppCompatActivity() {
         if (intent.getBooleanExtra(EXTRA_VOICE, false)) b.root.post { startVoice() }
 
         // Fim ak seri yo chaje dèyè; chanèl yo disponib touswit
-        val api = XtreamApi(account)
         lifecycleScope.launch {
             // Kontwòl paran: pa montre sa ki nan kategori pou granmoun
             val hide = ChannelStore.hideAdult
-            val badM = if (hide) runCatching { api.vodCategories() }.getOrDefault(emptyList()).filter { ChannelStore.isAdult(it.name) }.map { it.id }.toHashSet() else HashSet()
-            runCatching { api.vodStreams(null) }.onSuccess { l -> movies = l.filter { it.categoryId !in badM }; refresh() }
-            val badS = if (hide) runCatching { api.seriesCategories() }.getOrDefault(emptyList()).filter { ChannelStore.isAdult(it.name) }.map { it.id }.toHashSet() else HashSet()
-            runCatching { api.series(null) }.onSuccess { l -> series = l.filter { it.categoryId !in badS }; refresh() }
+            for (k in VodKind.values()) {
+                val d = VodStore.cached(this@SearchActivity, account, k)
+                    ?: runCatching { VodStore.fetch(this@SearchActivity, account, k) }.getOrNull() ?: continue
+                val bad = if (hide) d.categories.filter { ChannelStore.isAdult(it.name) }.map { it.id }.toHashSet() else HashSet()
+                val l = d.items.filter { it.categoryId !in bad }
+                if (k == VodKind.MOVIE) movies = l else series = l
+                refresh()
+            }
         }
     }
 

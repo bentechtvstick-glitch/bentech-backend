@@ -63,11 +63,11 @@ class PlayerActivity : AppCompatActivity() {
 
         /**
          * Chanje chanèl pi vit: player a kòmanse jwe depi li gen 1 s videyo (olye 2.5 s pa defo),
-         * epi 2 s apre yon koupi. Rès tanpon an (15–50 s) pa chanje, pou imaj la pa kole.
+         * epi 3.5 s apre yon koupi (pou l pa koupe ankò touswit). Rès tanpon an (20–60 s) pa chanje, pou imaj la pa kole.
          * Gid la (ti fenèt videyo a) sèvi ak menm reglaj la.
          */
         fun loadControl(): DefaultLoadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(15_000, 50_000, 500, 2_000)
+            .setBufferDurationsMs(20_000, 60_000, 500, 3_500)
             .build()
         /** Fason ki mache ak sèvè playlist la (app la sonje l pou pwochen chanèl yo). */
         private var preferredMode = 0
