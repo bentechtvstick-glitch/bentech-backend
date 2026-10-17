@@ -411,32 +411,55 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
   main{padding:18px 16px 32px}
   .pagehead h1{font-size:24px}
 }
-/* Nòt admin nan: tankou app Notes iPhone lan (bann jòn anlè, fèy blan ak liy), kenbe ak yon pinèz nan kwen an */
-.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px;padding:8px 2px 8px}
-.note-pad{position:relative;background:#FFFFFF;color:#1C1C1E;border-radius:14px;padding:0 0 10px;min-height:170px;display:flex;flex-direction:column;
-  box-shadow:0 1px 2px rgba(0,0,0,.18),0 10px 22px rgba(0,0,0,.28);transform:rotate(-.8deg);transition:transform .15s ease,box-shadow .15s ease;overflow:visible;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
-.note-pad:nth-child(even){transform:rotate(.9deg)}
-.note-pad:nth-child(3n){transform:rotate(-.3deg)}
-.note-pad:hover,.note-pad:focus-within{transform:rotate(0) translateY(-2px);box-shadow:0 2px 3px rgba(0,0,0,.18),0 16px 30px rgba(0,0,0,.34);z-index:1}
-.note-pad h3{margin:0;padding:14px 34px 12px 40px;font-size:16px;font-weight:700;color:#1C1C1E;word-break:break-word;letter-spacing:-.2px;
-  background:linear-gradient(180deg,#FFE066 0,#FFD60A 100%);border-radius:14px 14px 0 0;border-bottom:2px dashed rgba(140,110,0,.35)}
-.note-pad .nb{flex:1;margin:0 14px;padding-top:4px;font-size:15px;line-height:26px;white-space:pre-wrap;word-break:break-word;color:#1C1C1E;
-  background:repeating-linear-gradient(180deg,transparent 0 25px,#E5E5EA 25px 26px)}
-.note-pad .nb.hid{letter-spacing:3px;color:#8E8E93}
-.note-pad .when{margin:6px 14px 0;font-size:12px;color:#8E8E93}
-.note-pad .nt-act{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;margin:8px 10px 0;padding-top:8px;border-top:1px solid #E5E5EA}
-.note-pad .nt-act button{background:none;border:0;color:#B8860B;border-radius:8px;padding:4px 8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-.note-pad .nt-act button:hover,.note-pad .nt-act button:focus-visible{background:#FFF6CC;outline:none}
+/* Nòt admin nan: estil app Notes iPhone (bann koulè anlè, fèy blan ak liy), yon ti pil fèy dèyè,
+   kwen anba a ki leve, epi yon pinèz an vè ki kenbe l nan kwen an */
+.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:26px 22px;padding:14px 6px 10px}
+.note-pad{--band1:#FFE680;--band2:#FFD60A;--ink:#8A6A00;--pin1:#FF8A80;--pin2:#E53935;--pin3:#7F0000;
+  position:relative;background:#FFFFFF;color:#1C1C1E;border-radius:14px;padding:0 0 10px;min-height:180px;display:flex;flex-direction:column;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  background-image:radial-gradient(rgba(0,0,0,.018) 1px,transparent 1px);background-size:3px 3px;
+  box-shadow:0 1px 0 #fff,4px 4px 0 -1px #F4F4F6,4px 4px 0 0 #DCDCE0,8px 8px 0 -1px #EDEDF0,8px 8px 0 0 #D2D2D8,0 18px 30px -6px rgba(0,0,0,.45);
+  transform:rotate(var(--tilt,-.8deg));transition:transform .25s cubic-bezier(.2,.8,.2,1.2),box-shadow .25s ease;animation:ntDrop .45s cubic-bezier(.2,.9,.3,1.25) both}
+.note-pad:nth-child(even){--tilt:1deg}.note-pad:nth-child(3n){--tilt:-.3deg}.note-pad:nth-child(5n){--tilt:1.6deg}
+.note-pad:nth-child(2){animation-delay:.05s}.note-pad:nth-child(3){animation-delay:.1s}.note-pad:nth-child(4){animation-delay:.15s}.note-pad:nth-child(n+5){animation-delay:.2s}
+@keyframes ntDrop{from{opacity:0;transform:translateY(-14px) rotate(-6deg) scale(.96)}to{opacity:1;transform:rotate(var(--tilt,-.8deg))}}
+.note-pad:hover,.note-pad:focus-within{transform:rotate(0) translateY(-4px) scale(1.015);z-index:2;
+  box-shadow:0 1px 0 #fff,4px 4px 0 -1px #F4F4F6,4px 4px 0 0 #DCDCE0,8px 8px 0 -1px #EDEDF0,8px 8px 0 0 #D2D2D8,0 26px 40px -8px rgba(0,0,0,.55)}
+.note-pad[data-c="pink"]{--band1:#FFB3CF;--band2:#FF6FA5;--ink:#B0185A;--pin1:#82B1FF;--pin2:#2962FF;--pin3:#0D2A80}
+.note-pad[data-c="blue"]{--band1:#A8D8FF;--band2:#4DA8FF;--ink:#0B5CAD;--pin1:#FFE57F;--pin2:#FFB300;--pin3:#8A5A00}
+.note-pad[data-c="green"]{--band1:#B9F5C8;--band2:#34C759;--ink:#1E7A35;--pin1:#FF8A80;--pin2:#E53935;--pin3:#7F0000}
+.note-pad[data-c="purple"]{--band1:#E2C6FF;--band2:#AF52DE;--ink:#6B2A99;--pin1:#B9F6CA;--pin2:#00C853;--pin3:#00602A}
+.note-pad[data-c="orange"]{--band1:#FFD3A6;--band2:#FF9500;--ink:#A35A00;--pin1:#82B1FF;--pin2:#2962FF;--pin3:#0D2A80}
+.note-pad h3{margin:0;padding:15px 36px 13px 44px;font-size:16px;font-weight:700;color:#1C1C1E;word-break:break-word;letter-spacing:-.2px;position:relative;
+  background:linear-gradient(180deg,var(--band1) 0,var(--band2) 100%);border-radius:14px 14px 0 0;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.65),inset 0 -1px 0 rgba(0,0,0,.06)}
+.note-pad h3::after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:6px;
+  background:radial-gradient(circle at 5px 0,transparent 3px,rgba(0,0,0,.08) 3.5px,transparent 4px) 0 0/10px 6px repeat-x}
+.note-pad .nb{flex:1;margin:4px 16px 0 16px;padding:4px 0 0 12px;font-size:15px;line-height:26px;white-space:pre-wrap;word-break:break-word;color:#1C1C1E;
+  background:linear-gradient(90deg,rgba(255,59,48,.35) 0 1px,transparent 1px) 0 0/100% 100% no-repeat,repeating-linear-gradient(180deg,transparent 0 25px,#E5E5EA 25px 26px)}
+.note-pad .nb.hid{letter-spacing:4px;color:#8E8E93}
+.note-pad .when{margin:6px 16px 0;font-size:12px;color:#8E8E93;display:flex;align-items:center;gap:5px}
+.note-pad .nt-act{display:flex;gap:2px;flex-wrap:wrap;justify-content:flex-end;margin:8px 30px 0 10px;padding-top:8px;border-top:1px solid #EFEFF4}
+.note-pad .nt-act button{background:none;border:0;color:var(--ink);border-radius:9px;padding:5px 7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.note-pad .nt-act button:hover,.note-pad .nt-act button:focus-visible{background:color-mix(in srgb,var(--band1) 45%,#fff);outline:none}
 .note-pad .nt-act button.del{color:#FF3B30}
-.note-pad .lock{position:absolute;top:13px;right:12px;font-size:14px;z-index:2}
-@media (prefers-reduced-motion:reduce){.note-pad,.note-pad:nth-child(n){transform:none;transition:none}}
-.note-pad::before{content:"";position:absolute;top:-6px;left:8px;width:22px;height:22px;border-radius:50%;z-index:2;
-  background:radial-gradient(circle at 35% 30%,#FF8A80 0,#E53935 38%,#B71C1C 72%,#7F0000 100%);
-  box-shadow:inset -2px -3px 4px rgba(0,0,0,.35),inset 2px 2px 3px rgba(255,255,255,.35),2px 4px 5px rgba(0,0,0,.35)}
-.note-pad::after{content:"";position:absolute;top:10px;left:22px;width:3px;height:12px;border-radius:2px;z-index:1;
-  background:linear-gradient(90deg,#9E9E9E,#E0E0E0,#757575);transform:rotate(-35deg);transform-origin:top;box-shadow:1px 2px 2px rgba(0,0,0,.25)}
-
+.note-pad .lock{position:absolute;top:14px;right:13px;font-size:14px;z-index:2;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}
+/* Kwen anba adwat la ki leve tankou yon fèy papye */
+.note-pad .curl{position:absolute;right:0;bottom:0;width:26px;height:26px;border-radius:0 0 14px 0;pointer-events:none;
+  background:linear-gradient(315deg,transparent 0 45%,#E9E9EE 46%,#FFFFFF 60%,#F2F2F5 100%);box-shadow:-2px -2px 4px rgba(0,0,0,.10)}
+/* Pinèz an vè (koulè l chanje ak koulè nòt la), ak lonbraj li sou papye a */
+.note-pad::before{content:"";position:absolute;top:-8px;left:9px;width:24px;height:24px;border-radius:50%;z-index:3;
+  background:radial-gradient(circle at 34% 28%,#fff 0 9%,var(--pin1) 18%,var(--pin2) 48%,var(--pin3) 100%);
+  box-shadow:inset -2px -3px 5px rgba(0,0,0,.35),inset 2px 2px 3px rgba(255,255,255,.4),3px 6px 6px rgba(0,0,0,.35)}
+.note-pad::after{content:"";position:absolute;top:10px;left:23px;width:3px;height:13px;border-radius:2px;z-index:2;
+  background:linear-gradient(90deg,#8E8E93,#F2F2F7,#636366);transform:rotate(-35deg);transform-origin:top;box-shadow:2px 3px 3px rgba(0,0,0,.28)}
+/* Ti chwa koulè nan fòm nan */
+.ntc{display:flex;gap:10px;flex-wrap:wrap}
+.ntc label{cursor:pointer}.ntc input{position:absolute;opacity:0;pointer-events:none}
+.ntc i{display:block;width:28px;height:28px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.6),0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.ntc input:checked+i{transform:scale(1.15);box-shadow:0 0 0 3px var(--bg,#0f1426),0 0 0 5px #fff}
+.ntc input:focus-visible+i{outline:2px solid #fff;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.note-pad,.note-pad:nth-child(n){animation:none;transition:none;transform:none}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Audiowide&family=Bangers&family=Bebas+Neue&family=Great+Vibes&family=Lobster&family=Orbitron:wght@700&family=Oswald:wght@700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,800;1,800&family=Righteous&family=Russo+One&family=Teko:wght@600&display=swap">
@@ -1078,6 +1101,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <form id="ntForm" style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
           <div class="field"><label for="ntTitle">Tit</label><input type="text" id="ntTitle" maxlength="120" placeholder="Egz: Kòd Downloader app la"></div>
           <div class="field"><label for="ntBody">Nòt la</label><textarea id="ntBody" rows="3" maxlength="8000" placeholder="Egz: 1234567"></textarea></div>
+          <div class="field"><label>Koulè</label><div class="ntc" id="ntColor"><label title="Jòn"><input type="radio" name="ntColor" value="yellow" checked aria-label="Jòn"><i style="background:#FFD60A"></i></label><label title="Woz"><input type="radio" name="ntColor" value="pink" aria-label="Woz"><i style="background:#FF6FA5"></i></label><label title="Ble"><input type="radio" name="ntColor" value="blue" aria-label="Ble"><i style="background:#4DA8FF"></i></label><label title="Vèt"><input type="radio" name="ntColor" value="green" aria-label="Vèt"><i style="background:#34C759"></i></label><label title="Mov"><input type="radio" name="ntColor" value="purple" aria-label="Mov"><i style="background:#AF52DE"></i></label><label title="Zoranj"><input type="radio" name="ntColor" value="orange" aria-label="Zoranj"><i style="background:#FF9500"></i></label></div></div>
           <div class="inline"><label class="sw"><input type="checkbox" id="ntSecret"><i></i></label><label for="ntSecret">Kache l sou ekran an (pou modpas oswa kle): li parèt sèlman lè w peze 👁</label></div>
           <div class="btns" style="justify-content:flex-start"><button class="btn primary small" type="submit" id="ntSave">Ajoute nòt la</button><button class="btn small" type="button" id="ntCancel" hidden>Anile</button></div>
         </form>
@@ -2750,8 +2774,8 @@ function renderNotes() {
   $("#ntList").innerHTML = ntItems.map((n) => {
     const hide = n.secret && !ntShow.has(n.id);
     const when = n.updatedAt ? new Date(n.updatedAt).toLocaleDateString(lang) : "";
-    return `<div class="note-pad">${n.secret ? `<span class="lock" title="${esc(t("Kache"))}">🔒</span>` : ""}<h3>${esc(n.title || t("San tit"))}</h3>
-      <div class="nb${hide ? " hid" : ""}">${hide ? "••••••••" : esc(n.body)}</div>${when ? `<div class="when">${esc(when)}</div>` : ""}
+    return `<div class="note-pad" data-c="${esc(n.color || "yellow")}"><span class="curl"></span>${n.secret ? `<span class="lock" title="${esc(t("Kache"))}">🔒</span>` : ""}<h3>${esc(n.title || t("San tit"))}</h3>
+      <div class="nb${hide ? " hid" : ""}">${hide ? "••••••••" : esc(n.body)}</div>${when ? `<div class="when">🕒 ${esc(when)}</div>` : ""}
       <div class="nt-act">${n.secret ? `<button type="button" data-nt-eye="${esc(n.id)}" aria-label="${esc(t("Montre / kache"))}">👁</button>` : ""}<button type="button" data-nt-copy="${esc(n.id)}">${t("Kopye")}</button><button type="button" data-nt-edit="${esc(n.id)}">${t("Modifye")}</button><button type="button" class="del" data-nt-del="${esc(n.id)}">${t("Efase")}</button></div></div>`;
   }).join("") || `<div class="empty" style="grid-column:1/-1">${t("Poko gen nòt.")}</div>`;
 }
@@ -2759,10 +2783,10 @@ async function saveNotes(list) { ntItems = await api("PUT", "/galaxy/notes", { n
 function ntReset() { ntEdit = null; $("#ntForm").reset(); $("#ntSave").textContent = t("Ajoute nòt la"); $("#ntCancel").hidden = true; }
 $("#ntForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const title = $("#ntTitle").value.trim(), body = $("#ntBody").value, secret = $("#ntSecret").checked;
+  const title = $("#ntTitle").value.trim(), body = $("#ntBody").value, secret = $("#ntSecret").checked, color = $("#ntForm").querySelector("input[name=ntColor]:checked")?.value || "yellow";
   if (!title && !body.trim()) { $("#ntTitle").focus(); return; }
   const now = new Date().toISOString();
-  const list = ntEdit ? ntItems.map((n) => (n.id === ntEdit ? { ...n, title, body, secret, updatedAt: now } : n)) : [{ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, body, secret, updatedAt: now }, ...ntItems];
+  const list = ntEdit ? ntItems.map((n) => (n.id === ntEdit ? { ...n, title, body, secret, color, updatedAt: now } : n)) : [{ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, body, secret, color, updatedAt: now }, ...ntItems];
   try { await saveNotes(list); ntReset(); toast(t("Sove")); } catch (err) { toast(err.message); }
 });
 $("#ntCancel").addEventListener("click", ntReset);
@@ -2771,7 +2795,7 @@ $("#ntList").addEventListener("click", async (e) => {
   const id = b.dataset.ntEye || b.dataset.ntCopy || b.dataset.ntEdit || b.dataset.ntDel; const n = ntItems.find((x) => x.id === id); if (!n) return;
   if (b.dataset.ntEye) { ntShow.has(id) ? ntShow.delete(id) : ntShow.add(id); renderNotes(); }
   else if (b.dataset.ntCopy) { try { await navigator.clipboard.writeText(n.body); toast(t("Kopye")); } catch { toast(t("Pa ka kopye otomatikman: chwazi tèks la epi kopye l.")); } }
-  else if (b.dataset.ntEdit) { ntEdit = id; $("#ntTitle").value = n.title; $("#ntBody").value = n.body; $("#ntSecret").checked = !!n.secret; $("#ntSave").textContent = t("Sove chanjman yo"); $("#ntCancel").hidden = false; $("#ntTitle").focus(); }
+  else if (b.dataset.ntEdit) { ntEdit = id; $("#ntTitle").value = n.title; $("#ntBody").value = n.body; $("#ntSecret").checked = !!n.secret; const rc = $("#ntForm").querySelector(`input[name=ntColor][value="${n.color || "yellow"}"]`); if (rc) rc.checked = true; $("#ntSave").textContent = t("Sove chanjman yo"); $("#ntCancel").hidden = false; $("#ntTitle").focus(); }
   else if (b.dataset.ntDel) { if (!confirm(t("Efase nòt «{0}»?", n.title || ""))) return; try { await saveNotes(ntItems.filter((x) => x.id !== id)); } catch (err) { toast(err.message); } }
 });
 async function loadSystem() { loadAppUpdate(); loadNotes();

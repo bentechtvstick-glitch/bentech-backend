@@ -331,6 +331,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     title: String(n?.title || "").trim().slice(0, 120),
     body: String(n?.body || "").slice(0, 8000),
     secret: !!n?.secret,
+    color: ["yellow", "pink", "blue", "green", "purple", "orange"].includes(n?.color) ? n.color : "yellow",
     updatedAt: String(n?.updatedAt || new Date().toISOString()).slice(0, 30),
   });
   app.get("/api/galaxy/notes", authenticate, (req, res) => {
