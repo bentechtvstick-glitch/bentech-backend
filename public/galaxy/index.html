@@ -1046,6 +1046,17 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="bkDown" type="button">Telechaje yon kopi</button><button class="btn" id="bkUp" type="button">Remete yon kopi…</button><input type="file" id="bkFile" accept="application/json,.json" hidden><span class="msg" id="bkMsg"></span></div>
         <p class="note" style="margin:8px 0 0">Kopi a gen modpas playlist yo ladan l: kenbe fichye a an sekirite, pa pataje l.</p>
       </div>
+      <div class="card">
+        <div class="cardhead"><div><h2>🗒️ Nòt mwen yo</h2><p class="sub">Kote pou sere enfòmasyon ou bezwen: kòd Downloader app la, enfòmasyon sèvè a, domèn, kontak… Sèlman ou menm ki wè yo nan panel la.</p></div></div>
+        <div class="list" id="ntList"></div>
+        <form id="ntForm" style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+          <div class="field"><label for="ntTitle">Tit</label><input type="text" id="ntTitle" maxlength="120" placeholder="Egz: Kòd Downloader app la"></div>
+          <div class="field"><label for="ntBody">Nòt la</label><textarea id="ntBody" rows="3" maxlength="8000" placeholder="Egz: 1234567"></textarea></div>
+          <div class="inline"><label class="sw"><input type="checkbox" id="ntSecret"><i></i></label><label for="ntSecret">Kache l sou ekran an (pou modpas oswa kle): li parèt sèlman lè w peze 👁</label></div>
+          <div class="btns" style="justify-content:flex-start"><button class="btn primary small" type="submit" id="ntSave">Ajoute nòt la</button><button class="btn small" type="button" id="ntCancel" hidden>Anile</button></div>
+        </form>
+        <p class="note" style="margin:8px 0 0">Nòt yo rete sou sèvè panel ou a sèlman: yo pa janm ale sou TV yo. Yo antre nan "Kopi done yo", kidonk kenbe fichye kopi a an sekirite.</p>
+      </div>
       <div class="cols">
         <div class="card"><h2>Mentenans</h2>
           <div class="field"><label for="mtMsg">Mesaj mentenans</label><input type="text" id="mtMsg"></div>
@@ -2706,7 +2717,37 @@ $("#ewSave").addEventListener("click", () => putSettings({
   expiryWarnEveryMin: Math.min(1440, Math.max(15, Math.floor(+$("#ewEvery").value || 120))),
   expiryWarnContact: $("#ewContact").value.trim(), expiryWarnText: $("#ewText").value.trim() || EW_DEFAULT,
 }, "Sove"));
-async function loadSystem() { loadAppUpdate();
+// ------------------------------------------------------------ Nòt prive admin nan
+let ntItems = [], ntEdit = null; const ntShow = new Set();
+async function loadNotes() { ntItems = await api("GET", "/galaxy/notes").catch(() => []); renderNotes(); }
+function renderNotes() {
+  $("#ntList").innerHTML = ntItems.map((n) => {
+    const hide = n.secret && !ntShow.has(n.id);
+    const body = hide ? "••••••••" : esc(n.body).replace(/\n/g, "<br>");
+    return `<div class="li" style="align-items:flex-start"><span class="grow" style="min-width:0"><b>${esc(n.title || t("San tit"))}</b>${n.secret ? ` <span class="pill p-info">🔒</span>` : ""}<br><span class="mono" style="word-break:break-word;white-space:normal">${body}</span></span>
+      <span class="inline" style="flex-wrap:nowrap;gap:6px">${n.secret ? `<button class="btn small" type="button" data-nt-eye="${esc(n.id)}" title="${esc(t("Montre / kache"))}" aria-label="${esc(t("Montre / kache"))}">👁</button>` : ""}<button class="btn small" type="button" data-nt-copy="${esc(n.id)}">${t("Kopye")}</button><button class="btn small" type="button" data-nt-edit="${esc(n.id)}">${t("Modifye")}</button><button class="btn small danger" type="button" data-nt-del="${esc(n.id)}">${t("Efase")}</button></span></div>`;
+  }).join("") || `<div class="empty">${t("Poko gen nòt.")}</div>`;
+}
+async function saveNotes(list) { ntItems = await api("PUT", "/galaxy/notes", { notes: list }); renderNotes(); }
+function ntReset() { ntEdit = null; $("#ntForm").reset(); $("#ntSave").textContent = t("Ajoute nòt la"); $("#ntCancel").hidden = true; }
+$("#ntForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const title = $("#ntTitle").value.trim(), body = $("#ntBody").value, secret = $("#ntSecret").checked;
+  if (!title && !body.trim()) { $("#ntTitle").focus(); return; }
+  const now = new Date().toISOString();
+  const list = ntEdit ? ntItems.map((n) => (n.id === ntEdit ? { ...n, title, body, secret, updatedAt: now } : n)) : [{ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, body, secret, updatedAt: now }, ...ntItems];
+  try { await saveNotes(list); ntReset(); toast(t("Sove")); } catch (err) { toast(err.message); }
+});
+$("#ntCancel").addEventListener("click", ntReset);
+$("#ntList").addEventListener("click", async (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  const id = b.dataset.ntEye || b.dataset.ntCopy || b.dataset.ntEdit || b.dataset.ntDel; const n = ntItems.find((x) => x.id === id); if (!n) return;
+  if (b.dataset.ntEye) { ntShow.has(id) ? ntShow.delete(id) : ntShow.add(id); renderNotes(); }
+  else if (b.dataset.ntCopy) { try { await navigator.clipboard.writeText(n.body); toast(t("Kopye")); } catch { toast(t("Pa ka kopye otomatikman: chwazi tèks la epi kopye l.")); } }
+  else if (b.dataset.ntEdit) { ntEdit = id; $("#ntTitle").value = n.title; $("#ntBody").value = n.body; $("#ntSecret").checked = !!n.secret; $("#ntSave").textContent = t("Sove chanjman yo"); $("#ntCancel").hidden = false; $("#ntTitle").focus(); }
+  else if (b.dataset.ntDel) { if (!confirm(t("Efase nòt «{0}»?", n.title || ""))) return; try { await saveNotes(ntItems.filter((x) => x.id !== id)); } catch (err) { toast(err.message); } }
+});
+async function loadSystem() { loadAppUpdate(); loadNotes();
   loadSysStats();
   settings = await api("GET", "/settings").catch(() => ({}));
   $("#mtOn").checked = !!settings.maintenanceMode; $("#mtMsg").value = settings.maintenanceMessage || "";

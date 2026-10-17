@@ -324,6 +324,27 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     });
   });
 
+  // Nòt prive admin nan (kòd Downloader, sèvè, domèn…). Rete sou sèvè a sèlman:
+  // pa janm voye bay TV yo, pa nan AI a, pa nan jounal aktivite a. Yo antre nan kopi done yo (backup).
+  const cleanNote = (n) => ({
+    id: String(n?.id || "").slice(0, 40) || Math.random().toString(36).slice(2, 12),
+    title: String(n?.title || "").trim().slice(0, 120),
+    body: String(n?.body || "").slice(0, 8000),
+    secret: !!n?.secret,
+    updatedAt: String(n?.updatedAt || new Date().toISOString()).slice(0, 30),
+  });
+  app.get("/api/galaxy/notes", authenticate, (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json(db.data.adminNotes || []);
+  });
+  app.put("/api/galaxy/notes", authenticate, async (req, res) => {
+    const list = Array.isArray(req.body?.notes) ? req.body.notes : null;
+    if (!list) return res.status(400).json({ error: "Bad request" });
+    db.data.adminNotes = list.slice(0, 300).map(cleanNote).filter((n) => n.title || n.body);
+    await db.write();
+    res.json(db.data.adminNotes);
+  });
+
   // Asistan AI panel la
   mountAi(app, db, { authenticate, isOnline });
 
