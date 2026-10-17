@@ -411,31 +411,32 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
   main{padding:18px 16px 32px}
   .pagehead h1{font-size:24px}
 }
-/* Nòt admin nan: ti fèy jòn (sticky notes) */
-.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:4px 2px 8px}
-.note-pad{position:relative;background:linear-gradient(180deg,#FFF59D 0,#FFF176 100%);color:#3E3500;border-radius:2px 2px 14px 2px;padding:26px 14px 12px;min-height:150px;display:flex;flex-direction:column;gap:8px;
-  box-shadow:0 1px 1px rgba(0,0,0,.12),0 8px 18px rgba(0,0,0,.28);transform:rotate(-1deg);transition:transform .15s ease,box-shadow .15s ease;
-  background-image:linear-gradient(180deg,#FFF59D 0,#FFF176 100%),repeating-linear-gradient(180deg,transparent 0 23px,rgba(120,100,0,.13) 23px 24px);background-blend-mode:multiply}
-.note-pad:nth-child(even){transform:rotate(1.2deg);background:linear-gradient(180deg,#FFF9C4 0,#FFEE58 100%)}
-.note-pad:nth-child(3n){transform:rotate(-.4deg)}
-.note-pad:hover,.note-pad:focus-within{transform:rotate(0) translateY(-2px);box-shadow:0 2px 2px rgba(0,0,0,.12),0 14px 26px rgba(0,0,0,.32);z-index:1}
-.note-pad{transform-origin:22px 14px}
-/* Pinèz wouj nan kwen goch anlè a ki kenbe fèy la */
-.note-pad::before{content:"";position:absolute;top:2px;left:10px;width:22px;height:22px;border-radius:50%;z-index:2;
+/* Nòt admin nan: tankou app Notes iPhone lan (bann jòn anlè, fèy blan ak liy), kenbe ak yon pinèz nan kwen an */
+.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px;padding:8px 2px 8px}
+.note-pad{position:relative;background:#FFFFFF;color:#1C1C1E;border-radius:14px;padding:0 0 10px;min-height:170px;display:flex;flex-direction:column;
+  box-shadow:0 1px 2px rgba(0,0,0,.18),0 10px 22px rgba(0,0,0,.28);transform:rotate(-.8deg);transition:transform .15s ease,box-shadow .15s ease;overflow:visible;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
+.note-pad:nth-child(even){transform:rotate(.9deg)}
+.note-pad:nth-child(3n){transform:rotate(-.3deg)}
+.note-pad:hover,.note-pad:focus-within{transform:rotate(0) translateY(-2px);box-shadow:0 2px 3px rgba(0,0,0,.18),0 16px 30px rgba(0,0,0,.34);z-index:1}
+.note-pad h3{margin:0;padding:14px 34px 12px 40px;font-size:16px;font-weight:700;color:#1C1C1E;word-break:break-word;letter-spacing:-.2px;
+  background:linear-gradient(180deg,#FFE066 0,#FFD60A 100%);border-radius:14px 14px 0 0;border-bottom:2px dashed rgba(140,110,0,.35)}
+.note-pad .nb{flex:1;margin:0 14px;padding-top:4px;font-size:15px;line-height:26px;white-space:pre-wrap;word-break:break-word;color:#1C1C1E;
+  background:repeating-linear-gradient(180deg,transparent 0 25px,#E5E5EA 25px 26px)}
+.note-pad .nb.hid{letter-spacing:3px;color:#8E8E93}
+.note-pad .when{margin:6px 14px 0;font-size:12px;color:#8E8E93}
+.note-pad .nt-act{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;margin:8px 10px 0;padding-top:8px;border-top:1px solid #E5E5EA}
+.note-pad .nt-act button{background:none;border:0;color:#B8860B;border-radius:8px;padding:4px 8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.note-pad .nt-act button:hover,.note-pad .nt-act button:focus-visible{background:#FFF6CC;outline:none}
+.note-pad .nt-act button.del{color:#FF3B30}
+.note-pad .lock{position:absolute;top:13px;right:12px;font-size:14px;z-index:2}
+@media (prefers-reduced-motion:reduce){.note-pad,.note-pad:nth-child(n){transform:none;transition:none}}
+.note-pad::before{content:"";position:absolute;top:-6px;left:8px;width:22px;height:22px;border-radius:50%;z-index:2;
   background:radial-gradient(circle at 35% 30%,#FF8A80 0,#E53935 38%,#B71C1C 72%,#7F0000 100%);
   box-shadow:inset -2px -3px 4px rgba(0,0,0,.35),inset 2px 2px 3px rgba(255,255,255,.35),2px 4px 5px rgba(0,0,0,.35)}
-.note-pad::after{content:"";position:absolute;top:18px;left:24px;width:3px;height:12px;border-radius:2px;z-index:1;
+.note-pad::after{content:"";position:absolute;top:10px;left:22px;width:3px;height:12px;border-radius:2px;z-index:1;
   background:linear-gradient(90deg,#9E9E9E,#E0E0E0,#757575);transform:rotate(-35deg);transform-origin:top;box-shadow:1px 2px 2px rgba(0,0,0,.25)}
-.note-pad h3{margin:0 0 0 22px;font-size:16px;font-weight:800;color:#3E3500;font-family:"Marker Felt","Comic Sans MS","Segoe Print",cursive;word-break:break-word}
-.note-pad .nb{flex:1;font-size:14px;line-height:24px;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Menlo,Consolas,monospace;color:#2B2500}
-.note-pad .nb.hid{letter-spacing:3px;opacity:.7}
-.note-pad .nt-act{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;border-top:1px dashed rgba(90,75,0,.3);padding-top:8px}
-.note-pad .nt-act button{background:rgba(255,255,255,.45);border:1px solid rgba(90,75,0,.25);color:#3E3500;border-radius:8px;padding:4px 9px;font-size:12px;font-weight:700;cursor:pointer}
-.note-pad .nt-act button:hover,.note-pad .nt-act button:focus-visible{background:#fff;outline:none;border-color:#3E3500}
-.note-pad .nt-act button.del{color:#B71C1C}
-.note-pad .lock{position:absolute;top:6px;right:10px;font-size:13px}
-.note-pad .when{font-size:11px;opacity:.6}
-@media (prefers-reduced-motion:reduce){.note-pad,.note-pad:nth-child(n){transform:none;transition:none}}
+
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Audiowide&family=Bangers&family=Bebas+Neue&family=Great+Vibes&family=Lobster&family=Orbitron:wght@700&family=Oswald:wght@700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,800;1,800&family=Righteous&family=Russo+One&family=Teko:wght@600&display=swap">
