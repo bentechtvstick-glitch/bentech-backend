@@ -71,12 +71,45 @@ class OverlayController(
                 val cfg = runCatching { api.config() }.getOrNull()
                 if (cfg != null) {
                     PanelState.config = cfg
+                    // Playlist la efase oswa chanje nan panel la: kite l touswit, nenpòt ki ekran TV a ye
+                    if (playlistGone(cfg)) return@launch
                     apply(cfg)
                     onConfig(cfg)
                 }
                 delay(PanelState.config.refreshSec * 1000L)
             }
         }
+    }
+
+    /**
+     * Playlist app la ap itilize a pa nan panel la ankò (admin nan efase l) → tounen sou ekran playlist yo.
+     * Si se kont lan (sèvè, itilizatè, modpas) ki chanje → rechaje ak nouvo kont lan.
+     * Retounen true si ekran an fèmen.
+     */
+    private fun playlistGone(cfg: PanelConfig): Boolean {
+        if (activity.isFinishing) return true
+        val acc = prefs.account ?: return false
+        val id = acc.playlistId ?: return false
+        val pl = cfg.playlists.firstOrNull { it.id == id }
+        val target: Class<*> = if (pl == null) {
+            android.widget.Toast.makeText(activity, R.string.playlist_removed, android.widget.Toast.LENGTH_LONG).show()
+            prefs.account = null
+            LoginActivity::class.java
+        } else {
+            val want = pl.toAccount(com.galaxytvstick.app.BuildConfig.DEFAULT_SERVER) ?: return false
+            if (want.server == acc.server && want.username == acc.username && want.password == acc.password &&
+                want.type == acc.type && want.epgUrl == acc.epgUrl) return false
+            prefs.account = want
+            prefs.lastChannelId = -1
+            android.widget.Toast.makeText(activity, R.string.switching_playlist, android.widget.Toast.LENGTH_SHORT).show()
+            MainActivity::class.java
+        }
+        stop()
+        activity.startActivity(android.content.Intent(activity, target)
+            .putExtra(LoginActivity.EXTRA_NO_AUTO, true)
+            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK))
+        activity.finish()
+        return true
     }
 
     /** Kòmand panel la: long-poll ki toujou ouvè pandan ekran an vizib. */
