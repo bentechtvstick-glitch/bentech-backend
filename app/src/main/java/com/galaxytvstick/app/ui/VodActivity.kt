@@ -74,9 +74,9 @@ class VodActivity : AppCompatActivity() {
         history = WatchHistory(this)
 
         kind = if (intent.getStringExtra(EXTRA_KIND) == "series") VodKind.SERIES else VodKind.MOVIE
-        b.categories.layoutManager = LinearLayoutManager(this)
+        b.categories.layoutManager = TvLinearLayoutManager(this)
         b.categories.adapter = catAdapter
-        b.grid.layoutManager = GridLayoutManager(this, 5)
+        b.grid.layoutManager = TvGridLayoutManager(this, 5)
         b.grid.adapter = gridAdapter
         b.grid.itemAnimator = null
 

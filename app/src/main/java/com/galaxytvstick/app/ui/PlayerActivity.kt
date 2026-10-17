@@ -190,9 +190,9 @@ class PlayerActivity : AppCompatActivity() {
         index = if (wantedId >= 0) channels.indexOfFirst { it.streamId == wantedId }.coerceAtLeast(0)
                 else intent.getIntExtra(EXTRA_INDEX, 0).coerceIn(0, channels.size - 1)
 
-        b.ovCategories.layoutManager = LinearLayoutManager(this)
+        b.ovCategories.layoutManager = TvLinearLayoutManager(this)
         b.ovCategories.adapter = ovCatAdapter
-        b.ovChannels.layoutManager = LinearLayoutManager(this)
+        b.ovChannels.layoutManager = TvLinearLayoutManager(this)
         b.ovChannels.adapter = ovChAdapter
         // Lis chanèl sou videyo a: san animasyon, liy yo rete pare pou remòt la desann vit
         b.ovCategories.itemAnimator = null; b.ovChannels.itemAnimator = null

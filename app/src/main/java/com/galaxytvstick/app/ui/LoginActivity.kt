@@ -70,7 +70,7 @@ class LoginActivity : AppCompatActivity() {
         b.keyText.text = prefs.deviceKey
         b.deviceInfo.text = getString(R.string.device_short_fmt, prefs.mac, DeviceCaps.maxSupported)
 
-        b.playlists.layoutManager = LinearLayoutManager(this)
+        b.playlists.layoutManager = TvLinearLayoutManager(this)
         b.playlists.adapter = playlistAdapter
 
         if (BuildConfig.ALLOW_MANUAL_LOGIN) {

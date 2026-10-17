@@ -109,7 +109,7 @@ class EpgActivity : AppCompatActivity() {
             if (d > 0) maxBackMs = d.coerceAtMost(7) * 24 * 60 * 60 * 1000L
         }
         adapter = RowAdapter()
-        b.rows.layoutManager = LinearLayoutManager(this)
+        b.rows.layoutManager = TvLinearLayoutManager(this)
         b.rows.adapter = adapter
         b.rows.itemAnimator = null
         // Lis gid la: pa rekalkile gwosè li chak fwa, epi kenbe plis liy pare pou desann vit ak remòt la
@@ -117,7 +117,7 @@ class EpgActivity : AppCompatActivity() {
         b.rows.setItemViewCacheSize(24)
         adapter.items = channels
 
-        b.categories.layoutManager = LinearLayoutManager(this)
+        b.categories.layoutManager = TvLinearLayoutManager(this)
         b.categories.adapter = catAdapter
         b.categories.itemAnimator = null
         catAdapter.items = ChannelLists.categories(this)

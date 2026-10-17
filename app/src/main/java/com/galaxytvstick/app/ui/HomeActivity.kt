@@ -88,10 +88,10 @@ class HomeActivity : AppCompatActivity() {
             v.setOnFocusChangeListener { x, has -> x.animate().scaleX(if (has) 1.05f else 1f).scaleY(if (has) 1.05f else 1f).setDuration(120).start() }
         }
 
-        b.contList.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        b.contList.layoutManager = TvLinearLayoutManager(this, RecyclerView.HORIZONTAL)
         b.contList.adapter = contAdapter
         b.contList.itemAnimator = null
-        b.catList.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        b.catList.layoutManager = TvLinearLayoutManager(this, RecyclerView.HORIZONTAL)
         b.catList.adapter = catAdapter
         b.catList.itemAnimator = null
 

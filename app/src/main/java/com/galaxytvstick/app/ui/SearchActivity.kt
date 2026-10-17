@@ -62,7 +62,7 @@ class SearchActivity : AppCompatActivity() {
         b = ActivitySearchBinding.inflate(layoutInflater)
         setContentView(b.root)
 
-        b.results.layoutManager = LinearLayoutManager(this)
+        b.results.layoutManager = TvLinearLayoutManager(this)
         b.results.adapter = adapter
         b.results.itemAnimator = null
         buildKeys()

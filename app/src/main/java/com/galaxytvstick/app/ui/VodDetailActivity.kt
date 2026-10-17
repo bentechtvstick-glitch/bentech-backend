@@ -69,7 +69,7 @@ class VodDetailActivity : AppCompatActivity() {
         b.poster.load(item.poster) { crossfade(true); error(R.drawable.ic_tv) }
         b.backdrop.load(item.poster)
         b.meta.text = meta(item.year, item.rating, 0, "")
-        b.episodes.layoutManager = LinearLayoutManager(this)
+        b.episodes.layoutManager = TvLinearLayoutManager(this)
         b.episodes.adapter = epAdapter
         b.btnFav.setOnClickListener {
             history.rememberItem(item)
