@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.galaxytvstick.app"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.galaxytvstick.tv"
