@@ -13,7 +13,7 @@ const pos = (v, list, d) => (list.includes(v) ? v : d);
 // ------------------------------------------------------------------ Meteyo (Open-Meteo, gratis, san kle)
 const GEO_URL = process.env.WEATHER_GEO_URL || "https://geocoding-api.open-meteo.com/v1/search";
 const API_URL = process.env.WEATHER_API_URL || "https://api.open-meteo.com/v1/forecast";
-const WEATHER_TTL = 20 * 60_000;
+const WEATHER_TTL = 10 * 60_000; // Open-Meteo mete "current" ajou chak 15 minit
 const weatherCache = new Map(); // vil (miniskil) → { at, data, error, loading }
 
 /** Kòd meteyo WMO → imoji. */
@@ -55,11 +55,15 @@ export async function fetchWeather(place) {
     if (!p) throw new Error("Vil sa a pa jwenn");
     at = { name: p.name, country: p.country_code || "", lat: p.latitude, lon: p.longitude };
   }
-  const f = await getJson(`${API_URL}?latitude=${at.lat}&longitude=${at.lon}&current=temperature_2m,weather_code,is_day`);
+  const f = await getJson(`${API_URL}?latitude=${at.lat}&longitude=${at.lon}&current=temperature_2m,weather_code,is_day,precipitation,rain,showers&models=best_match`);
   const cur = f?.current;
   if (!cur || !Number.isFinite(Number(cur.temperature_2m))) throw new Error("Sèvis meteyo a pa reponn byen");
-  const data = { city: at.name, country: at.country, tempC: Number(cur.temperature_2m), code: Number(cur.weather_code) || 0, isDay: cur.is_day !== 0,
-    icon: weatherIcon(cur.weather_code, cur.is_day !== 0), at: Date.now() };
+  // Lapli ki ap tonbe kounye a (mm): si kòd la di "nyaj" men gen lapli, montre lapli
+  let code = Number(cur.weather_code) || 0;
+  const wet = Math.max(Number(cur.precipitation) || 0, Number(cur.rain) || 0, Number(cur.showers) || 0);
+  if (wet >= 0.1 && code < 51) code = wet >= 2 ? 81 : 61;
+  const data = { city: at.name, country: at.country, tempC: Number(cur.temperature_2m), code, rainMm: wet, isDay: cur.is_day !== 0,
+    icon: weatherIcon(code, cur.is_day !== 0), at: Date.now() };
   weatherCache.set(key, { at: Date.now(), data, place: at, error: "" });
   return data;
 }
