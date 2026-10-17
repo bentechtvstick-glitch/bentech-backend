@@ -69,7 +69,7 @@ android {
 }
 
 dependencies {
-    val media3 = "1.4.1"
+    val media3 = "1.5.0"
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
