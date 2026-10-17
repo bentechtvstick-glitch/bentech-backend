@@ -1102,7 +1102,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="field"><label for="ntTitle">Tit</label><input type="text" id="ntTitle" maxlength="120" placeholder="Egz: Kòd Downloader app la"></div>
           <div class="field"><label for="ntBody">Nòt la</label><textarea id="ntBody" rows="3" maxlength="8000" placeholder="Egz: 1234567"></textarea></div>
           <div class="field"><label>Koulè</label><div class="ntc" id="ntColor"><label title="Jòn"><input type="radio" name="ntColor" value="yellow" checked aria-label="Jòn"><i style="background:#FFD60A"></i></label><label title="Woz"><input type="radio" name="ntColor" value="pink" aria-label="Woz"><i style="background:#FF6FA5"></i></label><label title="Ble"><input type="radio" name="ntColor" value="blue" aria-label="Ble"><i style="background:#4DA8FF"></i></label><label title="Vèt"><input type="radio" name="ntColor" value="green" aria-label="Vèt"><i style="background:#34C759"></i></label><label title="Mov"><input type="radio" name="ntColor" value="purple" aria-label="Mov"><i style="background:#AF52DE"></i></label><label title="Zoranj"><input type="radio" name="ntColor" value="orange" aria-label="Zoranj"><i style="background:#FF9500"></i></label></div></div>
-          <div class="inline"><label class="sw"><input type="checkbox" id="ntSecret"><i></i></label><label for="ntSecret">Kache l sou ekran an (pou modpas oswa kle): li parèt sèlman lè w peze 👁</label></div>
+          <div class="inline" style="gap:10px"><input type="checkbox" id="ntSecret" hidden><button type="button" class="btn small" id="ntSecretBtn" aria-pressed="false">🔓 <span>Vizib sou ekran an</span></button><span class="note">Peze l pou kache nòt la (pou modpas oswa kle): li parèt sèlman lè w peze 👁</span></div>
           <div class="btns" style="justify-content:flex-start"><button class="btn primary small" type="submit" id="ntSave">Ajoute nòt la</button><button class="btn small" type="button" id="ntCancel" hidden>Anile</button></div>
         </form>
         <p class="note" style="margin:8px 0 0">Nòt yo rete sou sèvè panel ou a sèlman: yo pa janm ale sou TV yo. Yo antre nan "Kopi done yo", kidonk kenbe fichye kopi a an sekirite.</p>
@@ -2776,11 +2776,11 @@ function renderNotes() {
     const when = n.updatedAt ? new Date(n.updatedAt).toLocaleDateString(lang) : "";
     return `<div class="note-pad" data-c="${esc(n.color || "yellow")}"><span class="curl"></span>${n.secret ? `<span class="lock" title="${esc(t("Kache"))}">🔒</span>` : ""}<h3>${esc(n.title || t("San tit"))}</h3>
       <div class="nb${hide ? " hid" : ""}">${hide ? "••••••••" : esc(n.body)}</div>${when ? `<div class="when">🕒 ${esc(when)}</div>` : ""}
-      <div class="nt-act">${n.secret ? `<button type="button" data-nt-eye="${esc(n.id)}" aria-label="${esc(t("Montre / kache"))}">👁</button>` : ""}<button type="button" data-nt-copy="${esc(n.id)}">${t("Kopye")}</button><button type="button" data-nt-edit="${esc(n.id)}">${t("Modifye")}</button><button type="button" class="del" data-nt-del="${esc(n.id)}">${t("Efase")}</button></div></div>`;
+      <div class="nt-act">${n.secret ? `<button type="button" data-nt-eye="${esc(n.id)}" aria-label="${esc(t("Montre / kache"))}">👁</button>` : ""}<button type="button" data-nt-lock="${esc(n.id)}" title="${esc(t(n.secret ? "Pa kache l ankò" : "Kache l sou ekran an"))}" aria-label="${esc(t(n.secret ? "Pa kache l ankò" : "Kache l sou ekran an"))}">${n.secret ? "🔓" : "🔒"}</button><button type="button" data-nt-copy="${esc(n.id)}">${t("Kopye tèks la")}</button><button type="button" data-nt-edit="${esc(n.id)}">${t("Modifye")}</button><button type="button" class="del" data-nt-del="${esc(n.id)}">${t("Efase nòt la")}</button></div></div>`;
   }).join("") || `<div class="empty" style="grid-column:1/-1">${t("Poko gen nòt.")}</div>`;
 }
 async function saveNotes(list) { ntItems = await api("PUT", "/galaxy/notes", { notes: list }); renderNotes(); }
-function ntReset() { ntEdit = null; $("#ntForm").reset(); $("#ntSave").textContent = t("Ajoute nòt la"); $("#ntCancel").hidden = true; }
+function ntReset() { ntEdit = null; $("#ntForm").reset(); ntSecretUi(); $("#ntSave").textContent = t("Ajoute nòt la"); $("#ntCancel").hidden = true; }
 $("#ntForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = $("#ntTitle").value.trim(), body = $("#ntBody").value, secret = $("#ntSecret").checked, color = $("#ntForm").querySelector("input[name=ntColor]:checked")?.value || "yellow";
@@ -2790,12 +2790,16 @@ $("#ntForm").addEventListener("submit", async (e) => {
   try { await saveNotes(list); ntReset(); toast(t("Sove")); } catch (err) { toast(err.message); }
 });
 $("#ntCancel").addEventListener("click", ntReset);
+function ntSecretUi() { const on = $("#ntSecret").checked, b = $("#ntSecretBtn"); b.setAttribute("aria-pressed", String(on)); b.classList.toggle("primary", on);
+  b.innerHTML = on ? `🔒 <span>${t("Kache sou ekran an")}</span>` : `🔓 <span>${t("Vizib sou ekran an")}</span>`; }
+$("#ntSecretBtn").addEventListener("click", () => { $("#ntSecret").checked = !$("#ntSecret").checked; ntSecretUi(); });
 $("#ntList").addEventListener("click", async (e) => {
   const b = e.target.closest("button"); if (!b) return;
-  const id = b.dataset.ntEye || b.dataset.ntCopy || b.dataset.ntEdit || b.dataset.ntDel; const n = ntItems.find((x) => x.id === id); if (!n) return;
+  const id = b.dataset.ntEye || b.dataset.ntLock || b.dataset.ntCopy || b.dataset.ntEdit || b.dataset.ntDel; const n = ntItems.find((x) => x.id === id); if (!n) return;
+  if (b.dataset.ntLock) { ntShow.delete(id); try { await saveNotes(ntItems.map((x) => (x.id === id ? { ...x, secret: !x.secret } : x))); toast(t(n.secret ? "Nòt la vizib kounye a" : "Nòt la kache kounye a")); } catch (err) { toast(err.message); } return; }
   if (b.dataset.ntEye) { ntShow.has(id) ? ntShow.delete(id) : ntShow.add(id); renderNotes(); }
-  else if (b.dataset.ntCopy) { try { await navigator.clipboard.writeText(n.body); toast(t("Kopye")); } catch { toast(t("Pa ka kopye otomatikman: chwazi tèks la epi kopye l.")); } }
-  else if (b.dataset.ntEdit) { ntEdit = id; $("#ntTitle").value = n.title; $("#ntBody").value = n.body; $("#ntSecret").checked = !!n.secret; const rc = $("#ntForm").querySelector(`input[name=ntColor][value="${n.color || "yellow"}"]`); if (rc) rc.checked = true; $("#ntSave").textContent = t("Sove chanjman yo"); $("#ntCancel").hidden = false; $("#ntTitle").focus(); }
+  else if (b.dataset.ntCopy) { try { await navigator.clipboard.writeText(n.body); toast(t("Kopye tèks la")); } catch { toast(t("Pa ka kopye otomatikman: chwazi tèks la epi kopye l.")); } }
+  else if (b.dataset.ntEdit) { ntEdit = id; $("#ntTitle").value = n.title; $("#ntBody").value = n.body; $("#ntSecret").checked = !!n.secret; ntSecretUi(); const rc = $("#ntForm").querySelector(`input[name=ntColor][value="${n.color || "yellow"}"]`); if (rc) rc.checked = true; $("#ntSave").textContent = t("Sove chanjman yo"); $("#ntCancel").hidden = false; $("#ntTitle").focus(); }
   else if (b.dataset.ntDel) { if (!confirm(t("Efase nòt «{0}»?", n.title || ""))) return; try { await saveNotes(ntItems.filter((x) => x.id !== id)); } catch (err) { toast(err.message); } }
 });
 async function loadSystem() { loadAppUpdate(); loadNotes();
