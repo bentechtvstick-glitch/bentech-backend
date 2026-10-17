@@ -58,7 +58,12 @@ data class Ticker(
     /** Mo kle (miniskil): chanèl/gwoup ki deja gen pwòp ticker yo → kache pa nou an. */
     val hideOn: List<String> = emptyList(),
     /** Mo kle (miniskil): chanèl/gwoup kote ticker pa nou an monte anlè ekran an. */
-    val topOn: List<String> = emptyList()
+    val topOn: List<String> = emptyList(),
+    /** Polis ak estil tèks la (menm lis ak logo bug la). */
+    val font: String = "sans",
+    val textStyle: String = "classic",
+    val fxColor: String = "#1D4ED8",
+    val italic: Boolean = false
 ) {
     /** 0 = nòmal (anba), 1 = kache, 2 = anlè, pou chanèl sa a. */
     fun modeFor(channelName: String, categoryName: String): Int {
@@ -112,7 +117,12 @@ data class ChyronItem(
     val runnerSpeed: Int = 6,
     /** "right" = gòch → dwat, "left" = dwat → gòch. */
     val runnerDir: String = "right",
-    val runnerFlip: Boolean = false
+    val runnerFlip: Boolean = false,
+    /** Polis tout tèks yo; estil la (glow, kontou…) sou non an sèlman. */
+    val font: String = "sans",
+    val textStyle: String = "plain",
+    val fxColor: String = "#1D4ED8",
+    val italic: Boolean = false
 )
 
 /** Banner imaj (imageUrl) oswa tèks (text). */
@@ -330,7 +340,11 @@ data class PanelConfig(
                     direction = it.optString("direction", "left"),
                     repeat = it.optBoolean("repeat", false),
                     hideOn = it.optJSONArray("hideOn").strings(),
-                    topOn = it.optJSONArray("topOn").strings()
+                    topOn = it.optJSONArray("topOn").strings(),
+                    font = it.optString("font", "sans"),
+                    textStyle = it.optString("textStyle", "classic"),
+                    fxColor = it.optString("fxColor", "#1D4ED8"),
+                    italic = it.optBoolean("italic", false)
                 )
             }?.takeIf { it.text.isNotBlank() },
             chyron = o.optJSONObject("chyron")?.takeIf { it.optBoolean("enabled", true) }?.let {
@@ -358,7 +372,11 @@ data class PanelConfig(
                     runner = it.optString("runner").trim(),
                     runnerSpeed = it.optInt("runnerSpeed", 6).coerceIn(1, 10),
                     runnerDir = if (it.optString("runnerDir") == "left") "left" else "right",
-                    runnerFlip = it.optBoolean("runnerFlip", false)
+                    runnerFlip = it.optBoolean("runnerFlip", false),
+                    font = it.optString("font", "sans"),
+                    textStyle = it.optString("textStyle", "plain"),
+                    fxColor = it.optString("fxColor", "#1D4ED8"),
+                    italic = it.optBoolean("italic", false)
                 )
             }.filter { it.headline.isNotBlank() || it.name.isNotBlank() || it.title.isNotBlank() }
                 // Ansyen backend: sèlman "chyron" (tit + sou-tit)

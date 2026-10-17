@@ -127,7 +127,12 @@ class ChyronView @JvmOverloads constructor(
     }
 
     // ------------------------------------------------------------ Desen an
+    /** Polis chyron k ap desine kounye a (tout tèks li yo). */
+    private var curFont = "sans"
+    private var curItalic = false
+
     private fun build(c: ChyronItem): LinearLayout {
+        curFont = c.font; curItalic = c.italic
         val right = c.position.endsWith("right")
         val center = c.position.endsWith("center")
         val text = parse(c.textColor, Color.WHITE)
@@ -188,7 +193,18 @@ class ChyronView @JvmOverloads constructor(
                 layoutDirection = LAYOUT_DIRECTION_LTR
                 gravity = when { right -> Gravity.END; center -> Gravity.CENTER_HORIZONTAL; else -> Gravity.START }
             }
-            if (c.name.isNotBlank()) col.addView(line(c.name, c.nameSize, text, bold = true, animate = c.animateEmoji))
+            if (c.name.isNotBlank()) col.addView(if (c.textStyle != "plain")
+                FxTextView(context, c.textStyle, text, parse(c.fxColor, 0xFF1D4ED8.toInt())).apply {
+                    this.text = c.name
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, c.nameSize.toFloat())
+                    typeface = TextFx.typeface(context, c.font, c.italic)
+                    maxLines = 1
+                    ellipsize = TextUtils.TruncateAt.END
+                    maxWidth = dp(600f)
+                    layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                    applyStyle()
+                }
+            else line(c.name, c.nameSize, text, bold = true, animate = c.animateEmoji))
             if (c.title.isNotBlank()) col.addView(line(c.title, c.titleSize, text, bold = false, animate = c.animateEmoji).apply {
                 alpha = 0.88f
                 (layoutParams as? LinearLayout.LayoutParams)?.topMargin = dp(2f)
@@ -242,7 +258,7 @@ class ChyronView @JvmOverloads constructor(
         text = s
         setTextColor(color)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp.toFloat())
-        typeface = if (bold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+        typeface = TextFx.typeface(context, curFont, curItalic, bold)
         maxLines = 1
         ellipsize = TextUtils.TruncateAt.END
         maxWidth = dp(600f)

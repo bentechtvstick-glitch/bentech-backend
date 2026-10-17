@@ -103,12 +103,21 @@ class TickerView @JvmOverloads constructor(
         listOf(textPaint, labelPaint, clockPaint).forEach {
             if (shadow) it.setShadowLayer(3f * density, 0f, 1.5f * density, 0xE6000000.toInt()) else it.clearShadowLayer()
         }
+        // Polis ak estil tèks panel la chwazi a (klasik = lonbraj jan l te ye a)
+        val tf = TextFx.typeface(context, t.font, t.italic)
+        listOf(textPaint, labelPaint, clockPaint).forEach { it.typeface = tf }
+        if (t.textStyle != "classic") {
+            TextFx.applyPaint(textPaint, t.textStyle, TextFx.color(t.fxColor, 0xFF1D4ED8.toInt()), density, 0f, size * 1.2f, parseColor(t.textColor, Color.WHITE))
+        } else textPaint.shader = null
+        val fxSig = "${t.font}|${t.textStyle}|${t.fxColor}|${t.italic}"
+        if (fxSig != lastFx) { lastFx = fxSig; signature = ""; clockLayout = null }
         if (shadow != lastShadow) { lastShadow = shadow; signature = ""; clockLayout = null }
         val h = barHeightFor(t)
         layoutParams?.let { lp -> if (lp.height != h) { lp.height = h; layoutParams = lp } }
         rebuild()
     }
     private var lastShadow = false
+    private var lastFx = ""
 
     private fun emoji(cs: CharSequence): CharSequence = runCatching {
         if (EmojiCompat.get().loadState == EmojiCompat.LOAD_STATE_SUCCEEDED) EmojiCompat.get().process(cs) ?: cs else cs
@@ -268,7 +277,7 @@ class TickerView @JvmOverloads constructor(
         for ((_, cl) in EmojiFx.clusters(text)) {
             val fx = EmojiFx.of(cl)
             if (fx == null) { sb.append(cl); continue }
-            val p = TextPaint(paint)
+            val p = TextPaint(paint).apply { shader = null }
             val lay = layoutOf(emoji(cl), p)
             out += AnimGlyph(sb.length, lay, p, fx)
             sb.append('\uFFFC')
