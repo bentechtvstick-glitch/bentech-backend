@@ -276,6 +276,7 @@ class VodDetailActivity : AppCompatActivity() {
             h.b.watched.visibility = if (pct > 0) View.VISIBLE else View.GONE
             h.b.watched.progress = pct
             h.b.root.setOnClickListener { playEpisode(e, fromStart = p?.finished == true) }
+            Marquee.bind(h.b.root, h.b.title)
         }
     }
 }

@@ -35,6 +35,7 @@ class CategoryAdapter(
         h.b.name.text = c.name
         h.b.root.isSelected = c.id == selectedId
         h.b.root.setOnClickListener { onSelect(c) }
+        Marquee.bind(h.b.root, h.b.name)
     }
 }
 
@@ -86,6 +87,6 @@ class ChannelAdapter(
 
         h.b.root.setOnClickListener { onClick(h.bindingAdapterPosition) }
         h.b.root.setOnLongClickListener { onLongClick(ch); true }
-        h.b.root.setOnFocusChangeListener { _, has -> if (has) onFocus(ch) }
+        Marquee.bind(h.b.root, h.b.name, h.b.epgNow) { _, has -> if (has) onFocus(ch) }
     }
 }

@@ -218,6 +218,7 @@ class SearchActivity : AppCompatActivity() {
             val r = items[position]
             h.b.name.text = r.label
             h.b.root.setOnClickListener { open(r) }
+            Marquee.bind(h.b.root, h.b.name)
         }
     }
 

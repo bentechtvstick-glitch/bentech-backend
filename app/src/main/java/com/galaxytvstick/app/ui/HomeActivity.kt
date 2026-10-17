@@ -325,6 +325,7 @@ class HomeActivity : AppCompatActivity() {
             val c = items[position]
             h.b.name.text = c.name
             h.b.count.text = c.count.toString()
+            Marquee.bind(h.b.root, h.b.name)
             h.b.root.setOnClickListener {
                 openList(if (c.id == null) ChannelStore.all else ChannelStore.all.filter { it.categoryId == c.id })
             }

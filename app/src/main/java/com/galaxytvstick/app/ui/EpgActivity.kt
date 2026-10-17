@@ -461,7 +461,7 @@ class EpgActivity : AppCompatActivity() {
             h.b.name.text = c.name
             h.b.root.isSelected = c.id == selectedCat
             // Tankou yon gid TV: lis chanèl la chanje pandan w ap pase sou kategori yo
-            h.b.root.setOnFocusChangeListener { _, has ->
+            Marquee.bind(h.b.root, h.b.name) { _, has ->
                 if (has) {
                     pendingCat = c.id
                     handler.removeCallbacks(applyPendingCat)
