@@ -43,6 +43,8 @@ data class Ticker(
     val showClock: Boolean = false,
     /** "12" = 8:45 PM, "24" = 20:45 */
     val clockFormat: String = "24",
+    /** Kote lè a: right/left (nan ba a) oswa top-left/top-center/top-right (anlè ekran an). */
+    val clockPos: String = "right",
     /** Gwosè tèks la an sp (12–40). */
     val textSize: Int = 20,
     /** Fon transparan: tèks la jwenn yon lonbraj pou l rete lizib sou videyo a. */
@@ -331,6 +333,7 @@ data class PanelConfig(
                     labelColor = it.optString("labelColor", "#FFFFFF"),
                     showClock = it.optBoolean("showClock", false),
                     clockFormat = if (it.optString("clockFormat") == "12") "12" else "24",
+                    clockPos = it.optString("clockPos", "right"),
                     textSize = it.optInt("textSize", 20).coerceIn(12, 40),
                     transparent = it.optBoolean("transparent", false),
                     animateEmoji = it.optBoolean("animateEmoji", true),

@@ -148,6 +148,7 @@ class OverlayController(
     private fun apply(cfg: PanelConfig) {
         // --- Bloke (admin nan bloke, abònman ekspire, oswa mentenans) ---
         if (cfg.isBlocking) {
+            v.gfx.topClock = null
             v.gfx.setGraphics(null)
             v.blocker.visibility = View.VISIBLE
             v.blockerTitle.text = when (cfg.status) {
@@ -187,6 +188,8 @@ class OverlayController(
 
         // --- Grafik TV: logo bug, watermark, scoreboard, meteyo, countdown, ident (sèlman nan player) ---
         v.gfx.bottomInset = v.chyron.bottomInset
+        // Lè ticker a anlè ekran an (pa nan ba a)
+        v.gfx.topClock = t?.takeIf { it.showClock && it.clockPos.startsWith("top") && inPlayer }
         v.gfx.setGraphics(if (inPlayer) cfg.graphics else null)
 
         startBanners(cfg)

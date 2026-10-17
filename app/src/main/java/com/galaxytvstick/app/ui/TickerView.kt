@@ -185,19 +185,31 @@ class TickerView @JvmOverloads constructor(
         val h = height.toFloat()
         val pad = 14 * density
 
-        // --- Etikèt agoch (egz: 🔴 LIVE, BREAKING NEWS) ---
+        // --- Lè agoch (si panel la chwazi "agoch") ---
         var left = 0f
+        if (t.showClock && t.clockPos == "left") {
+            val now = clockFmt.format(Date())
+            if (now != clockText || clockLayout == null) { clockText = now; clockLayout = layoutOf(now, clockPaint) }
+            val clock = clockLayout!!
+            val boxW = clock.width + pad * 2
+            boxPaint.color = if (t.transparent) Color.TRANSPARENT else 0xE6000000.toInt()
+            canvas.drawRect(0f, 0f, boxW, h, boxPaint)
+            canvas.save(); canvas.translate(pad, (h - clock.height) / 2f); clock.draw(canvas); canvas.restore()
+            left = boxW
+        }
+
+        // --- Etikèt agoch (egz: 🔴 LIVE, BREAKING NEWS) ---
         labelLayout?.let { lab ->
             val boxW = lab.width + pad * 2
             boxPaint.color = colorOf(t.labelBg, 0xFFE50914.toInt())
-            canvas.drawRect(0f, 0f, boxW, h, boxPaint)
-            canvas.save(); canvas.translate(pad, (h - lab.height) / 2f); lab.draw(canvas); drawGlyphs(canvas, labelGlyphs, lab.height); canvas.restore()
-            left = boxW
+            canvas.drawRect(left, 0f, left + boxW, h, boxPaint)
+            canvas.save(); canvas.translate(left + pad, (h - lab.height) / 2f); lab.draw(canvas); drawGlyphs(canvas, labelGlyphs, lab.height); canvas.restore()
+            left += boxW
         }
 
         // --- Lè adwat ---
         var right = width.toFloat()
-        if (t.showClock) {
+        if (t.showClock && (t.clockPos == "right" || t.clockPos !in setOf("left", "top-left", "top-center", "top-right"))) {
             val now = clockFmt.format(Date())
             if (now != clockText || clockLayout == null) { clockText = now; clockLayout = layoutOf(now, clockPaint) }
             val clock = clockLayout!!

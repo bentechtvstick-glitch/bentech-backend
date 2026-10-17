@@ -83,17 +83,24 @@ class GraphicsView @JvmOverloads constructor(
         addView(full, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     }
 
+    /** Lè ticker a anlè ekran an (panel la: "Anlè ekran an"); null = pa gen. */
+    var topClock: com.galaxytvstick.app.data.Ticker? = null
+    private var clockView: android.widget.TextView? = null
+    private var clockFmt: java.text.SimpleDateFormat? = null
+
     /** Mete grafik panel la voye yo. Si anyen pa chanje, sa ki sou ekran an rete jan l ye. */
     fun setGraphics(g: Graphics?) {
         val hadIdent = gfx?.ident != null
         gfx = g
         if (g?.ident != null && !hadIdent) lastIdentAt = SystemClock.elapsedRealtime()
-        val sig = if (g == null) "" else listOf(g.bug, g.watermark, g.scoreboard, g.weather, g.countdown).toString()
+        val tc = topClock
+        val sig = (if (g == null) "" else listOf(g.bug, g.watermark, g.scoreboard, g.weather, g.countdown).toString()) +
+            (tc?.let { listOf(it.clockPos, it.clockFormat, it.font, it.textStyle, it.fxColor, it.italic, it.textColor, it.textSize).toString() } ?: "")
         if (sig != signature) { signature = sig; rebuild(g) }
-        val needTick = g != null && (g.countdown != null || g.watermark?.move == true || (g.ident?.everyMin ?: 0) > 0)
+        val needTick = (g != null && (g.countdown != null || g.watermark?.move == true || (g.ident?.everyMin ?: 0) > 0)) || tc != null
         if (needTick && !ticking) { ticking = true; ui.post(tick) }
         if (!needTick && ticking) { ticking = false; ui.removeCallbacks(tick) }
-        visibility = if (g == null && !bumperShowing) GONE else VISIBLE
+        visibility = if (g == null && tc == null && !bumperShowing) GONE else VISIBLE
     }
 
     fun stop() {
@@ -109,8 +116,23 @@ class GraphicsView @JvmOverloads constructor(
         stacks.values.forEach { removeView(it) }
         stacks.clear()
         wmView?.let { removeView(it) }
-        wmView = null; cdView = null; wmCorner = -1
-        if (g == null) return
+        wmView = null; cdView = null; wmCorner = -1; clockView = null
+        // Lè ticker a anlè ekran an
+        topClock?.let { t ->
+            clockFmt = java.text.SimpleDateFormat(if (t.clockFormat == "12") "h:mm a" else "HH:mm", java.util.Locale.getDefault())
+            val v = FxTextView(context, t.textStyle, TextFx.color(t.textColor, Color.WHITE), TextFx.color(t.fxColor, 0xFF1D4ED8.toInt())).apply {
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, t.textSize * 1.1f)
+                typeface = TextFx.typeface(context, t.font, t.italic)
+                fontFeatureSettings = "tnum"
+                maxLines = 1
+                text = clockFmt?.format(java.util.Date())
+                applyStyle()
+                if (t.textStyle == "plain") setShadowLayer(dp(3f).toFloat(), 0f, dp(1.5f).toFloat(), 0xE6000000.toInt())
+            }
+            put(t.clockPos, "top-right", v)
+            clockView = v
+        }
+        if (g == null) { applyVisibility(); return }
         g.bug?.let { put(it.position, "top-right", bug(it)) }
         g.scoreboard?.let { put(it.position, "top-left", scoreboard(it)) }
         g.weather?.let { put(it.position, "top-right", weather(it)) }
@@ -268,6 +290,7 @@ class GraphicsView @JvmOverloads constructor(
     }
 
     private fun updateTick() {
+        clockView?.let { cv -> val now = clockFmt?.format(java.util.Date()); if (now != null && cv.text.toString() != now) cv.text = now }
         val g = gfx ?: return
         val c = g.countdown
         val cd = cdView
