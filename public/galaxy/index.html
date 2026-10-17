@@ -460,6 +460,18 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .ntc input:checked+i{transform:scale(1.15);box-shadow:0 0 0 3px var(--bg,#0f1426),0 0 0 5px #fff}
 .ntc input:focus-visible+i{outline:2px solid #fff;outline-offset:3px}
 @media (prefers-reduced-motion:reduce){.note-pad,.note-pad:nth-child(n){animation:none;transition:none;transform:none}}
+/* Siveyans AI a */
+.wt{margin:0 0 14px;padding:12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--line,rgba(255,255,255,.08))}
+.wt-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.wt-head h3{margin:0;font-size:15px}
+.wt-sum{font-size:14px;line-height:1.5;margin:4px 0 10px;padding:10px 12px;border-radius:10px;background:rgba(99,102,241,.10);border-left:3px solid #6366f1}
+.wt-list{display:flex;flex-direction:column;gap:8px}
+.wt-i{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.035);border-left:4px solid #64748b}
+.wt-i.warn{border-left-color:#f59e0b;background:rgba(245,158,11,.07)}
+.wt-i.crit{border-left-color:#ef4444;background:rgba(239,68,68,.09)}
+.wt-i .tx{flex:1;min-width:0}.wt-i .tx b{display:block;font-size:14px}.wt-i .tx .note{display:block;margin-top:2px}
+.wt-i .ac{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.wt-ok{color:#22c55e;font-weight:600;font-size:14px;padding:4px 2px}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Audiowide&family=Bangers&family=Bebas+Neue&family=Great+Vibes&family=Lobster&family=Orbitron:wght@700&family=Oswald:wght@700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,800;1,800&family=Righteous&family=Russo+One&family=Teko:wght@600&display=swap">
@@ -543,6 +555,12 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <div class="kpis" id="dashKpis"></div>
       <div class="card" id="aiCard" style="margin-bottom:16px">
         <div class="cardhead"><div><h2>🤖 Asistan AI</h2><p class="sub">Poze l yon kesyon sou TV yo, kliyan yo oswa chanèl ki pa mache yo.</p></div><span class="note" id="aiUsage"></span></div>
+        <div class="wt" id="wtBox">
+          <div class="wt-head"><h3>🛡️ Sa AI a remake</h3><div class="btns" style="margin:0"><span class="note" id="wtWhen"></span><button class="btn small" id="wtAnalyze" type="button">Analize kounye a</button></div></div>
+          <div class="wt-sum" id="wtSum" hidden></div>
+          <div class="wt-list" id="wtList"><div class="note">Ap gade…</div></div>
+          <p class="note" style="margin:8px 0 0">Panel la tcheke tout bagay chak 10 minit. Li pa janm korije anyen pou kont li: se ou ki peze bouton an.</p>
+        </div>
         <div class="btns" style="justify-content:flex-start;flex-wrap:wrap;margin-bottom:8px">
           <button class="btn small" type="button" data-aiq="Fè m yon rezime eta panel la jodi a: TV, kliyan k ap ekspire, ak pwoblèm yo.">Rezime jodi a</button>
           <button class="btn small" type="button" data-aiq="Poukisa chanèl oswa videyo yo pa mache? Ki sa pou m fè?">Poukisa chanèl yo pa mache?</button>
@@ -1235,7 +1253,7 @@ function openTab(name) {
   $$(".tab").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
   const pane = CRUD[name] ? "crud" : name;
   $$("[data-pane]").forEach((p) => (p.hidden = p.dataset.pane !== pane));
-  if (name === "dash") { loadDashboard(); loadAi(); }
+  if (name === "dash") { loadDashboard(); loadAi(); loadWatch(); }
   if (CRUD[name]) openCrud(name);
   if (name === "live" || name === "cust") loadLive();
   if (name === "dev") loadDevices();
@@ -1826,6 +1844,68 @@ $("#aiClear").addEventListener("click", () => { $("#aiAnswer").hidden = true; $(
 $("#aiAsk").addEventListener("click", () => askAi($("#aiQ").value));
 $("#aiQ").addEventListener("keydown", (e) => { if (e.key === "Enter") askAi(e.target.value); });
 document.querySelectorAll("[data-aiq]").forEach((b) => b.addEventListener("click", () => { const q = t(b.dataset.aiq); $("#aiQ").value = q; askAi(q); }));
+// ------------------------------------------------------------ Siveyans AI a: pwoblèm + koreksyon (admin nan deside)
+let watchCache = { issues: [] };
+const WT_TEXT = {
+  tv_offline: (i) => [t("📴 TV {0} pa konekte depi {1} è", i.name || i.mac, i.hours), t("Kliyan an toujou aktif. TV a ka etenn, li pa gen entènèt, oswa app la fèmen.")],
+  provider_refused: (i) => [t("🚫 Founisè a refize kont TV {0} (HTTP {1})", i.name || i.mac, i.code), t("Kont playlist la ka ekspire, gen twòp ekran sou li, oswa modpas la chanje. Teste playlist la nan paj Aparèy la.")],
+  tv_many_fail: (i) => [t("📡 {0} chanèl diferan pa mache sou TV {1}", i.count, i.name || i.mac), t("Pwoblèm nan sanble se entènèt TV sa a oswa wouter li. Eseye rechaje TV a an premye.")],
+  channel_down: (i) => [t("📺 Chanèl «{0}» pa mache ({1} TV, {2} fwa)", i.channel, i.tvs, i.times), t("Chanèl la ka tonbe kay founisè a. Ou ka kache l pou kliyan yo pa tonbe sou li.") + (i.detail ? " · " + i.detail : "")],
+  old_app: (i) => [t("📲 {0} TV gen yon ansyen vèsyon app la", i.count), t("Dènye vèsyon an se {0}.", i.latest)],
+  expiring: (i) => [i.days ? t("⏰ Abònman {0} ap fini nan {1} jou", i.customer, i.days) : t("⏰ Abònman {0} ap fini jodi a", i.customer), t("Kontakte kliyan an pou l renouvle.")],
+  disk_low: (i) => [t("💾 Disk sèvè a prèske plen: {0}% ki rete", i.freePct), t("Gade \"Kisa ki pran plas?\" nan paj Sistèm nan.")],
+  ai_budget: (i) => [t("🤖 AI a deja itilize ${0} sou ${1} mwa sa a", i.cost, i.limit), t("Lè limit lan rive, AI a kanpe jiska mwa pwochen.")],
+};
+const WT_ACT = {
+  goto_device: () => t("Louvri aparèy la"), reload_tv: () => t("Rechaje TV a"), push_update: () => t("Voye mizajou a bay TV yo"),
+  hide_channel: (a) => t("Kache chanèl la ({0} TV)", a.macs.length), goto_customers: () => t("Kliyan yo"), goto_system: () => t("Sistèm"),
+};
+async function loadWatch(analyze) {
+  if (!token) return;
+  try { watchCache = analyze ? await api("POST", "/galaxy/watch/analyze", { lang }) : await api("GET", "/galaxy/watch?lang=" + encodeURIComponent(lang)); } catch { return; }
+  renderWatch(); updateBell();
+}
+function renderWatch() {
+  const w = watchCache, list = w.issues || [];
+  if (!$("#wtList")) return;
+  $("#wtSum").hidden = !w.summary; $("#wtSum").innerHTML = w.summary ? aiMd(w.summary) : "";
+  $("#wtWhen").textContent = w.summaryAt ? t("Dènye analiz: {0}", new Date(w.summaryAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })) : "";
+  $("#wtAnalyze").hidden = !w.aiOn;
+  $("#wtList").innerHTML = list.length ? list.map((i, n) => {
+    const [title, why] = (WT_TEXT[i.kind] || (() => [i.kind, ""]))(i);
+    const acts = (i.actions || []).map((a, k) => `<button class="btn small${k ? "" : " primary"}" type="button" data-wt="${n}" data-wta="${k}">${esc(WT_ACT[a.type] ? WT_ACT[a.type](a) : a.type)}</button>`).join("");
+    return `<div class="wt-i ${esc(i.level)}"><div class="tx"><b>${esc(title)}</b><span class="note">${esc(why)}</span></div><div class="ac">${acts}<button class="btn small" type="button" data-wt="${n}" data-wtd="1" title="${esc(t("Kache pwoblèm sa a pou 24 è"))}">${esc(t("Pa kounye a"))}</button></div></div>`;
+  }).join("") : `<div class="wt-ok">✅ ${esc(t("Tout bagay anfòm. Pa gen pwoblèm pou kounye a."))}</div>`;
+}
+$("#wtAnalyze").addEventListener("click", async (e) => { const b = e.currentTarget; b.disabled = true; b.textContent = t("Ap analize…"); await loadWatch(true); b.disabled = false; b.textContent = t("Analize kounye a"); });
+$("#wtList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-wt]"); if (!b) return;
+  const i = (watchCache.issues || [])[+b.dataset.wt]; if (!i) return;
+  if (b.dataset.wtd) { try { await api("POST", "/galaxy/watch/dismiss", { id: i.id }); watchCache.issues = watchCache.issues.filter((x) => x !== i); renderWatch(); updateBell(); } catch (err) { toast(err.message); } return; }
+  const a = (i.actions || [])[+b.dataset.wta]; if (!a) return;
+  try {
+    if (a.type === "goto_device") return selectDevice(a.mac, true);
+    if (a.type === "goto_customers") return openTab("cust");
+    if (a.type === "goto_system") return openTab("sys");
+    if (a.type === "reload_tv") {
+      if (!confirm(t("Rechaje TV {0}? App la ap rekonekte epi rechaje lis chanèl la (kèk segonn).", i.name || a.mac))) return;
+      await api("POST", `/galaxy/devices/${encodeURIComponent(a.mac)}/commands`, { type: "reload" }); toast(t("Kòmand lan voye bay TV a."));
+    } else if (a.type === "push_update") {
+      if (!confirm(t("Voye vèsyon {0} bay tout TV yo? Kliyan yo ap wè yon mesaj pou mete l ajou.", i.latest))) return;
+      await api("POST", "/galaxy/app-update", {}); toast(t("Mizajou a voye."));
+    } else if (a.type === "hide_channel") {
+      if (!confirm(t("Kache chanèl «{0}» sou {1} TV? Ou ka remete l nan paj Chanèl yo.", i.channel, a.macs.length))) return;
+      for (const mac of a.macs) {
+        const d = await api("GET", "/galaxy/devices/lookup?mac=" + encodeURIComponent(mac));
+        const hid = [...new Set([...(d.hiddenChannels || []).map(Number), a.channelId])];
+        await api("PATCH", `/galaxy/devices/${encodeURIComponent(mac)}`, { hiddenChannels: hid });
+        await api("POST", `/galaxy/devices/${encodeURIComponent(mac)}/commands`, { type: "refresh" }).catch(() => {});
+      }
+      toast(t("Chanèl la kache.")); chCache?.clear?.();
+    }
+    await loadWatch();
+  } catch (err) { toast(err.message); }
+});
 // ------------------------------------------------------------ Ba anlè: estati, notifikasyon, rechèch, itilizatè
 function setDot(sel, ok, on, off) { const d = $(sel); if (!d) return; d.className = "hdot " + (ok ? "on" : "off"); $(sel + "T").textContent = t(ok ? on : off); }
 async function checkHealth() { let ok = false; try { ok = (await fetch(API + "/health")).ok; } catch {} setDot("#hBackend", ok, "Backend Online", "Backend Offline"); }
@@ -1838,10 +1918,12 @@ async function loadAlerts() {
 function updateBell() {
   const waiting = devicesCache.filter((d) => d.galaxy && !d.blocked && !d.playlists.length);
   const alerts = alertsCache.items || [], fresh = alerts.filter((a) => a.at > (alertsCache.seenAt || 0));
-  const n = waiting.length + fresh.length;
+  const wIss = (watchCache.issues || []).filter((x) => x.level !== "info");
+  const n = waiting.length + fresh.length + wIss.length;
   $("#bellCount").hidden = !n; $("#bellCount").textContent = n; $("#navNew").hidden = !waiting.length; $("#navNew").textContent = waiting.length;
   let h = "";
   if (waiting.length) h += `<div class="hd">${esc(t("Nouvo aparèy k ap tann yon playlist"))}</div>` + waiting.slice(0, 8).map((d) => `<button class="mi" data-new="${esc(d.mac)}" type="button"><span class="mono">${esc(d.mac)}</span><span class="note">${esc(d.deviceName || "")} · ${esc(d.lastSeen || "")}</span></button>`).join("");
+  if (wIss.length) h += `<div class="hd">🛡️ ${esc(t("Sa AI a remake"))}</div>` + wIss.slice(0, 6).map((x) => `<button class="mi" type="button" data-goto="dash"><span>${esc((WT_TEXT[x.kind] || (() => [x.kind]))(x)[0])}</span></button>`).join("");
   if (alerts.length) {
     h += `<div class="hd" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>⚠ ${esc(t("Pwoblèm chanèl ak videyo"))}</span><button class="btn small" data-alerts-clear type="button">${esc(t("Efase"))}</button></div>`;
     h += alerts.slice(0, 15).map((a) => `<div class="mi" style="flex-direction:column;align-items:flex-start;gap:2px;max-width:420px;cursor:default${a.at > (alertsCache.seenAt || 0) ? ";background:rgba(239,68,68,.10)" : ""}">
@@ -3126,6 +3208,7 @@ function startApp() {
     if (ttv.wasOn()) ttv.start(); }
   openTab(tab); loadLive(); loadDevices(); checkHealth(); loadAlerts();
   timers.push(setInterval(() => { if (!document.hidden) loadAlerts(); }, 30000));
+  loadWatch(); timers.push(setInterval(() => { if (!document.hidden) loadWatch(); }, 5 * 60000));
   timers.push(setInterval(() => { if (!document.hidden) checkHealth(); }, 30000));
   timers.push(setInterval(() => { if (!document.hidden) loadLive(); }, 5000));
   timers.push(setInterval(() => { if (!document.hidden && tab === "dev" && dev) refreshDevLive(); }, 3000));

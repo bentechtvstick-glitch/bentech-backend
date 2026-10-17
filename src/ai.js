@@ -8,14 +8,39 @@ const MODEL = process.env.AI_MODEL || "claude-haiku-4-5";
 const PRICE_IN = Number(process.env.AI_PRICE_IN || 1), PRICE_OUT = Number(process.env.AI_PRICE_OUT || 5);
 const LANG_NAMES = { ht: "Haitian Creole (Kreyòl ayisyen)", en: "English", fr: "French", es: "Spanish" };
 
+const month = () => new Date().toISOString().slice(0, 7);
+const limit = () => Number(process.env.AI_MONTHLY_LIMIT_USD || 2);
+function usageOf(db) {
+  const u = (db.data.aiUsage ??= {});
+  if (u.month !== month()) Object.assign(u, { month: month(), inTok: 0, outTok: 0, cost: 0, asks: 0 });
+  return u;
+}
+export const aiLangName = (code) => LANG_NAMES[code] || "English";
+export const aiBudget = (db) => { const u = usageOf(db); return { cost: u.cost, limit: limit(), left: limit() - u.cost }; };
+
+/** Yon sèl apèl Claude (konte depans lan, respekte limit mwa a). Voye tèks repons lan, oswa jete yon erè. */
+export async function aiComplete(db, { system, user, maxTokens = 600 }) {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) throw new Error("AI is not set up yet: add ANTHROPIC_API_KEY on the server.");
+  const u = usageOf(db);
+  if (u.cost >= limit()) throw Object.assign(new Error(`Monthly AI limit reached ($${limit()}).`), { status: 429 });
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }] }),
+    signal: AbortSignal.timeout(60000),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j?.error?.message || `AI error HTTP ${r.status}`), { status: 502 });
+  const inTok = j.usage?.input_tokens || 0, outTok = j.usage?.output_tokens || 0;
+  const cost = (inTok * PRICE_IN + outTok * PRICE_OUT) / 1e6;
+  u.inTok += inTok; u.outTok += outTok; u.cost += cost; u.asks = (u.asks || 0) + 1;
+  db.write().catch(() => {});
+  return { text: (j.content || []).filter((c) => c.type === "text").map((c) => c.text).join("\n").trim(), cost, monthCost: u.cost };
+}
+
 export function mountAi(app, db, { authenticate, isOnline }) {
-  const month = () => new Date().toISOString().slice(0, 7);
-  const limit = () => Number(process.env.AI_MONTHLY_LIMIT_USD || 2);
-  const usage = () => {
-    const u = (db.data.aiUsage ??= {});
-    if (u.month !== month()) Object.assign(u, { month: month(), inTok: 0, outTok: 0, cost: 0, asks: 0 });
-    return u;
-  };
+  const usage = () => usageOf(db);
 
   /** Ti rezime eta panel la (san modpas, san kle, san lyen playlist). */
   function snapshot() {
@@ -62,23 +87,11 @@ export function mountAi(app, db, { authenticate, isOnline }) {
       "Common causes: HTTP 401/403/429 = provider account refused or too many screens; HTTP 5xx or empty reply = provider/channel down; many channels failing on one provider at once = provider outage; one TV only = that TV's internet/router. " +
       `Answer in ${lang}, in simple words, short (max ~12 lines), with concrete next steps in the panel. Never invent data that is not in the snapshot. Never reveal passwords or keys.`;
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-        body: JSON.stringify({ model: MODEL, max_tokens: 700, system,
-          messages: [{ role: "user", content: `Panel snapshot:\n${JSON.stringify(snapshot())}\n\nQuestion: ${question}` }] }),
-        signal: AbortSignal.timeout(60000),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) return res.status(502).json({ error: j?.error?.message || `AI error HTTP ${r.status}` });
-      const inTok = j.usage?.input_tokens || 0, outTok = j.usage?.output_tokens || 0;
-      const cost = (inTok * PRICE_IN + outTok * PRICE_OUT) / 1e6;
-      u.inTok += inTok; u.outTok += outTok; u.cost += cost; u.asks = (u.asks || 0) + 1;
-      db.write().catch(() => {});
-      const text = (j.content || []).filter((c) => c.type === "text").map((c) => c.text).join("\n").trim();
-      res.json({ answer: text, cost: Math.round(cost * 10000) / 10000, monthCost: Math.round(u.cost * 10000) / 10000, limit: limit() });
+      if (req.body?.lang && LANG_NAMES[req.body.lang]) { (db.data.watch ??= {}).lang = req.body.lang; }
+      const r = await aiComplete(db, { system, user: `Panel snapshot:\n${JSON.stringify(snapshot())}\n\nQuestion: ${question}`, maxTokens: 700 });
+      res.json({ answer: r.text, cost: Math.round(r.cost * 10000) / 10000, monthCost: Math.round(r.monthCost * 10000) / 10000, limit: limit() });
     } catch (err) {
-      res.status(502).json({ error: "AI unavailable: " + (err.message || err) });
+      res.status(err.status || 502).json({ error: err.status ? err.message : "AI unavailable: " + (err.message || err) });
     }
   });
 }

@@ -7,6 +7,7 @@
 // Tout sa ou deja jere nan panel la (tickers, banners, popups, live events,
 // channel profiles, customers, settings) voye bay app la atravè /config.
 // ---------------------------------------------------------------------------
+import { mountWatch } from "./watch.js";
 import crypto from "node:crypto";
 import { deviceIndex } from "./perf.js";
 import { buildGraphics, fetchWeather, clientIp, ipPlace, TEXT_STYLES, TEXT_FONTS } from "./graphics.js";
@@ -1451,6 +1452,14 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     syncTvs();
     auditLog("app-update", req.body?.cancel ? "App update push cancelled" : `App update 1.0.${s.updatePushBuild} sent to every TV${s.updateForce ? " (forced)" : ""}`, admin(req));
     res.json({ ok: true, pushedBuild: s.updatePushBuild, pushedAt: s.updatePushAt, force: s.updateForce });
+  });
+
+  // Siveyans panel la (pwoblèm + koreksyon pwopoze; admin nan deside)
+  mountWatch(app, db, {
+    authenticate, latestBuild, customerOf, toEpochSec, tz, playlistsOf,
+    isOnline: (dv) => !!dv.lastSeenAt && Date.now() - Date.parse(dv.lastSeenAt) < ONLINE_MS,
+    isExpired: (dv) => { const c = customerOf(dv); if (!c) return false; const cs = String(c.status || "").toLowerCase();
+      return cs === "suspended" || cs === "expired" || (!!c.expiry && toEpochSec(c.expiry, tz(), true) < Math.floor(Date.now() / 1000)); },
   });
 
   // =========================================================================
