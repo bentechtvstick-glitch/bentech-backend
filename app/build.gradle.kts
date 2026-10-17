@@ -24,6 +24,9 @@ android {
 
         // false = kliyan an pa ka antre playlist li menm; se panel la sèl ki ajoute l
         buildConfigField("boolean", "ALLOW_MANUAL_LOGIN", "false")
+
+        // Dekodè FFmpeg la gen kòd natif: sèlman pwosesè ARM TV yo (Fire TV, Android TV), pou APK a pa twò gwo
+        ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
     }
 
     // Menm kle siyati pou tout bati yo (san sa, Fire Stick la refize mete yon nouvo vèsyon sou ansyen an)
@@ -89,4 +92,6 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:$media3")
     implementation("androidx.media3:media3-ui:$media3")
     implementation("androidx.media3:media3-datasource-okhttp:$media3")
+    // Son fim/seri yo: dekode AC3, E-AC3 (Dolby), DTS, TrueHD… lè TV a pa ka fè l li menm (san sa: videyo san son)
+    implementation("org.jellyfin.media3:media3-ffmpeg-decoder:$media3+1")
 }

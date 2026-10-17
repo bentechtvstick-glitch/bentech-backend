@@ -172,7 +172,7 @@ class VodPlayerActivity : AppCompatActivity() {
 
     private fun initPlayer() {
         if (player != null) return
-        val renderers = DefaultRenderersFactory(this).setEnableDecoderFallback(true)
+        val renderers = Renderers.factory(this)
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(20_000, 90_000, 2_500, 5_000)
             .setPrioritizeTimeOverSizeThresholds(true)

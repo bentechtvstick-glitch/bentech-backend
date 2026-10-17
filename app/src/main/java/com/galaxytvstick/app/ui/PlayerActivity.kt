@@ -283,7 +283,7 @@ class PlayerActivity : AppCompatActivity() {
             .setUserAgent(XtreamApi.USER_AGENT)
         dataSourceFactory = dataSource
 
-        player = ExoPlayer.Builder(this)
+        player = ExoPlayer.Builder(this, Renderers.factory(this))
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSource))
             .setLoadControl(loadControl())
             .build().also { p ->
