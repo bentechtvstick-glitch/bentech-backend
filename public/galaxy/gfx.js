@@ -19,8 +19,8 @@
 .gx-sb-t{padding:8px 12px;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .gx-sb-n{background:rgba(8,12,26,.94);padding:8px 10px;min-width:22px;text-align:center;font-variant-numeric:tabular-nums}
 .gx-sb-c{background:rgba(8,12,26,.94);color:#00E5FF;padding:8px 12px;font-size:14px;display:flex;align-items:center;border-left:1px solid rgba(255,255,255,.14);white-space:nowrap;font-variant-numeric:tabular-nums}
-.gx-wx{display:flex;align-items:center;gap:8px;background:rgba(8,12,26,.72);border-radius:10px;padding:6px 12px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
-.gx-wx i{font-style:normal;font-size:24px;line-height:1}.gx-wx b{font-size:20px;font-weight:800;line-height:1}.gx-wx span{font-size:13px;opacity:.85;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.gx-wx{display:flex;align-items:center;gap:8px;padding:4px;text-shadow:0 1px 4px rgba(0,0,0,.9)}
+.gx-wx i{font-style:normal;font-size:24px;line-height:1}.gx-wx b{font-size:20px;font-weight:800;line-height:1}.gx-wx span{font-size:13px;font-weight:700;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
 .gx-cd{display:flex;flex-direction:column;align-items:center;background:rgba(8,12,26,.8);border-radius:10px;padding:6px 16px 8px;border-bottom:3px solid #00E5FF;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 .gx-cd small{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;white-space:nowrap}
 .gx-cd b{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15;white-space:nowrap}
@@ -53,9 +53,23 @@
   }
   const cdText = (c, now) => (now >= c.targetAt ? c.doneText || "00:00" : fmtLeft(c.targetAt - now));
 
+  const BUG_FONTS = { sans: "system-ui,Roboto,Arial,sans-serif", condensed: "'Roboto Condensed','Arial Narrow',sans-serif", black: "'Arial Black',Roboto,sans-serif",
+    serif: "Georgia,'Times New Roman',serif", mono: "'Roboto Mono',Consolas,monospace", script: "'Dancing Script','Brush Script MT',cursive" };
+  /** Tèks logo bug la ak estil li (menm rezilta ak app TV a). */
+  function bugTextCss(b, px) {
+    const c = b.color || "#FFFFFF", c2 = b.color2 || "#1D4ED8", st = b.style || "classic";
+    let css = `font-size:${px}px;font-family:${BUG_FONTS[b.font] || BUG_FONTS.sans};font-weight:${b.font === "black" ? 900 : 800};` +
+      `font-style:${b.italic ? "italic" : "normal"};text-transform:${b.caps === false ? "none" : "uppercase"};color:${c};`;
+    const k = Math.max(1, Math.round(px / 14));
+    if (st === "outline") css += `text-shadow:${[[-k, -k], [k, -k], [-k, k], [k, k], [0, -k], [0, k], [-k, 0], [k, 0]].map(([x, y]) => `${x}px ${y}px 0 ${c2}`).join(",")};`;
+    else if (st === "glow") css += `text-shadow:0 0 ${k * 3}px ${c2},0 0 ${k * 6}px ${c2},0 0 ${k * 10}px ${c2};`;
+    else if (st === "box") css += `background:${c2};padding:${Math.round(px * 0.18)}px ${Math.round(px * 0.45)}px;border-radius:${Math.round(px * 0.25)}px;text-shadow:none;`;
+    else if (st === "gradient") css += `background:linear-gradient(180deg,${c},${c2});-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));`;
+    return css;
+  }
   function bugHtml(b) {
     const op = (b.opacity ?? 85) / 100, h = b.size || 44;
-    return `<div class="gx-bug" style="opacity:${op}">${b.imageUrl ? `<img src="${esc(b.imageUrl)}" style="height:${h}px" alt="">` : `<b style="font-size:${Math.round(h * 0.6)}px">${esc(b.text)}</b>`}</div>`;
+    return `<div class="gx-bug" style="opacity:${op}">${b.imageUrl ? `<img src="${esc(b.imageUrl)}" style="height:${h}px" alt="">` : `<b style="${bugTextCss(b, Math.round(h * 0.6))}">${esc(b.text)}</b>`}</div>`;
   }
   function sbHtml(s) {
     return `<div class="gx-sb">${s.league ? `<div class="gx-sb-l">${esc(s.league)}</div>` : ""}<div class="gx-sb-r">

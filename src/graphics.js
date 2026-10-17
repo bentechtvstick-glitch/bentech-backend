@@ -128,7 +128,11 @@ export function buildGraphics(g, ctx) {
   const b = g.bug || {};
   if (b.on && (isUrl(b.imageUrl) || str(b.text))) {
     out.bug = { imageUrl: isUrl(b.imageUrl) ? str(b.imageUrl, 500) : null, text: str(b.text, 24), position: pos(b.position, POS6, "top-right"),
-      size: num(b.size, 44, 16, 160), opacity: num(b.opacity, 85, 10, 100) };
+      size: num(b.size, 44, 16, 160), opacity: num(b.opacity, 85, 10, 100),
+      // Estil tèks la (lè pa gen logo): kalite, polis, koulè, italik, majiskil
+      style: ["classic", "outline", "glow", "box", "gradient"].includes(b.style) ? b.style : "classic",
+      font: ["sans", "condensed", "black", "serif", "mono", "script"].includes(b.font) ? b.font : "sans",
+      color: hex(b.color, "#FFFFFF"), color2: hex(b.color2, "#1D4ED8"), italic: !!b.italic, caps: b.caps !== false };
   }
 
   // Watermark: tèks pal sou imaj la (egz: MAC kliyan an) pou dekouraje moun k ap kopye/rediffize
