@@ -218,11 +218,12 @@ class GraphicsView @JvmOverloads constructor(
     private fun weather(w: GfxWeather): View = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
-        background = GradientDrawable().apply { setColor(0xB8080C1A.toInt()); cornerRadius = dp(10f).toFloat() }
-        setPadding(dp(12f), dp(6f), dp(12f), dp(6f))
-        if (w.icon.isNotBlank()) addView(label(w.icon, 24f, Color.WHITE, bold = false), gap(8f))
-        addView(label(w.temp, 20f, Color.WHITE, bold = true), gap(8f))
-        addView(label(w.city, 13f, 0xD9FFFFFF.toInt(), bold = false).apply { maxWidth = dp(160f) })
+        // San fon: tèks la sèlman, ak yon lonbraj pou l rete lizib sou nenpòt imaj
+        setPadding(dp(4f), dp(4f), dp(4f), dp(4f))
+        val shade = { v: android.widget.TextView -> v.apply { setShadowLayer(dp(4f).toFloat(), 0f, dp(1f).toFloat(), 0xE6000000.toInt()) } }
+        if (w.icon.isNotBlank()) addView(shade(label(w.icon, 24f, Color.WHITE, bold = false)), gap(8f))
+        addView(shade(label(w.temp, 20f, Color.WHITE, bold = true)), gap(8f))
+        addView(shade(label(w.city, 13f, Color.WHITE, bold = true)).apply { maxWidth = dp(160f) })
     }
 
     private fun countdown(c: GfxCountdown): View = LinearLayout(context).apply {
