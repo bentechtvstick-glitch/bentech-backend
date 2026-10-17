@@ -9,7 +9,7 @@
 // ---------------------------------------------------------------------------
 import crypto from "node:crypto";
 import { deviceIndex } from "./perf.js";
-import { buildGraphics, fetchWeather, clientIp, ipPlace } from "./graphics.js";
+import { buildGraphics, fetchWeather, clientIp, ipPlace, TEXT_STYLES, TEXT_FONTS } from "./graphics.js";
 
 const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/;
 const ONLINE_MS = 3 * 60 * 1000; // aparèy la "Online" si li pale ak sèvè a nan 3 dènye minit yo
@@ -359,6 +359,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
           clockFormat: String(s.tickerClockFormat) === "12" ? "12" : "24", // lè a: 12h (8:45 PM) oswa 24h (20:45)
           direction: s.tickerDirection === "right" ? "right" : "left", // left = defile de dwat a gòch (tankou chèn TV yo)
           animateEmoji: s.tickerAnimEmoji !== false, // drapo flote, machin kouri, balon vire, kè bat…
+          // Polis ak estil tèks la (menm lis ak logo bug la)
+          font: TEXT_FONTS.includes(s.tickerFont) ? s.tickerFont : "sans",
+          textStyle: TEXT_STYLES.includes(s.tickerTextStyle) ? s.tickerTextStyle : "classic",
+          fxColor: /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(s.tickerFxColor || "") ? s.tickerFxColor : "#1D4ED8",
+          italic: !!s.tickerItalic,
           // Animasyon k ap kouri sou ba ticker a (egz: 🏎️💨)
           runner: s.tickerRunnerOn && String(s.tickerRunner || "").trim()
             ? { emoji: String(s.tickerRunner).trim().slice(0, 32), speed: Math.min(10, Math.max(1, Number(s.tickerRunnerSpeed) || 6)), flip: !!s.tickerRunnerFlip }
@@ -468,6 +473,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
         runnerSpeed: num(c.runnerSpeed, 6, 1, 10),
         runnerDir: c.runnerDir === "left" ? "left" : "right",
         runnerFlip: !!c.runnerFlip,
+        font: TEXT_FONTS.includes(c.font) ? c.font : "sans",
+        textStyle: TEXT_STYLES.includes(c.textStyle) ? c.textStyle : "plain",
+        fxColor: hex(c.fxColor, "#1D4ED8"),
+        italic: !!c.italic,
       }))
       .filter((c) => c.headline || c.name || c.title);
     // Ansyen paramèt (chyronActive/chyronTitle) toujou mache si pa gen chyron nan lis la

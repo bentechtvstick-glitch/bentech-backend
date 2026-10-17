@@ -386,7 +386,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .dimbox{transition:opacity .15s}.dimbox.dim{opacity:.45}
 .field input:disabled{opacity:.4;cursor:not-allowed}
 .tkprev .lab{flex:none;display:flex;align-items:center;padding:0 16px;font-size:.85em;white-space:nowrap;z-index:1}
-.tkprev .run{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;min-width:0}
+.tkprev .fxclip span{color:transparent!important}.tkprev .run{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;min-width:0}
 .tkprev .track{display:flex;white-space:pre;animation:tkmove linear infinite;will-change:transform}
 .tkprev .clk{flex:none;display:flex;align-items:center;padding:0 14px;background:rgba(0,0,0,.9);color:#fff;font-size:.85em;font-variant-numeric:tabular-nums;z-index:1}
 .tkprev.off{opacity:.45}
@@ -411,6 +411,8 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
   .pagehead h1{font-size:24px}
 }
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Audiowide&family=Bangers&family=Bebas+Neue&family=Great+Vibes&family=Lobster&family=Orbitron:wght@700&family=Oswald:wght@700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,800;1,800&family=Righteous&family=Russo+One&family=Teko:wght@600&display=swap">
 </head>
 <body>
 
@@ -677,7 +679,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="bug.on" id="g_bug_on"><i></i></label><div class="grow"><label for="g_bug_on"><b>Logo bug</b></label><p class="note" style="margin:2px 0 0">Ti logo chèn ou an nan yon kwen ekran an, toutan.</p></div></div>
             <div class="field"><label for="g_bug_imageUrl">URL logo (PNG transparan)</label><input type="url" id="g_bug_imageUrl" data-g="bug.imageUrl" maxlength="500" placeholder="https://…/logo.png"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="g_bug_imageUrl">📤 Chwazi yon imaj</button><span class="note" data-upmsg="g_bug_imageUrl"></span></div></div>
             <div class="row2"><div class="field"><label for="g_bug_text">Oswa tèks (si pa gen logo)</label><input type="text" id="g_bug_text" data-g="bug.text" maxlength="24" placeholder="GALAXY TV"></div><div class="field"><label for="g_bug_position">Pozisyon</label><select id="g_bug_position" data-g="bug.position"><option value="top-left">Anlè agoch</option><option value="top-center">Anlè nan mitan</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div></div>
-            <div class="row2"><div class="field"><label for="g_bug_style">Estil tèks la</label><select id="g_bug_style" data-g="bug.style"><option value="classic">Klasik (lonbraj)</option><option value="outline">Kontou</option><option value="glow">Limyè (glow)</option><option value="box">Nan yon bwat</option><option value="gradient">Degrade</option></select></div><div class="field"><label for="g_bug_font">Polis</label><select id="g_bug_font" data-g="bug.font"><option value="sans">Modèn</option><option value="condensed">Sere (condensed)</option><option value="black">Epè (black)</option><option value="serif">Klasik (serif)</option><option value="mono">Machin a ekri (mono)</option><option value="script">Ekriti men (script)</option></select></div></div>
+            <div class="row2"><div class="field"><label for="g_bug_style">Estil tèks la</label><select id="g_bug_style" data-g="bug.style" data-fx-style></select></div><div class="field"><label for="g_bug_font">Polis</label><select id="g_bug_font" data-g="bug.font" data-fx-font></select></div></div>
             <div class="row2"><div class="field"><label>Koulè tèks la</label><label class="swatch"><input type="color" id="g_bug_color" data-g="bug.color" value="#ffffff"><span><b>Koulè</b></span></label></div><div class="field"><label>Dezyèm koulè (kontou, limyè, bwat, degrade)</label><label class="swatch"><input type="color" id="g_bug_color2" data-g="bug.color2" value="#1d4ed8"><span><b>Koulè</b></span></label></div></div>
             <div class="row2"><div class="inline"><label class="sw"><input type="checkbox" data-g="bug.italic" id="g_bug_italic"><i></i></label><label for="g_bug_italic">Italik</label></div><div class="inline"><label class="sw"><input type="checkbox" data-g="bug.caps" id="g_bug_caps" checked><i></i></label><label for="g_bug_caps">TOUT AN MAJISKIL</label></div></div>
             <div class="row2"><div class="field"><label for="g_bug_size">Gwosè <b data-gv="bug.size"></b></label><input type="range" id="g_bug_size" data-g="bug.size" min="16" max="160" value="44"></div><div class="field"><label for="g_bug_opacity">Opasite % <b data-gv="bug.opacity"></b></label><input type="range" id="g_bug_opacity" data-g="bug.opacity" min="10" max="100" value="85"></div></div>
@@ -842,6 +844,12 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="field"><label for="tkSize">Gwosè tèks <b id="tkSizeV"></b></label><input type="range" id="tkSize" min="12" max="40"></div>
             <div class="field"><label>&nbsp;</label><div class="inline"><label class="sw"><input type="checkbox" id="tkBgTr"><i></i></label><label for="tkBgTr">Fon transparan</label></div></div>
           </div>
+          <div class="row2">
+            <div class="field"><label for="tkFont">Polis</label><select id="tkFont" data-fx-font></select></div>
+            <div class="field"><label for="tkStyle">Estil tèks la</label><select id="tkStyle" data-fx-style></select></div>
+            <div class="field"><label>Dezyèm koulè (kontou, limyè, bwat, degrade)</label><label class="swatch"><input type="color" id="tkFx" value="#1d4ed8"><span><b>Koulè</b></span></label></div>
+            <div class="field"><label>&nbsp;</label><div class="inline"><label class="sw"><input type="checkbox" id="tkItalic"><i></i></label><label for="tkItalic">Italik</label></div></div>
+          </div>
           <div class="inline" style="margin:6px 0 10px"><label class="sw"><input type="checkbox" id="tkRepeat"><i></i></label><label for="tkRepeat"><b>Repete mesaj yo san rete</b> <span class="note">— etenn: chak mesaj pase yon sèl fwa sou ekran an, epi li rekòmanse apre</span></label></div>
           <div class="inline" style="margin:6px 0 4px"><label class="sw"><input type="checkbox" id="tkLabelOn"><i></i></label><label for="tkLabelOn"><b>Montre etikèt agoch la</b></label></div>
           <div class="dimbox" id="tkLabelBox">
@@ -949,6 +957,12 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
               <label class="swatch"><input type="color" id="cyBg" value="#0b1630"><span><b>Fon</b><code id="cyBgV"></code></span></label>
               <label class="swatch"><input type="color" id="cyText" value="#ffffff"><span><b>Tèks</b><code id="cyTextV"></code></span></label>
               <label class="swatch"><input type="color" id="cyAccent" value="#e50914"><span><b>Aksan</b><code id="cyAccentV"></code></span></label>
+            </div>
+            <div class="row2">
+              <div class="field"><label for="cyFont">Polis</label><select id="cyFont" data-fx-font></select></div>
+              <div class="field"><label for="cyStyle">Estil tèks non an</label><select id="cyStyle" data-fx-style></select></div>
+              <div class="field"><label>Dezyèm koulè (kontou, limyè, bwat, degrade)</label><label class="swatch"><input type="color" id="cyFx" value="#1d4ed8"><span><b>Koulè</b></span></label></div>
+              <div class="field"><label>&nbsp;</label><div class="inline"><label class="sw"><input type="checkbox" id="cyItalic"><i></i></label><label for="cyItalic">Italik</label></div></div>
             </div>
             <div class="inline"><label class="sw"><input type="checkbox" id="cyAnimE" checked><i></i></label><label for="cyAnimE">Anime imoji yo (drapo flote, machin kouri, balon vire…)</label></div>
             <div class="row3">
@@ -1098,6 +1112,7 @@ function translateStatic(root) {
   });
 }
 function setLang(code) {
+  setTimeout(() => window.fillFxSelects && fillFxSelects(), 0);
   lang = code; try { localStorage.setItem("galaxy_lang", code); } catch {}
   document.documentElement.lang = code;
   document.querySelectorAll("[data-lang-select]").forEach((sel) => (sel.value = code));
@@ -1706,6 +1721,14 @@ $("#crudTable").addEventListener("click", (e) => {
 });
 
 
+// ------------------------------------------------------------ Lis polis ak estil tèks yo (logo bug, ticker, chyron)
+window.fillFxSelects = fillFxSelects;
+function fillFxSelects() {
+  const G = window.GalaxyGfx; if (!G) return;
+  $$("select[data-fx-font]").forEach((sel) => { const v = sel.value; sel.innerHTML = G.FONTS.map(([k, label, css]) => `<option value="${k}" style="font-family:${esc(css)}">${esc(t(label))}</option>`).join(""); if (v) sel.value = v; });
+  $$("select[data-fx-style]").forEach((sel) => { const v = sel.value; sel.innerHTML = G.STYLES.map(([k, label]) => `<option value="${k}">${esc(t(label))}</option>`).join(""); if (v) sel.value = v; });
+}
+fillFxSelects();
 // ------------------------------------------------------------ Asistan AI (Dashboard)
 async function loadAi() {
   let y; try { y = await api("GET", "/galaxy/ai"); } catch { return; }
@@ -2176,6 +2199,7 @@ function fillTickerStyle() {
   $("#tkLabelBg").value = hex6(s.tickerLabelBg || "#E50914"); $("#tkLabelColor").value = hex6(s.tickerLabelColor || "#FFFFFF");
   $("#tkClock").checked = !!s.tickerClock; setSegTk(String(s.tickerClockFormat) === "12" ? "12" : "24");
   $("#tkLabelOn").checked = s.tickerLabelOn !== false; $("#tkSize").value = s.tickerTextSize || 20;
+  $("#tkFont").value = s.tickerFont || "sans"; $("#tkStyle").value = s.tickerTextStyle || "classic"; $("#tkFx").value = hex6(s.tickerFxColor || "#1D4ED8"); $("#tkItalic").checked = !!s.tickerItalic;
   $("#tkBgTr").checked = !!s.tickerBgTransparent; $("#tkLabelTr").checked = !!s.tickerLabelBgTransparent;
   $("#tkAnim").checked = s.tickerAnimEmoji !== false; $("#tkRunOn").checked = !!s.tickerRunnerOn; $("#tkRun").value = s.tickerRunner ?? "🏎️💨";
   $("#tkRunSpeed").value = s.tickerRunnerSpeed || 6; $("#tkRunFlip").checked = !!s.tickerRunnerFlip;
@@ -2198,7 +2222,7 @@ $("#tkSeps").addEventListener("click", (e) => { const b = e.target.closest("[dat
 $("#tkSeps").addEventListener("input", (e) => { if (e.target.id !== "tkSepCustom") return; tkSep = e.target.value || "•"; $$("#tkSeps .chip").forEach((c) => c.classList.toggle("on", c.contains(e.target))); renderTkPreview(); scheduleTkSave(); });
 const setSegTk = (v) => $$("#tkClockFmt [data-v]").forEach((b) => { b.classList.toggle("on", b.dataset.v === v); b.setAttribute("role", "radio"); b.setAttribute("aria-checked", String(b.dataset.v === v)); });
 $("#tkClockFmt").addEventListener("click", (e) => { const b = e.target.closest("[data-v]"); if (!b) return; setSegTk(b.dataset.v); if (!$("#tkClock").checked) { $("#tkClock").checked = true; } renderTkPreview(); scheduleTkSave(); });
-["#tkRepeat", "#tkDir", "#tkSpeed", "#tkColor", "#tkBg", "#tkBgA", "#tkLabel", "#tkLabelBg", "#tkLabelColor", "#tkClock", "#tkActive", "#tkSize", "#tkBgTr", "#tkLabelOn", "#tkLabelTr", "#tkAnim", "#tkRunOn", "#tkRun", "#tkRunSpeed", "#tkRunFlip"].forEach((sel) => $(sel).addEventListener("input", () => {
+["#tkFont", "#tkStyle", "#tkFx", "#tkItalic", "#tkRepeat", "#tkDir", "#tkSpeed", "#tkColor", "#tkBg", "#tkBgA", "#tkLabel", "#tkLabelBg", "#tkLabelColor", "#tkClock", "#tkActive", "#tkSize", "#tkBgTr", "#tkLabelOn", "#tkLabelTr", "#tkAnim", "#tkRunOn", "#tkRun", "#tkRunSpeed", "#tkRunFlip"].forEach((sel) => $(sel).addEventListener("input", () => {
   // Ekri yon etikèt = limen switch etikèt la otomatikman
   if (sel === "#tkLabel" && $("#tkLabel").value.trim() && !$("#tkLabelOn").checked) $("#tkLabelOn").checked = true;
   if (sel === "#tkRun" && $("#tkRun").value.trim() && !$("#tkRunOn").checked) $("#tkRunOn").checked = true;
@@ -2207,6 +2231,11 @@ $("#tkClockFmt").addEventListener("click", (e) => { const b = e.target.closest("
 $("#tkActive").addEventListener("change", () => putSettings({ tickerActive: $("#tkActive").checked }, $("#tkActive").checked ? "Ticker aktive" : "Ticker dezaktive"));
 const tkScale = () => { const st = $("#tkStage"); if (st && st.clientWidth) $("#tkTv").style.transform = `scale(${st.clientWidth / 960})`; };
 if (window.ResizeObserver) new ResizeObserver(tkScale).observe($("#tkStage"));
+/** Estil tèks ticker a pou preview a (koulè chak mesaj rete sou span yo; degrade/metal/dife ranplase yo). */
+function tkTextCss(size) {
+  const G = window.GalaxyGfx; if (!G) return "";
+  return G.textCss({ style: $("#tkStyle").value, font: $("#tkFont").value, color: $("#tkColor").value, color2: $("#tkFx").value, italic: $("#tkItalic").checked }, size).replace(/(^|;)color:[^;]*;/, "$1");
+}
 function renderTkPreview() {
   const box = $("#tkPreview"); if (!box) return;
   const gc = $("#tkColor").value; const typing = $("#tickerText").value.trim();
@@ -2224,7 +2253,7 @@ function renderTkPreview() {
   const clk = `<div class="clk"${bgTr ? ' style="background:transparent"' : ""}>${new Date().toLocaleTimeString(h12 ? "en-US" : [], { hour: h12 ? "numeric" : "2-digit", minute: "2-digit", hour12: h12 })}</div>`;
   box.innerHTML = `<div class="tkprev${$("#tkActive").checked ? "" : " off"}${bgA < 43 ? " shadow" : ""}" style="background:${rgba($("#tkBg").value, bgA)};font-size:${size}px;height:${size * 2}px">
     ${label ? `<div class="lab" style="background:${$("#tkLabelTr").checked ? "transparent" : esc($("#tkLabelBg").value)};color:${esc($("#tkLabelColor").value)}">${esc(label)}</div>` : ""}
-    <div class="run"><div class="track">${rep ? half + half : half}</div></div>
+    <div class="run"><div class="track${["gradient", "metal", "fire"].includes($("#tkStyle").value) ? " fxclip" : ""}" style="${tkTextCss(size)}">${rep ? half + half : half}</div></div>
     ${$("#tkClock").checked ? clk : ""}</div>`;
   tkScale();
   const tr = $(".track", box); const w = tr.firstElementChild.offsetWidth; // lajè sou ekran 960 px la (pa lajè redwi a)
@@ -2250,6 +2279,7 @@ function tickerStylePatch() {
     tickerLabel: $("#tkLabel").value.trim(), tickerLabelBg: $("#tkLabelBg").value.toUpperCase(), tickerLabelColor: $("#tkLabelColor").value.toUpperCase(),
     tickerSeparator: tkSep, tickerClock: $("#tkClock").checked, tickerClockFormat: $("#tkClockFmt .on")?.dataset.v || "24",
     tickerLabelOn: $("#tkLabelOn").checked, tickerTextSize: +$("#tkSize").value || 20,
+    tickerFont: $("#tkFont").value || "sans", tickerTextStyle: $("#tkStyle").value || "classic", tickerFxColor: $("#tkFx").value.toUpperCase(), tickerItalic: $("#tkItalic").checked,
     tickerAnimEmoji: $("#tkAnim").checked, tickerRunnerOn: $("#tkRunOn").checked, tickerRunner: $("#tkRun").value.trim(),
     tickerRunnerSpeed: +$("#tkRunSpeed").value || 6, tickerRunnerFlip: $("#tkRunFlip").checked,
     tickerBgTransparent: $("#tkBgTr").checked, tickerLabelBgTransparent: $("#tkLabelTr").checked,
@@ -2276,7 +2306,7 @@ $("#tkSave").addEventListener("click", async () => {
 
 // ------------------------------------------------------------ Chyron / Lower third
 const CY_DEF = { headline: "", name: "", title: "", logoUrl: "", status: "Active", position: "bottom-left", animation: "slide", duration: 10, opacity: 92,
-  bgColor: "#0B1630", textColor: "#FFFFFF", accentColor: "#E50914", headlineSize: 14, nameSize: 26, titleSize: 16, sticker: "", animateEmoji: true, runner: "", runnerSpeed: 6, runnerDir: "right", runnerFlip: false };
+  bgColor: "#0B1630", textColor: "#FFFFFF", accentColor: "#E50914", headlineSize: 14, nameSize: 26, titleSize: 16, sticker: "", animateEmoji: true, runner: "", runnerSpeed: 6, runnerDir: "right", runnerFlip: false, font: "sans", textStyle: "plain", fxColor: "#1D4ED8", italic: false };
 const CY_THEMES = [["Nouvèl", "#0B1630", "#FFFFFF", "#E50914"], ["Espò", "#04261A", "#FFFFFF", "#00C853"], ["Lò", "#141414", "#FFFFFF", "#D4A017"], ["Galaxy", "#1A0F3D", "#FFFFFF", "#7C4DFF"], ["Klè", "#FFFFFF", "#101828", "#1565C0"]];
 const CY_POS = { "bottom-left": "Anba agoch", "bottom-center": "Anba nan mitan", "bottom-right": "Anba adwat", "top-left": "Anlè agoch", "top-center": "Anlè nan mitan", "top-right": "Anlè adwat" };
 const CY_ANIM = { slide: "Glise", fade: "Parèt dousman", wipe: "Bale", none: "Okenn" };
@@ -2294,6 +2324,7 @@ function cyRead() {
     sticker: $("#cySticker").value.trim(), animateEmoji: $("#cyAnimE").checked,
     runner: $("#cyRunOn").checked ? $("#cyRun").value.trim() : "", runnerSpeed: clampN($("#cyRunSpeed").value, 6, 1, 10),
     runnerDir: segVal("cyRunDir") || "right", runnerFlip: $("#cyRunFlip").checked,
+    font: $("#cyFont").value || "sans", textStyle: $("#cyStyle").value || "plain", fxColor: $("#cyFx").value.toUpperCase(), italic: $("#cyItalic").checked,
   };
 }
 function cyFill(c) {
@@ -2304,6 +2335,7 @@ function cyFill(c) {
   $("#cyBg").value = hex6(c.bgColor); $("#cyText").value = hex6(c.textColor); $("#cyAccent").value = hex6(c.accentColor);
   $("#cyHS").value = c.headlineSize; $("#cyNS").value = c.nameSize; $("#cyTS").value = c.titleSize;
   $("#cySticker").value = c.sticker || ""; $("#cyAnimE").checked = c.animateEmoji !== false;
+  $("#cyFont").value = c.font || "sans"; $("#cyStyle").value = c.textStyle || "plain"; $("#cyFx").value = hex6(c.fxColor || "#1D4ED8"); $("#cyItalic").checked = !!c.italic;
   $("#cyRunOn").checked = !!c.runner; if (c.runner) $("#cyRun").value = c.runner; else if (!$("#cyRun").value) $("#cyRun").value = "🏎️💨";
   $("#cyRunSpeed").value = c.runnerSpeed || 6; setSeg("cyRunDir", c.runnerDir === "left" ? "left" : "right"); $("#cyRunFlip").checked = !!c.runnerFlip;
   cyLabels();
@@ -2321,11 +2353,13 @@ function cyHtml(c, anim) {
   const body = c.name || c.title || c.logoUrl || c.sticker;
   const F = window.GalaxyFx, h = (x) => (F ? F.html(x, c.animateEmoji !== false) : esc(x));
   const stk = c.sticker ? `<span class="chy-stk" style="font-size:${Math.round(c.nameSize * 1.5)}px"><span class="fx fx-${F ? F.first(c.sticker) : "bounce"}">${esc(c.sticker)}</span></span>` : "";
-  return `<div class="chy pos-${esc(c.position)}${a}" style="--acc:${esc(c.accentColor)};color:${esc(c.textColor)}">`
+  const G = window.GalaxyGfx, fnt = G ? G.textCss({ style: "plain", font: c.font, italic: c.italic }).replace(/text-shadow:none;|color:[^;]*;/g, "") : "";
+  const nameCss = G ? G.textCss({ style: c.textStyle || "plain", font: c.font, color: c.textColor, color2: c.fxColor, italic: c.italic }, c.nameSize) : `font-size:${c.nameSize}px`;
+  return `<div class="chy pos-${esc(c.position)}${a}" style="--acc:${esc(c.accentColor)};color:${esc(c.textColor)};${fnt}">`
     + (c.headline ? `<div class="chy-head" style="font-size:${c.headlineSize}px">${h(c.headline)}</div>` : "")
     + (c.runner ? `<div class="chy-run" style="height:${Math.round(c.nameSize * 1.3)}px;font-size:${Math.round(c.nameSize * 1.05)}px"></div>` : "")
     + (body ? `<div class="chy-body" style="background:${rgba(hex6(c.bgColor), c.opacity)}">${stk}${c.logoUrl ? `<img class="chy-logo" src="${esc(c.logoUrl)}" alt="">` : ""}<div class="chy-txt">`
-      + (c.name ? `<div class="chy-name" style="font-size:${c.nameSize}px">${h(c.name)}</div>` : "")
+      + (c.name ? `<div class="chy-name"><span style="${nameCss};display:inline-block">${h(c.name)}</span></div>` : "")
       + (c.title ? `<div class="chy-title" style="font-size:${c.titleSize}px">${h(c.title)}</div>` : "") + `</div></div>` : "")
     + `</div>`;
 }

@@ -53,20 +53,44 @@
   }
   const cdText = (c, now) => (now >= c.targetAt ? c.doneText || "00:00" : fmtLeft(c.targetAt - now));
 
-  const BUG_FONTS = { sans: "system-ui,Roboto,Arial,sans-serif", condensed: "'Roboto Condensed','Arial Narrow',sans-serif", black: "'Arial Black',Roboto,sans-serif",
-    serif: "Georgia,'Times New Roman',serif", mono: "'Roboto Mono',Consolas,monospace", script: "'Dancing Script','Brush Script MT',cursive" };
-  /** Tèks logo bug la ak estil li (menm rezilta ak app TV a). */
-  function bugTextCss(b, px) {
-    const c = b.color || "#FFFFFF", c2 = b.color2 || "#1D4ED8", st = b.style || "classic";
-    let css = `font-size:${px}px;font-family:${BUG_FONTS[b.font] || BUG_FONTS.sans};font-weight:${b.font === "black" ? 900 : 800};` +
-      `font-style:${b.italic ? "italic" : "normal"};text-transform:${b.caps === false ? "none" : "uppercase"};color:${c};`;
-    const k = Math.max(1, Math.round(px / 14));
-    if (st === "outline") css += `text-shadow:${[[-k, -k], [k, -k], [-k, k], [k, k], [0, -k], [0, k], [-k, 0], [k, 0]].map(([x, y]) => `${x}px ${y}px 0 ${c2}`).join(",")};`;
+  // ---- Estil tèks (logo bug, ticker, chyron…): menm lis ak app TV a (ui/TextFx.kt) ----
+  const FONTS = [
+    ["sans", "Modèn", "system-ui,Roboto,Arial,sans-serif"], ["condensed", "Sere (condensed)", "'Roboto Condensed','Arial Narrow',sans-serif"],
+    ["black", "Epè (black)", "'Arial Black',Roboto,sans-serif"], ["serif", "Klasik (serif)", "Georgia,'Times New Roman',serif"],
+    ["mono", "Machin a ekri (mono)", "'Roboto Mono',Consolas,monospace"], ["script", "Ekriti men (script)", "'Dancing Script','Brush Script MT',cursive"],
+    ["bebas", "Bebas Neue", "'Bebas Neue',sans-serif"], ["oswald", "Oswald", "'Oswald',sans-serif"], ["anton", "Anton", "'Anton',sans-serif"],
+    ["teko", "Teko", "'Teko',sans-serif"], ["russo", "Russo One", "'Russo One',sans-serif"], ["orbitron", "Orbitron", "'Orbitron',sans-serif"],
+    ["audiowide", "Audiowide", "'Audiowide',sans-serif"], ["righteous", "Righteous", "'Righteous',sans-serif"], ["bangers", "Bangers", "'Bangers',cursive"],
+    ["marker", "Permanent Marker", "'Permanent Marker',cursive"], ["pacifico", "Pacifico", "'Pacifico',cursive"], ["lobster", "Lobster", "'Lobster',cursive"],
+    ["greatvibes", "Great Vibes", "'Great Vibes',cursive"], ["playfair", "Playfair Display", "'Playfair Display',serif"], ["abril", "Abril Fatface", "'Abril Fatface',serif"],
+  ];
+  const STYLES = [
+    ["plain", "Senp"], ["classic", "Klasik (lonbraj)"], ["outline", "Kontou"], ["glow", "Limyè (glow)"], ["neon", "Neyon"], ["box", "Nan yon bwat"],
+    ["gradient", "Degrade"], ["metal", "Metal"], ["fire", "Dife"], ["retro", "Retro (lonbraj plen)"], ["3d", "3D"],
+  ];
+  const FONT_CSS = Object.fromEntries(FONTS.map(([k, , css]) => [k, css]));
+  /** CSS pou yon tèks ak estil li. spec: { style, font, color, color2, italic, caps } */
+  function textCss(spec, px) {
+    const b = spec || {}, c = b.color || "#FFFFFF", c2 = b.color2 || "#1D4ED8", st = b.style || "classic";
+    const heavy = ["sans", "condensed", "serif", "mono", "oswald", "playfair"].includes(b.font || "sans");
+    let css = `font-family:${FONT_CSS[b.font] || FONT_CSS.sans};font-weight:${b.font === "black" ? 900 : heavy ? 800 : 400};` +
+      `font-style:${b.italic ? "italic" : "normal"};${b.caps === true ? "text-transform:uppercase;" : b.caps === false ? "text-transform:none;" : ""}color:${c};`;
+    if (px) css += `font-size:${px}px;`;
+    const k = Math.max(1, Math.round((px || 20) / 14));
+    if (st === "plain") css += "text-shadow:none;";
+    else if (st === "outline") css += `text-shadow:${[[-k, -k], [k, -k], [-k, k], [k, k], [0, -k], [0, k], [-k, 0], [k, 0]].map(([x, y]) => `${x}px ${y}px 0 ${c2}`).join(",")};`;
     else if (st === "glow") css += `text-shadow:0 0 ${k * 3}px ${c2},0 0 ${k * 6}px ${c2},0 0 ${k * 10}px ${c2};`;
-    else if (st === "box") css += `background:${c2};padding:${Math.round(px * 0.18)}px ${Math.round(px * 0.45)}px;border-radius:${Math.round(px * 0.25)}px;text-shadow:none;`;
+    else if (st === "neon") css += `text-shadow:0 0 ${k}px #fff,0 0 ${k * 3}px ${c2},0 0 ${k * 6}px ${c2},0 0 ${k * 12}px ${c2};`;
+    else if (st === "box") css += `background:${c2};padding:${Math.round((px || 20) * 0.18)}px ${Math.round((px || 20) * 0.45)}px;border-radius:${Math.round((px || 20) * 0.25)}px;text-shadow:none;`;
     else if (st === "gradient") css += `background:linear-gradient(180deg,${c},${c2});-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));`;
+    else if (st === "metal") css += `background:linear-gradient(180deg,#fff 0%,${c} 35%,${c2} 55%,${c} 80%,#fff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.7));`;
+    else if (st === "fire") css += `background:linear-gradient(180deg,#FFF59D 0%,#FFB300 45%,#E53935 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 ${k * 3}px #FF6D00);`;
+    else if (st === "retro") css += `text-shadow:${k * 2}px ${k * 2}px 0 ${c2};`;
+    else if (st === "3d") css += `text-shadow:${Array.from({ length: k * 3 }, (_, i) => `${i + 1}px ${i + 1}px 0 ${c2}`).join(",")},${k * 3 + 2}px ${k * 3 + 3}px ${k * 2}px rgba(0,0,0,.6);`;
+    else css += "text-shadow:0 2px 6px rgba(0,0,0,.7);";
     return css;
   }
+  const bugTextCss = (b, px) => textCss({ ...b, caps: b.caps !== false }, px);
   function bugHtml(b) {
     const op = (b.opacity ?? 85) / 100, h = b.size || 44;
     return `<div class="gx-bug" style="opacity:${op}">${b.imageUrl ? `<img src="${esc(b.imageUrl)}" style="height:${h}px" alt="">` : `<b style="${bugTextCss(b, Math.round(h * 0.6))}">${esc(b.text)}</b>`}</div>`;
@@ -113,5 +137,5 @@
     return `<div class="gx-full gx-bump" style="background:${esc(b.bgColor || "#0B1630")};color:${esc(b.textColor || "#fff")}">${url ? `<img src="${esc(url)}" alt="">` : `<b>${esc(text)}</b>`}</div>`;
   }
 
-  window.GalaxyGfx = { html, tick, identHtml, bumperHtml, fmtLeft, POS6 };
+  window.GalaxyGfx = { html, tick, identHtml, bumperHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
 })();

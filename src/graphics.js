@@ -7,6 +7,10 @@ const POS_WM = ["top-left", "top-right", "bottom-left", "bottom-right", "center"
 const isUrl = (s) => /^https?:\/\//i.test(String(s || "").trim());
 const str = (v, max = 80) => String(v ?? "").trim().slice(0, max);
 const num = (v, d, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(Number(v)) && v !== "" && v != null ? Number(v) : d));
+/** Estil ak polis tèks yo (menm lis ak panel la ak app TV a). */
+export const TEXT_STYLES = ["plain", "classic", "outline", "glow", "neon", "box", "gradient", "metal", "fire", "retro", "3d"];
+export const TEXT_FONTS = ["sans", "condensed", "black", "serif", "mono", "script", "bebas", "oswald", "anton", "teko", "russo", "orbitron",
+  "audiowide", "righteous", "bangers", "marker", "pacifico", "lobster", "greatvibes", "playfair", "abril"];
 const hex = (v, d) => (/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(v || "") ? v : d);
 const pos = (v, list, d) => (list.includes(v) ? v : d);
 
@@ -130,8 +134,8 @@ export function buildGraphics(g, ctx) {
     out.bug = { imageUrl: isUrl(b.imageUrl) ? str(b.imageUrl, 500) : null, text: str(b.text, 24), position: pos(b.position, POS6, "top-right"),
       size: num(b.size, 44, 16, 160), opacity: num(b.opacity, 85, 10, 100),
       // Estil tèks la (lè pa gen logo): kalite, polis, koulè, italik, majiskil
-      style: ["classic", "outline", "glow", "box", "gradient"].includes(b.style) ? b.style : "classic",
-      font: ["sans", "condensed", "black", "serif", "mono", "script"].includes(b.font) ? b.font : "sans",
+      style: TEXT_STYLES.includes(b.style) ? b.style : "classic",
+      font: TEXT_FONTS.includes(b.font) ? b.font : "sans",
       color: hex(b.color, "#FFFFFF"), color2: hex(b.color2, "#1D4ED8"), italic: !!b.italic, caps: b.caps !== false };
   }
 
