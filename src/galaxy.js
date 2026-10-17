@@ -356,6 +356,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
           // false (pa defo) = mesaj yo pase yon sèl fwa epi rekòmanse; true = yo repete san rete pou ba a toujou plen
           repeat: s.tickerRepeat === true,
           showClock: !!s.tickerClock,
+          // Kote lè a: nan ba a (adwat/agoch) oswa anlè ekran an (agoch, mitan, adwat)
+          clockPos: ["right", "left", "top-left", "top-center", "top-right"].includes(s.tickerClockPos) ? s.tickerClockPos : "right",
           clockFormat: String(s.tickerClockFormat) === "12" ? "12" : "24", // lè a: 12h (8:45 PM) oswa 24h (20:45)
           direction: s.tickerDirection === "right" ? "right" : "left", // left = defile de dwat a gòch (tankou chèn TV yo)
           animateEmoji: s.tickerAnimEmoji !== false, // drapo flote, machin kouri, balon vire, kè bat…
