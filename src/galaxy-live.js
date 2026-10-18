@@ -30,6 +30,8 @@ export const COMMAND_TYPES = {
   refresh: "Aplike chanjman panel la kounye a",
 };
 
+import { tvEvents } from "./tvevents.js";
+
 export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   const live = new Map();     // MAC → dènye estati
   const history = new Map();  // MAC → [ {id,num,name,at} ]
@@ -71,6 +73,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     const cmds = q.splice(0);
     const [first] = set;
     first(cmds);
+    tvEvents.delivered(findDevice(mac) || { mac }, cmds);
     return true;
   };
 
@@ -132,7 +135,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     if (!device) return;
     const mac = device.mac;
     const q = pendingFor(mac);
-    if (q.length) return res.json({ commands: q.splice(0) });
+    if (q.length) { const cmds = q.splice(0); tvEvents.delivered(device, cmds); return res.json({ commands: cmds }); }
 
     const wait = Math.min(Math.max(parseInt(req.query.wait, 10) || 20, 0), MAX_WAIT_S);
     if (!wait) return res.json({ commands: [] });
@@ -189,6 +192,12 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     const tm = setTimeout(finish, 25000);
     liveWaiters.add(finish);
     req.on("close", () => { if (!done) { done = true; clearTimeout(tm); liveWaiters.delete(finish); } });
+  });
+
+  /** Konfimasyon TV yo (panel la montre "✅ aplike sou TV …"). ?since=<id> */
+  app.get("/api/galaxy/tv-events", authenticate, (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json(tvEvents.since(Number(req.query.since) || 0));
   });
 
   /** Tout TV Galaxy yo, sa ki online an premye, ak sa yo ap gade. */

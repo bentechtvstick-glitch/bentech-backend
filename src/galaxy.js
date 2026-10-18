@@ -1,3 +1,4 @@
+import { tvEvents } from "./tvevents.js";
 // ---------------------------------------------------------------------------
 // Galaxy TV Stick — koneksyon ant app TV a ak panel BenTech la.
 //
@@ -294,6 +295,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const av = String(req.get("X-App-Version") || "").trim().slice(0, 20);
     if (/^\d+\.\d+\.\d+/.test(av)) device.appVersion = av;
     touchWrite();
+    tvEvents.configFetched(device); // panel la wè "✅ aplike sou TV a"
 
     const now = Math.floor(Date.now() / 1000);
     const zone = tz();

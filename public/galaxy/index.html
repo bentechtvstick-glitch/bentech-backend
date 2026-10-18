@@ -187,7 +187,7 @@ td.up,input.up{text-transform:uppercase}input.up::placeholder{text-transform:non
 .chedit{flex:1;min-width:0;height:30px;padding:2px 8px;font-size:14px;text-transform:none;letter-spacing:0}
 .chrow .catx{background:none;border:0;color:var(--dim);cursor:pointer;font-size:13px;width:24px;height:22px;padding:0;flex:none}
 .cat.off .catn{color:var(--faint);text-decoration:line-through}
-.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line2);border-radius:10px;padding:10px 16px;z-index:40;box-shadow:0 10px 30px #000}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line2);border-radius:10px;padding:10px 16px;z-index:40;box-shadow:0 10px 30px #000;white-space:pre-line;text-align:center}
 
 /* koulè, chips, seleksyonè imoji, preview ticker */
 input[type=color]{width:46px;height:40px;padding:3px;border:1px solid var(--line2);border-radius:8px;background:var(--field);cursor:pointer;flex:none}
@@ -1291,7 +1291,41 @@ function applyRole() {
 }
 
 // ------------------------------------------------------------ API
+// Konfimasyon TV yo: TV a pa di kliyan an anyen, se panel la ki montre "✅ aplike sou TV …"
+const TV_ACK_SKIP = /^\/(auth\/|galaxy\/(notes|watch|notify|ai|alerts|backup|backups|restore|storage|media|xtream\/test|tv-events)|admin-users)|\/test$/;
+let tvAckRun = null;
+async function tvEvLast() { try { const r = await fetch(API + "/galaxy/tv-events?since=999999999", { headers: token ? { Authorization: "Bearer " + token } : {} }); return (await r.json()).last || 0; } catch { return null; } }
+const TV_ACK_TEXT = {
+  applied: (n) => t("✅ Chanjman an aplike sou TV {0}", n),
+  reload: (n) => t("✅ {0}: chanèl yo rechaje an silans", n),
+  restart: (n) => t("✅ {0}: app la redemare", n),
+  play: (n) => t("✅ {0}: chanèl la chanje", n),
+  message: (n) => t("✅ {0}: mesaj la parèt sou TV a", n),
+  logout: (n) => t("✅ {0}: playlist la dekonekte", n),
+};
+function tvAckWatch(basePromise) {
+  const my = {}; tvAckRun = my;
+  (async () => {
+    const base = await basePromise; if (base == null) return;
+    let since = base; const seen = []; const end = Date.now() + 45000;
+    while (Date.now() < end && tvAckRun === my) {
+      await new Promise((ok) => setTimeout(ok, 2000));
+      let r; try { r = await (await fetch(API + `/galaxy/tv-events?since=${since}`, { headers: { Authorization: "Bearer " + token } })).json(); } catch { continue; }
+      since = r.last || since;
+      const fresh = (r.events || []).filter((e) => TV_ACK_TEXT[e.type]);
+      if (!fresh.length) { if (seen.length) break; continue; }
+      seen.push(...fresh);
+    }
+    if (!seen.length) return;
+    const applied = [...new Set(seen.filter((e) => e.type === "applied").map((e) => e.name))];
+    const msgs = seen.filter((e) => e.type !== "applied").map((e) => TV_ACK_TEXT[e.type](e.name));
+    if (applied.length === 1) msgs.unshift(TV_ACK_TEXT.applied(applied[0]));
+    else if (applied.length > 1) msgs.unshift(t("✅ Chanjman an aplike sou {0} TV", applied.length));
+    toast([...new Set(msgs)].slice(0, 3).join("\n"), 6000);
+  })();
+}
 async function api(method, path, body) {
+  const ack = method !== "GET" && !TV_ACK_SKIP.test(path) ? tvEvLast() : null;
   const r = await fetch(API + path, {
     method, headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -1300,6 +1334,7 @@ async function api(method, path, body) {
   const text = await r.text(); let data = null; try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (r.status === 403 && data && data.forbidden) throw new Error(t("🔒 Kont ou an pa gen dwa fè sa. Mande pwopriyetè panel la."));
   if (!r.ok) throw new Error(t((data && data.error) || t("Erè {0}", r.status)));
+  if (ack) tvAckWatch(ack);
   return data;
 }
 // Tout eleman yo (pa sèlman 100 premye yo): gwo paj, epi kontinye si gen plis toujou
@@ -1315,7 +1350,7 @@ const moreHtml = (key, total) => { const left = total - Math.min(total, caps[key
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; caps[k] = (caps[k] || CAP) + 200;
   ({ live: renderLive, dev: renderDevTable, crud: renderCrud })[k]?.(); });
 let toastT;
-function toast(m) { const el = $("#toast"); el.textContent = t(m); el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (el.hidden = true), 2800); }
+function toast(m, ms = 2800) { const el = $("#toast"); el.textContent = t(m); el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (el.hidden = true), ms); }
 function setMsg(el, text, ok) { el.textContent = text ? t(text) : ""; el.className = "msg" + (text ? (ok ? " s" : " e") : ""); }
 
 // ------------------------------------------------------------ Login
