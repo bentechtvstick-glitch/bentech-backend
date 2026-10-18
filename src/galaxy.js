@@ -1524,9 +1524,27 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     res.json({ ok: true, pushedBuild: s.updatePushBuild, pushedAt: s.updatePushAt, force: s.updateForce });
   });
 
+  /** Pakè yon TV: konbyen non gwoup/chanèl pakè a jwenn nan lis TV sa a (si 0: pakè a pa ka chanje anyen). */
+  function pkgCheck(device) {
+    const p = device.channelProfile ? (data().channelProfiles || []).find((x) => x.name === device.channelProfile) : null;
+    if (!p) return device.channelProfile ? { profile: device.channelProfile, missing: true } : null;
+    if (p.pkg !== true) return { profile: p.name, pkg: false };
+    const chs = channelsOf(device.mac); if (!chs.length) return { profile: p.name, pkg: true, noList: true };
+    const groups = new Set(chs.map((c) => nkey(c.categoryName))), names = new Set(chs.map((c) => nkey(c.name)));
+    const want = p.mode === "only" ? (p.shownGroups || []) : (p.hiddenGroups || []);
+    const gMatch = want.filter((g) => groups.has(nkey(g))).length, cMatch = (p.hiddenChannels || []).filter((c) => names.has(nkey(c))).length;
+    const eff = effectiveChannels(device), hidC = new Set(eff.hiddenCategories.map(String)), hid = new Set(eff.hiddenChannels.map(Number));
+    const visible = chs.filter((c) => !hid.has(Number(c.id)) && !hidC.has(String(c.categoryId))).length;
+    return { profile: p.name, pkg: true, mode: p.mode === "only" ? "only" : "hide", groupsInPkg: want.length, groupsMatched: gMatch, channelsInPkg: (p.hiddenChannels || []).length, channelsMatched: cMatch, total: chs.length, visible };
+  }
+  app.get("/api/galaxy/devices/:mac/pkgcheck", authenticate, (req, res) => {
+    const d = findDevice(normMac(req.params.mac)); if (!d) return res.status(404).json({ error: "Not found" });
+    res.json(pkgCheck(d) || {});
+  });
+
   // Siveyans panel la (pwoblèm + koreksyon pwopoze; admin nan deside)
   mountWatch(app, db, {
-    authenticate, latestBuild, customerOf, toEpochSec, tz, playlistsOf,
+    authenticate, latestBuild, customerOf, toEpochSec, tz, playlistsOf, pkgCheck,
     isOnline: (dv) => !!dv.lastSeenAt && Date.now() - Date.parse(dv.lastSeenAt) < ONLINE_MS,
     isExpired: (dv) => { const c = customerOf(dv); if (!c) return false; const cs = String(c.status || "").toLowerCase();
       return cs === "suspended" || cs === "expired" || (!!c.expiry && toEpochSec(c.expiry, tz(), true) < Math.floor(Date.now() / 1000)); },

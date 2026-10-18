@@ -10,7 +10,7 @@ import { createNotifier, mountNotify } from "./notify.js";
 const H = 3600000;
 
 export function mountWatch(app, db, h) {
-  const { authenticate, latestBuild, customerOf, toEpochSec, tz, playlistsOf, isOnline, isExpired } = h;
+  const { authenticate, latestBuild, customerOf, toEpochSec, tz, playlistsOf, isOnline, isExpired, pkgCheck } = h;
   const data = () => db.data;
   const state = () => (data().watch ??= {});
 
@@ -74,6 +74,18 @@ export function mountWatch(app, db, h) {
       out.push({ id: "net2:" + x.mac, kind: "weak_net", level: "warn", mac: x.mac, name: devName(x),
         cuts: Math.round((n.cuts || 0) * 10) / 10, mbps: n.bw ? Math.round(n.bw / 100) / 10 : null, startSec: n.start ? Math.round(n.start / 100) / 10 : null,
         actions: [{ type: "send_tip", mac: x.mac }, { type: "goto_device", mac: x.mac }] });
+    }
+
+    // 2d) Pakè chanèl ki pa ka aplike sou yon TV (non gwoup yo pa menm ak founisè TV sa a, pakè efase, oswa profil san règ)
+    for (const x of devices) {
+      const k = pkgCheck ? pkgCheck(x) : null; if (!k) continue;
+      let why = "";
+      if (k.missing) why = "missing";
+      else if (k.pkg === false) why = "notpkg";
+      else if (k.pkg && !k.noList && k.groupsInPkg > 0 && k.groupsMatched === 0 && k.channelsMatched === 0) why = "nomatch";
+      else if (k.pkg && !k.noList && k.mode === "hide" && k.visible === k.total && (k.groupsInPkg + k.channelsInPkg) > 0) why = "nochange";
+      if (why) out.push({ id: "pkg:" + x.mac + ":" + k.profile + ":" + why, kind: "pkg_problem", level: "warn", mac: x.mac, name: devName(x), profile: k.profile, why,
+        groups: k.groupsInPkg || 0, matched: k.groupsMatched || 0, actions: [{ type: "goto_channels", mac: x.mac }] });
     }
 
     // 3) Mizajou app la: TV ki gen yon ansyen vèsyon (aktif nan 30 dènye jou yo, kliyan an pa ekspire)
