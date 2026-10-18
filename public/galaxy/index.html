@@ -613,7 +613,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 
     <!-- Paj koleksyon (Kliyan, Abònman, Kòd, Providers…) -->
     <main data-pane="crud" hidden>
-      <div class="pagehead"><div><h1 id="crudTitle"></h1><p id="crudSub"></p></div><div class="inline"><button class="btn danger" id="crudClear" type="button" hidden>Efase tout</button><button class="btn primary big" id="crudAdd" type="button"></button></div></div>
+      <div class="pagehead"><div><h1 id="crudTitle"></h1><p id="crudSub"></p></div><div class="inline"><button class="btn danger" id="crudClear" type="button" hidden>Efase tout</button><button class="btn" id="crudSync" type="button" hidden title="Mande founisè playlist la dat ekspirasyon ak plan chak kliyan kounye a">🔄 Pran dat founisè a</button><button class="btn primary big" id="crudAdd" type="button"></button></div></div>
       <div class="card" id="crudFormCard" hidden>
         <div class="cardhead"><h2 id="crudFormTitle"></h2></div>
         <form id="crudForm" autocomplete="off" style="display:flex;flex-direction:column;gap:12px"><div class="row2" id="crudFields"></div>
@@ -1722,7 +1722,7 @@ const CRUD = {
     fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }, { k: "customers", l: "Kliyan", type: "number" }, { k: "tags", l: "Tags" }] },
   langs: { col: "languages", id: "name", title: "Lang yo", sub: "Lang chanèl yo.", fields: [{ k: "name", l: "Name", req: 1 }, { k: "code", l: "Kòd" }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }] },
   admins: { col: "admin-users", id: "email", title: "Admin Users", sub: "Moun ki ka konekte nan panel la ak imèl yo ak modpas ou ba yo. Administrator: tout bagay sof kont admin yo ak kopi done yo · Support: kliyan ak TV yo sèlman, san efase · Viewer: gade sèlman.",
-    fields: [{ k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", req: 1, noUpper: 1 }, { k: "role", l: "Wòl", opts: ["Administrator", "Support", "Viewer", "Super Administrator"], def: () => "Support" }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }, { k: "password", l: "Modpas (8 karaktè minimòm)", type: "password" }] },
+    fields: [{ k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", req: 1, noUpper: 1 }, { k: "role", l: "Wòl", opts: ["Administrator", "Support", "Viewer", "Super Administrator"], def: () => "Support" }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }, { k: "password", l: "Modpas (8 karaktè minimòm)", type: "password", hide: 1 }] },
   audit: { col: "audit-logs", readonly: 1, title: "Audit Logs", sub: "Kiyès ki fè kisa nan panel la.",
     fields: [{ k: "when", l: "Lè" }, { k: "user", l: "Itilizatè" }, { k: "action", l: "Aksyon", pill: 1 }, { k: "detail", l: "Detay" }] },
 };
@@ -1731,7 +1731,7 @@ const pillClass = (v) => { const x = String(v).toLowerCase(); return ["active", 
 async function openCrud(name) {
   const C = CRUD[name]; crud = { name, items: [], editing: null, refs: {} };
   $("#crudTitle").textContent = t(C.title); $("#crudSub").textContent = t(C.sub); $("#crudListTitle").textContent = t(C.title);
-  $("#crudAdd").hidden = !!C.readonly; $("#crudAdd").textContent = "+ " + t("Ajoute"); $("#crudClear").hidden = !C.readonly;
+  $("#crudAdd").hidden = !!C.readonly; $("#crudAdd").textContent = "+ " + t("Ajoute"); $("#crudClear").hidden = !C.readonly; $("#crudSync").hidden = crud.name !== "cust";
   $("#crudFormCard").hidden = true; $("#crudSearch").value = ""; caps.crud = CAP;
   if (C.fields.some((f) => f.ref)) crud.refs.customers = await list("customers").catch(() => []);
   if (C.fields.some((f) => f.list)) crud.refs.providers = await list("providers").catch(() => []);
@@ -1781,6 +1781,12 @@ function updCustTv() {
 }
 // Paj ki ekri an MAJISKIL (Kliyan yo): tout chan tèks yo, sof imèl la
 const isUpper = (C, f) => !!C.upper && !f.noUpper && !f.opts && !f.ref && !f.list && !f.type;
+$("#crudSync").addEventListener("click", async (e) => {
+  const b = e.currentTarget; b.disabled = true; const old = b.textContent; b.textContent = t("Ap mande founisè a…");
+  try { const r = await api("POST", "/galaxy/customers/sync-provider", {}); toast(t("{0} kliyan mete ajou ak dat founisè a.", r.updated) + (r.failed ? " " + t("{0} pa t reponn.", r.failed) : "")); await loadCrud(); }
+  catch (err) { toast(err.message); }
+  b.disabled = false; b.textContent = old;
+});
 function renderCrud() {
   const C = CRUD[crud.name]; const q = $("#crudSearch").value.trim().toLowerCase();
   const rows = crud.items.filter((it) => !q || C.fields.some((f) => String(it[f.k] ?? "").toLowerCase().includes(q)));

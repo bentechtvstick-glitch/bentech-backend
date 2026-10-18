@@ -45,6 +45,7 @@ const SUPPORT_WRITE = [
   /^\/api\/galaxy\/devices\/[^/]+$/,
   /^\/api\/galaxy\/xtream\/test$/,
   /^\/api\/customers(\/[^/]+)?$/,
+  /^\/api\/galaxy\/customers\/sync-provider$/,
   /^\/api\/galaxy\/(ai|watch\/analyze|watch\/dismiss|alerts\/seen)$/,
 ];
 

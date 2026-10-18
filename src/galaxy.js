@@ -911,7 +911,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     return created > 0 && exp > created ? planForDays((exp - created) / 86400) : null;
   }
 
-  const SYNC_EVERY_MS = 6 * 60 * 60 * 1000;
+  const SYNC_EVERY_MS = 60 * 60 * 1000; // chak èdtan: yon renouvèlman kay founisè a parèt vit nan panel la
   const syncing = new Set();
 
   /**
@@ -949,6 +949,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
         else if (ps === "active") customer.status = "Active";
       }
       customer.providerStatus = String(u.status || "");
+      // Dat TV a te voye a vin ansyen: ranplase l ak sa founisè a fèk di a (sinon li ta remete ansyen dat la)
+      device.providerExp = customer.providerExp; device.providerStatus = customer.providerStatus; device.providerExpAt = new Date().toISOString();
+      const ca = Number(u.created_at); if (ca > 0) device.providerCreated = ca;
+      if (String(u.is_trial) === "1" || String(u.is_trial) === "0") device.providerTrial = String(u.is_trial) === "1";
       await db.write();
       return customer;
     } catch { return null; } finally { syncing.delete(key); }
@@ -977,6 +981,25 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (device.providerStatus) customer.providerStatus = device.providerStatus;
     return true;
   }
+
+  /** Bouton "Pran dat founisè a" nan paj Kliyan yo: mande founisè a kounye a pou tout kliyan ki gen "Plan otomatik". */
+  app.post("/api/galaxy/customers/sync-provider", authenticate, async (req, res) => {
+    ensure();
+    let ok = 0, fail = 0, skip = 0;
+    const seen = new Set();
+    for (const d of (data().devices || []).filter((x) => x.mac)) {
+      linkCustomerByMac(d);
+      const c = customerOf(d);
+      if (!c || c.autoPlan === false || seen.has(c.id || c.name)) { skip++; continue; }
+      seen.add(c.id || c.name);
+      const r = await syncCustomerFromProvider(d, { force: true }).catch(() => null);
+      if (r) ok++; else fail++;
+    }
+    await db.write();
+    syncTvs();
+    auditLog("customer-sync", `Provider expiry sync: ${ok} updated, ${fail} failed`, admin(req));
+    res.json({ ok: true, updated: ok, failed: fail });
+  });
 
   // ---- Sante chanèl yo: TV yo mezire chak chanèl kliyan yo gade (vitès, koupi, erè) ----
   /** Kle founisè a (adrès sèvè playlist la): menm chanèl, menm founisè → menm mezi pou tout TV yo. */
