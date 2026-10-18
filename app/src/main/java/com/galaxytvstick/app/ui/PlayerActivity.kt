@@ -557,6 +557,28 @@ class PlayerActivity : AppCompatActivity() {
     private var hStalls = 0
     private var hFail = false
     private var hFailSent = false
+    /** Depi kilè n ap konte koupi yo (kòmansman chanèl la, oswa dènye rapò 15 minit lan). */
+    private var hWatchFrom = 0L
+    private val healthPeriodic = object : Runnable {
+        override fun run() { healthPartial(); handler.postDelayed(this, 15 * 60_000L) }
+    }
+
+    /** Vitès entènèt TV a (estimasyon lektè a, kbps), pou panel la wè si koneksyon kliyan an fèb. */
+    private fun bwKbps(): Long = runCatching {
+        androidx.media3.exoplayer.upstream.DefaultBandwidthMeter.getSingletonInstance(this).bitrateEstimate / 1000
+    }.getOrDefault(0L)
+
+    /** Kliyan an gade menm chanèl la lontan: voye yon rapò chak 15 minit (pa sèlman lè l chanje chanèl). */
+    private fun healthPartial() {
+        val ch = hCh ?: return
+        if (hStartMs < 0) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        val watchSec = (now - hWatchFrom) / 1000
+        if (watchSec < 60) return
+        val st = hStalls
+        healthSend(ch, "watch") { put("stalls", st); put("watchSec", watchSec); put("bwKbps", bwKbps()) }
+        hStalls = 0; hWatchFrom = now
+    }
 
     private fun healthBegin(ch: Channel) {
         healthFlush()
@@ -575,7 +597,9 @@ class PlayerActivity : AppCompatActivity() {
         val ch = hCh ?: return
         if (hStartMs >= 0) return
         hStartMs = android.os.SystemClock.elapsedRealtime() - hStartAt
-        healthSend(ch, "start") { put("startMs", hStartMs) }
+        hWatchFrom = android.os.SystemClock.elapsedRealtime()
+        healthSend(ch, "start") { put("startMs", hStartMs); put("bwKbps", bwKbps()) }
+        handler.removeCallbacks(healthPeriodic); handler.postDelayed(healthPeriodic, 15 * 60_000L)
     }
 
     /** Chanèl la pa mache (mesaj erè a parèt). */
@@ -597,8 +621,10 @@ class PlayerActivity : AppCompatActivity() {
             if (!hFailSent && elapsed >= 10_000) healthSend(ch, "fail") { put("fail", true) }
             return
         }
-        val watchSec = ((elapsed - hStartMs) / 1000).coerceAtLeast(0)
-        if (watchSec >= 60) healthSend(ch, "watch") { put("stalls", hStalls); put("watchSec", watchSec) }
+        handler.removeCallbacks(healthPeriodic)
+        val watchSec = ((android.os.SystemClock.elapsedRealtime() - hWatchFrom) / 1000).coerceAtLeast(0)
+        val st = hStalls
+        if (watchSec >= 60) healthSend(ch, "watch") { put("stalls", st); put("watchSec", watchSec); put("bwKbps", bwKbps()) }
     }
 
     /** Mete chanèl la nan player a. Pòtal Stalker: mande lyen videyo a anvan (li chanje chak fwa). */
