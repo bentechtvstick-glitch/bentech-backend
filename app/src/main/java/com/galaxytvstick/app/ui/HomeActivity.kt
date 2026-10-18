@@ -77,6 +77,7 @@ class HomeActivity : AppCompatActivity() {
         b.menuFav.setOnClickListener { openFavorites() }
         b.menuCatchup.setOnClickListener { startActivity(Intent(this, EpgActivity::class.java)) }
         b.menuSettings.setOnClickListener { showSettings() }
+        b.menuHelp.setOnClickListener { startActivity(Intent(this, HelpActivity::class.java)) }
 
         b.tileLive.setOnClickListener { openLive() }
         b.tileMovies.setOnClickListener { openVod("movie") }

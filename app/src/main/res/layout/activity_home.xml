@@ -59,6 +59,13 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:singleLine="true"
                     android:text="@string/home_settings" android:textColor="#FFFFFF" android:textSize="16sp"/>
             </LinearLayout>
+            <LinearLayout android:id="@+id/menuHelp" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_side_item" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
+                android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
+                <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="❓" android:textColor="#FFFFFF" android:textSize="17sp" android:importantForAccessibility="no"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:singleLine="true"
+                    android:text="@string/help_menu" android:textColor="#FFFFFF" android:textSize="16sp"/>
+            </LinearLayout>
 
             <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
             <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#22FFFFFF"/>

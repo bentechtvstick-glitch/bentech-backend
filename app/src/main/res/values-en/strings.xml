@@ -195,4 +195,24 @@
     <string name="set_update">App update (v%1$s)</string>
     <string name="update_checking">Checking for a new version…</string>
     <string name="update_latest">You already have the latest version (%1$s).</string>
+    <string name="help_menu">Help</string>
+    <string name="help_title">❓ How to use the app</string>
+    <string name="help_sub">Use the remote arrows to scroll, and BACK to go back.</string>
+    <string name="help_1_t">📺 Watch live TV</string>
+    <string name="help_1_b">On Home, choose Live TV and press OK on a channel.\n• Up / down arrows: previous / next channel.\n• OK: quick bar (what\'s on, TV Guide, channel list).\n• Right arrow: program info.\n• You can also type a channel number with the remote digits.</string>
+    <string name="help_2_t">🗓️ TV Guide</string>
+    <string name="help_2_b">The guide shows what\'s on now and next on every channel. The left arrow opens the categories. Press OK on a channel to watch it.</string>
+    <string name="help_3_t">⏪ Catch-up (watch what you missed)</string>
+    <string name="help_3_b">Channels with the ⏪ sign let you watch past programs. In the TV Guide, go to a program that has ended and press OK.</string>
+    <string name="help_4_t">🎬 Movies and Series</string>
+    <string name="help_4_b">Pick a category on the left, then a poster on the right. Press OK for the summary, then Play. «Continue watching» resumes where you stopped.</string>
+    <string name="help_5_t">⭐ Favorites</string>
+    <string name="help_5_b">Hold the OK button on a channel, movie or series to add it to (or remove it from) Favorites. Find them in Favorites on Home.</string>
+    <string name="help_6_t">🔍 Search and voice</string>
+    <string name="help_6_b">Open Search, type with the on-screen keyboard, or press 🎤 to speak. On Fire TV: press 🎤 Voice in the app first, then hold the remote\'s mic button while you speak.</string>
+    <string name="help_7_t">🔄 If a channel doesn\'t work</string>
+    <string name="help_7_b">• Try another channel, then come back.\n• If many channels buffer: turn your internet router and the Fire Stick off and on.\n• If it continues, contact your service provider.</string>
+    <string name="help_8_t">📲 Updates and settings</string>
+    <string name="help_8_b">When a new version is ready, a message appears: press «Update». The ≡ button on the remote opens settings while watching (language, subtitles, audio…).</string>
+    <string name="help_back">BACK to go back</string>
 </resources>

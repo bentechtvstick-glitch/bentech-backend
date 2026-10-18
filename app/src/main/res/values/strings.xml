@@ -218,4 +218,24 @@
     <string name="set_update">Mizajou app la (v%1$s)</string>
     <string name="update_checking">Ap tcheke si gen yon nouvo vèsyon…</string>
     <string name="update_latest">Ou gen dènye vèsyon an deja (%1$s).</string>
+    <string name="help_menu">Èd</string>
+    <string name="help_title">❓ Kijan pou itilize app la</string>
+    <string name="help_sub">Itilize flèch remòt la pou desann, epi BACK pou tounen.</string>
+    <string name="help_1_t">📺 Gade TV an dirèk</string>
+    <string name="help_1_b">Sou Home, chwazi Live TV epi peze OK sou yon chanèl.\n• Flèch anlè / anba: chanèl anvan / chanèl apre.\n• OK: ba rapid la (pwogram ki sou chanèl la, Gid TV, lis chanèl yo).\n• Flèch adwat: enfòmasyon sou pwogram nan.\n• Ou ka tape nimewo chanèl la ak chif remòt la tou.</string>
+    <string name="help_2_t">🗓️ Gid TV</string>
+    <string name="help_2_b">Gid la montre sa k ap pase kounye a ak sa ki pral vini sou chak chanèl. Flèch agoch louvri kategori yo. Peze OK sou yon chanèl pou gade l.</string>
+    <string name="help_3_t">⏪ Catch-up (gade sa w te rate)</string>
+    <string name="help_3_b">Chanèl ki gen siy ⏪ an pèmèt ou gade pwogram ki te pase deja. Nan Gid TV a, ale sou yon pwogram ki fini epi peze OK.</string>
+    <string name="help_4_t">🎬 Films ak Séries</string>
+    <string name="help_4_b">Chwazi yon kategori agoch, epi yon afich adwat. Peze OK pou wè rezime a, epi Play. «Kontinye gade» rekòmanse fim oswa epizòd la kote w te kite l.</string>
+    <string name="help_5_t">⭐ Favori</string>
+    <string name="help_5_b">Kenbe bouton OK la peze sou yon chanèl, yon fim oswa yon seri pou mete l (oswa retire l) nan Favori. Ou jwenn yo nan Favori sou Home.</string>
+    <string name="help_6_t">🔍 Rechèch ak vwa</string>
+    <string name="help_6_b">Louvri Rechèch, ekri ak klavye sou ekran an, oswa peze 🎤 pou pale. Sou Fire TV: peze 🎤 Voice nan app la an premye, epi kenbe bouton mikwo remòt la pandan w ap pale.</string>
+    <string name="help_7_t">🔄 Si yon chanèl pa mache</string>
+    <string name="help_7_b">• Eseye yon lòt chanèl, epi tounen sou li.\n• Si anpil chanèl koupe: etenn epi relimen wouter entènèt la ak Fire Stick la.\n• Si pwoblèm nan rete, kontakte moun ki ba w sèvis la.</string>
+    <string name="help_8_t">📲 Mizajou ak reglaj</string>
+    <string name="help_8_b">Lè yon nouvo vèsyon pare, yon mesaj parèt: peze «Mete ajou». Bouton ≡ remòt la louvri reglaj yo pandan w ap gade TV (lang, sou-tit, son…).</string>
+    <string name="help_back">BACK pou tounen</string>
 </resources>

@@ -195,4 +195,24 @@
     <string name="set_update">Mise à jour de l’app (v%1$s)</string>
     <string name="update_checking">Recherche d’une nouvelle version…</string>
     <string name="update_latest">Vous avez déjà la dernière version (%1$s).</string>
+    <string name="help_menu">Aide</string>
+    <string name="help_title">❓ Comment utiliser l\'app</string>
+    <string name="help_sub">Utilisez les flèches de la télécommande pour défiler, et RETOUR pour revenir.</string>
+    <string name="help_1_t">📺 Regarder la TV en direct</string>
+    <string name="help_1_b">Sur l\'accueil, choisissez Live TV et appuyez sur OK sur une chaîne.\n• Flèches haut / bas : chaîne précédente / suivante.\n• OK : barre rapide (programme, Guide TV, liste des chaînes).\n• Flèche droite : infos du programme.\n• Vous pouvez aussi taper le numéro de la chaîne.</string>
+    <string name="help_2_t">🗓️ Guide TV</string>
+    <string name="help_2_b">Le guide montre ce qui passe maintenant et ensuite sur chaque chaîne. La flèche gauche ouvre les catégories. OK sur une chaîne pour la regarder.</string>
+    <string name="help_3_t">⏪ Catch-up (revoir)</string>
+    <string name="help_3_b">Les chaînes avec le signe ⏪ permettent de revoir les programmes passés. Dans le Guide TV, allez sur un programme terminé et appuyez sur OK.</string>
+    <string name="help_4_t">🎬 Films et Séries</string>
+    <string name="help_4_b">Choisissez une catégorie à gauche, puis une affiche à droite. OK pour le résumé, puis Lecture. «Continuer» reprend là où vous étiez.</string>
+    <string name="help_5_t">⭐ Favoris</string>
+    <string name="help_5_b">Maintenez OK sur une chaîne, un film ou une série pour l\'ajouter (ou le retirer) des Favoris. Retrouvez-les dans Favoris sur l\'accueil.</string>
+    <string name="help_6_t">🔍 Recherche et voix</string>
+    <string name="help_6_b">Ouvrez Recherche, tapez avec le clavier à l\'écran ou appuyez sur 🎤 pour parler. Sur Fire TV : appuyez d\'abord sur 🎤 Voix dans l\'app, puis maintenez le bouton micro de la télécommande.</string>
+    <string name="help_7_t">🔄 Si une chaîne ne marche pas</string>
+    <string name="help_7_b">• Essayez une autre chaîne, puis revenez.\n• Si beaucoup de chaînes coupent : éteignez et rallumez la box internet et le Fire Stick.\n• Si cela continue, contactez votre fournisseur.</string>
+    <string name="help_8_t">📲 Mises à jour et réglages</string>
+    <string name="help_8_b">Quand une nouvelle version est prête, un message apparaît : appuyez sur «Mettre à jour». Le bouton ≡ ouvre les réglages pendant la lecture (langue, sous-titres, audio…).</string>
+    <string name="help_back">RETOUR pour revenir</string>
 </resources>

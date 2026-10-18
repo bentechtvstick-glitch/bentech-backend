@@ -124,6 +124,11 @@
             android:windowSoftInputMode="adjustNothing" />
 
         <activity
+            android:name=".ui.HelpActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+
+        <activity
             android:name=".ui.VodDetailActivity"
             android:exported="false"
             android:screenOrientation="landscape" />
