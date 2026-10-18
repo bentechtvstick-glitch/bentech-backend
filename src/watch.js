@@ -75,13 +75,24 @@ export function mountWatch(app, db, h) {
         actions: [{ type: "send_tip", mac: x.mac }, { type: "goto_device", mac: x.mac }] });
     }
 
-    // 3) TV ki gen yon ansyen vèsyon app la
+    // 3) Mizajou app la: TV ki gen yon ansyen vèsyon (aktif nan 30 dènye jou yo, kliyan an pa ekspire)
     const l = await latestBuild(false).catch(() => ({}));
     if (l?.build) {
-      const old = devices.filter((x) => isOnline(x) && buildOf(x.appVersion) && buildOf(x.appVersion) < l.build);
-      const pushed = Number(d.settings?.updatePushBuild) || 0;
-      if (old.length && pushed < l.build) out.push({ id: "upd:" + l.build, kind: "old_app", level: "info", count: old.length, latest: `1.0.${l.build}`,
-        macs: old.slice(0, 10).map((x) => x.mac), actions: [{ type: "push_update" }] });
+      const seen30 = (x) => now - (Date.parse(x.lastSeenAt || "") || 0) < 30 * 24 * H;
+      const old = devices.filter((x) => seen30(x) && !isExpired(x) && buildOf(x.appVersion) && buildOf(x.appVersion) < l.build);
+      const pushed = Number(d.settings?.updatePushBuild) || 0, pushedAt = Date.parse(d.settings?.updatePushAt || "") || 0;
+      const names = old.map((x) => devName(x) || x.mac);
+      if (old.length && pushed < l.build) {
+        // Yon nouvo vèsyon pare men li poko voye bay TV yo
+        out.push({ id: "upd:" + l.build, kind: "old_app", level: "warn", count: old.length, latest: `1.0.${l.build}`,
+          names: names.slice(0, 6), versions: [...new Set(old.map((x) => x.appVersion))].slice(0, 4), actions: [{ type: "push_update" }] });
+      } else if (old.length && pushed >= l.build && now - pushedAt > 24 * H) {
+        // Mizajou a voye depi plis pase 24 è, men TV sa yo (ki te limen depi lè sa a) poko mete l
+        const stuck = old.filter((x) => (Date.parse(x.lastSeenAt || "") || 0) > pushedAt);
+        if (stuck.length) out.push({ id: "upds:" + l.build, kind: "update_stuck", level: "warn", count: stuck.length, latest: `1.0.${l.build}`,
+          names: stuck.map((x) => devName(x) || x.mac).slice(0, 6), forced: !!d.settings?.updateForce,
+          actions: [...(d.settings?.updateForce ? [] : [{ type: "force_update" }]), ...(stuck.length === 1 ? [{ type: "goto_device", mac: stuck[0].mac }] : [])] });
+      }
     }
 
     // 4) Kliyan k ap ekspire nan 3 jou

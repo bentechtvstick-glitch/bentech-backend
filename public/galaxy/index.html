@@ -1927,7 +1927,8 @@ const WT_TEXT = {
   provider_refused: (i) => [t("🚫 Founisè a refize kont TV {0} (HTTP {1})", i.name || i.mac, i.code), t("Kont playlist la ka ekspire, gen twòp ekran sou li, oswa modpas la chanje. Teste playlist la nan paj Aparèy la.")],
   tv_many_fail: (i) => [t("📡 {0} chanèl diferan pa mache sou TV {1}", i.count, i.name || i.mac), t("Pwoblèm nan sanble se entènèt TV sa a oswa wouter li. Eseye rechaje TV a an premye.")],
   channel_down: (i) => [t("📺 Chanèl «{0}» pa mache ({1} TV, {2} fwa)", i.channel, i.tvs, i.times), t("Chanèl la ka tonbe kay founisè a. Ou ka kache l pou kliyan yo pa tonbe sou li.") + (i.detail ? " · " + i.detail : "")],
-  old_app: (i) => [t("📲 {0} TV gen yon ansyen vèsyon app la", i.count), t("Dènye vèsyon an se {0}.", i.latest)],
+  old_app: (i) => [t("📲 Nouvo vèsyon app {0} pare: {1} TV poko genyen l", i.latest, i.count), (i.names || []).join(", ") + (i.versions?.length ? " · " + t("yo gen {0}", i.versions.join(", ")) : "")],
+  update_stuck: (i) => [t("📲 {0} TV poko mete vèsyon {1}", i.count, i.latest), (i.names || []).join(", ") + ". " + t("Mizajou a voye depi plis pase 24 è, men kliyan an poko peze «Mete ajou».") + (i.forced ? "" : " " + t("Ou ka fè l obligatwa: kliyan an p ap ka kontinye san l pa mete ajou."))],
   expiring: (i) => [i.days ? t("⏰ Abònman {0} ap fini nan {1} jou", i.customer, i.days) : t("⏰ Abònman {0} ap fini jodi a", i.customer), t("Kontakte kliyan an pou l renouvle.")],
   disk_low: (i) => [t("💾 Disk sèvè a prèske plen: {0}% ki rete", i.freePct), t("Gade \"Kisa ki pran plas?\" nan paj Sistèm nan.")],
   weak_net: (i) => [t("📶 Entènèt TV {0} fèb", i.name || i.mac), t("Li koupe {0} fwa chak 10 minit", i.cuts) + (i.mbps ? " · " + i.mbps + " Mbps" : "") + ". " + t("Se koneksyon kliyan an, pa founisè a: wouter li twò lwen, Wi-Fi a chaje, oswa abònman entènèt li twò piti.")],
@@ -1935,7 +1936,7 @@ const WT_TEXT = {
   ai_budget: (i) => [t("🤖 AI a deja itilize ${0} sou ${1} mwa sa a", i.cost, i.limit), t("Lè limit lan rive, AI a kanpe jiska mwa pwochen.")],
 };
 const WT_ACT = {
-  goto_device: () => t("Louvri aparèy la"), send_tip: () => t("Voye konsèy bay kliyan an"), reload_tv: () => t("Rechaje TV a"), push_update: () => t("Voye mizajou a bay TV yo"),
+  goto_device: () => t("Louvri aparèy la"), force_update: () => t("Fè mizajou a obligatwa"), send_tip: () => t("Voye konsèy bay kliyan an"), reload_tv: () => t("Rechaje TV a"), push_update: () => t("Voye mizajou a bay TV yo"),
   hide_channel: (a) => t("Kache chanèl la ({0} TV)", a.macs.length), goto_customers: () => t("Kliyan yo"), goto_system: () => t("Sistèm"),
 };
 async function loadWatch(analyze) {
@@ -1974,6 +1975,9 @@ $("#wtList").addEventListener("click", async (e) => {
     if (a.type === "reload_tv") {
       if (!confirm(t("Rechaje TV {0}? App la ap rekonekte epi rechaje lis chanèl la (kèk segonn).", i.name || a.mac))) return;
       await api("POST", `/galaxy/devices/${encodeURIComponent(a.mac)}/commands`, { type: "reload" }); toast(t("Kòmand lan voye bay TV a."));
+    } else if (a.type === "force_update") {
+      if (!confirm(t("Fè vèsyon {0} obligatwa? TV ki poko mete l ap montre mesaj mizajou a, epi kliyan an p ap ka gade anyen jiskaske li mete l.", i.latest))) return;
+      await api("POST", "/galaxy/app-update", { force: true }); toast(t("Mizajou a vin obligatwa."));
     } else if (a.type === "push_update") {
       if (!confirm(t("Voye vèsyon {0} bay tout TV yo? Kliyan yo ap wè yon mesaj pou mete l ajou.", i.latest))) return;
       await api("POST", "/galaxy/app-update", {}); toast(t("Mizajou a voye."));
