@@ -32,7 +32,7 @@ id galaxy >/dev/null 2>&1 || useradd --system --home /var/lib/galaxy --shell /us
 git config --global --add safe.directory /opt/galaxy
 if [ -d /opt/galaxy/.git ]; then git -C /opt/galaxy fetch -q origin && git -C /opt/galaxy reset -q --hard origin/main
 else rm -rf /opt/galaxy && git clone -q "$REPO" /opt/galaxy; fi
-cd /opt/galaxy && npm install --omit=dev --no-audit --no-fund
+cd /opt/galaxy && npm install --omit=dev --no-audit --no-fund --ignore-scripts
 
 say "5/8 Done yo (soti nan Volume nan)"
 mkdir -p /var/lib/galaxy/data /mnt/sov
@@ -87,7 +87,7 @@ Description=Galaxy panel auto-update from GitHub main
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/galaxy
-ExecStart=/bin/sh -c 'git fetch -q origin && if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then git reset -q --hard origin/main && npm install --omit=dev --no-audit --no-fund && systemctl restart galaxy; fi'
+ExecStart=/bin/sh -c 'git fetch -q origin && if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then git reset -q --hard origin/main && npm install --omit=dev --no-audit --no-fund --ignore-scripts && systemctl restart galaxy; fi'
 UNIT
 cat > /etc/systemd/system/galaxy-update.timer <<'UNIT'
 [Unit]
