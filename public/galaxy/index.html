@@ -1162,6 +1162,18 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="inline" style="margin-top:12px"><label class="sw"><input type="checkbox" id="upForce"><i></i></label><label for="upForce">Obligatwa: kliyan an pa ka kontinye san l pa mete ajou</label></div>
         <div class="btns" style="justify-content:flex-start;margin-top:12px"><button class="btn primary" id="upSend" type="button">Voye mizajou bay tout TV</button><button class="btn" id="upCancel" type="button">Sispann pwopoze l</button><span class="msg" id="upMsg"></span></div>
       </div>
+      <div class="card" id="owCard" data-owner-only>
+        <div class="cardhead"><div><h2>🔑 Login pwopriyetè a</h2><p class="sub">Chanje non login ak modpas ou itilize pou konekte nan panel la. Lè w chanje yo, tout lòt kote ki te konekte ak kont pwopriyetè a dekonekte.</p></div></div>
+        <div class="grid2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+          <label>Non login kounye a<input id="owCur" readonly></label>
+          <label>Modpas kounye a<input id="owOld" type="password" autocomplete="current-password"></label>
+          <label>Nouvo non login<input id="owUser" autocomplete="username"></label>
+          <label>Nouvo modpas (12 karaktè oswa plis, lèt ak chif)<input id="owPw" type="password" autocomplete="new-password"></label>
+          <label>Konfime nouvo modpas la<input id="owPw2" type="password" autocomplete="new-password"></label>
+        </div>
+        <div class="btns" style="justify-content:flex-start;margin-top:12px"><button class="btn primary" id="owSave" type="button">Chanje login nan</button><span class="msg" id="owMsg"></span></div>
+        <p class="note" style="margin:8px 0 0">Si w bliye modpas la: mete RESET_OWNER=1 nan /etc/galaxy.env sou sèvè a, redemare panel la, konekte ak ansyen ADMIN_USER/ADMIN_PASS la, chanje l isit la, epi retire RESET_OWNER.</p>
+      </div>
       <div class="card" id="bkCard" data-owner-only>
         <div class="cardhead"><div><h2>💾 Kopi done yo</h2><p class="sub">Sove yon kopi tout done panel la (TV, kliyan, playlist, pakè, ticker…) sou òdinatè w. Si yon bagay efase, ou remete l an yon klik.</p></div></div>
         <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="bkDown" type="button">Telechaje yon kopi</button><button class="btn" id="bkUp" type="button">Remete yon kopi…</button><input type="file" id="bkFile" accept="application/json,.json" hidden><span class="msg" id="bkMsg"></span></div>
@@ -1292,7 +1304,7 @@ function applyRole() {
 
 // ------------------------------------------------------------ API
 // Konfimasyon TV yo: TV a pa di kliyan an anyen, se panel la ki montre "✅ aplike sou TV …"
-const TV_ACK_SKIP = /^\/(auth\/|galaxy\/(notes|watch|notify|ai|alerts|backup|backups|restore|storage|media|xtream\/test|tv-events)|admin-users)|\/test$/;
+const TV_ACK_SKIP = /^\/(auth\/|galaxy\/(owner-account|notes|watch|notify|ai|alerts|backup|backups|restore|storage|media|xtream\/test|tv-events)|admin-users)|\/test$/;
 let tvAckRun = null;
 async function tvEvLast() { try { const r = await fetch(API + "/galaxy/tv-events?since=999999999", { headers: token ? { Authorization: "Bearer " + token } : {} }); return (await r.json()).last || 0; } catch { return null; } }
 const TV_ACK_TEXT = {
@@ -2007,7 +2019,7 @@ const WT_TEXT = {
   disk_low: (i) => [t("💾 Disk sèvè a prèske plen: {0}% ki rete", i.freePct), t("Gade \"Kisa ki pran plas?\" nan paj Sistèm nan.")],
   pkg_problem: (i) => [t("📦 Pakè «{0}» pa aplike sou TV {1}", i.profile, i.name || i.mac), i.why === "notpkg" ? t("Se yon ansyen Channel Profile (limit kantite sèlman): li pa kache okenn chanèl.") : i.why === "missing" ? t("Pakè sa a pa egziste ankò.") : i.why === "nochange" ? t("Pakè a pa kache okenn chanèl sou TV sa a.") : t("Okenn nan {0} gwoup pakè a pa egziste kay founisè TV sa a (non yo diferan).", i.groups)],
   weak_net: (i) => [t("📶 Entènèt TV {0} fèb", i.name || i.mac), t("Li koupe {0} fwa chak 10 minit", i.cuts) + (i.mbps ? " · " + i.mbps + " Mbps" : "") + ". " + t("Se koneksyon kliyan an, pa founisè a: wouter li twò lwen, Wi-Fi a chaje, oswa abònman entènèt li twò piti.")],
-  weak_password: () => [t("🔑 Modpas login panel la twò fèb"), t("Chanje ADMIN_PASS nan /etc/galaxy.env sou sèvè a (12 karaktè oswa plis, ak chif ak senbòl), epi redemare sèvis la.")],
+  weak_password: () => [t("🔑 Modpas login panel la twò fèb"), t("Chanje l nan Sistèm → 🔑 Login pwopriyetè a (12 karaktè oswa plis, ak lèt ak chif).")],
   ai_budget: (i) => [t("🤖 AI a deja itilize ${0} sou ${1} mwa sa a", i.cost, i.limit), t("Lè limit lan rive, AI a kanpe jiska mwa pwochen.")],
 };
 const WT_ACT = {
@@ -3172,7 +3184,22 @@ $("#nfTest").addEventListener("click", async (e) => {
   try { nfShow(await api("POST", "/galaxy/notify/test", {})); toast(t("Tès la voye. Gade telefòn ou.")); } catch (err) { toast(err.message); }
   b.disabled = false;
 });
-async function loadSystem() { loadAppUpdate(); loadNotes(); loadAutoBackups(); loadNotify();
+async function loadOwner() {
+  if ($("#owCard").hidden) return;
+  try { const o = await api("GET", "/galaxy/owner-account"); $("#owCur").value = o.user || ""; if (!$("#owUser").value) $("#owUser").value = o.user || ""; } catch {}
+}
+$("#owSave").addEventListener("click", async () => {
+  const pw = $("#owPw").value, pw2 = $("#owPw2").value;
+  if (!$("#owOld").value) return setMsg($("#owMsg"), "Ekri modpas ou genyen kounye a.");
+  if (pw !== pw2) return setMsg($("#owMsg"), "De nouvo modpas yo pa menm.");
+  if (pw.length < 12 || !/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) return setMsg($("#owMsg"), "Nouvo modpas la bezwen 12 karaktè oswa plis, ak lèt ak chif.");
+  try {
+    await api("PUT", "/galaxy/owner-account", { currentPassword: $("#owOld").value, newUser: $("#owUser").value.trim(), newPassword: pw });
+    ["#owOld", "#owPw", "#owPw2"].forEach((k) => ($(k).value = ""));
+    showLogin(t("Login nan chanje. Konekte ak nouvo non login ak nouvo modpas ou."));
+  } catch (e) { setMsg($("#owMsg"), e.message); }
+});
+async function loadSystem() { loadAppUpdate(); loadNotes(); loadAutoBackups(); loadNotify(); loadOwner();
   loadSysStats();
   settings = await api("GET", "/settings").catch(() => ({}));
   $("#mtOn").checked = !!settings.maintenanceMode; $("#mtMsg").value = settings.maintenanceMessage || "";

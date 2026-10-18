@@ -14,7 +14,7 @@ import {
 } from "./galaxy.js";
 import { mountGalaxyLive } from "./galaxy-live.js";
 import { mountAutoBackup } from "./autobackup.js";
-import { accessControl, findAdminLogin, hashPassword } from "./access.js";
+import { accessControl, findAdminLogin, hashPassword, checkOwnerLogin, ownerAuth } from "./access.js";
 import crypto from "node:crypto";
 import { fastWrites, gzipJson } from "./perf.js";
 
@@ -88,7 +88,7 @@ const JWT_EXPIRES_IN = "24h";
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "changeme";
 // Dwa chak kont admin (wòl): aplike sou tout route panel yo anvan yo kouri
-app.use(accessControl(db, JWT_SECRET, ADMIN_USER));
+app.use(accessControl(db, JWT_SECRET));
 
 // ---------- helpers ----------
 
@@ -250,13 +250,14 @@ app.post("/api/auth/login", async (req, res) => {
     auditLog("login", `User ${sub.email} (${sub.role}) logged in`, sub.email);
     return res.json({ ok: true, token, role: sub.role, name: sub.name });
   }
-  if (safeEq(username || "", ADMIN_USER) && safeEq(password || "", ADMIN_PASS)) {
+  const own = checkOwnerLogin(db, username, password);
+  if (own) {
     loginFails.delete(ip);
-    const token = jwt.sign({ sub: username, role: "admin" }, JWT_SECRET, {
+    const token = jwt.sign(own.ov ? { sub: own.user, role: "admin", owner: 1, ov: own.ov } : { sub: own.user, role: "admin" }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN,
     });
-    auditLog("login", `User ${username} logged in`, username);
-    return res.json({ ok: true, token, role: "owner", name: username });
+    auditLog("login", `User ${own.user} logged in`, own.user);
+    return res.json({ ok: true, token, role: "owner", name: own.user });
   }
   // Move modpas: konte l, ralanti repons lan, epi bloke si twòp
   const cur = f && now - f.first < LOGIN_WINDOW ? f : { n: 0, first: now, lockUntil: 0 };
@@ -268,6 +269,30 @@ app.post("/api/auth/login", async (req, res) => {
   await new Promise((r) => setTimeout(r, 600));
   const left = LOGIN_MAX - cur.n;
   res.status(cur.lockUntil ? 429 : 401).json({ ok: false, error: cur.lockUntil ? "Too many attempts. Try again in 15 min." : `Invalid credentials (${left} attempt${left > 1 ? "s" : ""} left)` });
+});
+
+// Pwopriyetè a chanje non login li ak modpas li nan panel la (System → 🔑). Tout lòt sesyon pwopriyetè a dekonekte.
+app.get("/api/galaxy/owner-account", authenticate, (req, res) => {
+  const o = ownerAuth(db);
+  res.json({ user: o ? o.user : (process.env.ADMIN_USER || "admin"), fromPanel: !!o, changedAt: o?.changedAt || null });
+});
+app.put("/api/galaxy/owner-account", authenticate, async (req, res) => {
+  const b = req.body || {};
+  const cur = ownerAuth(db)?.user || process.env.ADMIN_USER || "admin";
+  if (!checkOwnerLogin(db, cur, b.currentPassword)) {
+    auditLog("owner-account", "Wrong current password when changing the owner login", "security");
+    await new Promise((r) => setTimeout(r, 800));
+    return res.status(400).json({ ok: false, error: "Current password is wrong." });
+  }
+  const user = String(b.newUser || "").trim();
+  const pw = String(b.newPassword || "");
+  if (!/^[^\s]{3,60}$/.test(user)) return res.status(400).json({ ok: false, error: "The login name needs 3 to 60 characters, without spaces." });
+  if (pw.length < 12 || !/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) return res.status(400).json({ ok: false, error: "The password needs at least 12 characters, with letters and numbers." });
+  if ((db.data.adminUsers || []).some((a) => String(a.email || "").trim().toLowerCase() === user.toLowerCase())) return res.status(400).json({ ok: false, error: "An admin account already uses this login." });
+  db.data.ownerAuth = { user, passwordHash: hashPassword(pw), changedAt: new Date().toISOString() };
+  await db.write();
+  auditLog("owner-account", `Owner login changed (${cur} → ${user})`, user);
+  res.json({ ok: true, user });
 });
 
 app.post("/api/auth/activate", async (req, res) => {

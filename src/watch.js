@@ -124,7 +124,7 @@ export function mountWatch(app, db, h) {
 
     // 5b) Modpas pwopriyetè a twò fèb (oswa li rete valè egzanp lan)
     const ap = process.env.ADMIN_PASS || "";
-    if (!ap || ap === "changeme" || ap.length < 10) out.push({ id: "weakpw", kind: "weak_password", level: "crit", actions: [] });
+    if (!(db.data.ownerAuth?.passwordHash && process.env.RESET_OWNER !== "1") && (!ap || ap === "changeme" || ap.length < 10)) out.push({ id: "weakpw", kind: "weak_password", level: "crit", actions: [] });
 
     // 6) Bidjè AI a
     const b = aiBudget(db);

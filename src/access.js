@@ -34,7 +34,33 @@ export function findAdminLogin(db, username, password) {
   return { email: x.email, name: x.name || x.email, role: ROLES.includes(x.role) ? x.role : "Viewer" };
 }
 
+// ---- Kont pwopriyetè a ----
+// Pa defo: ADMIN_USER / ADMIN_PASS nan /etc/galaxy.env. Depi pwopriyetè a chanje yo nan panel la,
+// yo sove (modpas la an hash) nan baz done a epi sa ki nan galaxy.env pa mache ankò.
+// Si w bliye modpas la: mete RESET_OWNER=1 nan /etc/galaxy.env, redemare, konekte ak ADMIN_USER/ADMIN_PASS, epi retire RESET_OWNER.
+const envOwner = () => ({ user: process.env.ADMIN_USER || "admin", pass: process.env.ADMIN_PASS || "changeme" });
+export function ownerAuth(db) {
+  if (process.env.RESET_OWNER === "1") return null;
+  const o = db.data.ownerAuth;
+  return o && o.user && o.passwordHash ? o : null;
+}
+const eq = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
+/** Non login + modpas sa yo se pou pwopriyetè a? Voye { user, ov } (ov = vèsyon kont lan) oswa null. */
+export function checkOwnerLogin(db, username, password) {
+  const o = ownerAuth(db);
+  if (o) return eq(String(username || "").trim(), o.user) && checkPassword(password, o.passwordHash) ? { user: o.user, ov: o.changedAt } : null;
+  const e = envOwner();
+  return eq(username || "", e.user) && eq(password || "", e.pass) ? { user: e.user, ov: "" } : null;
+}
+/** Token sa a se pou pwopriyetè a kounye a? (yon token ansyen kont lan pa mache ankò apre yon chanjman) */
+function isOwnerToken(db, tok) {
+  const o = ownerAuth(db);
+  if (o) return tok.owner === 1 && tok.sub === o.user && tok.ov === o.changedAt;
+  return tok.sub === envOwner().user && !tok.ov;
+}
+
 // Chemen sekrè yo
+const OWNER_ACC = /^\/api\/galaxy\/owner-account/;
 const NOTES = /^\/api\/galaxy\/notes/;
 const BACKUP = /^\/api\/galaxy\/(backup|backups|restore)(\/|$)/;
 const ADMINS = /^\/api\/admin-users(\/|$)/;
@@ -54,6 +80,7 @@ export function denyReason(role, method, p) {
   const write = method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
   if (role === "owner") return null;
   if (NOTES.test(p)) return "Only the owner can open the private notes.";
+  if (OWNER_ACC.test(p)) return "Only the owner can change the owner login.";
   if (role === "Super Administrator") return null;
   if (BACKUP.test(p)) return "Only the owner can download or restore backups.";
   if (ADMINS.test(p) && (write || role !== "Administrator")) return "Only the owner can manage admin accounts.";
@@ -72,7 +99,7 @@ export function denyReason(role, method, p) {
  * Middleware: li JWT a (si genyen), jwenn wòl moun nan (ajou, soti nan baz done a), epi bloke sa l pa gen dwa fè.
  * Route TV yo (/api/devices/<mac>/…, /api/devices/register), login ak /api/health pa konsène.
  */
-export function accessControl(db, secret, ownerUser) {
+export function accessControl(db, secret) {
   return (req, res, next) => {
     const p = req.path;
     if (!p.startsWith("/api/") || p.startsWith("/api/auth/") || p === "/api/health" || p === "/api/version") return next();
@@ -86,7 +113,9 @@ export function accessControl(db, secret, ownerUser) {
       const x = (db.data.adminUsers || []).find((a) => String(a.email || "").toLowerCase() === String(tok.uid).toLowerCase());
       if (!x || !x.passwordHash || String(x.status || "Active").toLowerCase() !== "active") return res.status(401).json({ ok: false, error: "Token expired or invalid" });
       role = ROLES.includes(x.role) ? x.role : "Viewer";
-    } else role = tok.sub === ownerUser ? "owner" : "Viewer";
+    } else if (isOwnerToken(db, tok)) role = "owner";
+    else if (ownerAuth(db) || tok.sub === envOwner().user) return res.status(401).json({ ok: false, error: "Token expired or invalid" }); // ansyen sesyon pwopriyetè a
+    else role = "Viewer";
     req.role = role;
     const why = denyReason(role, req.method, p);
     if (why) return res.status(403).json({ ok: false, error: why, forbidden: true });
