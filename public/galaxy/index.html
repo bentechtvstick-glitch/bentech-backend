@@ -423,6 +423,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .nt-chip .tx b,.nt-chip .tx span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nt-chip .tx b{font-size:14px}.nt-chip .tx span{font-size:12px;opacity:.6}
 .nt-chip small{flex:none;font-size:11px;opacity:.5}
+.nt-chip[draggable="true"]{cursor:grab}.nt-chip.dragging{opacity:.4;border-style:dashed}
 .nt-chip.new{justify-content:center;border-style:dashed;font-weight:600;font-size:14px}
 .nt-chip[data-c="pink"]{--dot:#FF6FA5}.nt-chip[data-c="blue"]{--dot:#4DA8FF}.nt-chip[data-c="green"]{--dot:#34C759}.nt-chip[data-c="purple"]{--dot:#AF52DE}.nt-chip[data-c="orange"]{--dot:#FF9500}
 .note-pad{--band1:#FFE680;--band2:#FFD60A;--ink:#8A6A00;--pin1:#FF8A80;--pin2:#E53935;--pin3:#7F0000;
@@ -3101,7 +3102,7 @@ function renderNotes() {
   $("#ntList").innerHTML = ntItems.map((n) => {
     const when = n.updatedAt ? new Date(n.updatedAt).toLocaleDateString(lang) : "";
     const prev = n.secret ? "••••••" : String(n.body || "").split("\n").find((l) => l.trim()) || "";
-    return `<div class="nt-chip" tabindex="0" role="button" data-nt-open="${esc(n.id)}" data-c="${esc(n.color || "yellow")}" aria-label="${esc(n.title || t("San tit"))}"><i></i><span class="tx"><b>${n.secret ? "🔒 " : ""}${esc(n.title || t("San tit"))}</b><span>${esc(prev)}</span></span>${when ? `<small>${esc(when)}</small>` : ""}</div>`;
+    return `<div class="nt-chip" tabindex="0" role="button" draggable="true" title="${esc(t("Klike pou louvri l · trennen l pou chanje plas li"))}" data-nt-open="${esc(n.id)}" data-c="${esc(n.color || "yellow")}" aria-label="${esc(n.title || t("San tit"))}"><i></i><span class="tx"><b>${n.secret ? "🔒 " : ""}${esc(n.title || t("San tit"))}</b><span>${esc(prev)}</span></span>${when ? `<small>${esc(when)}</small>` : ""}</div>`;
   }).join("") + `<button type="button" class="nt-chip new" id="ntNew">＋ ${esc(t("Nouvo nòt"))}</button>`;
 }
 async function saveNotes(list) { ntItems = await api("PUT", "/galaxy/notes", { notes: list }); }
@@ -3150,6 +3151,23 @@ $("#ntPopDel").addEventListener("click", async () => {
 $("#ntPopClose").addEventListener("click", ntCloseSheet);
 $("#ntOv").addEventListener("mousedown", (e) => { if (e.target === e.currentTarget) ntCloseSheet(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ntOpen) { e.preventDefault(); ntCloseSheet(); } });
+// Trennen yon nòt pou chanje plas li (lòd la sove sou sèvè a)
+let ntDrag = null;
+$("#ntList").addEventListener("dragstart", (e) => { const c = e.target.closest?.("[data-nt-open]"); if (!c) return; ntDrag = c; c.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", c.dataset.ntOpen); } catch {} });
+$("#ntList").addEventListener("dragover", (e) => {
+  if (!ntDrag) return; e.preventDefault();
+  const over = e.target.closest?.("[data-nt-open]"); if (!over || over === ntDrag) return;
+  const r = over.getBoundingClientRect(), after = (e.clientY - r.top) / r.height > 0.5 || ((e.clientY - r.top) / r.height > 0.2 && (e.clientX - r.left) / r.width > 0.5);
+  over.parentNode.insertBefore(ntDrag, after ? over.nextSibling : over);
+});
+$("#ntList").addEventListener("dragend", async () => {
+  if (!ntDrag) return; ntDrag.classList.remove("dragging"); ntDrag = null;
+  const order = [...$("#ntList").querySelectorAll("[data-nt-open]")].map((el) => el.dataset.ntOpen);
+  if (order.join() === ntItems.map((n) => n.id).join()) return;
+  const byId = Object.fromEntries(ntItems.map((n) => [n.id, n]));
+  try { await saveNotes(order.map((id) => byId[id]).filter(Boolean)); } catch (err) { toast(err.message); }
+  renderNotes();
+});
 $("#ntList").addEventListener("click", (e) => {
   if (e.target.closest("#ntNew")) return ntOpenSheet(null);
   const c = e.target.closest("[data-nt-open]"); if (c) ntOpenSheet(c.dataset.ntOpen);
