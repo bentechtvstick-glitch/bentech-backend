@@ -921,8 +921,16 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   async function syncCustomerFromProvider(device, { force = false } = {}) {
     const customer = customerOf(device);
     if (!customer || customer.autoPlan === false) return null;
-    const pl = playlistsOf(device.mac)[0];
-    if (!pl || plType(pl) !== "xtream") return null; // M3U / Stalker: pa gen API Xtream pou plan an
+    let pl = playlistsOf(device.mac)[0];
+    if (!pl) return null;
+    // Lis M3U ki soti nan yon sèvè Xtream (…/get.php?username=…&password=…): mande API Xtream nan menm sèvè a
+    if (plType(pl) === "m3u") {
+      try {
+        const u = new URL(String(pl.server || "").trim()), user = u.searchParams.get("username"), pass = u.searchParams.get("password");
+        if (!user || !pass) return null;
+        pl = { server: `${u.protocol}//${u.host}`, username: user, password: pass };
+      } catch { return null; }
+    } else if (plType(pl) !== "xtream") return null; // Stalker: se TV a ki voye dat la (li sèl ki ka konekte ak MAC la)
     // Plan an poko parèt: re-eseye chak 2 minit (pa tann 6 è) jiskaske founisè a reponn
     const every = customer.plan ? SYNC_EVERY_MS : 2 * 60 * 1000;
     if (!force && customer.providerSyncAt && Date.now() - Date.parse(customer.providerSyncAt) < every) return null;
