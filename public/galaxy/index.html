@@ -472,6 +472,39 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .wt-i .tx{flex:1;min-width:0}.wt-i .tx b{display:block;font-size:14px}.wt-i .tx .note{display:block;margin-top:2px}
 .wt-i .ac{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .wt-ok{color:#22c55e;font-weight:600;font-size:14px;padding:4px 2px}
+/* Nòt: fèy fèmen nan lis la; klike → li louvri kòm yon fèy papye pou ekri; fèmen → li tounen yon fèy */
+.note-pad.closed{cursor:pointer;min-height:150px}
+.note-pad.closed .nb{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;max-height:104px}
+.note-pad.closed:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.note-new{min-height:150px;border:2px dashed rgba(255,255,255,.28);border-radius:14px;background:rgba(255,255,255,.03);color:var(--text,#e5e7eb);
+  display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s}
+.note-new:hover,.note-new:focus-visible{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.5);outline:none}
+.nt-ov{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,8,20,.55);backdrop-filter:blur(3px);animation:ntFade .18s ease}
+.nt-ov[hidden]{display:none}
+@keyframes ntFade{from{opacity:0}to{opacity:1}}
+@keyframes ntOpen{from{opacity:0;transform:scale(.85) rotate(-2deg) translateY(20px)}to{opacity:1;transform:none}}
+.nt-pop{width:min(620px,100%);max-height:calc(100vh - 36px);min-height:420px;transform:none!important;animation:ntOpen .26s cubic-bezier(.2,.9,.3,1.15) both!important;
+  box-shadow:0 1px 0 #fff,6px 6px 0 -1px #F4F4F6,6px 6px 0 0 #DCDCE0,12px 12px 0 -1px #EDEDF0,12px 12px 0 0 #D2D2D8,0 40px 80px -10px rgba(0,0,0,.6)!important;border-radius:18px}
+.nt-pop.closing{animation:ntClose .2s ease forwards!important}
+@keyframes ntClose{to{opacity:0;transform:scale(.9) rotate(1.5deg) translateY(16px)}}
+.nt-pop .nt-title{border:0;outline:none;width:100%;padding:18px 44px 15px 48px;font:700 20px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif;color:#1C1C1E;
+  background:linear-gradient(180deg,var(--band1) 0,var(--band2) 100%);border-radius:18px 18px 0 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.65)}
+.nt-pop .nt-title::placeholder{color:rgba(0,0,0,.45)}
+.nt-pop .nt-body{flex:1;min-height:260px;resize:none;border:0;outline:none;margin:6px 20px 0;width:calc(100% - 40px);box-sizing:border-box;padding:2px 0 0 14px;font:16px/28px -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;color:#1C1C1E;
+  background:linear-gradient(90deg,rgba(255,59,48,.35) 0 1px,transparent 1px) 0 0/100% 100% no-repeat,repeating-linear-gradient(180deg,transparent 0 27px,#E5E5EA 27px 28px);background-attachment:local}
+.nt-pop .nt-bar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:8px 16px 0;padding-top:10px;border-top:1px solid #EFEFF4}
+.nt-pop .nt-bar .grow{flex:1}
+.nt-pop .nt-bar button{background:none;border:0;color:var(--ink);border-radius:10px;padding:7px 10px;font:600 14px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;cursor:pointer}
+.nt-pop .nt-bar button:hover,.nt-pop .nt-bar button:focus-visible{background:color-mix(in srgb,var(--band1) 45%,#fff);outline:none}
+.nt-pop .nt-bar button.del{color:#FF3B30}
+.nt-pop .nt-bar button.done{background:var(--band2);color:#1C1C1E;padding:7px 16px}
+.nt-pop .nt-bar button[aria-pressed="true"]{background:#1C1C1E;color:#fff}
+.nt-pop .ntc{gap:7px}.nt-pop .ntc i{width:22px;height:22px}
+.nt-pop .ntc input:checked+i{box-shadow:0 0 0 2px #fff,0 0 0 4px #1C1C1E}
+.nt-pop .nt-saved{position:absolute;right:20px;bottom:-26px;font-size:12px;color:#cbd5e1}
+.nt-pop .lock{top:18px;right:16px}
+.nt-pop::before{top:-9px;left:12px}.nt-pop::after{top:9px;left:26px}
+@media (prefers-reduced-motion:reduce){.nt-pop,.nt-ov,.nt-pop.closing{animation:none!important}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Audiowide&family=Bangers&family=Bebas+Neue&family=Great+Vibes&family=Lobster&family=Orbitron:wght@700&family=Oswald:wght@700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,800;1,800&family=Righteous&family=Russo+One&family=Teko:wght@600&display=swap">
@@ -1132,13 +1165,22 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <div class="card" id="ntCard" data-owner-only>
         <div class="cardhead"><div><h2>🗒️ Nòt mwen yo</h2><p class="sub">Kote pou sere enfòmasyon ou bezwen: kòd Downloader app la, enfòmasyon sèvè a, domèn, kontak… Sèlman ou menm ki wè yo nan panel la.</p></div></div>
         <div class="notes" id="ntList"></div>
-        <form id="ntForm" style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
-          <div class="field"><label for="ntTitle">Tit</label><input type="text" id="ntTitle" maxlength="120" placeholder="Egz: Kòd Downloader app la"></div>
-          <div class="field"><label for="ntBody">Nòt la</label><textarea id="ntBody" rows="3" maxlength="8000" placeholder="Egz: 1234567"></textarea></div>
-          <div class="field"><label>Koulè</label><div class="ntc" id="ntColor"><label title="Jòn"><input type="radio" name="ntColor" value="yellow" checked aria-label="Jòn"><i style="background:#FFD60A"></i></label><label title="Woz"><input type="radio" name="ntColor" value="pink" aria-label="Woz"><i style="background:#FF6FA5"></i></label><label title="Ble"><input type="radio" name="ntColor" value="blue" aria-label="Ble"><i style="background:#4DA8FF"></i></label><label title="Vèt"><input type="radio" name="ntColor" value="green" aria-label="Vèt"><i style="background:#34C759"></i></label><label title="Mov"><input type="radio" name="ntColor" value="purple" aria-label="Mov"><i style="background:#AF52DE"></i></label><label title="Zoranj"><input type="radio" name="ntColor" value="orange" aria-label="Zoranj"><i style="background:#FF9500"></i></label></div></div>
-          <div class="inline" style="gap:10px"><input type="checkbox" id="ntSecret" hidden><button type="button" class="btn small" id="ntSecretBtn" aria-pressed="false">🔓 <span>Vizib sou ekran an</span></button><span class="note">Peze l pou kache nòt la (pou modpas oswa kle): li parèt sèlman lè w peze 👁</span></div>
-          <div class="btns" style="justify-content:flex-start"><button class="btn primary small" type="submit" id="ntSave">Ajoute nòt la</button><button class="btn small" type="button" id="ntCancel" hidden>Anile</button></div>
-        </form>
+        <div class="nt-ov" id="ntOv" hidden>
+          <div class="nt-pop note-pad" id="ntPop" role="dialog" aria-modal="true" aria-label="Nòt la" data-c="yellow">
+            <span class="lock" id="ntPopLock" hidden>🔒</span>
+            <input type="text" class="nt-title" id="ntTitle" maxlength="120" placeholder="Tit">
+            <textarea class="nt-body" id="ntBody" maxlength="8000" placeholder="Ekri nòt ou la…"></textarea>
+            <div class="nt-bar">
+              <div class="ntc" id="ntColor"></div>
+              <span class="grow"></span>
+              <button type="button" id="ntPopSecret" title="Kache l sou ekran an">🔒</button>
+              <button type="button" id="ntPopCopy">Kopye tèks la</button>
+              <button type="button" id="ntPopDel" class="del">Efase nòt la</button>
+              <button type="button" id="ntPopClose" class="done">Fèmen</button>
+            </div>
+            <div class="nt-saved" id="ntSaved"></div>
+          </div>
+        </div>
         <p class="note" style="margin:8px 0 0">Nòt yo rete sou sèvè panel ou a sèlman: yo pa janm ale sou TV yo. Yo antre nan "Kopi done yo", kidonk kenbe fichye kopi a an sekirite.</p>
       </div>
       <div class="cols">
@@ -2892,40 +2934,68 @@ $("#ewSave").addEventListener("click", () => putSettings({
   expiryWarnContact: $("#ewContact").value.trim(), expiryWarnText: $("#ewText").value.trim() || EW_DEFAULT,
 }, "Sove"));
 // ------------------------------------------------------------ Nòt prive admin nan
-let ntItems = [], ntEdit = null; const ntShow = new Set();
+let ntItems = [], ntOpen = null, ntSaveT = 0, ntDirty = false;
+const NT_COLORS = [["yellow", "#FFD60A", "Jòn"], ["pink", "#FF6FA5", "Woz"], ["blue", "#4DA8FF", "Ble"], ["green", "#34C759", "Vèt"], ["purple", "#AF52DE", "Mov"], ["orange", "#FF9500", "Zoranj"]];
 async function loadNotes() { ntItems = await api("GET", "/galaxy/notes").catch(() => []); renderNotes(); }
+/** Fèy fèmen yo: tit + kòmansman nòt la (oswa •••• si l kache). Klike sou youn pou louvri l. */
 function renderNotes() {
   $("#ntList").innerHTML = ntItems.map((n) => {
-    const hide = n.secret && !ntShow.has(n.id);
     const when = n.updatedAt ? new Date(n.updatedAt).toLocaleDateString(lang) : "";
-    return `<div class="note-pad" data-c="${esc(n.color || "yellow")}"><span class="curl"></span>${n.secret ? `<span class="lock" title="${esc(t("Kache"))}">🔒</span>` : ""}<h3>${esc(n.title || t("San tit"))}</h3>
-      <div class="nb${hide ? " hid" : ""}">${hide ? "••••••••" : esc(n.body)}</div>${when ? `<div class="when">🕒 ${esc(when)}</div>` : ""}
-      <div class="nt-act">${n.secret ? `<button type="button" data-nt-eye="${esc(n.id)}" aria-label="${esc(t("Montre / kache"))}">👁</button>` : ""}<button type="button" data-nt-lock="${esc(n.id)}" title="${esc(t(n.secret ? "Pa kache l ankò" : "Kache l sou ekran an"))}" aria-label="${esc(t(n.secret ? "Pa kache l ankò" : "Kache l sou ekran an"))}">${n.secret ? "🔓" : "🔒"}</button><button type="button" data-nt-copy="${esc(n.id)}">${t("Kopye tèks la")}</button><button type="button" data-nt-edit="${esc(n.id)}">${t("Modifye")}</button><button type="button" class="del" data-nt-del="${esc(n.id)}">${t("Efase nòt la")}</button></div></div>`;
-  }).join("") || `<div class="empty" style="grid-column:1/-1">${t("Poko gen nòt.")}</div>`;
+    return `<div class="note-pad closed" tabindex="0" role="button" data-nt-open="${esc(n.id)}" data-c="${esc(n.color || "yellow")}" aria-label="${esc(n.title || t("San tit"))}"><span class="curl"></span>${n.secret ? `<span class="lock" title="${esc(t("Kache"))}">🔒</span>` : ""}<h3>${esc(n.title || t("San tit"))}</h3>
+      <div class="nb${n.secret ? " hid" : ""}">${n.secret ? "••••••••" : esc(n.body) || `<span style="opacity:.45">…</span>`}</div>${when ? `<div class="when">🕒 ${esc(when)}</div>` : ""}</div>`;
+  }).join("") + `<button type="button" class="note-new" id="ntNew">＋ ${esc(t("Nouvo nòt"))}</button>`;
 }
-async function saveNotes(list) { ntItems = await api("PUT", "/galaxy/notes", { notes: list }); renderNotes(); }
-function ntReset() { ntEdit = null; $("#ntForm").reset(); ntSecretUi(); $("#ntSave").textContent = t("Ajoute nòt la"); $("#ntCancel").hidden = true; }
-$("#ntForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const title = $("#ntTitle").value.trim(), body = $("#ntBody").value, secret = $("#ntSecret").checked, color = $("#ntForm").querySelector("input[name=ntColor]:checked")?.value || "yellow";
-  if (!title && !body.trim()) { $("#ntTitle").focus(); return; }
-  const now = new Date().toISOString();
-  const list = ntEdit ? ntItems.map((n) => (n.id === ntEdit ? { ...n, title, body, secret, color, updatedAt: now } : n)) : [{ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, body, secret, color, updatedAt: now }, ...ntItems];
-  try { await saveNotes(list); ntReset(); toast(t("Sove")); } catch (err) { toast(err.message); }
+async function saveNotes(list) { ntItems = await api("PUT", "/galaxy/notes", { notes: list }); }
+$("#ntColor").innerHTML = NT_COLORS.map(([k, c, n]) => `<label title="${esc(t(n))}"><input type="radio" name="ntColor" value="${k}" aria-label="${esc(t(n))}"><i style="background:${c}"></i></label>`).join("");
+function ntSecretUi(on) { const b = $("#ntPopSecret"); b.setAttribute("aria-pressed", String(!!on)); b.title = t(on ? "Pa kache l ankò" : "Kache l sou ekran an"); $("#ntPopLock").hidden = !on; }
+/** Louvri yon fèy pou ekri (yon nòt ki la deja, oswa yon nouvo). */
+function ntOpenSheet(id) {
+  const n = id ? ntItems.find((x) => x.id === id) : null;
+  ntOpen = n ? { ...n } : { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: "", body: "", color: "yellow", secret: false, isNew: true };
+  ntDirty = false;
+  $("#ntTitle").value = ntOpen.title || ""; $("#ntBody").value = ntOpen.body || "";
+  $("#ntTitle").placeholder = t("Tit"); $("#ntBody").placeholder = t("Ekri nòt ou la…"); $("#ntPop").setAttribute("aria-label", t("Nòt la"));
+  $("#ntPop").dataset.c = ntOpen.color || "yellow"; ntSecretUi(ntOpen.secret);
+  const rc = $(`#ntColor input[value="${ntOpen.color || "yellow"}"]`); if (rc) rc.checked = true;
+  $("#ntPopDel").hidden = !!ntOpen.isNew; $("#ntSaved").textContent = "";
+  $("#ntPop").classList.remove("closing"); $("#ntOv").hidden = false;
+  setTimeout(() => (ntOpen.isNew ? $("#ntTitle") : $("#ntBody")).focus(), 60);
+}
+async function ntPersist() {
+  if (!ntOpen) return;
+  clearTimeout(ntSaveT);
+  const o = ntOpen; o.title = $("#ntTitle").value.trim(); o.body = $("#ntBody").value;
+  if (!ntDirty) return;
+  if (o.isNew && !o.title && !o.body.trim()) return; // fèy vid: pa sove anyen
+  const item = { id: o.id, title: o.title, body: o.body, color: o.color, secret: !!o.secret, updatedAt: new Date().toISOString() };
+  const list = ntItems.some((x) => x.id === o.id) ? ntItems.map((x) => (x.id === o.id ? item : x)) : [item, ...ntItems];
+  try { await saveNotes(list); o.isNew = false; ntDirty = false; $("#ntPopDel").hidden = false; $("#ntSaved").textContent = "✓ " + t("Sove"); } catch (err) { toast(err.message); }
+}
+const ntChanged = () => { ntDirty = true; $("#ntSaved").textContent = ""; clearTimeout(ntSaveT); ntSaveT = setTimeout(ntPersist, 1200); };
+/** Fèmen fèy la: sove l, epi li tounen yon ti fèy nan lis la. */
+async function ntCloseSheet() {
+  if (!ntOpen || $("#ntPop").classList.contains("closing")) return;
+  await ntPersist();
+  $("#ntPop").classList.add("closing");
+  setTimeout(() => { $("#ntOv").hidden = true; $("#ntPop").classList.remove("closing"); const id = ntOpen?.id; ntOpen = null; renderNotes(); $(`#ntList [data-nt-open="${id}"]`)?.focus(); }, 190);
+}
+$("#ntTitle").addEventListener("input", ntChanged);
+$("#ntBody").addEventListener("input", ntChanged);
+$("#ntColor").addEventListener("change", (e) => { if (!ntOpen) return; ntOpen.color = e.target.value; $("#ntPop").dataset.c = ntOpen.color; ntChanged(); });
+$("#ntPopSecret").addEventListener("click", () => { if (!ntOpen) return; ntOpen.secret = !ntOpen.secret; ntSecretUi(ntOpen.secret); toast(t(ntOpen.secret ? "Nòt la kache kounye a" : "Nòt la vizib kounye a")); ntChanged(); });
+$("#ntPopCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("#ntBody").value); toast(t("Kopye tèks la")); } catch { toast(t("Pa ka kopye otomatikman: chwazi tèks la epi kopye l.")); } });
+$("#ntPopDel").addEventListener("click", async () => {
+  if (!ntOpen || !confirm(t("Efase nòt «{0}»?", $("#ntTitle").value || ""))) return;
+  try { await saveNotes(ntItems.filter((x) => x.id !== ntOpen.id)); ntDirty = false; ntOpen.isNew = true; ntOpen.title = ""; ntOpen.body = ""; $("#ntTitle").value = ""; $("#ntBody").value = ""; await ntCloseSheet(); } catch (err) { toast(err.message); }
 });
-$("#ntCancel").addEventListener("click", ntReset);
-function ntSecretUi() { const on = $("#ntSecret").checked, b = $("#ntSecretBtn"); b.setAttribute("aria-pressed", String(on)); b.classList.toggle("primary", on);
-  b.innerHTML = on ? `🔒 <span>${t("Kache sou ekran an")}</span>` : `🔓 <span>${t("Vizib sou ekran an")}</span>`; }
-$("#ntSecretBtn").addEventListener("click", () => { $("#ntSecret").checked = !$("#ntSecret").checked; ntSecretUi(); });
-$("#ntList").addEventListener("click", async (e) => {
-  const b = e.target.closest("button"); if (!b) return;
-  const id = b.dataset.ntEye || b.dataset.ntLock || b.dataset.ntCopy || b.dataset.ntEdit || b.dataset.ntDel; const n = ntItems.find((x) => x.id === id); if (!n) return;
-  if (b.dataset.ntLock) { ntShow.delete(id); try { await saveNotes(ntItems.map((x) => (x.id === id ? { ...x, secret: !x.secret } : x))); toast(t(n.secret ? "Nòt la vizib kounye a" : "Nòt la kache kounye a")); } catch (err) { toast(err.message); } return; }
-  if (b.dataset.ntEye) { ntShow.has(id) ? ntShow.delete(id) : ntShow.add(id); renderNotes(); }
-  else if (b.dataset.ntCopy) { try { await navigator.clipboard.writeText(n.body); toast(t("Kopye tèks la")); } catch { toast(t("Pa ka kopye otomatikman: chwazi tèks la epi kopye l.")); } }
-  else if (b.dataset.ntEdit) { ntEdit = id; $("#ntTitle").value = n.title; $("#ntBody").value = n.body; $("#ntSecret").checked = !!n.secret; ntSecretUi(); const rc = $("#ntForm").querySelector(`input[name=ntColor][value="${n.color || "yellow"}"]`); if (rc) rc.checked = true; $("#ntSave").textContent = t("Sove chanjman yo"); $("#ntCancel").hidden = false; $("#ntTitle").focus(); }
-  else if (b.dataset.ntDel) { if (!confirm(t("Efase nòt «{0}»?", n.title || ""))) return; try { await saveNotes(ntItems.filter((x) => x.id !== id)); } catch (err) { toast(err.message); } }
+$("#ntPopClose").addEventListener("click", ntCloseSheet);
+$("#ntOv").addEventListener("mousedown", (e) => { if (e.target === e.currentTarget) ntCloseSheet(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ntOpen) { e.preventDefault(); ntCloseSheet(); } });
+$("#ntList").addEventListener("click", (e) => {
+  if (e.target.closest("#ntNew")) return ntOpenSheet(null);
+  const c = e.target.closest("[data-nt-open]"); if (c) ntOpenSheet(c.dataset.ntOpen);
 });
+$("#ntList").addEventListener("keydown", (e) => { const c = e.target.closest("[data-nt-open]"); if (c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); ntOpenSheet(c.dataset.ntOpen); } });
 // ---- Kopi otomatik sou sèvè a
 async function loadAutoBackups() {
   let y; try { y = await api("GET", "/galaxy/backups"); } catch { $("#abList").innerHTML = ""; return; }
