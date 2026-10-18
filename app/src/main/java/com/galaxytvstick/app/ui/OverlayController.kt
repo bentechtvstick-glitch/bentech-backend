@@ -90,6 +90,9 @@ class OverlayController(
         if (activity.isFinishing) return true
         val acc = prefs.account ?: return false
         val id = acc.playlistId ?: return false
+        // Sèvè a pa rekonèt TV a (li fèk reenstale, done li yo poko la, oswa yon pàn): PA dekonekte kliyan an.
+        // Kliyan an kontinye gade ak playlist li te genyen an jiskaske panel la konnen l ankò.
+        if (!cfg.known) return false
         val pl = cfg.playlists.firstOrNull { it.id == id }
         val target: Class<*> = if (pl == null) {
             android.widget.Toast.makeText(activity, R.string.playlist_removed, android.widget.Toast.LENGTH_LONG).show()
