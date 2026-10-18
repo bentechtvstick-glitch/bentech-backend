@@ -1058,7 +1058,7 @@ class PlayerActivity : AppCompatActivity() {
     /** Di panel la sa TV a ap montre (regroupe chanjman ki rive youn dèyè lòt). */
     private fun reportStatus() {
         handler.removeCallbacks(sendStatus)
-        handler.postDelayed(sendStatus, 800)
+        handler.postDelayed(sendStatus, 350)
     }
 
     /** Kòmand sèvis kliyan an voye soti nan panel la. */
