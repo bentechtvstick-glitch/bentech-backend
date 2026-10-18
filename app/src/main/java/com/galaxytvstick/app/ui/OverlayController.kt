@@ -101,7 +101,6 @@ class OverlayController(
                 want.type == acc.type && want.epgUrl == acc.epgUrl) return false
             prefs.account = want
             prefs.lastChannelId = -1
-            android.widget.Toast.makeText(activity, R.string.switching_playlist, android.widget.Toast.LENGTH_SHORT).show()
             MainActivity::class.java
         }
         stop()
@@ -146,7 +145,28 @@ class OverlayController(
         when (cmd.type) {
             "message" -> showDialog(activity.getString(R.string.remote_message_title), cmd.text, null) {}
             "refresh" -> startPolling() // chèche config la kounye a
+            "reload" -> reloadSilently() // rechaje chanèl yo an aryè plan: videyo a pa kanpe
             else -> onCommand(cmd)
+        }
+    }
+
+    /**
+     * Rechaje lis chanèl founisè a san kliyan an pa remake: pa gen ekran chajman, videyo a kontinye.
+     * Lè l fini, ekran an mete l ajou ak menm chemen an tankou yon chanjman panel (onConfig).
+     */
+    fun reloadSilently() {
+        val acc = prefs.account ?: return
+        val ctx = activity.applicationContext
+        com.galaxytvstick.app.GalaxyApp.scope.launch {
+            val e = runCatching { com.galaxytvstick.app.data.ChannelCache.fetch(ctx, acc) }.getOrNull() ?: return@launch
+            if (e.channels.isEmpty()) return@launch
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                com.galaxytvstick.app.data.ChannelStore.rawCategories = e.categories
+                com.galaxytvstick.app.data.ChannelStore.rawChannels = e.channels
+                com.galaxytvstick.app.data.ChannelStore.applyPanel(PanelState.config)
+                if (!activity.isFinishing && !activity.isDestroyed) onConfig(PanelState.config)
+            }
+            runCatching { api.uploadChannels(e.channels, e.categories) }
         }
     }
 

@@ -1112,10 +1112,7 @@ class PlayerActivity : AppCompatActivity() {
         if (cfg.forceRefreshAt.isNotBlank() && cfg.forceRefreshAt != prefs.lastForceRefresh) {
             val first = prefs.lastForceRefresh.isEmpty()
             prefs.lastForceRefresh = cfg.forceRefreshAt
-            if (!first) {
-                reloadPlaylist()
-                return
-            }
+            if (!first) overlay.reloadSilently() // an silans: videyo a pa kanpe
         }
 
         // Playlist la retire (oswa chanje) nan panel la
@@ -1202,7 +1199,6 @@ class PlayerActivity : AppCompatActivity() {
         }
         prefs.account = account
         prefs.lastChannelId = -1
-        android.widget.Toast.makeText(this, R.string.switching_playlist, android.widget.Toast.LENGTH_SHORT).show()
         startActivity(
             Intent(this, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
