@@ -638,6 +638,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const nameList = (l) => [...new Set(l.map((x) => String(x ?? "").trim().slice(0, 200)).filter(Boolean))].slice(0, 5000);
     if (Array.isArray(b.extraGroups)) device.extraGroups = nameList(b.extraGroups);
     if (Array.isArray(b.extraChannels)) device.extraChannels = nameList(b.extraChannels);
+    // Sa TV sa a pa vle nan pakè a (gwoup / chanèl retire pou li sèlman)
+    if (Array.isArray(b.removedGroups)) device.removedGroups = nameList(b.removedGroups);
+    if (Array.isArray(b.removedChannels)) device.removedChannels = nameList(b.removedChannels);
     // Non chanje: { id: "nouvo non" }; yon non vid retire chanjman an
     const names = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [String(k), String(v ?? "").trim().slice(0, 80)]).filter(([, v]) => v).slice(0, 80000));
     if (b.categoryNames && typeof b.categoryNames === "object" && !Array.isArray(b.categoryNames)) device.categoryNames = names(b.categoryNames);
@@ -840,6 +843,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       mode: p.mode === "only" ? "only" : "hide",
       shownGroups: keys(p.shownGroups), hiddenGroups: keys(p.hiddenGroups), hiddenChannels: keys(p.hiddenChannels),
       extraGroups: keys(device.extraGroups), extraChannels: keys(device.extraChannels),
+      removedGroups: keys(device.removedGroups), removedChannels: keys(device.removedChannels),
     };
   }
 
@@ -855,7 +859,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const chs = channelsOf(device.mac);
     // Siplemantè TV sa a sèlman, anplis pakè a (egz: Miami + CNN + gwoup HAITI)
     const xg = new Set((device.extraGroups || []).map(nkey)), xc = new Set((device.extraChannels || []).map(nkey));
-    const ck = `${p.name}|${p.updatedAt || ""}|${chs.length}|${chs[0]?.id ?? ""}|${chs[chs.length - 1]?.id ?? ""}|${[...xg].join("\u0001")}|${[...xc].join("\u0001")}`;
+    const rg = new Set((device.removedGroups || []).map(nkey)), rc = new Set((device.removedChannels || []).map(nkey));
+    const ck = `${p.name}|${p.updatedAt || ""}|${chs.length}|${chs[0]?.id ?? ""}|${chs[chs.length - 1]?.id ?? ""}|${[...xg].join("\u0001")}|${[...xc].join("\u0001")}|${[...rg].join("\u0001")}|${[...rc].join("\u0001")}`;
     const hit = pkgCache.get(device.mac);
     if (hit && hit.ck === ck) return hit.out;
     const hg = new Set((p.hiddenGroups || []).map(nkey)), hc = new Set((p.hiddenChannels || []).map(nkey));
@@ -869,11 +874,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (xc.size) for (const c of chs) { const g = nkey(c.categoryName); if ((only ? !sg.has(g) : hg.has(g)) && !xg.has(g) && xc.has(nkey(c.name))) partial.add(String(c.categoryId)); }
     for (const c of chs) {
       const g = nkey(c.categoryName), n = nkey(c.name), cid = String(c.categoryId);
-      const gHidden = (only ? !sg.has(g) : hg.has(g)) && !xg.has(g);
+      const gHidden = ((only ? !sg.has(g) : hg.has(g)) && !xg.has(g)) || rg.has(g);
       if (gHidden && !partial.has(cid)) cats.add(cid);
       if (gn[g]) out.categoryNames[cid] = gn[g];
       if (xc.has(n)) { /* siplemantè: toujou vizib */ }
-      else if (hc.has(n) || (gHidden && partial.has(cid))) out.hiddenChannels.push(Number(c.id));
+      else if (hc.has(n) || rc.has(n) || (gHidden && partial.has(cid))) out.hiddenChannels.push(Number(c.id));
       if (cn[n]) out.channelNames[String(c.id)] = cn[n];
     }
     out.hiddenCategories = [...cats];
