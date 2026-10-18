@@ -83,7 +83,8 @@ data class Ticker(
 data class PkgRules(
     val only: Boolean,
     val shownGroups: Set<String>, val hiddenGroups: Set<String>, val hiddenChannels: Set<String>,
-    val extraGroups: Set<String>, val extraChannels: Set<String>
+    val extraGroups: Set<String>, val extraChannels: Set<String>,
+    val removedGroups: Set<String> = emptySet(), val removedChannels: Set<String> = emptySet()
 )
 
 data class AppUpdate(val build: Int, val version: String, val url: String, val force: Boolean, val pushAt: String, val notes: String = "")
@@ -488,7 +489,7 @@ data class PanelConfig(
             },
             pkgRules = o.optJSONObject("pkgRules")?.let { r ->
                 fun set(k: String) = r.optJSONArray(k).strings().map { it.trim().uppercase() }.toHashSet()
-                PkgRules(r.optString("mode") == "only", set("shownGroups"), set("hiddenGroups"), set("hiddenChannels"), set("extraGroups"), set("extraChannels"))
+                PkgRules(r.optString("mode") == "only", set("shownGroups"), set("hiddenGroups"), set("hiddenChannels"), set("extraGroups"), set("extraChannels"), set("removedGroups"), set("removedChannels"))
             },
             update = o.optJSONObject("update")?.let { u ->
                 AppUpdate(u.optInt("build", 0), u.optString("version"), u.optString("url"), u.optBoolean("force", false), u.optString("pushAt"), u.optString("notes"))

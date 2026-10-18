@@ -77,8 +77,10 @@ object ChannelStore {
             val rawName = rawChannels.associate { it.streamId to it.name.trim().uppercase() }
             all = all.filter { c ->
                 val n = rawName[c.streamId] ?: c.name.trim().uppercase()
-                if (n in r.extraChannels) return@filter true
                 val g = catName[c.categoryId].orEmpty()
+                // Retire pou TV sa a sèlman (menm si pakè a bay li)
+                if (n in r.removedChannels || g in r.removedGroups) return@filter false
+                if (n in r.extraChannels) return@filter true
                 val gHidden = (if (r.only) g !in r.shownGroups else g in r.hiddenGroups) && g !in r.extraGroups
                 !gHidden && n !in r.hiddenChannels
             }
