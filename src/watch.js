@@ -22,7 +22,8 @@ export function mountWatch(app, db, h) {
   };
   const buildOf = (v) => { const m = String(v || "").match(/^1\.0\.(\d+)/); return m ? Number(m[1]) : 0; };
   const pkgOf = (d) => !!(d.channelProfile && (data().channelProfiles || []).find((p) => p.name === d.channelProfile && p.pkg === true));
-  const devName = (d) => d.name || d.deviceName || d.customer || "";
+  // Idantifye yon TV pa kliyan an + MAC li (pa modèl aparèy la: "Fire TV Stick 4K" pa di w kiyès li ye)
+  const devName = (d) => { const c = (customerOf(d)?.name || d.customer || "").trim(); return c ? `${c} · ${d.mac}` : d.mac; };
 
   /** Tout pwoblèm panel la wè kounye a. Chak pwoblèm: { id, kind, level, ...done, actions }. */
   async function issues() {
@@ -138,7 +139,7 @@ export function mountWatch(app, db, h) {
     const system = "You watch an IPTV admin panel (Galaxy TV Stick: Android TV / Fire TV app; streams come from the customer's IPTV provider, not from this panel). " +
       "You get a JSON list of problems the panel detected. Write a short heads-up for the non-technical owner: what matters most first, the likely cause, " +
       "and which fix button to press (the panel shows buttons: 'Reload this TV', 'Hide this channel', 'Send the app update', 'Open the device'). " +
-      `Answer in ${lang}, max 6 short lines, simple words, no greeting. Never invent facts that are not in the list. Never say you fixed anything: the owner decides.`;
+      `Answer in ${lang}, max 6 short lines, simple words, no greeting. Never invent facts that are not in the list. Never say you fixed anything: the owner decides. Always name a TV by its customer and MAC exactly as given in the list, never by device model.`;
     try {
       const r = await aiComplete(db, { system, user: JSON.stringify(list.filter((i) => i.level !== "info").map(({ actions, ...i }) => i)), maxTokens: 350 });
       Object.assign(s, { summary: r.text, summaryAt: Date.now(), summaryKey: key, summaryLang: s.lang || "en" });
