@@ -57,6 +57,7 @@ export function denyReason(role, method, p) {
   if (BACKUP.test(p)) return "Only the owner can download or restore backups.";
   if (ADMINS.test(p) && (write || role !== "Administrator")) return "Only the owner can manage admin accounts.";
   if (role === "Administrator") return null;
+  if (/^\/api\/galaxy\/notify/.test(p)) return "Your account cannot open the phone notification settings.";
   if (!write) return null; // Support ak Viewer ka gade
   if (role === "Support") {
     if (method === "DELETE" && !/\/playlists\//.test(p)) return "Your account (Support) cannot delete.";

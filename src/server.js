@@ -62,7 +62,7 @@ app.use((req, res, next) => {
 
 // Nenpòt chanjman admin nan fè nan panel la (kliyan, pakè, grafik, reglaj…): TV ki konekte yo mete yo ajou touswit.
 // (Demann TV yo li menm voye — /api/devices/… — ak tès yo pa konte.)
-const NO_SYNC = /^\/api\/(devices\/|auth\/|galaxy\/xtream\/test|galaxy\/devices\/[^/]+\/(playlists\/[^/]+\/test|commands)|galaxy\/backup|galaxy\/alerts|galaxy\/ai|galaxy\/notes|galaxy\/watch|galaxy\/storage|galaxy\/media)/;
+const NO_SYNC = /^\/api\/(devices\/|auth\/|galaxy\/xtream\/test|galaxy\/devices\/[^/]+\/(playlists\/[^/]+\/test|commands)|galaxy\/backup|galaxy\/alerts|galaxy\/ai|galaxy\/notes|galaxy\/watch|galaxy\/notify|galaxy\/storage|galaxy\/media)/;
 app.use((req, res, next) => {
   if (req.method !== "GET" && req.method !== "OPTIONS" && req.path.startsWith("/api/") && !NO_SYNC.test(req.path)) {
     res.on("finish", () => { if (res.statusCode < 400) syncTvs(); });

@@ -1116,6 +1116,18 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="list" id="abList"></div>
         <p class="note" style="margin:8px 0 0">Kopi sa yo sou menm disk ak sèvè a: yo pwoteje w si yon bagay efase oswa gate. Telechaje youn sou òdinatè w chak semèn konsa, pou w pwoteje kont yon pàn sèvè.</p>
       </div>
+      <div class="card" id="nfCard">
+        <div class="cardhead"><div><h2>📱 Notifikasyon sou telefòn ou</h2><p class="sub">Resevwa yon alèt sou telefòn ou lè panel la jwenn yon pwoblèm (chanèl tonbe, TV ki pa konekte, disk plen…), menm lè panel la pa louvri. Gratis, ak app "ntfy".</p></div></div>
+        <div class="inline" style="gap:10px;flex-wrap:wrap"><label class="sw"><input type="checkbox" id="nfOn"><i></i></label><label for="nfOn"><b>Voye notifikasyon yo</b></label>
+          <select id="nfLevel" style="max-width:260px"><option value="warn">Pwoblèm enpòtan ak grav</option><option value="crit">Pwoblèm grav sèlman</option></select>
+          <button class="btn small" id="nfTest" type="button">Voye yon tès</button></div>
+        <ol class="note" id="nfSteps" style="margin:12px 0 0 18px;line-height:1.7" hidden>
+          <li>Telechaje app ntfy sou telefòn ou (App Store oswa Play Store). Li gratis, pa bezwen kont.</li>
+          <li>Nan app la, peze + (Subscribe to topic) epi kole non sa a: <code id="nfTopic" style="user-select:all"></code> <button class="btn small" id="nfCopy" type="button">Kopye</button></li>
+          <li>Peze «Voye yon tès» anwo a: ou ta dwe resevwa yon notifikasyon nan kèk segonn.</li>
+        </ol>
+        <p class="note" style="margin:8px 0 0">Non topic la se tankou yon kle: pa pataje l. Si yon moun jwenn li, <button class="btn small" id="nfNew" type="button">chanje l</button> epi abòne ankò ak nouvo a.</p>
+      </div>
       <div class="card" id="ntCard" data-owner-only>
         <div class="cardhead"><div><h2>🗒️ Nòt mwen yo</h2><p class="sub">Kote pou sere enfòmasyon ou bezwen: kòd Downloader app la, enfòmasyon sèvè a, domèn, kontak… Sèlman ou menm ki wè yo nan panel la.</p></div></div>
         <div class="notes" id="ntList"></div>
@@ -2924,7 +2936,25 @@ $("#abList").addEventListener("click", async (e) => {
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   } catch (err) { toast(err.message); }
 });
-async function loadSystem() { loadAppUpdate(); loadNotes(); loadAutoBackups();
+// ---- Notifikasyon sou telefòn (ntfy)
+function nfShow(y) {
+  $("#nfOn").checked = !!y.on; $("#nfLevel").value = y.level || "warn"; $("#nfTopic").textContent = y.topic || "";
+  $("#nfSteps").hidden = !y.topic; $("#nfNew").disabled = !y.topic;
+}
+async function loadNotify() {
+  try { nfShow(await api("GET", "/galaxy/notify")); $("#nfCard").hidden = false; } catch { $("#nfCard").hidden = true; }
+}
+const nfSave = async (extra = {}) => { try { nfShow(await api("PUT", "/galaxy/notify", { on: $("#nfOn").checked, level: $("#nfLevel").value, ...extra })); toast(t("Sove")); } catch (err) { toast(err.message); } };
+$("#nfOn").addEventListener("change", () => nfSave());
+$("#nfLevel").addEventListener("change", () => nfSave());
+$("#nfNew").addEventListener("click", () => { if (confirm(t("Chanje non topic la? Telefòn ki abòne ak ansyen an p ap resevwa anyen ankò."))) nfSave({ newTopic: true }); });
+$("#nfCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("#nfTopic").textContent); toast(t("Kopye tèks la")); } catch { toast(t("Pa ka kopye otomatikman: chwazi tèks la epi kopye l.")); } });
+$("#nfTest").addEventListener("click", async (e) => {
+  const b = e.currentTarget; b.disabled = true;
+  try { nfShow(await api("POST", "/galaxy/notify/test", {})); toast(t("Tès la voye. Gade telefòn ou.")); } catch (err) { toast(err.message); }
+  b.disabled = false;
+});
+async function loadSystem() { loadAppUpdate(); loadNotes(); loadAutoBackups(); loadNotify();
   loadSysStats();
   settings = await api("GET", "/settings").catch(() => ({}));
   $("#mtOn").checked = !!settings.maintenanceMode; $("#mtMsg").value = settings.maintenanceMessage || "";

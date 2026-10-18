@@ -5,6 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { aiComplete, aiBudget, aiLangName } from "./ai.js";
+import { createNotifier, mountNotify } from "./notify.js";
 
 const H = 3600000;
 
@@ -128,7 +129,11 @@ export function mountWatch(app, db, h) {
   }
 
   // Siveyans an aryè plan
-  const tick = async () => { try { await summarize(await issues()); } catch {} };
+  // Notifikasyon sou telefòn (app ntfy)
+  const notifier = createNotifier(db);
+  mountNotify(app, db, notifier, { authenticate });
+  setTimeout(() => notifier.started(), 20000).unref?.();
+  const tick = async () => { try { const list = await issues(); await notifier.onIssues(list); await summarize(list); } catch {} };
   setTimeout(tick, 60000);
   setInterval(tick, 10 * 60000).unref?.();
 
