@@ -66,11 +66,11 @@ class HomeActivity : AppCompatActivity() {
         b = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(b.root)
         ready = true
-        // Dat ekspirasyon kay founisè a (nenpòt kalite playlist): voye l bay panel la, maks yon fwa chak 3 è
+        // Dat ekspirasyon kay founisè a (nenpòt kalite playlist): voye l bay panel la, maks yon fwa chak 30 minit
         prefs.account?.let { acc ->
             lifecycleScope.launch {
                 val sp = getSharedPreferences("galaxy_exp", MODE_PRIVATE)
-                if (System.currentTimeMillis() - sp.getLong("at", 0L) < 3 * 3600_000L) return@launch
+                if (System.currentTimeMillis() - sp.getLong("at", 0L) < 30 * 60_000L) return@launch
                 val info = runCatching { com.galaxytvstick.app.data.XtreamApi(acc).expiryInfo() }.getOrNull() ?: return@launch
                 runCatching { PanelApi(prefs).reportExpiry(info) }.onSuccess { sp.edit().putLong("at", System.currentTimeMillis()).apply() }
             }
