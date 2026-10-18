@@ -2387,7 +2387,10 @@ const enc = encodeURIComponent;
 async function loadMessages() {
   const [tickers, banners, popups, s] = await Promise.all([list("tickers"), list("banners"), list("popups"), api("GET", "/settings")]).catch(() => [[], [], [], {}]);
   settings = s || {};
-  tkItems = tickers; fillTickerStyle(); tsFill();
+  tkItems = tickers; fillTickerStyle();
+  tsSample.bannerStyle = (banners.find((b) => isOn(b.status) && !/^https?:\/\//i.test(b.content || "")) || {}).content || "";
+  tsSample.popupStyle = (popups.find((p) => isOn(p.active)) || popups[0] || {}).title || "";
+  tsFill();
   const gc = settings.tickerTextColor || "#FFFFFF";
   renderTickerList();
   renderTkPreview();
@@ -2479,7 +2482,9 @@ $("#popupForm").addEventListener("submit", async (e) => {
 // ---- Estil tèks banner / pop-up (anrejistre nan reglaj yo)
 const TS_DEF = { bannerStyle: { style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false }, popupStyle: { style: "plain", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false } };
 function tsRead(box) { const o = {}; box.querySelectorAll("[data-ts]").forEach((el) => (o[el.dataset.ts] = el.type === "checkbox" ? el.checked : el.value)); return o; }
-function tsPreview(box) { const o = tsRead(box), pv = box.querySelector("[data-tsprev]"); if (pv && window.GalaxyGfx?.textCss) pv.innerHTML = `<span style="display:inline-block;padding:6px 12px;background:#0b1220;border-radius:8px"><b style="${GalaxyGfx.textCss(o, 20)}">${esc(t("Egzanp tèks"))}</b></span>`; }
+function tsPreview(box) { const o = tsRead(box), pv = box.querySelector("[data-tsprev]"); if (pv && window.GalaxyGfx?.textCss) pv.innerHTML = `<span style="display:inline-block;padding:6px 12px;background:#0b1220;border-radius:8px;max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b style="${GalaxyGfx.textCss(o, 20)}">${esc(tsSample[box.dataset.tstyle] || t("Egzanp tèks"))}</b></span>`; }
+/** Egzanp lan montre pwòp tèks premye banner / pop-up ou a (si genyen youn). */
+const tsSample = {};
 function tsFill() { $$("[data-tstyle]").forEach((box) => { const v = { ...TS_DEF[box.dataset.tstyle], ...(settings[box.dataset.tstyle] || {}) }; box.querySelectorAll("[data-ts]").forEach((el) => { if (el.type === "checkbox") el.checked = !!v[el.dataset.ts]; else el.value = v[el.dataset.ts]; }); tsPreview(box); }); }
 let tsSaveT = 0;
 $$("[data-tstyle]").forEach((box) => { const ch = () => { tsPreview(box); clearTimeout(tsSaveT); tsSaveT = setTimeout(async () => { try { settings = await api("PUT", "/settings", { [box.dataset.tstyle]: tsRead(box) }); toast(t("Sove")); } catch (err) { toast(err.message); } }, 600); };
