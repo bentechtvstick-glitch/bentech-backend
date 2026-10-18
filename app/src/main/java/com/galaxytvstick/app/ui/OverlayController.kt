@@ -135,13 +135,11 @@ class OverlayController(
             if (chans.isNotEmpty()) com.galaxytvstick.app.GalaxyApp.scope.launch { runCatching { api.uploadChannels(chans, cats) } }
             return
         }
-        // Toujou montre kliyan an lè sèvis kliyan an aji sou TV li
+        // Chanjman yo (chanèl, pakè, reglaj) fèt an silans: kliyan an pa wè okenn mesaj.
+        // Sèlman lè ekran an ap chanje nèt (redemaraj, dekoneksyon) nou di l poukisa.
         val what = when (cmd.type) {
-            "play" -> activity.getString(R.string.remote_play)
-            "reload" -> activity.getString(R.string.remote_reload)
             "restart" -> activity.getString(R.string.remote_restart)
             "logout" -> activity.getString(R.string.remote_logout)
-            "refresh" -> activity.getString(R.string.remote_refresh)
             else -> null
         }
         if (what != null) android.widget.Toast.makeText(activity, what, android.widget.Toast.LENGTH_LONG).show()
