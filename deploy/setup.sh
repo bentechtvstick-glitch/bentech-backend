@@ -105,7 +105,13 @@ $DOMAIN {
 }
 CADDY
 systemctl daemon-reload
-systemctl enable --now galaxy galaxy-update.timer
+if [ -f /var/lib/galaxy/data/db.json ]; then
+  systemctl enable --now galaxy galaxy-update.timer
+else
+  # Pa janm limen yon panel vid: TV yo t ap kwè yo efase
+  echo "PANEL LA PA LIMEN: pa gen done (db.json). Tcheke Volume nan, epi kouri script la ankò."
+  systemctl enable galaxy-update.timer
+fi
 systemctl restart caddy
 
 say "8/8 Verifikasyon"
