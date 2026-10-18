@@ -545,7 +545,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="rel"><button class="iconbtn" id="bellBtn" type="button" aria-label="Notifikasyon"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg><span class="count" id="bellCount" hidden></span></button>
           <div class="menu" id="bellMenu" hidden></div></div>
         <div class="rel"><button class="user" id="userBtn" type="button"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M6.2 18.4a7 7 0 0 1 11.6 0"/></svg><span id="userName">Admin</span></button>
-          <div class="menu" id="userMenu" hidden><button class="mi" id="logoutBtn" type="button">Dekonekte</button></div></div>
+          <div class="menu" id="userMenu" hidden><div class="mi note" id="whoAmI" style="cursor:default"></div><button class="mi" id="logoutBtn" type="button">Dekonekte</button></div></div>
       </div>
     </header>
 
@@ -1108,7 +1108,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="inline" style="margin-top:12px"><label class="sw"><input type="checkbox" id="upForce"><i></i></label><label for="upForce">Obligatwa: kliyan an pa ka kontinye san l pa mete ajou</label></div>
         <div class="btns" style="justify-content:flex-start;margin-top:12px"><button class="btn primary" id="upSend" type="button">Voye mizajou bay tout TV</button><button class="btn" id="upCancel" type="button">Sispann pwopoze l</button><span class="msg" id="upMsg"></span></div>
       </div>
-      <div class="card">
+      <div class="card" id="bkCard" data-owner-only>
         <div class="cardhead"><div><h2>💾 Kopi done yo</h2><p class="sub">Sove yon kopi tout done panel la (TV, kliyan, playlist, pakè, ticker…) sou òdinatè w. Si yon bagay efase, ou remete l an yon klik.</p></div></div>
         <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="bkDown" type="button">Telechaje yon kopi</button><button class="btn" id="bkUp" type="button">Remete yon kopi…</button><input type="file" id="bkFile" accept="application/json,.json" hidden><span class="msg" id="bkMsg"></span></div>
         <p class="note" style="margin:8px 0 0">Kopi a gen modpas playlist yo ladan l: kenbe fichye a an sekirite, pa pataje l.</p>
@@ -1116,7 +1116,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="list" id="abList"></div>
         <p class="note" style="margin:8px 0 0">Kopi sa yo sou menm disk ak sèvè a: yo pwoteje w si yon bagay efase oswa gate. Telechaje youn sou òdinatè w chak semèn konsa, pou w pwoteje kont yon pàn sèvè.</p>
       </div>
-      <div class="card">
+      <div class="card" id="ntCard" data-owner-only>
         <div class="cardhead"><div><h2>🗒️ Nòt mwen yo</h2><p class="sub">Kote pou sere enfòmasyon ou bezwen: kòd Downloader app la, enfòmasyon sèvè a, domèn, kontak… Sèlman ou menm ki wè yo nan panel la.</p></div></div>
         <div class="notes" id="ntList"></div>
         <form id="ntForm" style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
@@ -1205,6 +1205,15 @@ function setLang(code) {
 }
 const TOKEN_KEY = "galaxy_admin_token";
 let token = (() => { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch { return ""; } })();
+let role = (() => { try { return localStorage.getItem("galaxy_admin_role") || "owner"; } catch { return "owner"; } })();
+/** Kache sa kont lan pa gen dwa wè (sèvè a bloke l kanmenm). */
+function applyRole() {
+  const owner = role === "owner";
+  $$("[data-owner-only]").forEach((el) => (el.hidden = !owner));
+  const adminsTab = document.querySelector('[data-tab="admins"]'); if (adminsTab) adminsTab.hidden = !(owner || role === "Super Administrator" || role === "Administrator");
+  let nm = ""; try { nm = localStorage.getItem("galaxy_admin_name") || ""; } catch {}
+  const who = $("#whoAmI"); if (who) who.textContent = (nm ? nm + " · " : "") + (owner ? t("Pwopriyetè") : t(role));
+}
 
 // ------------------------------------------------------------ API
 async function api(method, path, body) {
@@ -1214,6 +1223,7 @@ async function api(method, path, body) {
   });
   if (r.status === 401 && !path.startsWith("/auth/")) { showLogin(t("Sesyon ou fini. Konekte ankò.")); throw new Error("401"); }
   const text = await r.text(); let data = null; try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (r.status === 403 && data && data.forbidden) throw new Error(t("🔒 Kont ou an pa gen dwa fè sa. Mande pwopriyetè panel la."));
   if (!r.ok) throw new Error(t((data && data.error) || t("Erè {0}", r.status)));
   return data;
 }
@@ -1242,7 +1252,7 @@ $("#loginForm").addEventListener("submit", async (e) => {
   e.preventDefault(); $("#loginMsg").textContent = "";
   try {
     const r = await api("POST", "/auth/login", { username: $("#lu").value.trim(), password: $("#lp").value });
-    token = r.token; try { localStorage.setItem(TOKEN_KEY, token); } catch {}
+    token = r.token; role = r.role || "owner"; try { localStorage.setItem(TOKEN_KEY, token); localStorage.setItem("galaxy_admin_role", role); localStorage.setItem("galaxy_admin_name", r.name || ""); } catch {}
     startApp();
   } catch (err) {
     const m = String(err.message || ""), left = m.match(/\((\d+) attempt/), mins = m.match(/in (\d+) min/);
@@ -1634,8 +1644,8 @@ const CRUD = {
   prof: { col: "channel-profiles", id: "name", title: "Channel Profiles", sub: "Pakè chanèl. Kantite chanèl la se limit TV a.",
     fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }, { k: "customers", l: "Kliyan", type: "number" }, { k: "tags", l: "Tags" }] },
   langs: { col: "languages", id: "name", title: "Lang yo", sub: "Lang chanèl yo.", fields: [{ k: "name", l: "Name", req: 1 }, { k: "code", l: "Kòd" }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }] },
-  admins: { col: "admin-users", id: "email", title: "Admin Users", sub: "Moun ki gen aksè nan panel la.",
-    fields: [{ k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", req: 1 }, { k: "role", l: "Wòl", opts: ["Super Administrator", "Administrator", "Support", "Viewer"] }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }] },
+  admins: { col: "admin-users", id: "email", title: "Admin Users", sub: "Moun ki ka konekte nan panel la ak imèl yo ak modpas ou ba yo. Administrator: tout bagay sof kont admin yo ak kopi done yo · Support: kliyan ak TV yo sèlman, san efase · Viewer: gade sèlman.",
+    fields: [{ k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", req: 1, noUpper: 1 }, { k: "role", l: "Wòl", opts: ["Administrator", "Support", "Viewer", "Super Administrator"], def: () => "Support" }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }, { k: "password", l: "Modpas (8 karaktè minimòm)", type: "password" }] },
   audit: { col: "audit-logs", readonly: 1, title: "Audit Logs", sub: "Kiyès ki fè kisa nan panel la.",
     fields: [{ k: "when", l: "Lè" }, { k: "user", l: "Itilizatè" }, { k: "action", l: "Aksyon", pill: 1 }, { k: "detail", l: "Detay" }] },
 };
@@ -1861,6 +1871,7 @@ const WT_TEXT = {
   old_app: (i) => [t("📲 {0} TV gen yon ansyen vèsyon app la", i.count), t("Dènye vèsyon an se {0}.", i.latest)],
   expiring: (i) => [i.days ? t("⏰ Abònman {0} ap fini nan {1} jou", i.customer, i.days) : t("⏰ Abònman {0} ap fini jodi a", i.customer), t("Kontakte kliyan an pou l renouvle.")],
   disk_low: (i) => [t("💾 Disk sèvè a prèske plen: {0}% ki rete", i.freePct), t("Gade \"Kisa ki pran plas?\" nan paj Sistèm nan.")],
+  weak_password: () => [t("🔑 Modpas login panel la twò fèb"), t("Chanje ADMIN_PASS nan /etc/galaxy.env sou sèvè a (12 karaktè oswa plis, ak chif ak senbòl), epi redemare sèvis la.")],
   ai_budget: (i) => [t("🤖 AI a deja itilize ${0} sou ${1} mwa sa a", i.cost, i.limit), t("Lè limit lan rive, AI a kanpe jiska mwa pwochen.")],
 };
 const WT_ACT = {
@@ -3231,7 +3242,7 @@ function stopTimers() { timers.forEach(clearInterval); timers = []; }
 let ttv = null;
 $("#ttvBtn").addEventListener("click", () => ttv?.toggle());
 function startApp() {
-  $("#loginView").hidden = true; $("#appView").hidden = false; stopTimers();
+  $("#loginView").hidden = true; $("#appView").hidden = false; stopTimers(); applyRole();
   if (window.GalaxyTestTv) { $("#ttvBtn").hidden = false; $("#ttvBtn").title = t("Limen oswa etenn yon TV tès ki konekte ak panel sa a");
     if (!ttv) ttv = GalaxyTestTv.init({ API, t, esc, cyHtml, sigHtml, getToken: () => token, openDevice: (mac) => { openTab("dev"); loadDevices().then(() => selectDevice(mac, true)); } });
     if (ttv.wasOn()) ttv.start(); }

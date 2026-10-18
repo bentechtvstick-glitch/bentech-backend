@@ -26,6 +26,9 @@ export function mountAutoBackup(app, db, { authenticate, auditLog }) {
     if (running) return running;
     running = (async () => {
       fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+      // Pa janm plen disk la: si mwens pase 10% disk la rete lib, pa fè kopi a (panel la ap avèti w)
+      try { const st = fs.statfsSync(dir); if (st.blocks && st.bavail / st.blocks < 0.10) throw new Error("Not enough free disk space for a backup (less than 10% left)."); }
+      catch (e) { if (/free disk/.test(e.message)) throw e; }
       const stamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
       const name = `galaxy-auto-${stamp}.json.gz`;
       const tmp = path.join(dir, name + ".tmp");

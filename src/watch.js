@@ -90,6 +90,10 @@ export function mountWatch(app, db, h) {
     const free = diskFreePct();
     if (free != null && free < 15) out.push({ id: "disk", kind: "disk_low", level: free < 7 ? "crit" : "warn", freePct: free, actions: [{ type: "goto_system" }] });
 
+    // 5b) Modpas pwopriyetè a twò fèb (oswa li rete valè egzanp lan)
+    const ap = process.env.ADMIN_PASS || "";
+    if (!ap || ap === "changeme" || ap.length < 10) out.push({ id: "weakpw", kind: "weak_password", level: "crit", actions: [] });
+
     // 6) Bidjè AI a
     const b = aiBudget(db);
     if (process.env.ANTHROPIC_API_KEY && b.limit > 0 && b.cost >= b.limit * 0.8) out.push({ id: "aib:" + new Date().toISOString().slice(0, 7), kind: "ai_budget", level: "info",

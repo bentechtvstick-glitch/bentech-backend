@@ -14,6 +14,7 @@ import {
 } from "./galaxy.js";
 import { mountGalaxyLive } from "./galaxy-live.js";
 import { mountAutoBackup } from "./autobackup.js";
+import { accessControl, findAdminLogin, hashPassword } from "./access.js";
 import crypto from "node:crypto";
 import { fastWrites, gzipJson } from "./perf.js";
 
@@ -70,12 +71,24 @@ app.use((req, res, next) => {
 });
 
 // JWT configuration
-const JWT_SECRET = process.env.JWT_SECRET || "change-me-before-production";
+// Kle sekrè sesyon yo: si l pa mete (oswa li rete valè egzanp lan), sèvè a kreye youn o aza
+// epi li sere l bò kote baz done a (pa janm nan kòd la).
+const JWT_SECRET = (() => {
+  const env = process.env.JWT_SECRET;
+  if (env && env !== "change-me-before-production" && env.length >= 16) return env;
+  const f = path.join(path.dirname(path.resolve(DB_FILE)), ".jwt-secret");
+  try { const v = fs.readFileSync(f, "utf8").trim(); if (v.length >= 32) return v; } catch {}
+  const v = crypto.randomBytes(48).toString("hex");
+  try { fs.writeFileSync(f, v, { mode: 0o600 }); } catch (e) { console.error("Cannot save JWT secret:", e.message); }
+  return v;
+})();
 const JWT_EXPIRES_IN = "24h";
 
 // Simple admin auth with real JWT
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "changeme";
+// Dwa chak kont admin (wòl): aplike sou tout route panel yo anvan yo kouri
+app.use(accessControl(db, JWT_SECRET, ADMIN_USER));
 
 // ---------- helpers ----------
 
@@ -230,13 +243,20 @@ app.post("/api/auth/login", async (req, res) => {
   if (lockedFor > 0) {
     return res.status(429).json({ ok: false, error: `Too many attempts. Try again in ${Math.ceil(lockedFor / 60000)} min.` });
   }
+  const sub = findAdminLogin(db, username, password);
+  if (sub) {
+    loginFails.delete(ip);
+    const token = jwt.sign({ sub: sub.email, uid: sub.email, role: sub.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    auditLog("login", `User ${sub.email} (${sub.role}) logged in`, sub.email);
+    return res.json({ ok: true, token, role: sub.role, name: sub.name });
+  }
   if (safeEq(username || "", ADMIN_USER) && safeEq(password || "", ADMIN_PASS)) {
     loginFails.delete(ip);
     const token = jwt.sign({ sub: username, role: "admin" }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN,
     });
     auditLog("login", `User ${username} logged in`, username);
-    return res.json({ ok: true, token });
+    return res.json({ ok: true, token, role: "owner", name: username });
   }
   // Move modpas: konte l, ralanti repons lan, epi bloke si twòp
   const cur = f && now - f.first < LOGIN_WINDOW ? f : { n: 0, first: now, lockUntil: 0 };
@@ -284,8 +304,9 @@ app.post("/api/auth/activate", async (req, res) => {
 
 // PROTECT_API=true → tout route panel yo mande JWT (rekòmande pou pwodiksyon,
 // men panel la dwe voye "Authorization: Bearer <token>" nan chak demann).
+// Pa defo tout route panel yo mande login (PROTECT_API=false sèlman pou tès lokal)
 const guard =
-  process.env.PROTECT_API === "true" ? authenticate : (req, res, next) => next();
+  process.env.PROTECT_API === "false" ? (req, res, next) => next() : authenticate;
 
 // ---------- generic collection helper ----------
 
@@ -295,7 +316,7 @@ const TV_COLLECTIONS = new Set(["tickers", "chyrons", "banners", "popups", "live
 
 function mountCollection(path, key, idField = "id", opts = {}) {
   const tvSync = () => { if (TV_COLLECTIONS.has(key)) syncTvs(); };
-  const { present = (x) => x, protectedFields = [], onDelete, keepIfEmpty = [] } = opts;
+  const { present = (x) => x, protectedFields = [], onDelete, keepIfEmpty = [], prepare = (x) => x } = opts;
   const clean = (body) => {
     const item = { ...(body || {}) };
     for (const f of protectedFields) delete item[f];
@@ -331,7 +352,7 @@ function mountCollection(path, key, idField = "id", opts = {}) {
 
   // POST – create
   app.post(`/api/${path}`, guard, async (req, res) => {
-    const item = clean(req.body);
+    let item; try { item = prepare(clean(req.body)); } catch (e) { return res.status(e.status || 400).json({ error: e.message }); }
     if (!item[idField]) item[idField] = nanoid(8);
     db.data[key].push(item);
     await db.write();
@@ -344,7 +365,8 @@ function mountCollection(path, key, idField = "id", opts = {}) {
   app.put(`/api/${path}/:id`, guard, async (req, res) => {
     const idx = db.data[key].findIndex((x) => String(x[idField]) === req.params.id);
     if (idx === -1) return res.status(404).json({ error: "Not found" });
-    db.data[key][idx] = { ...db.data[key][idx], ...clean(req.body) };
+    let upd; try { upd = prepare(clean(req.body)); } catch (e) { return res.status(e.status || 400).json({ error: e.message }); }
+    db.data[key][idx] = { ...db.data[key][idx], ...upd };
     await db.write();
     tvSync();
     auditLog("update", `${key}: ${req.params.id}`, req.user?.sub || "anonymous");
@@ -391,7 +413,17 @@ mountCollection("programs", "programs", "id");
 mountCollection("banners", "banners", "content");
 mountCollection("popups", "popups", "title");
 mountCollection("tickers", "tickers", "message");
-mountCollection("admin-users", "adminUsers", "email");
+mountCollection("admin-users", "adminUsers", "email", {
+  present: ({ passwordHash, password, ...x }) => ({ ...x, hasPassword: !!passwordHash }),
+  protectedFields: ["passwordHash", "hasPassword"],
+  prepare: (item) => {
+    const pw = String(item.password || "");
+    delete item.password;
+    if (pw) { if (pw.length < 8) throw Object.assign(new Error("The password must have at least 8 characters."), { status: 400 }); item.passwordHash = hashPassword(pw); }
+    if (item.email) item.email = String(item.email).trim().toLowerCase();
+    return item;
+  },
+});
 mountCollection("countries", "countries", "name");
 mountCollection("regions", "regions", "name");
 mountCollection("categories", "categories", "name");
@@ -423,7 +455,7 @@ app.get("/api/audit-logs", guard, (req, res) => {
   res.json((db.data.auditLogs || []).slice(-limit));
 });
 
-app.get("/api/settings", (req, res) => res.json(db.data.settings || {}));
+app.get("/api/settings", guard, (req, res) => res.json(db.data.settings || {}));
 app.put("/api/settings", guard, async (req, res) => {
   db.data.settings = { ...db.data.settings, ...req.body };
   await db.write();
