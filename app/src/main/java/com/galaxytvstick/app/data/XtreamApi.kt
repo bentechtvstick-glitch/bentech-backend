@@ -16,6 +16,15 @@ import java.util.concurrent.TimeUnit
 class XtreamApi(private val account: Account) {
 
     companion object {
+        /** Lyen M3U Xtream (…/get.php?username=…&password=…) → kont Xtream pou mande dat ekspirasyon an. null si se pa youn. */
+        fun m3uAsXtream(url: String): Account? = runCatching {
+            val u = java.net.URI(url.trim())
+            val q = (u.rawQuery ?: "").split("&").mapNotNull { kv -> kv.split("=", limit = 2).takeIf { it.size == 2 }?.let { java.net.URLDecoder.decode(it[0], "UTF-8") to java.net.URLDecoder.decode(it[1], "UTF-8") } }.toMap()
+            val user = q["username"]; val pass = q["password"]
+            if (user.isNullOrBlank() || pass.isNullOrBlank()) return@runCatching null
+            val port = if (u.port > 0) ":${u.port}" else ""
+            Account("${u.scheme}://${u.host}$port", user, pass, type = "xtream")
+        }.getOrNull()
         /** Menm fòm ak lòt app ki bati sou ExoPlayer/Media3 (kèk sèvè IPTV refize non yo pa konnen). */
         val DEFAULT_USER_AGENT = "Galaxy TV"
         @Volatile var USER_AGENT = DEFAULT_USER_AGENT
@@ -163,7 +172,18 @@ class XtreamApi(private val account: Account) {
     data class ProviderInfo(val exp: Long, val status: String, val created: Long, val trial: Boolean, val maxConnections: Int)
 
     /** Enfòmasyon kont lan kay founisè a, oswa null si founisè a pa reponn. exp/created an segonn Unix, 0 = pa gen. */
-    suspend fun expiryInfo(): ProviderInfo? = runCatching {
+    suspend fun expiryInfo(): ProviderInfo? {
+        // Kèlkeswa kalite playlist la: Xtream dirèk, lyen M3U ki soti nan yon sèvè Xtream, oswa pòtal Stalker (MAC)
+        if (account.isStalker) return withContext(Dispatchers.IO) {
+            runCatching { Stalker.forAccount(account).expiry() }.getOrNull()?.takeIf { it > 0 }?.let { exp -> // 0 = pòtal la pa di l: pa voye anyen
+                ProviderInfo(exp, if (exp > 0 && exp * 1000 < System.currentTimeMillis()) "Expired" else "Active", 0L, false, 0)
+            }
+        }
+        if (account.isM3u) return m3uAsXtream(account.server)?.let { XtreamApi(it).expiryInfo() }
+        return xtreamExpiry()
+    }
+
+    private suspend fun xtreamExpiry(): ProviderInfo? = runCatching {
         val u = JSONObject(get(apiUrl(null))).optJSONObject("user_info") ?: return@runCatching null
         ProviderInfo(
             exp = (u.optString("exp_date").toLongOrNull() ?: 0L).coerceAtLeast(0L),

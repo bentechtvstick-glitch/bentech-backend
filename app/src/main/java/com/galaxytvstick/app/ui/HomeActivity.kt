@@ -66,6 +66,15 @@ class HomeActivity : AppCompatActivity() {
         b = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(b.root)
         ready = true
+        // Dat ekspirasyon kay founisè a (nenpòt kalite playlist): voye l bay panel la, maks yon fwa chak 3 è
+        prefs.account?.let { acc ->
+            lifecycleScope.launch {
+                val sp = getSharedPreferences("galaxy_exp", MODE_PRIVATE)
+                if (System.currentTimeMillis() - sp.getLong("at", 0L) < 3 * 3600_000L) return@launch
+                val info = runCatching { com.galaxytvstick.app.data.XtreamApi(acc).expiryInfo() }.getOrNull() ?: return@launch
+                runCatching { PanelApi(prefs).reportExpiry(info) }.onSuccess { sp.edit().putLong("at", System.currentTimeMillis()).apply() }
+            }
+        }
         // Prepare Films ak Séries an aryè plan pou yo louvri touswit (san chajman)
         prefs.account?.let { acc -> lifecycleScope.launch { delay(3000); VodStore.prefetch(this@HomeActivity, acc) } }
 

@@ -80,6 +80,33 @@ class Stalker private constructor(private val portal: String, private val mac: S
         }
     }
 
+    /** Dat ekspirasyon kont lan sou pòtal la (segonn Unix), 0 = pòtal la pa di l. */
+    fun expiry(): Long {
+        val fields = listOf("end_date", "expire_billing_date", "expire_date", "exp_date", "phone", "account_balance")
+        val sources = listOf(
+            runCatching { authed(mapOf("type" to "account_info", "action" to "get_main_info")).optJSONObject("js") }.getOrNull(),
+            runCatching { authed(mapOf("type" to "stb", "action" to "get_profile")).optJSONObject("js") }.getOrNull(),
+        )
+        for (js in sources) {
+            if (js == null) continue
+            for (f in fields) parseDate(js.optString(f))?.let { return it }
+        }
+        return 0L
+    }
+
+    private fun parseDate(raw: String?): Long? {
+        val v = raw?.trim()?.takeIf { it.isNotBlank() && it != "0" && it != "null" } ?: return null
+        v.toLongOrNull()?.let { n -> if (n > 1_000_000_000L) return if (n > 10_000_000_000L) n / 1000 else n }
+        val pats = listOf("yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM-dd", "MMMM d, yyyy, h:mm a", "MMMM d, yyyy", "dd.MM.yyyy", "dd/MM/yyyy", "MM/dd/yyyy")
+        val txt = v.replace(Regex("^[^0-9A-Za-z]+"), "")
+        for (p in pats) runCatching {
+            val f = java.text.SimpleDateFormat(p, java.util.Locale.US).apply { isLenient = false }
+            val d = f.parse(txt, java.text.ParsePosition(0)) ?: return@runCatching
+            if (d.time > 946684800000L) return d.time / 1000
+        }
+        return null
+    }
+
     private fun abs(u: String?): String? = u?.trim()?.takeIf { it.isNotBlank() }?.let { if (it.startsWith("http")) it else "$origin/${it.trimStart('/')}" }
 
     /** Gwoup ak chanèl live yo. */
