@@ -100,7 +100,7 @@
       <span class="gx-sb-t" style="background:${esc(s.homeColor)}">${esc(s.home)}</span><span class="gx-sb-n">${esc(s.homeScore)}</span><span class="gx-sb-n">${esc(s.awayScore)}</span><span class="gx-sb-t" style="background:${esc(s.awayColor)}">${esc(s.away)}</span>${s.clock ? `<span class="gx-sb-c">${esc(s.clock)}</span>` : ""}</div></div>`;
   }
   const wxHtml = (w) => `<div class="gx-wx"><i>${esc(w.icon)}</i><b>${esc(w.temp)}</b><span>${esc(w.city)}</span></div>`;
-  const cdHtml = (c, now) => `<div class="gx-cd">${c.title ? `<small>${esc(c.title)}</small>` : ""}<b data-gxcd="${c.targetAt}" data-gxdone="${esc(c.doneText || "")}">${esc(cdText(c, now))}</b></div>`;
+  const cdHtml = (c, now) => `<div class="gx-cd"${c.box === false ? ' style="background:none;box-shadow:none"' : ""}>${c.title ? `<small style="${textCss({ ...c, caps: true, style: c.style === "box" ? "classic" : c.style }, 11)}">${esc(c.title)}</small>` : ""}<b style="${textCss({ ...c, caps: false }, 26)};font-variant-numeric:tabular-nums" data-gxcd="${c.targetAt}" data-gxdone="${esc(c.doneText || "")}">${esc(cdText(c, now))}</b></div>`;
 
   /** Kouch grafik ki rete sou ekran an (bug, scoreboard, meteyo, countdown, watermark). */
   function html(g, opts = {}) {
@@ -114,7 +114,7 @@
     put(g.countdown, "top-center", g.countdown && cdHtml(g.countdown, now));
     let h = POS6.filter((p) => stacks[p].length).map((p) => `<div class="gx-s ${p}">${stacks[p].join("")}</div>`).join("");
     if (g.watermark) { const w = g.watermark;
-      h += `<div class="gx-wm ${esc(w.position)}" data-gxwm="${w.move ? 1 : 0}" style="font-size:${w.size || 16}px;opacity:${(w.opacity ?? 25) / 100}">${esc(w.text)}</div>`; }
+      h += `<div class="gx-wm ${esc(w.position)}" data-gxwm="${w.move ? 1 : 0}" style="${textCss({ style: "plain", ...w, caps: false }, w.size || 16)}opacity:${(w.opacity ?? 25) / 100}">${esc(w.text)}</div>`; }
     return `<div class="gx" style="--gx-bottom:${opts.bottom ?? 60}px">${h}</div>`;
   }
 

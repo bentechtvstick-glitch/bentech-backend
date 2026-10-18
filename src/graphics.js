@@ -143,7 +143,9 @@ export function buildGraphics(g, ctx) {
   const w = g.watermark || {};
   if (w.on && str(w.text)) {
     const text = str(w.text, 60).replace(/\{mac\}/gi, ctx.mac || "").replace(/\{customer\}/gi, ctx.customer || "").replace(/\{device\}/gi, ctx.deviceName || "").trim();
-    if (text) out.watermark = { text, position: pos(w.position, POS_WM, "bottom-right"), size: num(w.size, 16, 8, 60), opacity: num(w.opacity, 25, 3, 100), move: !!w.move };
+    if (text) out.watermark = { text, position: pos(w.position, POS_WM, "bottom-right"), size: num(w.size, 16, 8, 60), opacity: num(w.opacity, 25, 3, 100), move: !!w.move,
+      style: TEXT_STYLES.includes(w.style) ? w.style : "plain", font: TEXT_FONTS.includes(w.font) ? w.font : "sans",
+      color: hex(w.color, "#FFFFFF"), color2: hex(w.color2, "#000000"), italic: !!w.italic };
   }
 
   // Scoreboard
@@ -176,7 +178,9 @@ export function buildGraphics(g, ctx) {
     const targetAt = ctx.toEpoch(c.target);
     const keep = num(c.keepMin, 10, 0, 1440) * 60; // konbyen tan mesaj "fini" an rete
     if (targetAt && now < targetAt + (str(c.doneText) ? keep : 0)) {
-      out.countdown = { title: str(c.title, 40), targetAt, doneText: str(c.doneText, 40), position: pos(c.position, POS6, "top-center") };
+      out.countdown = { title: str(c.title, 40), targetAt, doneText: str(c.doneText, 40), position: pos(c.position, POS6, "top-center"),
+        style: TEXT_STYLES.includes(c.style) ? c.style : "classic", font: TEXT_FONTS.includes(c.font) ? c.font : "sans",
+        color: hex(c.color, "#FFFFFF"), color2: hex(c.color2, "#1D4ED8"), italic: !!c.italic, box: c.box !== false };
       edge = Math.min(edge, now < targetAt ? targetAt - now + 1 : targetAt + keep - now + 1);
     }
   }

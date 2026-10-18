@@ -126,6 +126,12 @@ export function toEpochSec(value, timeZone, endOfDay = false) {
 }
 
 export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {} }) {
+  const hexc = (v, d) => (/^#[0-9a-f]{6}$/i.test(String(v || "")) ? String(v) : d);
+  const textSpec = (o, defStyle, c1, c2) => {
+    if (!o || typeof o !== "object") return null;
+    return { style: TEXT_STYLES.includes(o.style) ? o.style : defStyle, font: TEXT_FONTS.includes(o.font) ? o.font : "sans",
+      color: hexc(o.color, c1), color2: hexc(o.color2, c2), italic: !!o.italic };
+  };
   const data = () => db.data;
   const ensure = () => {
     const d = data();
@@ -524,6 +530,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       chyron: chyrons[0] ? { title: chyrons[0].name || chyrons[0].headline, subtitle: chyrons[0].title, logoUrl: chyrons[0].logoUrl } : null,
       banners,
       popups,
+      // Estil tèks banner ak pop-up yo (menm lis estil/polis ak logo bug la)
+      bannerStyle: textSpec(s.bannerStyle, "classic", "#FFFFFF", "#1D4ED8"),
+      popupStyle: textSpec(s.popupStyle, "plain", "#FFFFFF", "#1D4ED8"),
       ads,
       adBreak,
       graphics: gfx.graphics,

@@ -792,6 +792,9 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="row2"><div class="field"><label for="g_watermark_position">Pozisyon</label><select id="g_watermark_position" data-g="watermark.position"><option value="top-left">Anlè agoch</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-right">Anba adwat</option><option value="center">Nan mitan</option></select></div>
               <div class="field"><label>&nbsp;</label><div class="inline"><label class="sw"><input type="checkbox" data-g="watermark.move" id="g_watermark_move"><i></i></label><label for="g_watermark_move">Chanje kwen chak 30 segonn</label></div></div></div>
             <div class="row2"><div class="field"><label for="g_watermark_size">Gwosè <b data-gv="watermark.size"></b></label><input type="range" id="g_watermark_size" data-g="watermark.size" min="8" max="60" value="16"></div><div class="field"><label for="g_watermark_opacity">Opasite % <b data-gv="watermark.opacity"></b></label><input type="range" id="g_watermark_opacity" data-g="watermark.opacity" min="3" max="100" value="25"></div></div>
+            <div class="row2"><div class="field"><label for="g_watermark_style">Estil tèks la</label><select id="g_watermark_style" data-g="watermark.style" data-fx-style></select></div><div class="field"><label for="g_watermark_font">Polis</label><select id="g_watermark_font" data-g="watermark.font" data-fx-font></select></div></div>
+            <div class="row2"><div class="field"><label>Koulè tèks la</label><label class="swatch"><input type="color" id="g_watermark_color" data-g="watermark.color" value="#ffffff"><span><b>Koulè</b></span></label></div><div class="field"><label>Dezyèm koulè (kontou, limyè, bwat, degrade)</label><label class="swatch"><input type="color" id="g_watermark_color2" data-g="watermark.color2" value="#000000"><span><b>Koulè</b></span></label></div></div>
+            <div class="inline"><label class="sw"><input type="checkbox" data-g="watermark.italic" id="g_watermark_italic"><i></i></label><label for="g_watermark_italic">Italik</label></div>
           </div>
           <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="scoreboard.on" id="g_scoreboard_on"><i></i></label><div class="grow"><label for="g_scoreboard_on"><b>Scoreboard</b></label><p class="note" style="margin:2px 0 0">Rezilta match la sou ekran an. Chanje chif yo pandan match la; TV yo mete yo ajou touswit.</p></div></div>
             <div class="row2"><div class="field"><label for="g_scoreboard_league">Konpetisyon</label><input type="text" id="g_scoreboard_league" data-g="scoreboard.league" maxlength="30" placeholder="Egz: Kalifikasyon Mondyal"></div><div class="field"><label for="g_scoreboard_clock">Tan / peryòd</label><input type="text" id="g_scoreboard_clock" data-g="scoreboard.clock" maxlength="16" placeholder="67' · 2yèm mitan"></div></div>
@@ -816,6 +819,9 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="row2"><div class="field"><label for="g_countdown_title">Tit</label><input type="text" id="g_countdown_title" data-g="countdown.title" maxlength="40" placeholder="Egz: Gwo match la kòmanse nan"></div><div class="field"><label for="g_countdown_target">Dat ak lè evènman an</label><input type="datetime-local" id="g_countdown_target" data-g="countdown.target"></div></div>
             <div class="row2"><div class="field"><label for="g_countdown_doneText">Mesaj lè l fini (opsyonèl)</label><input type="text" id="g_countdown_doneText" data-g="countdown.doneText" maxlength="40" placeholder="Egz: KOUNYE A!"></div><div class="field"><label for="g_countdown_keepMin">Kenbe mesaj la (minit)</label><input type="number" id="g_countdown_keepMin" data-g="countdown.keepMin" min="0" max="1440" value="10"></div></div>
             <div class="field"><label for="g_countdown_position">Pozisyon</label><select id="g_countdown_position" data-g="countdown.position"><option value="top-left">Anlè agoch</option><option value="top-center">Anlè nan mitan</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div>
+            <div class="row2"><div class="field"><label for="g_countdown_style">Estil tèks la</label><select id="g_countdown_style" data-g="countdown.style" data-fx-style></select></div><div class="field"><label for="g_countdown_font">Polis</label><select id="g_countdown_font" data-g="countdown.font" data-fx-font></select></div></div>
+            <div class="row2"><div class="field"><label>Koulè tèks la</label><label class="swatch"><input type="color" id="g_countdown_color" data-g="countdown.color" value="#ffffff"><span><b>Koulè</b></span></label></div><div class="field"><label>Dezyèm koulè (kontou, limyè, bwat, degrade)</label><label class="swatch"><input type="color" id="g_countdown_color2" data-g="countdown.color2" value="#1d4ed8"><span><b>Koulè</b></span></label></div></div>
+            <div class="row2"><div class="inline"><label class="sw"><input type="checkbox" data-g="countdown.italic" id="g_countdown_italic"><i></i></label><label for="g_countdown_italic">Italik</label></div><div class="inline"><label class="sw"><input type="checkbox" data-g="countdown.box" id="g_countdown_box" checked><i></i></label><label for="g_countdown_box">Fon nwa dèyè l</label></div></div>
           </div>
           <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="ident.on" id="g_ident_on"><i></i></label><div class="grow"><label for="g_ident_on"><b>Channel ident</b></label><p class="note" style="margin:2px 0 0">Logo oswa non chèn ou an parèt nan mitan ekran an pou kèk segonn.</p></div><button class="btn small purple" type="button" data-gxplay="ident">▶ Gade</button></div>
             <div class="field"><label for="g_ident_imageUrl">URL logo</label><input type="url" id="g_ident_imageUrl" data-g="ident.imageUrl" maxlength="500" placeholder="https://…/logo.png"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="g_ident_imageUrl">📤 Chwazi yon imaj</button><span class="note" data-upmsg="g_ident_imageUrl"></span></div></div>
@@ -1092,7 +1098,13 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
     <main data-pane="bn" hidden>
       <div class="pagehead"><div><h1>Banners</h1><p>Tèks oswa URL yon imaj. Parèt lè kliyan an louvri lis chanèl la.</p></div></div>
       <div class="card"><div class="list" id="bannerList"></div>
-        <form class="inline" id="bannerForm"><input type="text" id="bannerText" data-emoji class="grow" placeholder="Tèks banner oswa https://…/banner.png"><button class="btn primary" type="submit">Ajoute</button></form><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="bannerText">📤 Chwazi yon imaj</button><span class="note" data-upmsg="bannerText"></span></div></div>
+        <form class="inline" id="bannerForm"><input type="text" id="bannerText" data-emoji class="grow" placeholder="Tèks banner oswa https://…/banner.png"><button class="btn primary" type="submit">Ajoute</button></form><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="bannerText">📤 Chwazi yon imaj</button><span class="note" data-upmsg="bannerText"></span></div>
+        <div class="anibox" style="margin-top:12px" data-tstyle="bannerStyle"><div class="gxhead"><div class="grow"><b>🎨 Estil tèks banner yo</b></div></div>
+          <div class="row2"><div class="field"><label for="ts_bannerStyle_style">Estil tèks la</label><select id="ts_bannerStyle_style" data-ts="style" data-fx-style></select></div><div class="field"><label for="ts_bannerStyle_font">Polis</label><select id="ts_bannerStyle_font" data-ts="font" data-fx-font></select></div></div>
+          <div class="row2"><div class="field"><label>Koulè tèks la</label><label class="swatch"><input type="color" data-ts="color" value="#ffffff"><span><b>Koulè</b></span></label></div><div class="field"><label>Dezyèm koulè (kontou, limyè, bwat, degrade)</label><label class="swatch"><input type="color" data-ts="color2" value="#1d4ed8"><span><b>Koulè</b></span></label></div></div>
+          <div class="inline"><label class="sw"><input type="checkbox" data-ts="italic" id="ts_bannerStyle_italic"><i></i></label><label for="ts_bannerStyle_italic">Italik</label><span class="grow"></span><span class="tsprev" data-tsprev></span></div>
+        </div>
+      </div>
     </main>
 
     <!-- Pop-ups -->
@@ -1104,7 +1116,13 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="field"><label for="popImg">Imaj (opsyonèl)</label><input type="url" id="popImg" placeholder="https://…/pwomo.png"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="popImg">📤 Chwazi yon imaj</button><span class="note" data-upmsg="popImg"></span></div></div>
           <div class="row2"><div class="field"><label for="popStart">Kòmanse</label><input type="datetime-local" id="popStart"></div><div class="field"><label for="popEnd">Fini</label><input type="datetime-local" id="popEnd"></div></div>
           <div class="btns"><button class="btn primary" type="submit">Ajoute pop-up</button></div>
-        </form></div>
+        </form>
+        <div class="anibox" style="margin-top:12px" data-tstyle="popupStyle"><div class="gxhead"><div class="grow"><b>🎨 Estil tit pop-up yo</b></div></div>
+          <div class="row2"><div class="field"><label for="ts_popupStyle_style">Estil tèks la</label><select id="ts_popupStyle_style" data-ts="style" data-fx-style></select></div><div class="field"><label for="ts_popupStyle_font">Polis</label><select id="ts_popupStyle_font" data-ts="font" data-fx-font></select></div></div>
+          <div class="row2"><div class="field"><label>Koulè tèks la</label><label class="swatch"><input type="color" data-ts="color" value="#ffffff"><span><b>Koulè</b></span></label></div><div class="field"><label>Dezyèm koulè (kontou, limyè, bwat, degrade)</label><label class="swatch"><input type="color" data-ts="color2" value="#1d4ed8"><span><b>Koulè</b></span></label></div></div>
+          <div class="inline"><label class="sw"><input type="checkbox" data-ts="italic" id="ts_popupStyle_italic"><i></i></label><label for="ts_popupStyle_italic">Italik</label><span class="grow"></span><span class="tsprev" data-tsprev></span></div>
+        </div>
+</div>
     </main>
 
     <!-- Sistèm -->
@@ -2369,7 +2387,7 @@ const enc = encodeURIComponent;
 async function loadMessages() {
   const [tickers, banners, popups, s] = await Promise.all([list("tickers"), list("banners"), list("popups"), api("GET", "/settings")]).catch(() => [[], [], [], {}]);
   settings = s || {};
-  tkItems = tickers; fillTickerStyle();
+  tkItems = tickers; fillTickerStyle(); tsFill();
   const gc = settings.tickerTextColor || "#FFFFFF";
   renderTickerList();
   renderTkPreview();
@@ -2458,6 +2476,14 @@ $("#popupForm").addEventListener("submit", async (e) => {
   await api("POST", "/popups", { title, message: $("#popMsg").value.trim(), imageUrl: $("#popImg").value.trim() || undefined, active: "Yes", start: localIso($("#popStart").value), end: localIso($("#popEnd").value) });
   ["#popTitle", "#popMsg", "#popImg"].forEach((s) => ($(s).value = "")); loadMessages();
 });
+// ---- Estil tèks banner / pop-up (anrejistre nan reglaj yo)
+const TS_DEF = { bannerStyle: { style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false }, popupStyle: { style: "plain", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false } };
+function tsRead(box) { const o = {}; box.querySelectorAll("[data-ts]").forEach((el) => (o[el.dataset.ts] = el.type === "checkbox" ? el.checked : el.value)); return o; }
+function tsPreview(box) { const o = tsRead(box), pv = box.querySelector("[data-tsprev]"); if (pv && window.GalaxyGfx?.textCss) pv.innerHTML = `<span style="display:inline-block;padding:6px 12px;background:#0b1220;border-radius:8px"><b style="${GalaxyGfx.textCss(o, 20)}">${esc(t("Egzanp tèks"))}</b></span>`; }
+function tsFill() { $$("[data-tstyle]").forEach((box) => { const v = { ...TS_DEF[box.dataset.tstyle], ...(settings[box.dataset.tstyle] || {}) }; box.querySelectorAll("[data-ts]").forEach((el) => { if (el.type === "checkbox") el.checked = !!v[el.dataset.ts]; else el.value = v[el.dataset.ts]; }); tsPreview(box); }); }
+let tsSaveT = 0;
+$$("[data-tstyle]").forEach((box) => { const ch = () => { tsPreview(box); clearTimeout(tsSaveT); tsSaveT = setTimeout(async () => { try { settings = await api("PUT", "/settings", { [box.dataset.tstyle]: tsRead(box) }); toast(t("Sove")); } catch (err) { toast(err.message); } }, 600); };
+  box.addEventListener("change", ch); box.addEventListener("input", (e) => { if (e.target.type === "color") tsPreview(box); }); });
 async function putSettings(patch, msg) { settings = await api("PUT", "/settings", patch); toast(msg); if (tab === "msg") loadMessages(); if (tab === "sys") loadSystem(); }
 $("#bcSend").addEventListener("click", () => { const v = $("#bcText").value.trim(); if (!v) return toast("Ekri mesaj la."); putSettings({ emergencyActive: true, emergencyText: v, emergencySeverity: $("#bcLevel").value }, "Broadcast voye bay tout TV"); });
 $("#bcStop").addEventListener("click", () => putSettings({ emergencyActive: false }, "Broadcast sispann"));
@@ -3061,10 +3087,10 @@ async function loadAds() {
 // ------------------------------------------------------------ Grafik TV
 // Sa panel la sove nan settings.gfx; sèvè a netwaye l epi voye l bay TV yo nan "graphics".
 const GX_DEF = { bug: { on: false, imageUrl: "", text: "", position: "top-right", size: 44, opacity: 85, style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false, caps: true },
-  watermark: { on: false, text: "{mac}", position: "bottom-right", size: 16, opacity: 25, move: false },
+  watermark: { on: false, text: "{mac}", position: "bottom-right", size: 16, opacity: 25, move: false, style: "plain", font: "sans", color: "#ffffff", color2: "#000000", italic: false },
   scoreboard: { on: false, league: "", clock: "", home: "", homeScore: "0", homeColor: "#1d4ed8", away: "", awayScore: "0", awayColor: "#dc2626", position: "top-left" },
   weather: { on: false, city: "", scope: "all", unit: "C", auto: true, temp: 30, icon: "🌤️", position: "top-right" },
-  countdown: { on: false, title: "", target: "", doneText: "", keepMin: 10, position: "top-center" },
+  countdown: { on: false, title: "", target: "", doneText: "", keepMin: 10, position: "top-center", style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false, box: true },
   ident: { on: false, imageUrl: "", text: "", tagline: "", everyMin: 30, durationSec: 5, onChannelChange: false },
   bumper: { on: false, inText: "", outText: "", inUrl: "", outUrl: "", durationSec: 4, bgColor: "#0b1630", textColor: "#ffffff" } };
 let gxWx = null, gxSaveT = null, gxTickT = null, gxFullT = null, gxWxT = null;
@@ -3149,13 +3175,13 @@ function gxLabels() { $("#gxWxScopeNote").hidden = $('[data-g="weather.scope"]')
 function gxNormalize(g) {
   const url = (u) => (/^https?:\/\//i.test(u || "") ? u : null), n = (v, d, lo, hi) => Math.min(hi, Math.max(lo, v === "" || v == null || !isFinite(+v) ? d : +v)), out = {};
   const b = g.bug; if (b.on && (url(b.imageUrl) || b.text)) out.bug = { imageUrl: url(b.imageUrl), text: b.text, position: b.position, size: n(b.size, 44, 16, 160), opacity: n(b.opacity, 85, 10, 100), style: b.style, font: b.font, color: b.color, color2: b.color2, italic: !!b.italic, caps: b.caps !== false };
-  const w = g.watermark; if (w.on && w.text) { const text = w.text.replace(/\{mac\}/gi, "02:AA:BB:CC:DD:EE").replace(/\{customer\}/gi, "John Doe").replace(/\{device\}/gi, "Living Room TV"); out.watermark = { text, position: w.position, size: n(w.size, 16, 8, 60), opacity: n(w.opacity, 25, 3, 100), move: w.move }; }
+  const w = g.watermark; if (w.on && w.text) { const text = w.text.replace(/\{mac\}/gi, "02:AA:BB:CC:DD:EE").replace(/\{customer\}/gi, "John Doe").replace(/\{device\}/gi, "Living Room TV"); out.watermark = { text, position: w.position, size: n(w.size, 16, 8, 60), opacity: n(w.opacity, 25, 3, 100), move: w.move, style: w.style, font: w.font, color: w.color, color2: w.color2, italic: !!w.italic }; }
   const s = g.scoreboard; if (s.on && (s.home || s.away)) out.scoreboard = { ...s, homeScore: s.homeScore || "0", awayScore: s.awayScore || "0" };
   if (g.weather.on && g.weather.scope === "client" && !g.weather.city) out.weather = { city: t("Vil kliyan an"), temp: "28°" + g.weather.unit, icon: "🌤️", position: g.weather.position };
   const m = g.weather; if (m.on && m.city) { const live = m.auto && gxWx && gxWx.q === m.city.toLowerCase() ? gxWx : null; let c = live ? live.tempC : m.temp === "" ? null : m.unit === "F" ? ((+m.temp - 32) * 5) / 9 : +m.temp;
     if (m.auto && !live) c = null;
     if (c !== null && isFinite(c)) out.weather = { city: m.city, temp: Math.round(m.unit === "F" ? (c * 9) / 5 + 32 : c) + "°" + m.unit, icon: live ? live.icon : m.icon, position: m.position }; }
-  const c = g.countdown; if (c.on && c.target) { const at = Math.floor(new Date(c.target).getTime() / 1000), now = Date.now() / 1000; if (at && now < at + (c.doneText ? n(c.keepMin, 10, 0, 1440) * 60 : 0)) out.countdown = { title: c.title, targetAt: at, doneText: c.doneText, position: c.position }; }
+  const c = g.countdown; if (c.on && c.target) { const at = Math.floor(new Date(c.target).getTime() / 1000), now = Date.now() / 1000; if (at && now < at + (c.doneText ? n(c.keepMin, 10, 0, 1440) * 60 : 0)) out.countdown = { title: c.title, targetAt: at, doneText: c.doneText, position: c.position, style: c.style, font: c.font, color: c.color, color2: c.color2, italic: !!c.italic, box: c.box !== false }; }
   const i = g.ident; if (i.on && (url(i.imageUrl) || i.text)) out.ident = { imageUrl: url(i.imageUrl), text: i.text, tagline: i.tagline, everyMin: n(i.everyMin, 30, 0, 240), durationSec: n(i.durationSec, 5, 2, 15) };
   const u = g.bumper; if (u.on && (url(u.inUrl) || u.inText || url(u.outUrl) || u.outText)) out.bumper = { inUrl: url(u.inUrl), inText: u.inText, outUrl: url(u.outUrl), outText: u.outText, durationSec: n(u.durationSec, 4, 2, 15), bgColor: u.bgColor, textColor: u.textColor };
   return out;
