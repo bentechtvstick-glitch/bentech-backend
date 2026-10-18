@@ -29,14 +29,7 @@ export function mountWatch(app, db, h) {
     const d = data(), now = Date.now(), out = [];
     const devices = (d.devices || []).filter((x) => x.mac && !x.blocked && playlistsOf(x.mac).length);
 
-    // 1) TV ki pa konekte depi plis pase 24 è (kliyan an toujou aktif)
-    for (const x of devices) {
-      const seen = Date.parse(x.lastSeenAt || "") || 0;
-      if (!seen || isExpired(x)) continue;
-      const age = now - seen;
-      if (age > 24 * H && age < 14 * 24 * H) out.push({ id: "off:" + x.mac, kind: "tv_offline", level: age > 72 * H ? "warn" : "info",
-        mac: x.mac, name: devName(x), hours: Math.round(age / H), actions: [{ type: "goto_device", mac: x.mac }] });
-    }
+    // (TV ki etenn / offline pa yon pwoblèm: kliyan an ka jis pa gade TV. Panel la pa siyale yo.)
 
     // 2) Pwoblèm chanèl/videyo nan dènye 3 è yo
     const recent = (d.channelAlerts || []).filter((a) => now - a.at < 3 * H);
@@ -111,7 +104,7 @@ export function mountWatch(app, db, h) {
     const s = state();
     if (!process.env.ANTHROPIC_API_KEY) return;
     const key = list.map((i) => i.id).sort().join("|");
-    if (!list.some((i) => i.level !== "info")) { if (!list.length) { s.summary = ""; s.summaryKey = ""; } return; }
+    if (!list.some((i) => i.level !== "info")) { if (s.summary) { s.summary = ""; s.summaryKey = ""; db.write().catch(() => {}); } return; }
     if (!force && key === s.summaryKey) return;
     const crit = list.some((i) => i.level === "crit");
     if (!force && !crit && Date.now() - (s.summaryAt || 0) < 3 * H) return;
@@ -122,7 +115,7 @@ export function mountWatch(app, db, h) {
       "and which fix button to press (the panel shows buttons: 'Reload this TV', 'Hide this channel', 'Send the app update', 'Open the device'). " +
       `Answer in ${lang}, max 6 short lines, simple words, no greeting. Never invent facts that are not in the list. Never say you fixed anything: the owner decides.`;
     try {
-      const r = await aiComplete(db, { system, user: JSON.stringify(list.map(({ actions, ...i }) => i)), maxTokens: 350 });
+      const r = await aiComplete(db, { system, user: JSON.stringify(list.filter((i) => i.level !== "info").map(({ actions, ...i }) => i)), maxTokens: 350 });
       Object.assign(s, { summary: r.text, summaryAt: Date.now(), summaryKey: key, summaryLang: s.lang || "en" });
       db.write().catch(() => {});
     } catch { /* limit oswa rezo: n ap eseye ankò pi ta */ }
