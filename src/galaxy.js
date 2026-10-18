@@ -911,7 +911,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     return created > 0 && exp > created ? planForDays((exp - created) / 86400) : null;
   }
 
-  const SYNC_EVERY_MS = 60 * 60 * 1000; // chak èdtan: yon renouvèlman kay founisè a parèt vit nan panel la
+  const SYNC_EVERY_MS = 10 * 60 * 1000; // chak 10 minit: yon renouvèlman kay founisè a parèt prèske touswit nan panel la
   const syncing = new Set();
 
   /**
@@ -989,6 +989,28 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (device.providerStatus) customer.providerStatus = device.providerStatus;
     return true;
   }
+
+  // Siveyans an aryè plan: chak 2 minit, mande founisè a pou kliyan ki pa t tcheke depi 10 minit (maks 40 chak fwa,
+  // pou pa chaje founisè a). Lè dat la chanje, TV kliyan an mete l ajou touswit.
+  setInterval(async () => {
+    try {
+      const now = Date.now(), seen = new Set(); let n = 0;
+      for (const d of (data().devices || [])) {
+        if (n >= 40) break;
+        if (!d.mac) continue;
+        const c = customerOf(d); if (!c || c.autoPlan === false || seen.has(c.id || c.name)) continue;
+        seen.add(c.id || c.name);
+        if (c.providerSyncAt && now - Date.parse(c.providerSyncAt) < SYNC_EVERY_MS) continue;
+        n++;
+        const before = `${c.expiry}|${c.status}|${c.plan}`;
+        const r = await syncCustomerFromProvider(d).catch(() => null);
+        if (r && `${r.expiry}|${r.status}|${r.plan}` !== before) {
+          auditLog("customer-sync", `Customer ${c.name || c.id}: provider expiry ${before.split("|")[0] || "—"} → ${r.expiry || "—"}`, "system");
+          syncTvs();
+        }
+      }
+    } catch { /* n ap eseye ankò nan 2 minit */ }
+  }, 2 * 60 * 1000).unref?.();
 
   /** Bouton "Pran dat founisè a" nan paj Kliyan yo: mande founisè a kounye a pou tout kliyan ki gen "Plan otomatik". */
   app.post("/api/galaxy/customers/sync-provider", authenticate, async (req, res) => {
