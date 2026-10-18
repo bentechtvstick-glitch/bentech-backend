@@ -413,7 +413,18 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 }
 /* Nòt admin nan: estil app Notes iPhone (bann koulè anlè, fèy blan ak liy), yon ti pil fèy dèyè,
    kwen anba a ki leve, epi yon pinèz an vè ki kenbe l nan kwen an */
-.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:26px 22px;padding:14px 6px 10px}
+.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;padding:4px 0}
+/* Lis kout: yon ti liy pou chak nòt (klike → fèy papye a louvri) */
+.nt-chip{--dot:#FFD60A;display:flex;align-items:center;gap:10px;min-width:0;padding:8px 12px;border-radius:10px;cursor:pointer;text-align:left;
+  background:rgba(255,255,255,.04);border:1px solid var(--line,rgba(255,255,255,.08));color:inherit;font:inherit;transition:background .15s,border-color .15s}
+.nt-chip:hover,.nt-chip:focus-visible{background:rgba(255,255,255,.08);border-color:var(--dot);outline:none}
+.nt-chip>i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--dot)}
+.nt-chip .tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.nt-chip .tx b,.nt-chip .tx span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nt-chip .tx b{font-size:14px}.nt-chip .tx span{font-size:12px;opacity:.6}
+.nt-chip small{flex:none;font-size:11px;opacity:.5}
+.nt-chip.new{justify-content:center;border-style:dashed;font-weight:600;font-size:14px}
+.nt-chip[data-c="pink"]{--dot:#FF6FA5}.nt-chip[data-c="blue"]{--dot:#4DA8FF}.nt-chip[data-c="green"]{--dot:#34C759}.nt-chip[data-c="purple"]{--dot:#AF52DE}.nt-chip[data-c="orange"]{--dot:#FF9500}
 .note-pad{--band1:#FFE680;--band2:#FFD60A;--ink:#8A6A00;--pin1:#FF8A80;--pin2:#E53935;--pin3:#7F0000;
   position:relative;background:#FFFFFF;color:#1C1C1E;border-radius:14px;padding:0 0 10px;min-height:180px;display:flex;flex-direction:column;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
@@ -1195,7 +1206,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <p class="note" style="margin:8px 0 0">Non topic la se tankou yon kle: pa pataje l. Si yon moun jwenn li, <button class="btn small" id="nfNew" type="button">chanje l</button> epi abòne ankò ak nouvo a.</p>
       </div>
       <div class="card" id="ntCard" data-owner-only>
-        <div class="cardhead"><div><h2>🗒️ Nòt mwen yo</h2><p class="sub">Kote pou sere enfòmasyon ou bezwen: kòd Downloader app la, enfòmasyon sèvè a, domèn, kontak… Sèlman ou menm ki wè yo nan panel la.</p></div></div>
+        <div class="cardhead"><div><h2>🗒️ Nòt mwen yo</h2></div></div>
         <div class="notes" id="ntList"></div>
         <div class="nt-ov" id="ntOv" hidden>
           <div class="nt-pop note-pad" id="ntPop" role="dialog" aria-modal="true" aria-label="Nòt la" data-c="yellow">
@@ -3089,9 +3100,9 @@ async function loadNotes() { ntItems = await api("GET", "/galaxy/notes").catch((
 function renderNotes() {
   $("#ntList").innerHTML = ntItems.map((n) => {
     const when = n.updatedAt ? new Date(n.updatedAt).toLocaleDateString(lang) : "";
-    return `<div class="note-pad closed" tabindex="0" role="button" data-nt-open="${esc(n.id)}" data-c="${esc(n.color || "yellow")}" aria-label="${esc(n.title || t("San tit"))}"><span class="curl"></span>${n.secret ? `<span class="lock" title="${esc(t("Kache"))}">🔒</span>` : ""}<h3>${esc(n.title || t("San tit"))}</h3>
-      <div class="nb${n.secret ? " hid" : ""}">${n.secret ? "••••••••" : esc(n.body) || `<span style="opacity:.45">…</span>`}</div>${when ? `<div class="when">🕒 ${esc(when)}</div>` : ""}</div>`;
-  }).join("") + `<button type="button" class="note-new" id="ntNew">＋ ${esc(t("Nouvo nòt"))}</button>`;
+    const prev = n.secret ? "••••••" : String(n.body || "").split("\n").find((l) => l.trim()) || "";
+    return `<div class="nt-chip" tabindex="0" role="button" data-nt-open="${esc(n.id)}" data-c="${esc(n.color || "yellow")}" aria-label="${esc(n.title || t("San tit"))}"><i></i><span class="tx"><b>${n.secret ? "🔒 " : ""}${esc(n.title || t("San tit"))}</b><span>${esc(prev)}</span></span>${when ? `<small>${esc(when)}</small>` : ""}</div>`;
+  }).join("") + `<button type="button" class="nt-chip new" id="ntNew">＋ ${esc(t("Nouvo nòt"))}</button>`;
 }
 async function saveNotes(list) { ntItems = await api("PUT", "/galaxy/notes", { notes: list }); }
 $("#ntColor").innerHTML = NT_COLORS.map(([k, c, n]) => `<label title="${esc(t(n))}"><input type="radio" name="ntColor" value="${k}" aria-label="${esc(t(n))}"><i style="background:${c}"></i></label>`).join("");
