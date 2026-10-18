@@ -735,6 +735,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         </div>
         <div class="pkgnote" id="chPkgNote" hidden></div>
         <div class="inline"><input type="text" id="chPkgName" class="grow" placeholder="Non yon nouvo pakè (egz: Miami)" maxlength="40"><button class="btn small purple" id="chPkgSave" type="button">Sove kòm pakè</button></div>
+        <p class="note" style="margin:0 0 6px">Egz: chèche «tampa», peze «Sèlman sa ki nan lis la», epi pou ajoute lòt chanèl: chèche non yo (egz: «cnn») epi peze «Montre sa ki nan lis la», oswa limen ti kaz bò kote chanèl la.</p>
         <div class="inline"><input type="text" id="chSearch" class="grow" placeholder="Chèche yon chanèl"><button class="btn small red" id="chHideShown" type="button">Kache sa ki nan lis la</button><button class="btn small purple" id="chOnlyShown" type="button">Sèlman sa ki nan lis la</button><button class="btn small green" id="chShowShown" type="button">Montre sa ki nan lis la</button><button class="btn small" id="chAllOn" type="button">Montre tout</button></div>
         <div class="inline" style="margin-top:6px"><button class="btn small" id="chReload" type="button">🔄 Rechaje lis chanèl yo</button><button class="btn small" id="chDupBtn" type="button">🔁 Chanèl doub</button><button class="btn small" id="chWeakBtn" type="button">📶 Chanèl fèb</button><button class="btn small red" id="chDupHide" type="button" hidden>Kache doub yo (kenbe youn)</button><span class="note" id="chDupNote"></span></div>
         <p class="note">Etenn bouton yon gwoup pou kache tout chanèl li yo ak yon sèl klik. Klike sou non gwoup la pou wè chanèl li yo. Kreyon an (✎) chanje non yon gwoup oswa yon chanèl.</p>
@@ -2246,7 +2247,30 @@ function chComputeDups() {
   chState.dupGroups = [...m.values()].filter((l) => l.length > 1); chState.dupCount = new Map();
   for (const l of chState.dupGroups) for (const c of l) chState.dupCount.set(c.id, l.length);
 }
-const chMatch0 = (c, q) => !q || (c._q ?? (c.name + "\u0001" + (c.categoryName || "")).toLowerCase()).includes(q) || (!!chState?.chN[c.id] && chName(c).toLowerCase().includes(q)) || (!!chState?.catN[c.categoryId] && String(catName(c.categoryId, "")).toLowerCase().includes(q));
+// Chèche yon vil (egz: "tampa") jwenn tou chanèl lokal vil la ki pa gen non vil la (WFLA, WTSP, Bay News 9…)
+const CITY_CH = {
+  tampa: "WFLA WTSP WFTS WTVT WTOG WMOR WEDU WTTA WUSF WVEA WRMD WXPX WCLF BN9|Bay News 9|Spectrum News Bay",
+  miami: "WTVJ WFOR WPLG WSVN WSFL WBFS WLTV WSCV WPBT WLRN WAMI WPXM WHFT",
+  orlando: "WESH WKMG WFTV WOFL WKCF WRDQ WUCF WOTF WVEN WTMO|Spectrum News 13|News 13",
+  jacksonville: "WJXT WTLV WJAX WFOX WCWJ WTEV WJCT",
+  "fort myers": "WBBH WINK WZVN WFTX WGCU", naples: "WBBH WINK WZVN WFTX WGCU",
+  "west palm": "WPTV WPBF WPEC WFLX WTVX", "palm beach": "WPTV WPBF WPEC WFLX WTVX",
+  "new york": "WCBS WNBC WABC WNYW WPIX WWOR WNET WNJU WXTV|NY1",
+  "los angeles": "KCBS KNBC KABC KTTV KTLA KCAL KCOP KMEX KVEA KOCE",
+  chicago: "WBBM WMAQ WLS WFLD WGN WTTW WSNS WGBO", atlanta: "WGCL WXIA WSB WAGA WPCH WATL WPBA",
+  boston: "WBZ WHDH WCVB WFXT WBTS WGBH WSBK", houston: "KHOU KPRC KTRK KRIV KIAH KUHT KXLN KTMD",
+  dallas: "KTVT KXAS WFAA KDFW KDAF KERA KUVN KXTX", philadelphia: "KYW WCAU WPVI WTXF WPHL WHYY",
+  washington: "WUSA WRC WJLA WTTG WDCW WETA",
+};
+const cityRe = new Map();
+function cityRegex(q) {
+  const key = Object.keys(CITY_CH).find((k) => q === k || q === k + " bay" || (q.length >= 4 && k.startsWith(q)));
+  if (!key) return null;
+  if (!cityRe.has(key)) { const [calls, ...names] = CITY_CH[key].split("|");
+    cityRe.set(key, new RegExp(`\\b(${calls.trim().split(/\s+/).join("|")})(-?(TV|DT|HD|CD|LD))?\\b${names.length ? "|" + names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") : ""}`, "i")); }
+  return cityRe.get(key);
+}
+const chMatch0 = (c, q) => !q || (cityRegex(q)?.test(c.name) ?? false) || (c._q ?? (c.name + "\u0001" + (c.categoryName || "")).toLowerCase()).includes(q) || (!!chState?.chN[c.id] && chName(c).toLowerCase().includes(q)) || (!!chState?.catN[c.categoryId] && String(catName(c.categoryId, "")).toLowerCase().includes(q));
 // Ti fòm pou chanje yon non (gwoup oswa chanèl). Enter = OK, Esc = anile, non vid = remete non orijinal la.
 const editBox = (kind, id, cur) => `<input type="text" class="chedit" data-edit-${kind}="${esc(id)}" value="${esc(cur)}" maxlength="80" aria-label="${esc(t("Nouvo non"))}">`;
 const penBtn = (kind, id) => `<button class="catx" type="button" data-pen-${kind}="${esc(id)}" title="${esc(t("Chanje non an"))}" aria-label="${esc(t("Chanje non an"))}">✎</button>`;
