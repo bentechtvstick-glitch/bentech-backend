@@ -17,7 +17,7 @@ android {
         versionName = "1.0.$build"
 
         // Adrès backend panel la (bentech-backend)
-        buildConfigField("String", "PANEL_URL", "\"https://bentech-backend.onrender.com/api\"")
+        buildConfigField("String", "PANEL_URL", "\"https://panel.galaxytvstick.net/api\"")
 
         // Sèvè Xtream pa defo si panel la pa bay youn nan playlist la (egz: "http://dns.example.com:8080")
         buildConfigField("String", "DEFAULT_SERVER", "\"\"")
