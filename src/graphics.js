@@ -17,7 +17,7 @@ const pos = (v, list, d) => (list.includes(v) ? v : d);
 // ------------------------------------------------------------------ Meteyo (Open-Meteo, gratis, san kle)
 const GEO_URL = process.env.WEATHER_GEO_URL || "https://geocoding-api.open-meteo.com/v1/search";
 const API_URL = process.env.WEATHER_API_URL || "https://api.open-meteo.com/v1/forecast";
-const WEATHER_TTL = 10 * 60_000; // Open-Meteo mete "current" ajou chak 15 minit
+const WEATHER_TTL = 5 * 60_000; // tcheke meteyo a chak 5 minit
 const weatherCache = new Map(); // vil (miniskil) → { at, data, error, loading }
 
 /** Kòd meteyo WMO → imoji. */
@@ -59,17 +59,79 @@ export async function fetchWeather(place) {
     if (!p) throw new Error("Vil sa a pa jwenn");
     at = { name: p.name, country: p.country_code || "", lat: p.latitude, lon: p.longitude };
   }
-  const f = await getJson(`${API_URL}?latitude=${at.lat}&longitude=${at.lon}&current=temperature_2m,weather_code,is_day,precipitation,rain,showers&models=best_match`);
+  // Modèl meteyo (Open-Meteo) + lapli nan 30 dènye minit yo (pa tranch 15 minit)
+  const f = await getJson(`${API_URL}?latitude=${at.lat}&longitude=${at.lon}&current=temperature_2m,weather_code,is_day,precipitation,rain,showers&minutely_15=precipitation,rain&past_minutely_15=2&forecast_minutely_15=1&models=best_match`);
   const cur = f?.current;
   if (!cur || !Number.isFinite(Number(cur.temperature_2m))) throw new Error("Sèvis meteyo a pa reponn byen");
+  let code = Number(cur.weather_code) || 0, tempC = Number(cur.temperature_2m), source = "model";
+  const m15 = f?.minutely_15 || {};
+  const recent = [...(m15.precipitation || []), ...(m15.rain || [])].map(Number).filter(Number.isFinite);
+  let wet = Math.max(Number(cur.precipitation) || 0, Number(cur.rain) || 0, Number(cur.showers) || 0, ...recent, 0);
+  // Ozetazini: vrè mezi estasyon meteyo ki pi pre a (National Weather Service), pa yon previzyon
+  if (String(at.country || "").toUpperCase() === "US") {
+    const obs = await nwsObservation(at).catch(() => null);
+    if (obs) {
+      if (Number.isFinite(obs.tempC)) { tempC = obs.tempC; source = "station"; }
+      if (obs.code != null) code = obs.code;
+      if (obs.rainMm > wet) wet = obs.rainMm;
+      if (obs.raining && code < 51) code = 61;
+    }
+  }
   // Lapli ki ap tonbe kounye a (mm): si kòd la di "nyaj" men gen lapli, montre lapli
-  let code = Number(cur.weather_code) || 0;
-  const wet = Math.max(Number(cur.precipitation) || 0, Number(cur.rain) || 0, Number(cur.showers) || 0);
   if (wet >= 0.1 && code < 51) code = wet >= 2 ? 81 : 61;
-  const data = { city: at.name, country: at.country, tempC: Number(cur.temperature_2m), code, rainMm: wet, isDay: cur.is_day !== 0,
+  const data = { city: at.name, country: at.country, tempC, code, rainMm: wet, isDay: cur.is_day !== 0, source,
     icon: weatherIcon(code, cur.is_day !== 0), at: Date.now() };
   weatherCache.set(key, { at: Date.now(), data, place: at, error: "" });
   return data;
+}
+
+// ---- National Weather Service (Ozetazini sèlman): obsèvasyon reyèl estasyon ki pi pre a ----
+const NWS = "https://api.weather.gov";
+const NWS_HEAD = { accept: "application/geo+json", "user-agent": "GalaxyTVStick panel (weather)" };
+const nwsStations = new Map(); // "lat,lon" → { at, ids }
+async function nwsJson(url) {
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 8000);
+  try { const r = await fetch(url, { signal: ctl.signal, headers: NWS_HEAD }); if (!r.ok) throw new Error(`NWS HTTP ${r.status}`); return await r.json(); }
+  finally { clearTimeout(tm); }
+}
+/** Kondisyon NWS (tèks) → kòd WMO. */
+function nwsCode(text) {
+  const t = String(text || "").toLowerCase();
+  if (!t) return null;
+  if (/thunder|t-storm/.test(t)) return 95;
+  if (/snow|sleet|ice|flurr/.test(t)) return 71;
+  if (/heavy rain|heavy showers/.test(t)) return 81;
+  if (/rain|shower/.test(t)) return 61;
+  if (/drizzle/.test(t)) return 51;
+  if (/fog|mist|haze|smoke/.test(t)) return 45;
+  if (/overcast|cloudy/.test(t) && !/partly|mostly clear/.test(t)) return 3;
+  if (/partly|mostly|few clouds|scattered/.test(t)) return 2;
+  if (/clear|sunny|fair/.test(t)) return 0;
+  return null;
+}
+async function nwsObservation(at) {
+  const k = `${Number(at.lat).toFixed(3)},${Number(at.lon).toFixed(3)}`;
+  let st = nwsStations.get(k);
+  if (!st || Date.now() - st.at > 24 * 3600_000) {
+    const pt = await nwsJson(`${NWS}/points/${Number(at.lat).toFixed(4)},${Number(at.lon).toFixed(4)}`);
+    const url = pt?.properties?.observationStations; if (!url) return null;
+    const list = await nwsJson(url);
+    st = { at: Date.now(), ids: (list?.features || []).slice(0, 3).map((f) => f?.properties?.stationIdentifier).filter(Boolean) };
+    nwsStations.set(k, st);
+  }
+  for (const id of st.ids) {
+    const o = (await nwsJson(`${NWS}/stations/${id}/observations/latest`).catch(() => null))?.properties;
+    if (!o) continue;
+    const age = Date.now() - Date.parse(o.timestamp || 0);
+    if (!(age < 2 * 3600_000)) continue; // mezi twò ansyen: eseye lòt estasyon an
+    const tempC = o.temperature?.value != null ? Number(o.temperature.value) : NaN;
+    const pw = (o.presentWeather || []).map((w) => String(w?.weather || "")).join(" ");
+    const text = `${o.textDescription || ""} ${pw}`;
+    const rainMm = Number(o.precipitationLastHour?.value) || 0;
+    if (!Number.isFinite(tempC) && !text.trim()) continue;
+    return { tempC, code: nwsCode(text), rainMm, raining: /rain|drizzle|shower|thunder/i.test(text), station: id };
+  }
+  return null;
 }
 
 /** Dènye meteyo nou konnen pou kote a (san tann); li rafrechi dèyè si l fin vye. */
