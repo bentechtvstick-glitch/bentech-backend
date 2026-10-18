@@ -1381,6 +1381,19 @@ function screenHtml(d, big) {
 
 // ------------------------------------------------------------ An dirèk
 let liveData = null;
+/** Long-poll: paj Live TV a mete l ajou depi yon TV chanje chanèl (san tann 5 segonn). */
+let liveVer = 0, liveLoopOn = false;
+async function liveWaitLoop() {
+  if (liveLoopOn) return; liveLoopOn = true;
+  while (token) {
+    try {
+      const r = await api("GET", "/galaxy/live/wait?v=" + liveVer);
+      const changed = liveVer && r.v !== liveVer; liveVer = r.v;
+      if (changed && !document.hidden) await loadLive();
+    } catch { await new Promise((ok) => setTimeout(ok, 5000)); }
+  }
+  liveLoopOn = false;
+}
 async function loadLive() {
   try { liveData = await api("GET", "/galaxy/live"); } catch { return; }
   setDot("#hDb", true, "Database Online", "Database Offline");
@@ -3404,6 +3417,7 @@ function startApp() {
   loadWatch(); timers.push(setInterval(() => { if (!document.hidden) loadWatch(); }, 5 * 60000));
   timers.push(setInterval(() => { if (!document.hidden) checkHealth(); }, 30000));
   timers.push(setInterval(() => { if (!document.hidden) loadLive(); }, 5000));
+  liveWaitLoop();
   timers.push(setInterval(() => { if (!document.hidden && tab === "dev" && dev) refreshDevLive(); }, 3000));
   timers.push(setInterval(() => { if (!document.hidden) loadDevices(); }, 20000));
 }

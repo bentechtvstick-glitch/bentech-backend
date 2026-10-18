@@ -115,6 +115,9 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       updatedAt: Date.now(),
     };
     live.set(mac, state);
+    // Panel la (paj Live TV) ap tann chanjman: reveye l touswit si sa TV a montre chanje
+    const sig = (x) => x ? [x.screen, x.channel?.id, x.program?.title, x.buffering, x.error, x.adBreak, x.quality].join("|") : "";
+    if (sig(prev) !== sig(state)) bumpLive();
     if (changed) {
       const h = history.get(mac) || [];
       h.unshift({ id: ch.id, num: ch.num, name: ch.name, at: Date.now() });
@@ -174,6 +177,19 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       })(),
     };
   };
+
+  // Long-poll pou panel la: repons touswit lè yon TV chanje chanèl/ekran (pa tann 5 s)
+  let liveVer = 1; const liveWaiters = new Set();
+  function bumpLive() { liveVer++; for (const w of liveWaiters) w(); liveWaiters.clear(); }
+  app.get("/api/galaxy/live/wait", authenticate, (req, res) => {
+    const since = Number(req.query.v) || 0;
+    if (since !== liveVer) return res.json({ v: liveVer });
+    let done = false;
+    const finish = () => { if (done) return; done = true; clearTimeout(tm); liveWaiters.delete(finish); res.json({ v: liveVer }); };
+    const tm = setTimeout(finish, 25000);
+    liveWaiters.add(finish);
+    req.on("close", () => { if (!done) { done = true; clearTimeout(tm); liveWaiters.delete(finish); } });
+  });
 
   /** Tout TV Galaxy yo, sa ki online an premye, ak sa yo ap gade. */
   app.get("/api/galaxy/live", authenticate, (req, res) => {
