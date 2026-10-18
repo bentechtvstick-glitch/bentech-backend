@@ -138,9 +138,14 @@ class GraphicsView @JvmOverloads constructor(
         g.weather?.let { put(it.position, "top-right", weather(it)) }
         g.countdown?.let { put(it.position, "top-center", countdown(it)) }
         g.watermark?.let { w ->
-            val v = label(w.text, w.size.toFloat(), Color.WHITE, bold = true).apply {
+            val v = FxTextView(context, w.style, TextFx.color(w.color, Color.WHITE), TextFx.color(w.color2, Color.BLACK)).apply {
+                text = w.text
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, w.size.toFloat())
+                typeface = TextFx.typeface(context, w.font, w.italic)
+                maxLines = 1
+                applyStyle()
+                if (w.style == "plain") setShadowLayer(dp(1f).toFloat(), 0f, dp(1f).toFloat(), 0x80000000.toInt())
                 alpha = w.opacity / 100f
-                setShadowLayer(dp(1f).toFloat(), 0f, dp(1f).toFloat(), 0x80000000.toInt())
             }
             addView(v, childCount - 1, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
             placeWatermark(v, w)
@@ -255,10 +260,17 @@ class GraphicsView @JvmOverloads constructor(
     private fun countdown(c: GfxCountdown): View = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER_HORIZONTAL
-        background = GradientDrawable().apply { setColor(0xCC080C1A.toInt()); cornerRadius = dp(10f).toFloat() }
+        if (c.box) background = GradientDrawable().apply { setColor(0xCC080C1A.toInt()); cornerRadius = dp(10f).toFloat() }
         setPadding(dp(16f), dp(6f), dp(16f), dp(8f))
-        if (c.title.isNotBlank()) addView(label(c.title.uppercase(), 11f, 0xD9FFFFFF.toInt(), bold = true).apply { letterSpacing = 0.1f })
-        val time = label(countdownText(c), 26f, Color.WHITE, bold = true).apply { fontFeatureSettings = "tnum" }
+        val c1 = TextFx.color(c.color, Color.WHITE); val c2 = TextFx.color(c.color2, 0xFF1D4ED8.toInt())
+        if (c.title.isNotBlank()) addView(FxTextView(context, if (c.style == "box") "classic" else c.style, c1, c2).apply {
+            text = c.title.uppercase(); setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f); typeface = TextFx.typeface(context, c.font, c.italic)
+            letterSpacing = 0.1f; maxLines = 1; applyStyle(); alpha = 0.9f
+        })
+        val time = FxTextView(context, c.style, c1, c2).apply {
+            text = countdownText(c); setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f); typeface = TextFx.typeface(context, c.font, c.italic)
+            fontFeatureSettings = "tnum"; maxLines = 1; applyStyle()
+        }
         addView(time)
         cdView = time
     }

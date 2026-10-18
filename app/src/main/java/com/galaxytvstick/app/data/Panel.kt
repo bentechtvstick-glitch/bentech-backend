@@ -128,6 +128,15 @@ data class ChyronItem(
 )
 
 /** Banner imaj (imageUrl) oswa tèks (text). */
+/** Estil yon tèks: menm lis estil/polis ak panel la (TextFx). */
+data class TextSpec(val style: String, val font: String, val color: String, val color2: String, val italic: Boolean) {
+    companion object {
+        fun parse(o: org.json.JSONObject?, defStyle: String): TextSpec? = o?.let {
+            TextSpec(it.optString("style", defStyle), it.optString("font", "sans"), it.optString("color", "#FFFFFF"), it.optString("color2", "#1D4ED8"), it.optBoolean("italic", false))
+        }
+    }
+}
+
 data class Banner(val id: String, val imageUrl: String, val text: String, val position: String)
 data class Popup(val id: String, val title: String, val message: String, val imageUrl: String?, val showOnce: Boolean)
 data class Ad(
@@ -214,7 +223,8 @@ data class GfxBug(
     val italic: Boolean = false, val caps: Boolean = true,
 )
 /** Tèks pal sou imaj la (egz: MAC kliyan an). [move] = chanje kwen chak 30 s. */
-data class GfxWatermark(val text: String, val position: String, val size: Int, val opacity: Int, val move: Boolean)
+data class GfxWatermark(val text: String, val position: String, val size: Int, val opacity: Int, val move: Boolean,
+    val style: String = "plain", val font: String = "sans", val color: String = "#FFFFFF", val color2: String = "#000000", val italic: Boolean = false)
 data class GfxScoreboard(
     val league: String, val home: String, val away: String, val homeScore: String, val awayScore: String,
     val clock: String, val homeColor: String, val awayColor: String, val position: String
@@ -222,7 +232,8 @@ data class GfxScoreboard(
 /** [temp] deja fòmate pa sèvè a (egz: "31°C"); [icon] se yon imoji. */
 data class GfxWeather(val city: String, val temp: String, val icon: String, val position: String)
 /** [targetAt] an segonn epoch. Apre lè a: [doneText] (si genyen). */
-data class GfxCountdown(val title: String, val targetAt: Long, val doneText: String, val position: String)
+data class GfxCountdown(val title: String, val targetAt: Long, val doneText: String, val position: String,
+    val style: String = "classic", val font: String = "sans", val color: String = "#FFFFFF", val color2: String = "#1D4ED8", val italic: Boolean = false, val box: Boolean = true)
 /** Logo/non chèn nan nan mitan ekran an pou [durationSec] segonn, chak [everyMin] minit (0 = pa otomatik). */
 data class GfxIdent(val imageUrl: String?, val text: String, val tagline: String, val everyMin: Int, val durationSec: Int, val onChannelChange: Boolean)
 /** Ekran anvan ("in") ak apre ("out") koupi piblisite a. */
@@ -265,6 +276,9 @@ data class PanelConfig(
     val chyrons: List<ChyronItem> = emptyList(),
     val banners: List<Banner>,
     val popups: List<Popup>,
+    /** Estil tèks banner yo ak tit pop-up yo (null = estil pa defo app la). */
+    val bannerStyle: TextSpec? = null,
+    val popupStyle: TextSpec? = null,
     val ads: List<Ad>,
     /** Koupi piblisite otomatik (null = pa gen spot). */
     val adBreak: AdBreak? = null,
@@ -401,6 +415,8 @@ data class PanelConfig(
                     it.optStringOrNull("imageUrl"), it.optBoolean("showOnce", true)
                 )
             }.filter { it.title.isNotBlank() || it.message.isNotBlank() },
+            bannerStyle = TextSpec.parse(o.optJSONObject("bannerStyle"), "classic"),
+            popupStyle = TextSpec.parse(o.optJSONObject("popupStyle"), "plain"),
             ads = o.optJSONArray("ads").objects().map {
                 Ad(
                     it.optString("id"), it.optString("type", "image"), it.optString("url"),
@@ -428,7 +444,8 @@ data class PanelConfig(
                     }?.takeIf { it.imageUrl != null || it.text.isNotBlank() },
                     watermark = g.optJSONObject("watermark")?.let {
                         GfxWatermark(it.optString("text"), it.optString("position", "bottom-right"),
-                            it.optInt("size", 16).coerceIn(8, 60), it.optInt("opacity", 25).coerceIn(3, 100), it.optBoolean("move", false))
+                            it.optInt("size", 16).coerceIn(8, 60), it.optInt("opacity", 25).coerceIn(3, 100), it.optBoolean("move", false),
+                            it.optString("style", "plain"), it.optString("font", "sans"), it.optString("color", "#FFFFFF"), it.optString("color2", "#000000"), it.optBoolean("italic", false))
                     }?.takeIf { it.text.isNotBlank() },
                     scoreboard = g.optJSONObject("scoreboard")?.let {
                         GfxScoreboard(it.optString("league"), it.optString("home"), it.optString("away"),
@@ -439,7 +456,9 @@ data class PanelConfig(
                         GfxWeather(it.optString("city"), it.optString("temp"), it.optString("icon"), it.optString("position", "top-right"))
                     }?.takeIf { it.temp.isNotBlank() },
                     countdown = g.optJSONObject("countdown")?.let {
-                        GfxCountdown(it.optString("title"), it.optLong("targetAt"), it.optString("doneText"), it.optString("position", "top-center"))
+                        GfxCountdown(it.optString("title"), it.optLong("targetAt"), it.optString("doneText"), it.optString("position", "top-center"),
+                            it.optString("style", "classic"), it.optString("font", "sans"), it.optString("color", "#FFFFFF"), it.optString("color2", "#1D4ED8"),
+                            it.optBoolean("italic", false), it.optBoolean("box", true))
                     }?.takeIf { it.targetAt > 0 },
                     ident = g.optJSONObject("ident")?.let {
                         GfxIdent(it.optStringOrNull("imageUrl"), it.optString("text"), it.optString("tagline"),

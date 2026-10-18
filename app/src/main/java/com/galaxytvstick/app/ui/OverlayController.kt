@@ -278,6 +278,7 @@ class OverlayController(
                     v.bannerImage.visibility = View.GONE
                     v.bannerText.visibility = View.VISIBLE
                     v.bannerText.text = b.text
+                    styleBanner(PanelState.config.bannerStyle)
                 }
                 v.bannerBox.visibility = View.VISIBLE
                 delay(8_000)
@@ -338,10 +339,41 @@ class OverlayController(
         showDialog(popup.title, popup.message, popup.imageUrl) { prefs.markPopupSeen("p:${popup.id}") }
     }
 
+    /** Polis, koulè ak estil panel la chwazi pou tèks banner yo. */
+    private var bannerDefault: Triple<android.graphics.Typeface?, Int, android.graphics.drawable.Drawable?>? = null
+    private fun styleBanner(spec: com.galaxytvstick.app.data.TextSpec?) {
+        val tv = v.bannerText
+        if (bannerDefault == null) bannerDefault = Triple(tv.typeface, tv.currentTextColor, tv.background)
+        val d = bannerDefault!!
+        tv.paint.shader = null
+        if (spec == null) { tv.typeface = d.first; tv.setTextColor(d.second); tv.background = d.third; return }
+        val c1 = TextFx.color(spec.color, Color.WHITE); val c2 = TextFx.color(spec.color2, 0xFF1D4ED8.toInt())
+        tv.typeface = TextFx.typeface(activity, spec.font, spec.italic)
+        tv.setTextColor(c1)
+        tv.background = if (spec.style == "box") android.graphics.drawable.GradientDrawable().apply { setColor(c2); cornerRadius = tv.textSize * 0.4f } else d.third
+        tv.post {
+            val top = tv.paddingTop.toFloat(); val bottom = (tv.height - tv.paddingBottom).toFloat().coerceAtLeast(top + tv.textSize)
+            TextFx.applyPaint(tv.paint, spec.style, c2, activity.resources.displayMetrics.density, top, bottom, c1)
+            tv.invalidate()
+        }
+    }
+
     private fun showDialog(title: String, message: String, imageUrl: String?, onClose: () -> Unit) {
         dialogShowing = true
+        val ps = PanelState.config.popupStyle
         val builder = AlertDialog.Builder(activity, R.style.Theme_Galaxy_Dialog)
-            .setTitle(title)
+        if (ps != null && title.isNotBlank()) {
+            // Tit la ak estil panel la chwazi a
+            val dp = activity.resources.displayMetrics.density
+            builder.setCustomTitle(FxTextView(activity, ps.style, TextFx.color(ps.color, Color.WHITE), TextFx.color(ps.color2, 0xFF1D4ED8.toInt())).apply {
+                text = title
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 22f)
+                typeface = TextFx.typeface(activity, ps.font, ps.italic)
+                setPadding((24 * dp).toInt(), (20 * dp).toInt(), (24 * dp).toInt(), (4 * dp).toInt())
+                applyStyle()
+            })
+        } else builder.setTitle(title)
+        builder
             .setMessage(message)
             .setPositiveButton(R.string.ok) { d, _ -> d.dismiss() }
             .setOnDismissListener {
