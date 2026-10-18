@@ -13,6 +13,8 @@ import {
   DEVICE_PROTECTED_FIELDS,
 } from "./galaxy.js";
 import { mountGalaxyLive } from "./galaxy-live.js";
+import { mountAutoBackup } from "./autobackup.js";
+import crypto from "node:crypto";
 import { fastWrites, gzipJson } from "./perf.js";
 
 // Baz done a. Sou Render, mete DB_FILE=/data/db.json (disk pèmanan) pou done yo
@@ -206,16 +208,46 @@ app.use((req, res, next) => {
 
 // ---------- auth routes ----------
 
-app.post("/api/auth/login", (req, res) => {
+// Pwoteksyon login: apre 5 move modpas nan 15 minit, adrès IP sa a bloke 15 minit.
+// (Plis yon limit global: 100 move tantativ nan 15 minit, tout IP ansanm → login an fèmen 15 minit.)
+const LOGIN_MAX = 5, LOGIN_WINDOW = 15 * 60 * 1000, LOGIN_GLOBAL_MAX = 100;
+const loginFails = new Map(); // ip → { n, first, lockUntil }
+let globalFails = { n: 0, first: 0, lockUntil: 0 };
+const clientIp = (req) => {
+  const sock = req.socket?.remoteAddress || "";
+  // Dèyè reverse proxy a (Caddy/Nginx sou menm sèvè a): vrè IP a nan X-Forwarded-For
+  if (/^(::1|127\.|::ffff:127\.)/.test(sock)) return String(req.headers["x-forwarded-for"] || sock).split(",").pop().trim(); // dènye a = sa proxy nou an ajoute (pa ka fo)
+  return sock;
+};
+const safeEq = (a, b) => { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
+setInterval(() => { const now = Date.now(); for (const [k, v] of loginFails) if (now - v.first > LOGIN_WINDOW && now > v.lockUntil) loginFails.delete(k); }, 10 * 60 * 1000).unref?.();
+
+app.post("/api/auth/login", async (req, res) => {
   const { username, password } = req.body || {};
-  if (username === ADMIN_USER && password === ADMIN_PASS) {
+  const ip = clientIp(req), now = Date.now();
+  const f = loginFails.get(ip);
+  const lockedFor = Math.max(f?.lockUntil || 0, globalFails.lockUntil) - now;
+  if (lockedFor > 0) {
+    return res.status(429).json({ ok: false, error: `Too many attempts. Try again in ${Math.ceil(lockedFor / 60000)} min.` });
+  }
+  if (safeEq(username || "", ADMIN_USER) && safeEq(password || "", ADMIN_PASS)) {
+    loginFails.delete(ip);
     const token = jwt.sign({ sub: username, role: "admin" }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN,
     });
     auditLog("login", `User ${username} logged in`, username);
     return res.json({ ok: true, token });
   }
-  res.status(401).json({ ok: false, error: "Invalid credentials" });
+  // Move modpas: konte l, ralanti repons lan, epi bloke si twòp
+  const cur = f && now - f.first < LOGIN_WINDOW ? f : { n: 0, first: now, lockUntil: 0 };
+  cur.n++; if (cur.n >= LOGIN_MAX) cur.lockUntil = now + LOGIN_WINDOW;
+  loginFails.set(ip, cur);
+  if (now - globalFails.first > LOGIN_WINDOW) globalFails = { n: 0, first: now, lockUntil: 0 };
+  if (++globalFails.n >= LOGIN_GLOBAL_MAX) globalFails.lockUntil = now + LOGIN_WINDOW;
+  if (cur.n === LOGIN_MAX) auditLog("login-blocked", `Login blocked for 15 min after ${LOGIN_MAX} wrong passwords (IP ${ip})`, "security");
+  await new Promise((r) => setTimeout(r, 600));
+  const left = LOGIN_MAX - cur.n;
+  res.status(cur.lockUntil ? 429 : 401).json({ ok: false, error: cur.lockUntil ? "Too many attempts. Try again in 15 min." : `Invalid credentials (${left} attempt${left > 1 ? "s" : ""} left)` });
 });
 
 app.post("/api/auth/activate", async (req, res) => {
@@ -374,6 +406,8 @@ mountGalaxy(app, db, { authenticate, auditLog, syncTvs: () => syncTvs() }); // p
 // Galaxy TV Stick: sa TV yo ap gade an dirèk, kòmand a distans, ak paj panel /galaxy
 const galaxyLive = mountGalaxyLive(app, db, { authenticate, auditLog });
 syncTvs = galaxyLive.broadcastSync; // TV yo mete yo ajou touswit lè panel la chanje yon bagay
+// Kopi done otomatik chak jou (7 dènye yo) + lis/telechajman nan paj Sistèm nan
+mountAutoBackup(app, db, { authenticate, auditLog });
 
 // Efase tout jounal aksyon yo (bouton "Efase tout" nan paj Audit Logs)
 app.delete("/api/audit-logs", guard, async (req, res) => {
