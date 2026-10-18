@@ -424,6 +424,14 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .nt-chip .tx b{font-size:14px}.nt-chip .tx span{font-size:12px;opacity:.6}
 .nt-chip small{flex:none;font-size:11px;opacity:.5}
 .nt-chip[draggable="true"]{cursor:grab}.nt-chip.dragging{opacity:.4;border-style:dashed}
+.nt-pile{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;cursor:pointer;text-align:left;color:inherit;font:inherit;
+  background:rgba(255,255,255,.04);border:1px solid var(--line,rgba(255,255,255,.08));transition:background .15s}
+.nt-pile:hover,.nt-pile:focus-visible{background:rgba(255,255,255,.08);outline:none}
+.nt-pile .nt-stk{display:flex;flex-direction:row;align-items:center;margin:0;padding:0}.nt-pile .nt-stk i{display:block;flex:none;margin-top:0;margin-bottom:0;width:22px;height:28px;border-radius:5px;background:#FFD60A;border:2px solid #1f2937;margin-left:-10px;box-shadow:0 2px 4px rgba(0,0,0,.35)}
+.nt-pile .nt-stk i:first-child{margin-left:0}
+.nt-pile .nt-stk i[data-c="pink"]{background:#FF6FA5}.nt-pile .nt-stk i[data-c="blue"]{background:#4DA8FF}.nt-pile .nt-stk i[data-c="green"]{background:#34C759}.nt-pile .nt-stk i[data-c="purple"]{background:#AF52DE}.nt-pile .nt-stk i[data-c="orange"]{background:#FF9500}
+.nt-pile b{font-size:15px}.nt-pile .note{margin-left:auto}
+.nt-close{opacity:.8}
 .nt-chip.new{justify-content:center;border-style:dashed;font-weight:600;font-size:14px}
 .nt-chip[data-c="pink"]{--dot:#FF6FA5}.nt-chip[data-c="blue"]{--dot:#4DA8FF}.nt-chip[data-c="green"]{--dot:#34C759}.nt-chip[data-c="purple"]{--dot:#AF52DE}.nt-chip[data-c="orange"]{--dot:#FF9500}
 .note-pad{--band1:#FFE680;--band2:#FFD60A;--ink:#8A6A00;--pin1:#FF8A80;--pin2:#E53935;--pin3:#7F0000;
@@ -3098,8 +3106,16 @@ let ntItems = [], ntOpen = null, ntSaveT = 0, ntDirty = false;
 const NT_COLORS = [["yellow", "#FFD60A", "Jòn"], ["pink", "#FF6FA5", "Woz"], ["blue", "#4DA8FF", "Ble"], ["green", "#34C759", "Vèt"], ["purple", "#AF52DE", "Mov"], ["orange", "#FF9500", "Zoranj"]];
 async function loadNotes() { ntItems = await api("GET", "/galaxy/notes").catch(() => []); renderNotes(); }
 /** Fèy fèmen yo: tit + kòmansman nòt la (oswa •••• si l kache). Klike sou youn pou louvri l. */
+// Nòt yo rete fèmen an yon sèl pakèt; klike sou pakèt la → yo louvri, klike "Fèmen" → yo tounen yon pakèt
+let ntGroupOpen = false; try { ntGroupOpen = localStorage.getItem("galaxy_notes_open") === "1"; } catch {}
+function ntSetGroup(open) { ntGroupOpen = open; try { localStorage.setItem("galaxy_notes_open", open ? "1" : "0"); } catch {} renderNotes(); }
 function renderNotes() {
-  $("#ntList").innerHTML = ntItems.map((n) => {
+  if (!ntGroupOpen) {
+    const dots = ntItems.slice(0, 6).map((n) => `<i data-c="${esc(n.color || "yellow")}"></i>`).join("");
+    $("#ntList").innerHTML = `<button type="button" class="nt-pile" id="ntPile" aria-expanded="false"><span class="nt-stk">${dots || "<i></i>"}</span><b>${esc(ntItems.length ? t("{0} nòt", ntItems.length) : t("Poko gen nòt."))}</b><span class="note">${esc(t("Klike pou louvri yo"))}</span></button>`;
+    return;
+  }
+  $("#ntList").innerHTML = `<button type="button" class="nt-chip new nt-close" id="ntPileClose" aria-expanded="true">▴ ${esc(t("Fèmen nòt yo"))}</button>` + ntItems.map((n) => {
     const when = n.updatedAt ? new Date(n.updatedAt).toLocaleDateString(lang) : "";
     const prev = n.secret ? "••••••" : String(n.body || "").split("\n").find((l) => l.trim()) || "";
     return `<div class="nt-chip" tabindex="0" role="button" draggable="true" title="${esc(t("Klike pou louvri l · trennen l pou chanje plas li"))}" data-nt-open="${esc(n.id)}" data-c="${esc(n.color || "yellow")}" aria-label="${esc(n.title || t("San tit"))}"><i></i><span class="tx"><b>${n.secret ? "🔒 " : ""}${esc(n.title || t("San tit"))}</b><span>${esc(prev)}</span></span>${when ? `<small>${esc(when)}</small>` : ""}</div>`;
@@ -3169,6 +3185,8 @@ $("#ntList").addEventListener("dragend", async () => {
   renderNotes();
 });
 $("#ntList").addEventListener("click", (e) => {
+  if (e.target.closest("#ntPile")) return ntSetGroup(true);
+  if (e.target.closest("#ntPileClose")) return ntSetGroup(false);
   if (e.target.closest("#ntNew")) return ntOpenSheet(null);
   const c = e.target.closest("[data-nt-open]"); if (c) ntOpenSheet(c.dataset.ntOpen);
 });
