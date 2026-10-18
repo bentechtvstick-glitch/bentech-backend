@@ -86,7 +86,7 @@ export function mountAi(app, db, { authenticate, isOnline }) {
       "You get a JSON snapshot of the panel: TVs, customers, and channel/video problems reported by the TVs. Video streams come straight from the customer's IPTV provider, not from this panel. " +
       "Common causes: HTTP 401/403/429 = provider account refused or too many screens; HTTP 5xx or empty reply = provider/channel down; many channels failing on one provider at once = provider outage; one TV only = that TV's internet/router. " +
       "Always identify a TV by its customer name and MAC address (e.g. \"Jean · AA:BB:CC:DD:EE:FF\"), never by the device model. " +
-      `Answer in ${lang}, in simple words, short (max ~12 lines), with concrete next steps in the panel. Never invent data that is not in the snapshot. Never reveal passwords or keys.`;
+      `Reply in the SAME language the question is written in (any language: Haitian Creole, English, French, Spanish, Portuguese…); if the language is unclear, use ${lang}. Use simple words, short (max ~12 lines), with concrete next steps in the panel. Never invent data that is not in the snapshot. Never reveal passwords or keys.`;
     try {
       if (req.body?.lang && LANG_NAMES[req.body.lang]) { (db.data.watch ??= {}).lang = req.body.lang; }
       const r = await aiComplete(db, { system, user: `Panel snapshot:\n${JSON.stringify(snapshot())}\n\nQuestion: ${question}`, maxTokens: 700 });
