@@ -652,6 +652,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="kv"><span>Device Key</span><b class="mono" id="dvKey" style="font-size:18px;letter-spacing:.12em"></b></div>
             <div class="kv"><span>Modèl</span><span id="dvModel"></span></div>
             <div class="kv"><span>Vèsyon app</span><span id="dvVersion"></span></div>
+            <div class="kv"><span>Entènèt TV a</span><span id="dvNet">—</span></div>
             <div class="kv"><span>Ekspirasyon</span><span id="dvExp"></span></div>
             <div class="field"><label for="dvName">Non aparèy la</label><input type="text" id="dvName"></div>
             <div class="field"><label for="dvCity">Vil (pou meteyo sou TV sa a)</label><input type="text" id="dvCity" maxlength="30" placeholder="Egz: Miami"><span class="note" id="dvGeo"></span></div>
@@ -1373,7 +1374,11 @@ async function selectDevice(mac, jump) {
 }
 function renderDevice() {
   $("#dvMac").textContent = dev.mac; $("#dvKey").textContent = dev.deviceKey || t("— (ap tann TV a)"); $("#dvModel").textContent = dev.model ? `${devType(dev.model)} · ${dev.model}` : "—";
-  $("#dvVersion").textContent = dev.appVersion || "—"; $("#dvExp").innerHTML = devExpHtml(dev); $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : ""; $("#dvBlocked").checked = !!dev.blocked; const lim = Number(dev.providerMaxConn) || 0; $("#dvLimit").textContent = lim ? t("{0} koneksyon", lim) : "—";
+  $("#dvVersion").textContent = dev.appVersion || "—";
+  { const n = dev.net || {}, fresh = n.at && Date.now() - n.at < 24 * 3600000;
+    const bad = (n.cuts || 0) >= 2.5 || (n.bw && n.bw < 3000), ok = n.bw >= 8000 && (n.cuts || 0) < 1;
+    $("#dvNet").innerHTML = !fresh ? `<span class="note">${esc(t("Poko gen mezi (app 1.0.120+, kliyan an dwe gade TV)"))}</span>`
+      : `<span class="pill ${bad ? "p-bad" : ok ? "p-on" : "p-warn"}">${esc(t(bad ? "Fèb" : ok ? "Bon" : "Mwayen"))}</span> <span class="note">${n.bw ? esc((n.bw / 1000).toFixed(1)) + " Mbps · " : ""}${esc(t("{0} koupi / 10 min", n.cuts ?? 0))}${n.start ? " · " + esc(t("kòmanse nan {0} s", (n.start / 1000).toFixed(1))) : ""}</span>`; } $("#dvExp").innerHTML = devExpHtml(dev); $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : ""; $("#dvBlocked").checked = !!dev.blocked; const lim = Number(dev.providerMaxConn) || 0; $("#dvLimit").textContent = lim ? t("{0} koneksyon", lim) : "—";
   $("#dvLimitNote").textContent = lim ? t("Kantite TV ki ka gade an menm tan ak kont sa a, selon founisè playlist la.") : t("Poko konnen: TV a voye l lè l louvri app la (1.0.90+), oswa peze ⚡ Teste sou playlist la.");
   $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${String(c.name).toUpperCase() === String(dev.customer || "").toUpperCase() ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
   $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span> <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
@@ -1883,11 +1888,12 @@ const WT_TEXT = {
   old_app: (i) => [t("📲 {0} TV gen yon ansyen vèsyon app la", i.count), t("Dènye vèsyon an se {0}.", i.latest)],
   expiring: (i) => [i.days ? t("⏰ Abònman {0} ap fini nan {1} jou", i.customer, i.days) : t("⏰ Abònman {0} ap fini jodi a", i.customer), t("Kontakte kliyan an pou l renouvle.")],
   disk_low: (i) => [t("💾 Disk sèvè a prèske plen: {0}% ki rete", i.freePct), t("Gade \"Kisa ki pran plas?\" nan paj Sistèm nan.")],
+  weak_net: (i) => [t("📶 Entènèt TV {0} fèb", i.name || i.mac), t("Li koupe {0} fwa chak 10 minit", i.cuts) + (i.mbps ? " · " + i.mbps + " Mbps" : "") + ". " + t("Se koneksyon kliyan an, pa founisè a: wouter li twò lwen, Wi-Fi a chaje, oswa abònman entènèt li twò piti.")],
   weak_password: () => [t("🔑 Modpas login panel la twò fèb"), t("Chanje ADMIN_PASS nan /etc/galaxy.env sou sèvè a (12 karaktè oswa plis, ak chif ak senbòl), epi redemare sèvis la.")],
   ai_budget: (i) => [t("🤖 AI a deja itilize ${0} sou ${1} mwa sa a", i.cost, i.limit), t("Lè limit lan rive, AI a kanpe jiska mwa pwochen.")],
 };
 const WT_ACT = {
-  goto_device: () => t("Louvri aparèy la"), reload_tv: () => t("Rechaje TV a"), push_update: () => t("Voye mizajou a bay TV yo"),
+  goto_device: () => t("Louvri aparèy la"), send_tip: () => t("Voye konsèy bay kliyan an"), reload_tv: () => t("Rechaje TV a"), push_update: () => t("Voye mizajou a bay TV yo"),
   hide_channel: (a) => t("Kache chanèl la ({0} TV)", a.macs.length), goto_customers: () => t("Kliyan yo"), goto_system: () => t("Sistèm"),
 };
 async function loadWatch(analyze) {
@@ -1917,6 +1923,12 @@ $("#wtList").addEventListener("click", async (e) => {
     if (a.type === "goto_device") return selectDevice(a.mac, true);
     if (a.type === "goto_customers") return openTab("cust");
     if (a.type === "goto_system") return openTab("sys");
+    if (a.type === "send_tip") {
+      const txt = prompt(t("Mesaj ki pral parèt sou TV kliyan an (ou ka chanje l):"), t("📶 Koneksyon entènèt ou a fèb, se sa ki fè imaj la koupe. Eseye: etenn epi relimen wouter a, mete Fire Stick la pi pre wouter a, oswa konekte l ak yon fil. Mèsi!"));
+      if (!txt || !txt.trim()) return;
+      await api("POST", `/galaxy/devices/${encodeURIComponent(a.mac)}/commands`, { type: "message", text: txt.trim() }); toast(t("Mesaj la voye bay TV a."));
+      return;
+    }
     if (a.type === "reload_tv") {
       if (!confirm(t("Rechaje TV {0}? App la ap rekonekte epi rechaje lis chanèl la (kèk segonn).", i.name || a.mac))) return;
       await api("POST", `/galaxy/devices/${encodeURIComponent(a.mac)}/commands`, { type: "reload" }); toast(t("Kòmand lan voye bay TV a."));

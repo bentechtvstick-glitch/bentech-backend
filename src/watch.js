@@ -61,6 +61,20 @@ export function mountWatch(app, db, h) {
         actions: [...(hideable.length ? [{ type: "hide_channel", macs: hideable, channelId: Number(cid) }] : []), ...(macs.length === 1 ? [{ type: "reload_tv", mac: macs[0] }] : [])] });
     }
 
+    // 2c) Entènèt yon kliyan fèb: TV a koupe souvan (oswa vitès li ba), pandan lòt TV yo mache byen
+    const nets = devices.filter((x) => x.net && now - (x.net.at || 0) < 6 * H);
+    for (const x of nets) {
+      const n = x.net, enough = (n.n || 0) >= 3;
+      const others = nets.filter((o) => o !== x && o.net.cuts != null && (o.net.n || 0) >= 3).map((o) => o.net.cuts);
+      const avgOthers = others.length ? others.reduce((a, b) => a + b, 0) / others.length : 0;
+      const cutsBad = enough && n.cuts >= 2.5 && (!others.length || n.cuts >= Math.max(1, avgOthers * 2));
+      const slow = n.bw > 0 && n.bw < 3000;
+      if (!cutsBad && !(slow && enough && n.cuts >= 1)) continue;
+      out.push({ id: "net2:" + x.mac, kind: "weak_net", level: "warn", mac: x.mac, name: devName(x),
+        cuts: Math.round((n.cuts || 0) * 10) / 10, mbps: n.bw ? Math.round(n.bw / 100) / 10 : null, startSec: n.start ? Math.round(n.start / 100) / 10 : null,
+        actions: [{ type: "send_tip", mac: x.mac }, { type: "goto_device", mac: x.mac }] });
+    }
+
     // 3) TV ki gen yon ansyen vèsyon app la
     const l = await latestBuild(false).catch(() => ({}));
     if (l?.build) {

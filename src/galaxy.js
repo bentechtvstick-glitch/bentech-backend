@@ -988,6 +988,14 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     // Dyagnostik pou panel la: kilè TV sa a te voye dènye mezi a
     device.healthAt = new Date().toISOString(); device.healthCount = (device.healthCount || 0) + 1;
     device.healthLast = id <= 0 ? "id" : !host ? "host" : "ok";
+    // Kalite entènèt TV sa a (tout chanèl ansanm): koupi pa 10 minit, tan pou kòmanse, vitès (app 1.0.120+)
+    {
+      const n = (device.net ??= {}), bw = Math.max(0, Number(b.bwKbps) || 0), w = Math.max(0, Number(b.watchSec) || 0), st = Math.max(0, Number(b.stalls) || 0);
+      if (bw > 0) n.bw = Math.round(ema(n.bw, Math.min(bw, 200000)));
+      if (b.kind === "watch" && !b.fail && w >= 60) { n.cuts = Math.round(ema(n.cuts, (st / w) * 600) * 100) / 100; n.n = (n.n || 0) + 1; n.watchMin = Math.round((n.watchMin || 0) + w / 60); }
+      if (b.kind === "start" && Number(b.startMs) >= 0) n.start = Math.round(ema(n.start, Math.min(Number(b.startMs), 60000)));
+      n.at = Date.now();
+    }
     if (id <= 0 || !host) { touchWrite(); return res.json({ ok: true }); }
     const all = (data().channelHealth ??= {}), byHost = (all[host] ??= {});
     const h = (byHost[id] ??= { n: 0 });
