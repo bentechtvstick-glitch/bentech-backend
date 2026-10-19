@@ -284,7 +284,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
     if (!device) {
       // known:false → app la pa chanje anyen, li jis re-anrejistre tèt li
-      return res.json({ known: false, status: "pending", playlists: [], refreshSec: 15 });
+      // deleted:true → admin nan efase TV sa a: app la dekonekte l (pa konfonn ak yon sèvè ki pèdi done li)
+      return res.json({ known: false, deleted: data().deletedDevices.includes(mac), status: "pending", playlists: [], refreshSec: 15 });
     }
     if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) {
       return res.status(403).json({ ok: false, error: "Device Key pa bon" });

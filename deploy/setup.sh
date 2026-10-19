@@ -99,6 +99,9 @@ OnUnitActiveSec=3min
 WantedBy=timers.target
 UNIT
 cat > /etc/caddy/Caddyfile <<CADDY
+{
+	key_type rsa2048
+}
 $DOMAIN {
 	encode gzip
 	reverse_proxy 127.0.0.1:3000
