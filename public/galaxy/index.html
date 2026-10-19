@@ -621,6 +621,11 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         </div>
         <div style="display:flex;gap:8px"><input id="aiQ" type="text" maxlength="1000" placeholder="Ekri kesyon ou la…" style="flex:1"><button class="btn primary" id="aiAsk" type="button">Mande</button><button class="btn" id="aiClear" type="button" hidden>Efase</button></div>
         <div id="aiAnswer" class="note" style="margin-top:12px;font-size:14px;line-height:1.55;color:var(--text)" hidden></div>
+        <details id="aiKeyBox" data-owner-only style="margin-top:12px"><summary class="note" style="cursor:pointer">🔑 Kle AI a</summary>
+          <p class="note" style="margin:8px 0">Kole kle API Anthropic ou a (li kòmanse ak sk-ant-). Li sove sou sèvè a sèlman, panel la pa janm montre l ankò.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="aiKeyIn" type="password" autocomplete="off" placeholder="sk-ant-…" style="flex:1;min-width:220px"><button class="btn primary" id="aiKeySave" type="button">Sove kle a</button><button class="btn" id="aiKeyDel" type="button" hidden>Retire kle a</button></div>
+          <span class="msg" id="aiKeyMsg"></span>
+        </details>
       </div>
       <div class="cols">
         <div class="card"><div class="cardhead"><div><h2>Ap ekspire byento</h2><p class="sub">Kliyan ki ekspire oswa k ap ekspire nan 14 jou.</p></div><button class="btn small" data-goto="cust" type="button">Kliyan yo</button></div><div class="tbl" id="dashExpiring"></div></div>
@@ -1997,7 +2002,18 @@ async function loadAi() {
   let y; try { y = await api("GET", "/galaxy/ai"); } catch { return; }
   $("#aiUsage").textContent = y.configured ? t("Mwa sa a: ${0} sou ${1}", y.cost.toFixed(2), y.limit) : t("Poko konfigire (kle AI a manke sou sèvè a)");
   $("#aiAsk").disabled = !y.configured;
+  if (!$("#aiKeyBox").hidden) { try { const k = await api("GET", "/galaxy/ai-key"); $("#aiKeyDel").hidden = !k.set || k.fromEnv;
+    setMsg($("#aiKeyMsg"), k.set ? t("Kle a mete ✓ (…{0})", k.last4) : "", true); if (!k.set) $("#aiKeyBox").open = true; } catch {} }
 }
+$("#aiKeySave").addEventListener("click", async () => {
+  const key = $("#aiKeyIn").value.trim(); if (!key) return;
+  setMsg($("#aiKeyMsg"), "Ap tcheke kle a…", true);
+  try { await api("PUT", "/galaxy/ai-key", { key }); $("#aiKeyIn").value = ""; await loadAi(); } catch (e) { setMsg($("#aiKeyMsg"), e.message); }
+});
+$("#aiKeyDel").addEventListener("click", async () => {
+  if (!confirm(t("Retire kle AI a?"))) return;
+  try { await api("PUT", "/galaxy/ai-key", { key: "" }); await loadAi(); } catch (e) { setMsg($("#aiKeyMsg"), e.message); }
+});
 async function askAi(q) {
   q = String(q || "").trim(); if (!q) return;
   const box = $("#aiAnswer"); box.hidden = false; box.textContent = t("Ap reflechi…"); $("#aiAsk").disabled = true; $("#aiClear").hidden = true;

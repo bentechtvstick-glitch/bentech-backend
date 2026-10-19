@@ -1,9 +1,24 @@
+import fs from "node:fs";
+import path from "node:path";
 // Asistan AI panel la (Claude Haiku): li gade eta panel la epi li reponn kesyon admin nan.
 // Ekonomik: yon sèl demann pa kesyon, yon ti rezime done yo (pa tout baz done a), repons kout,
 // epi yon limit depans pa mwa (AI_MONTHLY_LIMIT_USD, pa defo $2) pou pa janm gen sipriz.
 // Kle a: ANTHROPIC_API_KEY nan /etc/galaxy.env (pa janm nan kòd la ni nan baz done a).
 
 const MODEL = process.env.AI_MODEL || "claude-haiku-4-5";
+// Kle AI a: ANTHROPIC_API_KEY nan /etc/galaxy.env, OSWA kle pwopriyetè a kole nan panel la
+// (sove nan yon fichye prive bò kote baz done a, mode 600, PA nan db.json ni nan kopi done yo).
+const KEY_FILE = path.join(path.dirname(path.resolve(process.env.DB_FILE || "./db.json")), ".anthropic-key");
+let keyCache;
+export function aiKey() {
+  if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
+  if (keyCache === undefined) { try { keyCache = fs.readFileSync(KEY_FILE, "utf8").trim(); } catch { keyCache = ""; } }
+  return keyCache;
+}
+function saveKey(k) {
+  if (k) fs.writeFileSync(KEY_FILE, k, { mode: 0o600 }); else { try { fs.unlinkSync(KEY_FILE); } catch {} }
+  keyCache = k || "";
+}
 // Pri pa milyon token (Haiku 4.5): $1 antre, $5 sòti
 const PRICE_IN = Number(process.env.AI_PRICE_IN || 1), PRICE_OUT = Number(process.env.AI_PRICE_OUT || 5);
 const LANG_NAMES = { ht: "Haitian Creole (Kreyòl ayisyen)", en: "English", fr: "French", es: "Spanish" };
@@ -20,8 +35,8 @@ export const aiBudget = (db) => { const u = usageOf(db); return { cost: u.cost, 
 
 /** Yon sèl apèl Claude (konte depans lan, respekte limit mwa a). Voye tèks repons lan, oswa jete yon erè. */
 export async function aiComplete(db, { system, user, maxTokens = 600 }) {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error("AI is not set up yet: add ANTHROPIC_API_KEY on the server.");
+  const key = aiKey();
+  if (!key) throw new Error("AI is not set up yet: paste the AI key in Dashboard → 🔑 AI key.");
   const u = usageOf(db);
   if (u.cost >= limit()) throw Object.assign(new Error(`Monthly AI limit reached ($${limit()}).`), { status: 429 });
   const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -69,14 +84,32 @@ export function mountAi(app, db, { authenticate, isOnline }) {
     };
   }
 
+  // Pwopriyetè a kole kle AI a nan panel la (li pa janm voye kle a tounen, sèlman 4 dènye karaktè yo)
+  app.get("/api/galaxy/ai-key", authenticate, (req, res) => {
+    const k = aiKey();
+    res.json({ set: !!k, fromEnv: !!process.env.ANTHROPIC_API_KEY, last4: k ? k.slice(-4) : "" });
+  });
+  app.put("/api/galaxy/ai-key", authenticate, async (req, res) => {
+    if (process.env.ANTHROPIC_API_KEY) return res.status(400).json({ error: "The key is set in /etc/galaxy.env on the server: remove it there first." });
+    const k = String(req.body?.key || "").trim();
+    if (!k) { saveKey(""); return res.json({ ok: true, set: false }); }
+    if (!/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(k)) return res.status(400).json({ error: "This doesn't look like an Anthropic API key (it starts with sk-ant-)." });
+    try {
+      const r = await fetch("https://api.anthropic.com/v1/models?limit=1", { headers: { "x-api-key": k, "anthropic-version": "2023-06-01" }, signal: AbortSignal.timeout(15000) });
+      if (r.status === 401 || r.status === 403) return res.status(400).json({ error: "Anthropic refused this key. Check that you copied all of it." });
+    } catch { /* rezo a pa reponn: sove l kanmenm */ }
+    saveKey(k);
+    res.json({ ok: true, set: true, last4: k.slice(-4) });
+  });
+
   app.get("/api/galaxy/ai", authenticate, (req, res) => {
     const u = usage();
-    res.json({ configured: !!process.env.ANTHROPIC_API_KEY, model: MODEL, month: u.month, cost: Math.round(u.cost * 10000) / 10000, asks: u.asks || 0, limit: limit() });
+    res.json({ configured: !!aiKey(), model: MODEL, month: u.month, cost: Math.round(u.cost * 10000) / 10000, asks: u.asks || 0, limit: limit() });
   });
 
   app.post("/api/galaxy/ai", authenticate, async (req, res) => {
-    const key = process.env.ANTHROPIC_API_KEY;
-    if (!key) return res.status(400).json({ error: "AI is not set up yet: add ANTHROPIC_API_KEY on the server." });
+    const key = aiKey();
+    if (!key) return res.status(400).json({ error: "AI is not set up yet: paste the AI key in Dashboard → 🔑 AI key." });
     const u = usage();
     if (u.cost >= limit()) return res.status(429).json({ error: `Monthly AI limit reached ($${limit()}).` });
     const question = String(req.body?.question || "").trim().slice(0, 1000);

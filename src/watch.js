@@ -4,7 +4,7 @@
 // AI a (Claude Haiku) ekri yon ti rezime sèlman lè lis pwoblèm yo chanje (pou depans lan rete piti).
 import fs from "node:fs";
 import path from "node:path";
-import { aiComplete, aiBudget, aiLangName } from "./ai.js";
+import { aiComplete, aiBudget, aiLangName, aiKey } from "./ai.js";
 import { createNotifier, mountNotify } from "./notify.js";
 
 const H = 3600000;
@@ -128,7 +128,7 @@ export function mountWatch(app, db, h) {
 
     // 6) Bidjè AI a
     const b = aiBudget(db);
-    if (process.env.ANTHROPIC_API_KEY && b.limit > 0 && b.cost >= b.limit * 0.8) out.push({ id: "aib:" + new Date().toISOString().slice(0, 7), kind: "ai_budget", level: "info",
+    if (aiKey() && b.limit > 0 && b.cost >= b.limit * 0.8) out.push({ id: "aib:" + new Date().toISOString().slice(0, 7), kind: "ai_budget", level: "info",
       cost: Math.round(b.cost * 100) / 100, limit: b.limit, actions: [] });
 
     // Sa admin nan di "pa kounye a" pou yo rete kache 24 è
@@ -140,7 +140,7 @@ export function mountWatch(app, db, h) {
   /** Rezime AI a: sèlman si lis pwoblèm yo chanje, maks yon fwa chak 3 è (oswa touswit pou yon pwoblèm grav). */
   async function summarize(list, force = false) {
     const s = state();
-    if (!process.env.ANTHROPIC_API_KEY) return;
+    if (!aiKey()) return;
     const key = list.map((i) => i.id).sort().join("|");
     if (!list.some((i) => i.level !== "info")) { if (s.summary) { s.summary = ""; s.summaryKey = ""; db.write().catch(() => {}); } return; }
     if (!force && key === s.summaryKey) return;
@@ -172,7 +172,7 @@ export function mountWatch(app, db, h) {
     if (req.query.lang && ["ht", "en", "fr", "es"].includes(req.query.lang)) state().lang = req.query.lang;
     const list = await issues();
     const s = state();
-    res.json({ issues: list, summary: s.summary || "", summaryAt: s.summaryAt || 0, aiOn: !!process.env.ANTHROPIC_API_KEY });
+    res.json({ issues: list, summary: s.summary || "", summaryAt: s.summaryAt || 0, aiOn: !!aiKey() });
   });
 
   /** Mande AI a rezime kounye a (bouton "Analize kounye a"). */

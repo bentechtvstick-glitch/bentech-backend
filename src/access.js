@@ -81,6 +81,7 @@ export function denyReason(role, method, p) {
   if (role === "owner") return null;
   if (NOTES.test(p)) return "Only the owner can open the private notes.";
   if (OWNER_ACC.test(p)) return "Only the owner can change the owner login.";
+  if (/^\/api\/galaxy\/ai-key/.test(p) && write) return "Only the owner can change the AI key.";
   if (role === "Super Administrator") return null;
   if (BACKUP.test(p)) return "Only the owner can download or restore backups.";
   if (ADMINS.test(p) && (write || role !== "Administrator")) return "Only the owner can manage admin accounts.";
