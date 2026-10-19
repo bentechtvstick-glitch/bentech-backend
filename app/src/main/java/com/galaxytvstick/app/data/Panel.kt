@@ -255,6 +255,8 @@ data class ExpiryNotice(val text: String, val daysLeft: Int, val repeatMin: Int,
 data class PanelConfig(
     /** false = sèvè a pa konnen aparèy sa a (egz: li pèdi done li yo). */
     val known: Boolean,
+    /** Admin nan efase TV sa a nan panel la (pa yon sèvè ki pèdi done li). */
+    val deleted: Boolean = false,
     val status: String,                 // active, pending, blocked, expired, maintenance
     val statusMessage: String,
     val deviceName: String,
@@ -320,6 +322,7 @@ data class PanelConfig(
 
         fun parse(o: JSONObject): PanelConfig = PanelConfig(
             known = o.optBoolean("known", true),
+            deleted = o.optBoolean("deleted", false),
             status = o.optString("status", "pending"),
             statusMessage = o.optString("statusMessage"),
             deviceName = o.optString("deviceName"),

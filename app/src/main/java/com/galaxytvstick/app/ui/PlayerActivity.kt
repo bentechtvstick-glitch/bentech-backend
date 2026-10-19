@@ -1097,6 +1097,11 @@ class PlayerActivity : AppCompatActivity() {
 
         // Sèvè a pa konnen aparèy sa a (li pèdi done li yo): pa dekonekte kliyan an,
         // re-anrejistre aparèy la ak playlist li ap itilize a pou panel la retabli l.
+        if (!cfg.known && cfg.deleted && acc?.playlistId != null) {
+            // Admin nan efase TV sa a: tounen sou ekran aktivasyon an
+            logout()
+            return
+        }
         if (!cfg.known) {
             if (!reRegistering) {
                 reRegistering = true
