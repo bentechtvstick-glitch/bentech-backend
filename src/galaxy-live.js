@@ -59,6 +59,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     return Date.now() - t < ONLINE_MS;
   };
 
+  const askedChannels = new Map();
   const pendingFor = (mac) => {
     const q = (queues.get(mac) || []).filter((c) => Date.now() - c.createdAt < COMMAND_TTL_MS);
     queues.set(mac, q);
@@ -135,6 +136,13 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     if (!device) return;
     const mac = device.mac;
     const q = pendingFor(mac);
+    // Panel la pa gen lis chanèl TV sa a (egz: apre yon reenstalasyon): mande l an silans, maks yon fwa chak 10 minit
+    const ref = db.data.deviceChannels?.[mac];
+    const hasList = Array.isArray(ref) ? ref.length > 0 : !!(ref && db.data.channelLists?.[ref]?.length);
+    if (!hasList && (db.data.devicePlaylists?.[mac] || []).length && Date.now() - (askedChannels.get(mac) || 0) > 10 * 60000 && !q.some((c) => c.type === "channels")) {
+      askedChannels.set(mac, Date.now());
+      q.push({ id: Math.random().toString(36).slice(2, 10), type: "channels", createdAt: Date.now() });
+    }
     if (q.length) { const cmds = q.splice(0); tvEvents.delivered(device, cmds); return res.json({ commands: cmds }); }
 
     const wait = Math.min(Math.max(parseInt(req.query.wait, 10) || 20, 0), MAX_WAIT_S);
