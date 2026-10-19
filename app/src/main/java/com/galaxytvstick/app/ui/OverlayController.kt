@@ -339,6 +339,8 @@ class OverlayController(
         if (dialogShowing || activity.isFinishing) return
         // Mizajou panel la voye a pase anvan lòt mesaj yo
         if (Updater.maybePrompt(activity, cfg.update, prefs)) return
+        // Otomatik tou: si GitHub gen yon vèsyon pi nouvo, menm si panel la poko voye l
+        Updater.autoCheck(activity)
 
         cfg.broadcast?.let { b ->
             val key = "b:${b.id}"

@@ -59,6 +59,34 @@ object Updater {
      * Bouton "Mizajou app la" nan Settings: kliyan an tcheke li menm si gen yon nouvo vèsyon,
      * san l pa tann panel la voye l. Si gen youn, menm fenèt mizajou a parèt.
      */
+    @Volatile private var lastAutoCheck = 0L
+    @Volatile private var autoPromptedBuild = 0
+
+    /**
+     * Otomatik: app la tcheke poukont li (chak 6 è, ak lè l louvri) si gen yon nouvo vèsyon sou GitHub,
+     * menm si admin nan poko peze "Voye mizajou" nan panel la. Li montre mesaj la yon fwa pa vèsyon pandan app la louvri.
+     */
+    fun autoCheck(activity: Activity) {
+        if (showing || downloading) return
+        val now = System.currentTimeMillis()
+        if (now - lastAutoCheck < 6 * 3600_000L) return
+        lastAutoCheck = now
+        GalaxyApp.scope.launch {
+            val b = runCatching {
+                XtreamApi.http.newCall(Request.Builder().url("$VERSION_URL?t=$now").build()).execute().use { r ->
+                    if (!r.isSuccessful) 0 else org.json.JSONObject(r.body?.string().orEmpty()).optInt("build")
+                }
+            }.getOrDefault(0)
+            if (b <= BuildConfig.VERSION_CODE || b == autoPromptedBuild) return@launch
+            withContext(Dispatchers.Main) {
+                if (showing || downloading || activity.isFinishing || activity.isDestroyed) return@withContext
+                autoPromptedBuild = b
+                showing = true
+                runCatching { showDialog(activity, AppUpdate(b, "1.0.$b", APK_URL, false, "auto", "")) }.onFailure { showing = false }
+            }
+        }
+    }
+
     fun checkNow(activity: Activity, pushed: AppUpdate?) {
         if (showing || downloading) return
         val app = activity.applicationContext
