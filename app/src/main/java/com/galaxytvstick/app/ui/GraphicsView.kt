@@ -106,13 +106,17 @@ class GraphicsView @JvmOverloads constructor(
     fun stop() {
         ticking = false
         ui.removeCallbacksAndMessages(null)
+        wxRotate = null; signature = "" // pwochen setGraphics rekonstwi l (epi relanse vil k ap vire yo)
         hideFull()
     }
 
     override fun onDetachedFromWindow() { stop(); super.onDetachedFromWindow() }
 
     // ------------------------------------------------------------ Grafik ki rete sou ekran an
+    private var wxRotate: Runnable? = null
+
     private fun rebuild(g: Graphics?) {
+        wxRotate?.let { ui.removeCallbacks(it) }; wxRotate = null
         stacks.values.forEach { removeView(it) }
         stacks.clear()
         wmView?.let { removeView(it) }
@@ -252,9 +256,30 @@ class GraphicsView @JvmOverloads constructor(
         // San fon: tèks la sèlman, ak yon lonbraj pou l rete lizib sou nenpòt imaj
         setPadding(dp(4f), dp(4f), dp(4f), dp(4f))
         val shade = { v: android.widget.TextView -> v.apply { setShadowLayer(dp(4f).toFloat(), 0f, dp(1f).toFloat(), 0xE6000000.toInt()) } }
-        if (w.icon.isNotBlank()) addView(shade(label(w.icon, 24f, Color.WHITE, bold = false)), gap(8f))
-        addView(shade(label(w.temp, 20f, Color.WHITE, bold = true)), gap(8f))
-        addView(shade(label(w.city, 13f, Color.WHITE, bold = true)).apply { maxWidth = dp(160f) })
+        val iconV = shade(label(w.icon, 24f, Color.WHITE, bold = false))
+        val tempV = shade(label(w.temp, 20f, Color.WHITE, bold = true))
+        val cityV = shade(label(w.city, 13f, Color.WHITE, bold = true)).apply { maxWidth = dp(160f) }
+        if (w.icon.isNotBlank() || w.list.isNotEmpty()) addView(iconV, gap(8f))
+        addView(tempV, gap(8f))
+        addView(cityV)
+        // Plizyè vil: youn apre lòt, ak yon ti fondu (tankou CNN)
+        if (w.list.size > 1) {
+            var i = 0
+            val row = this
+            val r = object : Runnable {
+                override fun run() {
+                    i = (i + 1) % w.list.size
+                    row.animate().alpha(0f).setDuration(250).withEndAction {
+                        val (c, t, ic) = w.list[i]
+                        cityV.text = c; tempV.text = t; iconV.text = ic
+                        row.animate().alpha(1f).setDuration(250).start()
+                    }.start()
+                    ui.postDelayed(this, w.everySec * 1000L)
+                }
+            }
+            wxRotate = r
+            ui.postDelayed(r, w.everySec * 1000L)
+        }
     }
 
     private fun countdown(c: GfxCountdown): View = LinearLayout(context).apply {
