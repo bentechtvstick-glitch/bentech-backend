@@ -23,6 +23,7 @@ object Renderers {
     fun trackSelector(ctx: Context) = androidx.media3.exoplayer.trackselection.DefaultTrackSelector(ctx).apply {
         setParameters(buildUponParameters()
             .setForceHighestSupportedBitrate(true)
+            .setViewportSize(Int.MAX_VALUE, Int.MAX_VALUE, false)
             .setExceedVideoConstraintsIfNecessary(true)
             .setExceedRendererCapabilitiesIfNecessary(true))
     }
