@@ -526,6 +526,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       channelNames: eff.channelNames,
       // Règ pakè a pa NON (app la aplike yo sou pwòp lis konplè li): konsa gwoup / chanèl panel la poko konnen yo kache tou
       pkgRules: pkgRules(device),
+      forceHideAdult: !!device.forceHideAdult,
+      blockedCats: { live: device.blockedCats?.live || [], movies: device.blockedCats?.movies || [], series: device.blockedCats?.series || [] },
       playlists: playlists.map(({ id, name, server, username, password, type, epgUrl }) => ({ id, name, server, username: username || "", password: password || "", type: plType({ type }), epgUrl: epgUrl || "" })),
       ticker,
       chyrons,
@@ -562,6 +564,29 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     }
     return list;
   }
+
+  // Kontni granmoun: TV a voye non kategori fim ak seri li yo (panel la chèche sa ki pou granmoun ladan yo)
+  const ADULT_RX = /(xxx|porn|adult(?!\s*swim)|adulte|adulto|18\s*\+|\+\s*18)/i;
+  app.post("/api/devices/:mac/vodcats", async (req, res) => {
+    ensure();
+    const device = findDevice(normMac(req.params.mac));
+    if (!device) return res.status(404).json({ ok: false });
+    if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) return res.status(403).json({ ok: false });
+    const kind = req.body?.kind === "series" ? "series" : "movies";
+    const names = [...new Set((Array.isArray(req.body?.categories) ? req.body.categories : []).map((c) => String(c?.name || "").trim().slice(0, 120)).filter(Boolean))].slice(0, 3000);
+    device.vodCats ??= {}; device.vodCats[kind] = names; device.vodCatsAt = new Date().toISOString();
+    touchWrite();
+    res.json({ ok: true, count: names.length });
+  });
+  /** Sa ki pou granmoun sou TV sa a (chanèl, fim, seri) + sa admin nan deja kache. */
+  app.get("/api/galaxy/devices/:mac/adult", authenticate, (req, res) => {
+    const d = findDevice(normMac(req.params.mac)); if (!d) return res.status(404).json({ error: "Not found" });
+    const bl = d.blockedCats || {};
+    const pick = (names, blocked) => { const b = new Set((blocked || []).map(nkey)); return [...new Set(names)].filter((n) => ADULT_RX.test(n) || b.has(nkey(n))).map((n) => ({ name: n, adult: ADULT_RX.test(n), hidden: b.has(nkey(n)) })); };
+    const live = [...new Set(channelsOf(d.mac).map((c) => String(c.categoryName || "").trim()).filter(Boolean))];
+    res.json({ forceHideAdult: !!d.forceHideAdult, vodKnown: !!d.vodCatsAt,
+      live: pick(live, bl.live), movies: pick(d.vodCats?.movies || [], bl.movies), series: pick(d.vodCats?.series || [], bl.series) });
+  });
 
   app.post("/api/devices/:mac/channels", async (req, res) => {
     ensure();
@@ -644,6 +669,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     // Sa TV sa a pa vle nan pakè a (gwoup / chanèl retire pou li sèlman)
     if (Array.isArray(b.removedGroups)) device.removedGroups = nameList(b.removedGroups);
     if (Array.isArray(b.removedChannels)) device.removedChannels = nameList(b.removedChannels);
+    // Kontni granmoun / kategori kache pa non (chanèl, fim, seri)
+    if (typeof b.forceHideAdult === "boolean") device.forceHideAdult = b.forceHideAdult;
+    if (b.blockedCats && typeof b.blockedCats === "object") {
+      device.blockedCats = { live: nameList(b.blockedCats.live || []), movies: nameList(b.blockedCats.movies || []), series: nameList(b.blockedCats.series || []) };
+    }
     // Non chanje: { id: "nouvo non" }; yon non vid retire chanjman an
     const names = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [String(k), String(v ?? "").trim().slice(0, 80)]).filter(([, v]) => v).slice(0, 80000));
     if (b.categoryNames && typeof b.categoryNames === "object" && !Array.isArray(b.categoryNames)) device.categoryNames = names(b.categoryNames);
