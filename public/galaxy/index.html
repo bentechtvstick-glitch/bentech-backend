@@ -3280,7 +3280,7 @@ function blRow(b, n) {
     <label class="note" style="display:flex;align-items:center;gap:6px">${esc(t("Jou"))} <input data-k="day" type="number" min="1" max="31" value="${esc(b.day || 1)}" style="width:64px"></label>
     <label class="note" style="display:flex;align-items:center;gap:6px">${esc(t("Fè m sonje (jou anvan)"))} <input data-k="before" type="number" min="0" max="30" value="${esc(b.before ?? 3)}" style="width:56px"></label>
     ${b.paidMonth ? `<span class="note">✓ ${esc(t("Peye pou {0}", b.paidMonth))}</span>` : ""}
-    <button class="btn small danger" type="button" data-bldel="${n}">${esc(t("Efase"))}</button></div>`;
+    <button class="btn small danger" type="button" data-bldel="${n}">${esc(t("Efase peman an"))}</button></div>`;
 }
 function renderBills() { $("#blList").innerHTML = bills.length ? bills.map(blRow).join("") : `<div class="note">${esc(t("Poko gen peman. Peze «Ajoute yon peman»."))}</div>`; }
 function readBills() { $$("#blList [data-bl]").forEach((row) => { const b = bills[+row.dataset.bl]; row.querySelectorAll("[data-k]").forEach((inp) => { b[inp.dataset.k] = inp.type === "number" || inp.dataset.k === "month" ? Number(inp.value) : inp.value; }); }); }
