@@ -351,7 +351,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       + Object.values(d.deviceChannels || {}).reduce((n, l) => n + (Array.isArray(l) ? l.length : 0), 0);
     let online = 0; for (const x of d.devices || []) if (x.mac && (d.devicePlaylists?.[x.mac] || []).length && isOnline(x.mac)) online++;
     res.json({
-      uptimeSec: Math.round(process.uptime()), node: process.version,
+      uptimeSec: Math.round(process.uptime()), node: process.version, lastStart: globalThis.galaxyLastStart || null, machineUpSec: Math.round(os.uptime()),
       memoryMb: Math.round(mem.rss / 1048576), heapMb: Math.round(mem.heapUsed / 1048576),
       dbBytes: perf.lastBytes || 0, dbWriteMs: perf.lastMs || 0, dbWrites: perf.writes || 0, dbWriteErrors: perf.errors || 0, dbLastWriteAt: perf.lastAt || null, dbPending: !!perf.pending, chBytes: perf.splitBytes || 0, chFiles: perf.splitFiles || 0,
       persistent: !!process.env.DB_FILE && process.env.DB_FILE !== "./db.json",

@@ -17,6 +17,8 @@ import { mountAutoBackup } from "./autobackup.js";
 import { accessControl, findAdminLogin, hashPassword, checkOwnerLogin, ownerAuth } from "./access.js";
 import crypto from "node:crypto";
 import { fastWrites, gzipJson } from "./perf.js";
+import { lastStart } from "./lifecycle.js";
+globalThis.galaxyLastStart = lastStart;
 
 // Baz done a. Sou Render, mete DB_FILE=/data/db.json (disk pèmanan) pou done yo
 // pa efase chak fwa sèvè a redemare oswa w fè yon deploy.

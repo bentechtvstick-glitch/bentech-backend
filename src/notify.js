@@ -23,7 +23,7 @@ const TX = {
     disk_low: (i) => ["💾 Disk sèvè a prèske plen", `Sèlman ${i.freePct}% ki rete.`],
     weak_password: () => ["🔑 Modpas panel la twò fèb", "Chanje l nan Sistèm → 🔑 Login pwopriyetè a."],
     ai_budget: (i) => ["🤖 Bidjè AI a", `$${i.cost} sou $${i.limit} mwa sa a.`],
-    start: () => ["🔄 Panel la redemare", "Sèvè a fèk limen ankò. Si w pa t fè l, tcheke paj Sistèm nan."],
+    start: (r) => ["🔄 Panel la redemare", ({ update: "Rezon: mizajou otomatik panel la (nouvo vèsyon). Pa gen pwoblèm.", reboot: "Rezon: tout sèvè a te etenn oswa redemare (Hetzner, mizajou sekirite, oswa yon moun). Tcheke paj Sistèm nan.", manual: "Rezon: yon moun oswa yon script redemare panel la.", crash: "Rezon: panel la te kanpe akoz yon erè, li relimen poukont li. Tcheke paj Sistèm nan.", killed: "Rezon: panel la te kanpe sanzatann (memwa plen oswa sèvè a), li relimen poukont li." })[r?.reason] || "Sèvè a fèk limen ankò. Si w pa t fè l, tcheke paj Sistèm nan."],
     test: () => ["✅ Tès Galaxy", "Notifikasyon yo mache sou telefòn ou."],
     open: "Louvri panel la",
   },
@@ -41,7 +41,7 @@ const TX = {
     disk_low: (i) => ["💾 Server disk almost full", `Only ${i.freePct}% left.`],
     weak_password: () => ["🔑 Panel password too weak", "Change it in System → 🔑 Owner login."],
     ai_budget: (i) => ["🤖 AI budget", `$${i.cost} of $${i.limit} this month.`],
-    start: () => ["🔄 Panel restarted", "The server just came back on. If you didn't do it, check the System page."],
+    start: (r) => ["🔄 Panel restarted", ({ update: "Reason: automatic panel update (new version). Nothing to worry about.", reboot: "Reason: the whole server was off or rebooted (Hetzner, security updates, or someone). Check the System page.", manual: "Reason: someone or a script restarted the panel.", crash: "Reason: the panel stopped because of an error and came back on by itself. Check the System page.", killed: "Reason: the panel stopped unexpectedly (memory full or server) and came back on by itself." })[r?.reason] || "The server just came back on. If you didn't do it, check the System page."],
     test: () => ["✅ Galaxy test", "Notifications work on your phone."],
     open: "Open the panel",
   },
@@ -49,7 +49,7 @@ const TX = {
 TX.fr = { ...TX.en,
   tv_offline: (i) => [`📴 TV ${i.name || i.mac} hors ligne`, `Depuis ${i.hours} h, le client est toujours actif.`],
   channel_down: (i) => [`📺 La chaîne ${i.channel} ne marche pas`, `Sur ${i.tvs} TV (${i.times} fois).`],
-  start: () => ["🔄 Panneau redémarré", "Le serveur vient de redémarrer."], test: () => ["✅ Test Galaxy", "Les notifications marchent."], open: "Ouvrir le panneau" };
+  start: (r) => ["🔄 Panneau redémarré", ({ update: "Raison : mise à jour automatique du panneau.", reboot: "Raison : le serveur entier a redémarré.", manual: "Raison : redémarrage manuel.", crash: "Raison : une erreur ; il a redémarré tout seul.", killed: "Raison : arrêt inattendu ; il a redémarré tout seul." })[r?.reason] || "Le serveur vient de redémarrer."], test: () => ["✅ Test Galaxy", "Les notifications marchent."], open: "Ouvrir le panneau" };
 TX.es = { ...TX.en,
   tv_offline: (i) => [`📴 TV ${i.name || i.mac} desconectada`, `Hace ${i.hours} h, el cliente sigue activo.`],
   channel_down: (i) => [`📺 El canal ${i.channel} no funciona`, `En ${i.tvs} TV (${i.times} veces).`],
@@ -92,7 +92,7 @@ export function createNotifier(db) {
     texts: () => lang(),
     async started() {
       const c = cfg(); if (!c.on || !c.topic || c.noStart) return;
-      const [t, b] = lang().start(); sendText(t, b, { priority: 3, tags: "arrows_counterclockwise" }).catch(() => {});
+      const [t, b] = lang().start(globalThis.galaxyLastStart); sendText(t, b, { priority: 3, tags: "arrows_counterclockwise" }).catch(() => {});
     },
     newTopic: () => "galaxy-" + crypto.randomBytes(12).toString("hex"),
   };

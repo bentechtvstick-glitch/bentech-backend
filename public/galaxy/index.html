@@ -3089,7 +3089,9 @@ async function loadSysStats() {
     + k("Aparèy", n(y.devices), t("{0} online", n(y.online))) + k("Playlist", n(y.playlists)) + k("Chanèl an memwa", n(y.channels), t("{0} lis", n(y.channelLists)))
     + k("Kliyan yo", n(y.customers)) + k("Memwa sèvè a", y.memoryMb + " MB", y.memTotalMb ? t("{0} ki lib sou {1}", fmtGb(y.memFreeMb * 1048576), fmtGb(y.memTotalMb * 1048576)) : "")
     + (y.diskTotal ? k("Disk sèvè a", fmtGb(y.diskTotal), t("{0} ki lib", fmtGb(y.diskFree))) : "")
-    + k("Sèvè a limen depi", fmtUp(y.uptimeSec), y.node + (y.cpus ? " · " + t("{0} CPU", y.cpus) : ""));
+    + k("Sèvè a limen depi", fmtUp(y.uptimeSec), y.node + (y.cpus ? " · " + t("{0} CPU", y.cpus) : ""))
+    + (y.lastStart ? k("Dènye redemaraj", t(({ update: "Mizajou otomatik", reboot: "Tout sèvè a te redemare", manual: "Redemaraj manyèl", crash: "Erè (crash)", killed: "Kanpe sanzatann", first: "Premye demaraj" })[y.lastStart.reason] || y.lastStart.reason),
+        new Date(y.lastStart.at).toLocaleString() + (y.lastStart.detail ? " · " + y.lastStart.detail : "") + (y.machineUpSec ? " · " + t("Machin nan limen depi {0}", fmtUp(y.machineUpSec)) : "")) : "");
   // Disk sèvè a (kote done yo, imaj ak videyo yo sove)
   $("#sysDiskWrap").hidden = !y.diskTotal;
   if (y.diskTotal) {

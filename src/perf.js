@@ -1,3 +1,4 @@
+import { markExit } from "./lifecycle.js";
 // Kapasite ak rapidite: ekriti baz done a gwoupe, repons konprese, endèks aparèy.
 // Tout bagay isit la sèvi ak Node sèlman (pa gen nouvo depandans pou enstale).
 import fs from "node:fs";
@@ -89,7 +90,7 @@ export function fastWrites(db, file, { delay = 150, splitKey = "channelLists" } 
     try { syncSplit(true).catch((e) => console.error("Channel list flush failed:", e.message)); fs.writeFileSync(tmp, mainJson()); fs.renameSync(tmp, file); dirty = false; stats.pending = false; }
     catch (err) { console.error("DB flush failed:", err.code || err.message); }
   };
-  for (const sig of ["SIGTERM", "SIGINT"]) process.once(sig, () => { db.flushSync(); process.exit(0); });
+  for (const sig of ["SIGTERM", "SIGINT"]) process.once(sig, () => { markExit("signal"); db.flushSync(); process.exit(0); });
   process.once("beforeExit", () => db.flushSync());
 
   db.perf = stats;
