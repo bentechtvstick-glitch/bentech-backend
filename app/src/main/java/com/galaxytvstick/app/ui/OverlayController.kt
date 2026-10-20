@@ -131,6 +131,10 @@ class OverlayController(
         // Panel la chanje yon bagay ki parèt sou TV a (ticker, chyron, banner…): mete l ajou san mesaj
         if (cmd.type == "sync") { startPolling(); return }
         // Panel la mande lis chanèl konplè a (bouton 🔄 nan paj Channels la): voye l an silans
+        if (cmd.type == "vodcats") {
+            prefs.account?.let { com.galaxytvstick.app.data.VodStore.reportNow(activity, it) }
+            return
+        }
         if (cmd.type == "channels") {
             val chans = com.galaxytvstick.app.data.ChannelStore.rawChannels
             val cats = com.galaxytvstick.app.data.ChannelStore.rawCategories

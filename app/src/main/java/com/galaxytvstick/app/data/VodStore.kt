@@ -57,6 +57,27 @@ object VodStore {
     /** Telechaje lis la (si l pa la oswa li twò ansyen) an aryè plan. */
     private val sentCats = java.util.Collections.synchronizedSet(HashSet<String>())
 
+    /** Voye non kategori fim/seri yo bay panel la (yon fwa pa lis, oswa toujou si force), pou admin nan wè kontni granmoun yo. */
+    fun report(ctx: Context, k: VodKind, cats: List<Category>, force: Boolean = false) {
+        if (cats.isEmpty()) return
+        val sig = "${k.name}:${cats.joinToString("|") { it.name }.hashCode()}"
+        if (!sentCats.add(sig) && !force) return
+        val prefs = Prefs(ctx.applicationContext)
+        com.galaxytvstick.app.GalaxyApp.scope.launch { runCatching { PanelApi(prefs).uploadVodCats(if (k == VodKind.MOVIE) "movies" else "series", cats) } }
+    }
+
+    /** Kòmand panel la ("vodcats"): voye lis kategori fim ak seri yo kounye a (disk la, oswa rezo a si pa gen anyen). */
+    fun reportNow(ctx: Context, a: Account) {
+        if (!a.isXtream) return
+        val app = ctx.applicationContext
+        scope.launch {
+            for (k in VodKind.values()) {
+                val d = cached(app, a, k) ?: runCatching { fetch(app, a, k) }.getOrNull() ?: continue
+                report(app, k, d.categories, force = true)
+            }
+        }
+    }
+
     fun prefetch(ctx: Context, a: Account, force: Boolean = false) {
         if (!a.isXtream) return
         val app = ctx.applicationContext
@@ -68,6 +89,7 @@ object VodStore {
         synchronized(running) { running[k]?.takeIf { it.isActive }?.let { return it } }
         val job = scope.launch {
             val cur = cached(ctx, a, k)
+            cur?.let { report(ctx, k, it.categories) } // menm si lis la soti nan disk la
             if (!force && cur != null && System.currentTimeMillis() - cur.savedAt < REFRESH_AFTER_MS) return@launch
             runCatching { fetch(ctx, a, k) }
         }
@@ -82,12 +104,7 @@ object VodStore {
         val items = if (k == VodKind.MOVIE) api.vodStreams(null) else api.series(null)
         val d = Data(cats, items.sortedByDescending { it.added }, System.currentTimeMillis())
         checkAccount(a)
-        // Voye non kategori yo bay panel la (yon fwa pa lis), pou admin nan ka wè/kache kontni granmoun yo
-        val sig = "${k.name}:${cats.joinToString("|") { it.name }.hashCode()}"
-        if (sentCats.add(sig)) {
-            val prefs = Prefs(ctx.applicationContext)
-            com.galaxytvstick.app.GalaxyApp.scope.launch { runCatching { PanelApi(prefs).uploadVodCats(if (k == VodKind.MOVIE) "movies" else "series", cats) } }
-        }
+        report(ctx, k, cats)
         synchronized(mem) { mem[k] = d }
         runCatching { write(file(ctx, a, k), d) }
         onUpdated?.invoke(k)
