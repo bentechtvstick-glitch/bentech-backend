@@ -774,7 +774,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="cardhead"><div><h2>🔞 Kontni pou granmoun</h2><p class="sub">Panel la chèche gwoup chanèl, fim ak seri ki pou granmoun (XXX, Adult, 18+…) sou TV sa a. Etenn sa ou vle kache.</p></div></div>
         <div class="inline" style="gap:10px;margin-bottom:10px"><label class="sw"><input type="checkbox" id="adForce"><i></i></label><label for="adForce"><b>Toujou kache tout kontni granmoun sou TV sa a</b> <span class="note">(kliyan an pa ka remete l nan Settings)</span></label></div>
         <div id="adLists"></div>
-        <div class="btns" style="justify-content:flex-start;margin-top:10px"><button class="btn small" id="adAsk" type="button">🔄 Mande TV a lis fim/seri yo</button><button class="btn small red" id="adHideAll" type="button">Kache tout sa ki pou granmoun</button><button class="btn primary small" id="adSave" type="button">Sove</button><span class="msg" id="adMsg"></span></div>
+        <div class="btns" style="justify-content:flex-start;margin-top:10px"><button class="btn small" id="adAsk" type="button">🔄 Mande TV a lis fim/seri yo</button><button class="btn small red" id="adHideAll" type="button">Kache tout sa ki pou granmoun</button><span class="msg" id="adMsg"></span></div>
       </div>
     </main>
 
@@ -2202,23 +2202,34 @@ async function loadAdult() {
   if (!dev || dev.mac !== mac) return;
   $("#adCard").hidden = false; $("#adForce").checked = !!adState.forceHideAdult; renderAdult();
 }
+const adOpen = new Set();
 function renderAdult() {
   const sec = [["live", "📺 Chanèl (gwoup)"], ["movies", "🎬 Fim"], ["series", "📺 Seri"]];
+  const row = (k, it, n) => `<div class="inline" data-adrow="${esc(it.name.toLowerCase())}" style="gap:10px;margin:4px 0"><label class="sw"><input type="checkbox" data-ad="${k}" data-n="${n}"${it.hidden ? "" : " checked"}><i></i></label><span>${esc(it.name)}</span>${it.adult ? ' <span class="note">🔞</span>' : ""}</div>`;
   $("#adLists").innerHTML = sec.map(([k, label]) => {
-    const items = adState[k] || [];
-    const body = items.length ? items.map((it, n) => `<div class="inline" style="gap:10px;margin:4px 0"><label class="sw"><input type="checkbox" data-ad="${k}" data-n="${n}"${it.hidden ? "" : " checked"}><i></i></label><span>${esc(it.name)}</span>${it.adult ? ' <span class="note">🔞</span>' : ""}</div>`).join("")
+    const items = (adState[k] || []).map((it, n) => [it, n]);
+    const top = items.filter(([it]) => it.adult || it.hidden);
+    const rest = items.filter(([it]) => !it.adult && !it.hidden);
+    const body = top.length ? top.map(([it, n]) => row(k, it, n)).join("")
       : `<div class="note">${esc(k !== "live" && !adState.vodKnown ? t("TV a poko voye lis fim/seri li yo. Peze «Mande TV a lis fim/seri yo» (app 1.0.134+).") : t("Pa jwenn anyen pou granmoun."))}</div>`;
-    return `<div style="margin:10px 0"><div class="label">${esc(t(label))} <span class="note">(${items.length})</span></div>${body}</div>`;
+    const all = rest.length ? `<details data-adk="${k}"${adOpen.has(k) ? " open" : ""} style="margin-top:6px"><summary class="note" style="cursor:pointer">${esc(t("Wè tout lis la"))} (${rest.length})</summary><input class="input" data-adq="${k}" placeholder="${esc(t("Chèche…"))}" style="margin:6px 0;max-width:320px"><div style="max-height:320px;overflow:auto">${rest.map(([it, n]) => row(k, it, n)).join("")}</div></details>` : "";
+    return `<div style="margin:10px 0"><div class="label">${esc(t(label))} <span class="note">(${top.filter(([it]) => it.adult).length} 🔞 · ${items.length})</span></div>${body}${all}</div>`;
   }).join("");
 }
-$("#adLists").addEventListener("change", (e) => { const c = e.target.closest("[data-ad]"); if (!c) return; adState[c.dataset.ad][+c.dataset.n].hidden = !c.checked; });
+$("#adLists").addEventListener("toggle", (e) => { const d = e.target.closest?.("details[data-adk]"); if (d) d.open ? adOpen.add(d.dataset.adk) : adOpen.delete(d.dataset.adk); }, true);
+$("#adLists").addEventListener("input", (e) => { const q = e.target.closest("[data-adq]"); if (!q) return; const v = q.value.trim().toLowerCase();
+  q.parentElement.querySelectorAll("[data-adrow]").forEach((r) => { r.style.display = !v || r.dataset.adrow.includes(v) ? "" : "none"; }); });
+$("#adLists").addEventListener("change", (e) => { const c = e.target.closest("[data-ad]"); if (!c) return; adState[c.dataset.ad][+c.dataset.n].hidden = !c.checked; adSaveSoon(); });
+$("#adForce").addEventListener("change", () => adSaveSoon(0));
+let adTimer = 0;
+function adSaveSoon(ms = 500) { clearTimeout(adTimer); setMsg($("#adMsg"), "Ap sove…", true); adTimer = setTimeout(adSave, ms); }
 $("#adAsk").addEventListener("click", async () => {
   if (!dev) return;
   try { await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/commands`, { type: "vodcats" }); setMsg($("#adMsg"), "Demann lan voye. Lis la ap parèt nan kèk segonn (TV a dwe limen, app 1.0.134+).", true);
     setTimeout(loadAdult, 8000); setTimeout(loadAdult, 20000); } catch (e) { setMsg($("#adMsg"), e.message); }
 });
-$("#adHideAll").addEventListener("click", () => { for (const k of ["live", "movies", "series"]) (adState[k] || []).forEach((it) => { if (it.adult) it.hidden = true; }); renderAdult(); });
-$("#adSave").addEventListener("click", async () => {
+$("#adHideAll").addEventListener("click", () => { if (!adState) return; for (const k of ["live", "movies", "series"]) (adState[k] || []).forEach((it) => { if (it.adult) it.hidden = true; }); renderAdult(); adSaveSoon(0); });
+async function adSave() {
   if (!dev || !adState) return;
   const names = (k) => (adState[k] || []).filter((it) => it.hidden).map((it) => it.name);
   // Kenbe lòt non ki te deja kache (ki pa nan lis la kounye a)
@@ -2226,9 +2237,9 @@ $("#adSave").addEventListener("click", async () => {
   const keep = (k) => (prev[k] || []).filter((n) => !(adState[k] || []).some((it) => it.name.toUpperCase() === String(n).toUpperCase()));
   try {
     const r = await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { forceHideAdult: $("#adForce").checked, blockedCats: { live: [...keep("live"), ...names("live")], movies: [...keep("movies"), ...names("movies")], series: [...keep("series"), ...names("series")] } });
-    dev = { ...dev, ...r }; setMsg($("#adMsg"), "Sove. TV a ap aplike l an silans.", true);
+    dev = { ...dev, ...r }; setMsg($("#adMsg"), "Sove ✓ TV a aplike l touswit, an silans.", true);
   } catch (e) { setMsg($("#adMsg"), e.message); }
-});
+}
 async function loadChannels() {
   loadAdult();
   if (dev && chCache.has(dev.mac) && !chState?.fromCache) {

@@ -612,7 +612,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const d = findDevice(normMac(req.params.mac)); if (!d) return res.status(404).json({ error: "Not found" });
     await fetchProviderCats(d, { force: req.query.fresh === "1" }).catch(() => false);
     const bl = d.blockedCats || {};
-    const pick = (names, blocked) => { const b = new Set((blocked || []).map(nkey)); return [...new Set(names)].filter((n) => ADULT_RX.test(n) || b.has(nkey(n))).map((n) => ({ name: n, adult: ADULT_RX.test(n), hidden: b.has(nkey(n)) })); };
+    const pick = (names, blocked) => { const b = new Set((blocked || []).map(nkey)); return [...new Set(names)].map((n) => ({ name: n, adult: ADULT_RX.test(n), hidden: b.has(nkey(n)) })); };
     const live = [...new Set(channelsOf(d.mac).map((c) => String(c.categoryName || "").trim()).filter(Boolean))];
     res.json({ forceHideAdult: !!d.forceHideAdult, vodKnown: !!d.vodCatsAt,
       live: pick(live, bl.live), movies: pick(d.vodCats?.movies || [], bl.movies), series: pick(d.vodCats?.series || [], bl.series) });
