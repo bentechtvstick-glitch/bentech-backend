@@ -379,6 +379,33 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     res.json(db.data.adminNotes);
   });
 
+  // Peman pou sonje (egz: sèvè Hetzner chak mwa): panel la fè w sonje kèk jou anvan, ak notifikasyon sou telefòn
+  const cleanBill = (b) => ({
+    id: String(b?.id || Math.random().toString(36).slice(2, 10)).slice(0, 20),
+    name: String(b?.name || "").trim().slice(0, 60),
+    amount: String(b?.amount || "").trim().slice(0, 20),
+    day: Math.min(31, Math.max(1, Math.round(Number(b?.day) || 1))),
+    before: Math.min(30, Math.max(0, Math.round(Number(b?.before ?? 3)))),
+    every: b?.every === "year" ? "year" : "month",       // chak mwa oswa yon fwa pa ane
+    month: Math.min(12, Math.max(1, Math.round(Number(b?.month) || 1))), // pou "year": ki mwa
+    paidMonth: /^\d{4}(-\d{2})?$/.test(String(b?.paidMonth || "")) ? String(b.paidMonth) : "", // "2026-10" (mwa) oswa "2026" (ane)
+  });
+  app.get("/api/galaxy/bills", authenticate, (req, res) => res.json(db.data.bills || []));
+  app.put("/api/galaxy/bills", authenticate, async (req, res) => {
+    const list = Array.isArray(req.body?.bills) ? req.body.bills : null;
+    if (!list) return res.status(400).json({ error: "Bad request" });
+    db.data.bills = list.slice(0, 30).map(cleanBill).filter((b) => b.name);
+    await db.write();
+    res.json(db.data.bills);
+  });
+  app.post("/api/galaxy/bills/:id/paid", authenticate, async (req, res) => {
+    const b = (db.data.bills || []).find((x) => x.id === req.params.id);
+    if (!b) return res.status(404).json({ error: "Not found" });
+    const m = String(req.body?.month || ""); b.paidMonth = /^\d{4}(-\d{2})?$/.test(m) ? m : new Date().toISOString().slice(0, b.every === "year" ? 4 : 7);
+    await db.write();
+    res.json(b);
+  });
+
   // Asistan AI panel la
   mountAi(app, db, { authenticate, isOnline });
 

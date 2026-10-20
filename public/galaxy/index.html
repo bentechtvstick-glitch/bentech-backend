@@ -1207,6 +1207,11 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="list" id="abList"></div>
         <p class="note" style="margin:8px 0 0">Kopi sa yo sou menm disk ak sèvè a: yo pwoteje w si yon bagay efase oswa gate. Telechaje youn sou òdinatè w chak semèn konsa, pou w pwoteje kont yon pàn sèvè.</p>
       </div>
+      <div class="card" id="blCard">
+        <div class="cardhead"><div><h2>💳 Peman pou sonje</h2><p class="sub">Egz: sèvè Hetzner, domèn. Panel la fè w sonje kèk jou anvan (nan 🔔 ak sou telefòn ou), jiskaske w di li peye.</p></div></div>
+        <div id="blList"></div>
+        <div class="btns" style="justify-content:flex-start;margin-top:10px"><button class="btn small" id="blAdd" type="button">＋ Ajoute yon peman</button><button class="btn primary small" id="blSave" type="button">Sove</button><span class="msg" id="blMsg"></span></div>
+      </div>
       <div class="card" id="nfCard">
         <div class="cardhead"><div><h2>📱 Notifikasyon sou telefòn ou</h2><p class="sub">Resevwa yon alèt sou telefòn ou lè panel la jwenn yon pwoblèm (chanèl tonbe, TV ki pa konekte, disk plen…), menm lè panel la pa louvri. Gratis, ak app "ntfy".</p></div></div>
         <div class="inline" style="gap:10px;flex-wrap:wrap"><label class="sw"><input type="checkbox" id="nfOn"><i></i></label><label for="nfOn"><b>Voye notifikasyon yo</b></label>
@@ -1329,7 +1334,7 @@ function applyRole() {
 
 // ------------------------------------------------------------ API
 // Konfimasyon TV yo: TV a pa di kliyan an anyen, se panel la ki montre "✅ aplike sou TV …"
-const TV_ACK_SKIP = /^\/(auth\/|galaxy\/(owner-account|notes|watch|notify|ai|alerts|backup|backups|restore|storage|media|xtream\/test|tv-events)|admin-users)|\/test$/;
+const TV_ACK_SKIP = /^\/(auth\/|galaxy\/(bills|owner-account|notes|watch|notify|ai|alerts|backup|backups|restore|storage|media|xtream\/test|tv-events)|admin-users)|\/test$/;
 let tvAckRun = null;
 async function tvEvLast() { try { const r = await fetch(API + "/galaxy/tv-events?since=999999999", { headers: token ? { Authorization: "Bearer " + token } : {} }); return (await r.json()).last || 0; } catch { return null; } }
 const TV_ACK_TEXT = {
@@ -2055,12 +2060,13 @@ const WT_TEXT = {
   disk_low: (i) => [t("💾 Disk sèvè a prèske plen: {0}% ki rete", i.freePct), t("Gade \"Kisa ki pran plas?\" nan paj Sistèm nan.")],
   pkg_problem: (i) => [t("📦 Pakè «{0}» pa aplike sou TV {1}", i.profile, i.name || i.mac), i.why === "notpkg" ? t("Se yon ansyen Channel Profile (limit kantite sèlman): li pa kache okenn chanèl.") : i.why === "missing" ? t("Pakè sa a pa egziste ankò.") : i.why === "nochange" ? t("Pakè a pa kache okenn chanèl sou TV sa a.") : t("Okenn nan {0} gwoup pakè a pa egziste kay founisè TV sa a (non yo diferan).", i.groups)],
   weak_net: (i) => [t("📶 Entènèt TV {0} fèb", i.name || i.mac), t("Li koupe {0} fwa chak 10 minit", i.cuts) + (i.mbps ? " · " + i.mbps + " Mbps" : "") + ". " + t("Se koneksyon kliyan an, pa founisè a: wouter li twò lwen, Wi-Fi a chaje, oswa abònman entènèt li twò piti.")],
+  bill_due: (i) => [t("💳 Peman {0}", i.name) + (i.amount ? " (" + i.amount + ")" : ""), i.days > 0 ? t("Pou peye nan {0} jou ({1}).", i.days, i.date) : i.days === 0 ? t("Pou peye jodi a ({0}).", i.date) : t("Dat la pase depi {0} jou ({1}).", -i.days, i.date)],
   weak_password: () => [t("🔑 Modpas login panel la twò fèb"), t("Chanje l nan Sistèm → 🔑 Login pwopriyetè a (12 karaktè oswa plis, ak lèt ak chif).")],
   ai_budget: (i) => [t("🤖 AI a deja itilize ${0} sou ${1} mwa sa a", i.cost, i.limit), t("Lè limit lan rive, AI a kanpe jiska mwa pwochen.")],
 };
 const WT_ACT = {
   goto_device: () => t("Louvri aparèy la"), goto_channels: () => t("Louvri Channels pou TV sa a"), force_update: () => t("Fè mizajou a obligatwa"), send_tip: () => t("Voye konsèy bay kliyan an"), reload_tv: () => t("Rechaje TV a"), push_update: () => t("Voye mizajou a bay TV yo"),
-  hide_channel: (a) => t("Kache chanèl la ({0} TV)", a.macs.length), goto_customers: () => t("Kliyan yo"), goto_system: () => t("Sistèm"),
+  hide_channel: (a) => t("Kache chanèl la ({0} TV)", a.macs.length), bill_paid: () => t("Mwen peye l ✓"), goto_customers: () => t("Kliyan yo"), goto_system: () => t("Sistèm"),
 };
 async function loadWatch(analyze) {
   if (!token) return;
@@ -2090,6 +2096,7 @@ $("#wtList").addEventListener("click", async (e) => {
     if (a.type === "goto_channels") { await selectDevice(a.mac, false); return openTab("ch"); }
     if (a.type === "goto_customers") return openTab("cust");
     if (a.type === "goto_system") return openTab("sys");
+    if (a.type === "bill_paid") { await api("POST", `/galaxy/bills/${encodeURIComponent(a.id)}/paid`, { month: a.month }); watchCache.issues = watchCache.issues.filter((x) => x !== i); renderWatch(); updateBell(); loadBills(); return toast(t("Byen: panel la p ap fè w sonje l ankò jiska pwochen peman an.")); }
     if (a.type === "send_tip") {
       const txt = prompt(t("Mesaj ki pral parèt sou TV kliyan an (ou ka chanje l):"), t("📶 Koneksyon entènèt ou a fèb, se sa ki fè imaj la koupe. Eseye: etenn epi relimen wouter a, mete Fire Stick la pi pre wouter a, oswa konekte l ak yon fil. Mèsi!"));
       if (!txt || !txt.trim()) return;
@@ -3262,7 +3269,30 @@ $("#owSave").addEventListener("click", async () => {
     showLogin(t("Login nan chanje. Konekte ak nouvo non login ak nouvo modpas ou."));
   } catch (e) { setMsg($("#owMsg"), e.message); }
 });
-async function loadSystem() { loadAppUpdate(); loadNotes(); loadAutoBackups(); loadNotify(); loadOwner();
+// ------------------------------------------------------------ Peman pou sonje
+let bills = [];
+function blRow(b, n) {
+  return `<div class="li" data-bl="${n}" style="gap:8px;flex-wrap:wrap">
+    <input data-k="name" value="${esc(b.name || "")}" placeholder="${esc(t("Non (egz: Sèvè Hetzner)"))}" style="flex:2;min-width:160px">
+    <input data-k="amount" value="${esc(b.amount || "")}" placeholder="${esc(t("Montan (egz: $12)"))}" style="flex:1;min-width:90px">
+    <select data-k="every" style="width:auto"><option value="month"${b.every === "year" ? "" : " selected"}>${esc(t("Chak mwa"))}</option><option value="year"${b.every === "year" ? " selected" : ""}>${esc(t("Yon fwa pa ane"))}</option></select>
+    <label class="note" data-yearonly style="display:${b.every === "year" ? "flex" : "none"};align-items:center;gap:6px">${esc(t("Mwa"))} <select data-k="month" style="width:auto">${Array.from({ length: 12 }, (_, k) => `<option value="${k + 1}"${(b.month || 1) === k + 1 ? " selected" : ""}>${esc(new Date(2026, k, 1).toLocaleDateString(lang, { month: "long" }))}</option>`).join("")}</select></label>
+    <label class="note" style="display:flex;align-items:center;gap:6px">${esc(t("Jou"))} <input data-k="day" type="number" min="1" max="31" value="${esc(b.day || 1)}" style="width:64px"></label>
+    <label class="note" style="display:flex;align-items:center;gap:6px">${esc(t("Fè m sonje (jou anvan)"))} <input data-k="before" type="number" min="0" max="30" value="${esc(b.before ?? 3)}" style="width:56px"></label>
+    ${b.paidMonth ? `<span class="note">✓ ${esc(t("Peye pou {0}", b.paidMonth))}</span>` : ""}
+    <button class="btn small danger" type="button" data-bldel="${n}">${esc(t("Efase"))}</button></div>`;
+}
+function renderBills() { $("#blList").innerHTML = bills.length ? bills.map(blRow).join("") : `<div class="note">${esc(t("Poko gen peman. Peze «Ajoute yon peman»."))}</div>`; }
+function readBills() { $$("#blList [data-bl]").forEach((row) => { const b = bills[+row.dataset.bl]; row.querySelectorAll("[data-k]").forEach((inp) => { b[inp.dataset.k] = inp.type === "number" || inp.dataset.k === "month" ? Number(inp.value) : inp.value; }); }); }
+$("#blList").addEventListener("change", (e) => { if (e.target.dataset.k !== "every") return; const row = e.target.closest("[data-bl]"); row.querySelector("[data-yearonly]").style.display = e.target.value === "year" ? "flex" : "none"; });
+async function loadBills() { try { bills = await api("GET", "/galaxy/bills"); } catch { bills = []; } renderBills(); }
+$("#blAdd").addEventListener("click", () => { readBills(); bills.push({ name: "", amount: "", day: 1, before: 3, every: "month", month: 1 }); renderBills(); });
+$("#blList").addEventListener("click", (e) => { const d = e.target.closest("[data-bldel]"); if (!d) return; readBills(); bills.splice(+d.dataset.bldel, 1); renderBills(); });
+$("#blSave").addEventListener("click", async () => {
+  readBills();
+  try { bills = await api("PUT", "/galaxy/bills", { bills }); renderBills(); setMsg($("#blMsg"), "Sove.", true); loadWatch(); } catch (e) { setMsg($("#blMsg"), e.message); }
+});
+async function loadSystem() { loadBills(); loadAppUpdate(); loadNotes(); loadAutoBackups(); loadNotify(); loadOwner();
   loadSysStats();
   settings = await api("GET", "/settings").catch(() => ({}));
   $("#mtOn").checked = !!settings.maintenanceMode; $("#mtMsg").value = settings.maintenanceMessage || "";

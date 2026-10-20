@@ -126,6 +126,24 @@ export function mountWatch(app, db, h) {
     const ap = process.env.ADMIN_PASS || "";
     if (!(db.data.ownerAuth?.passwordHash && process.env.RESET_OWNER !== "1") && (!ap || ap === "changeme" || ap.length < 10)) out.push({ id: "weakpw", kind: "weak_password", level: "crit", actions: [] });
 
+    // 5c) Peman pou sonje (sèvè, domèn…): X jou anvan dat la, jiskaske admin nan di li peye
+    {
+      const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: tz(), year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(now)).map((x) => [x.type, x.value]));
+      const today = Date.UTC(+p.year, +p.month - 1, +p.day);
+      for (const b of d.bills || []) {
+        const yearly = b.every === "year";
+        let y = +p.year, m = yearly ? (b.month || 1) - 1 : +p.month - 1;
+        const dueOf = (yy, mm) => Date.UTC(yy, mm, Math.min(b.day, new Date(Date.UTC(yy, mm + 1, 0)).getUTCDate()));
+        const key = (yy, mm) => yearly ? String(yy) : `${yy}-${String(mm + 1).padStart(2, "0")}`;
+        if (b.paidMonth === key(y, m) || today - dueOf(y, m) > 5 * 864e5) { if (yearly) y++; else { m++; if (m > 11) { m = 0; y++; } } }
+        if (b.paidMonth === key(y, m)) continue;
+        const days = Math.round((dueOf(y, m) - today) / 864e5);
+        if (days > b.before) continue;
+        out.push({ id: `bill:${b.id}:${key(y, m)}`, kind: "bill_due", level: days <= 1 ? "crit" : "warn", name: b.name, amount: b.amount || "", days,
+          date: new Date(dueOf(y, m)).toISOString().slice(0, 10), actions: [{ type: "bill_paid", id: b.id, month: key(y, m) }] });
+      }
+    }
+
     // 6) Bidjè AI a
     const b = aiBudget(db);
     if (aiKey() && b.limit > 0 && b.cost >= b.limit * 0.8) out.push({ id: "aib:" + new Date().toISOString().slice(0, 7), kind: "ai_budget", level: "info",
