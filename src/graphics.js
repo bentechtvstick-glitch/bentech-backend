@@ -44,6 +44,24 @@ async function getJson(url) {
   } finally { clearTimeout(timer); }
 }
 
+// Vil chèf-lye 10 depatman Ayiti yo, ak kowòdone yo (non vil ayisyen yo pa toujou jwenn pa non nan sèvis jewografi a)
+const WX_HAITI = [
+  { name: "Port-au-Prince", lat: 18.5944, lon: -72.3074 }, { name: "Cap-Haïtien", lat: 19.7578, lon: -72.2042 },
+  { name: "Gonaïves", lat: 19.4475, lon: -72.6889 }, { name: "Les Cayes", lat: 18.1933, lon: -73.7461 },
+  { name: "Jacmel", lat: 18.2342, lon: -72.5347 }, { name: "Jérémie", lat: 18.65, lon: -74.1167 },
+  { name: "Hinche", lat: 19.15, lon: -72.0167 }, { name: "Port-de-Paix", lat: 19.9397, lon: -72.8306 },
+  { name: "Fort-Liberté", lat: 19.6667, lon: -71.8333 }, { name: "Miragoâne", lat: 18.4425, lon: -73.0897 },
+];
+const WX_WORLD = [
+  { name: "New York", lat: 40.7128, lon: -74.006 }, { name: "Miami", lat: 25.7617, lon: -80.1918 },
+  { name: "Montréal", lat: 45.5019, lon: -73.5674 }, { name: "Port-au-Prince", lat: 18.5944, lon: -72.3074 },
+  { name: "Santo Domingo", lat: 18.4861, lon: -69.9312 }, { name: "Mexico", lat: 19.4326, lon: -99.1332 },
+  { name: "São Paulo", lat: -23.5505, lon: -46.6333 }, { name: "Paris", lat: 48.8566, lon: 2.3522 },
+  { name: "London", lat: 51.5072, lon: -0.1276 }, { name: "Madrid", lat: 40.4168, lon: -3.7038 },
+  { name: "Dakar", lat: 14.7167, lon: -17.4677 }, { name: "Dubai", lat: 25.2048, lon: 55.2708 },
+  { name: "Tokyo", lat: 35.6762, lon: 139.6503 }, { name: "Sydney", lat: -33.8688, lon: 151.2093 },
+];
+
 // Yon "kote" se swa yon non vil (tèks), swa { lat, lon, name } (egz: jwenn pa IP kliyan an)
 const placeKey = (place) => (typeof place === "string" ? "c:" + str(place).toLowerCase() : `g:${Number(place.lat).toFixed(2)},${Number(place.lon).toFixed(2)}`);
 
@@ -219,7 +237,24 @@ export function buildGraphics(g, ctx) {
 
   // Meteyo: otomatik (Open-Meteo) oswa alamen
   const m = g.weather || {};
-  if (m.on && (str(m.city) || m.scope === "client")) {
+  // Plizyè vil youn apre lòt (tankou CNN): tout depatman Ayiti, gran vil nan mond lan, oswa pwòp lis admin nan
+  const multi = m.scope === "haiti" ? WX_HAITI : m.scope === "world" ? WX_WORLD
+    : m.scope === "list" ? String(m.cities || "").split(/[\n,;]+/).map((c) => str(c, 40)).filter(Boolean).slice(0, 20) : null;
+  if (m.on && multi && multi.length) {
+    const unit = m.unit === "F" ? "F" : "C";
+    const list = [];
+    for (const place of multi) {
+      const live = weatherNow(place); if (!live || !Number.isFinite(live.tempC)) continue;
+      const t = unit === "F" ? (live.tempC * 9) / 5 + 32 : live.tempC;
+      list.push({ city: (typeof place === "string" ? live.city || place : place.name), temp: `${Math.round(t)}°${unit}`, icon: live.icon });
+    }
+    if (list.length) {
+      const everySec = num(m.every, 8, 4, 60);
+      // App ansyen yo (san "list") wè yon lòt vil chak minit; app 1.0.145+ fè yo vire chak {everySec} segonn
+      const first = list[Math.floor(now / 60) % list.length];
+      out.weather = { ...first, position: pos(m.position, POS6, "top-right"), list, everySec };
+    }
+  } else if (m.on && (str(m.city) || m.scope === "client")) {
     const unit = m.unit === "F" ? "F" : "C";
     // "client" = meteyo kote chak kliyan ye: vil aparèy la, sinon vil kliyan an, sinon IP li, sinon vil jeneral la
     const place = m.scope === "client" ? str(ctx.deviceCity, 30) || str(ctx.customerCity, 30) || ipPlace(ctx.ip) || str(m.city, 30) : str(m.city, 30);
