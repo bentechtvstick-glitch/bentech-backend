@@ -93,8 +93,14 @@ class VodActivity : AppCompatActivity() {
 
         overlay = OverlayController(
             this, b.overlay, lifecycleScope, inPlayer = false, showTicker = false,
+            onConfig = { cfg ->
+                // Panel la kache / montre kontni granmoun: aplike l touswit, an silans
+                val sig = adultSig(cfg)
+                if (sig != lastAdultSig) { lastAdultSig = sig; data?.let { applyData(it, first = false, reselect = true) } }
+            },
             onCommand = { cmd -> onRemoteCommand(cmd) }
         )
+        lastAdultSig = adultSig(PanelState.config)
         applyKindLabels()
         loadCategories()
     }
@@ -164,7 +170,10 @@ class VodActivity : AppCompatActivity() {
 
     private val updListener: (VodKind) -> Unit = { k -> if (k == kind) runOnUiThread { VodStore.peek(account, kind)?.let { applyData(it, first = false) } } }
 
-    private fun applyData(d: VodStore.Data, first: Boolean) {
+    private fun adultSig(c: com.galaxytvstick.app.data.PanelConfig) = listOf(c.forceHideAdult, c.blockedMovies, c.blockedSeries).hashCode()
+    private var lastAdultSig = 0
+
+    private fun applyData(d: VodStore.Data, first: Boolean, reselect: Boolean = false) {
         if (isFinishing || isDestroyed) return
         data = d
         val raw = d.categories
@@ -180,6 +189,10 @@ class VodActivity : AppCompatActivity() {
             val start = if (history.continueWatching().any { it.kind == kind }) CAT_CONTINUE else null
             selectCategory(start ?: cats.firstOrNull()?.id ?: CAT_ALL, focusGrid = false)
             focusCategories()
+        } else if (reselect) {
+            val sel = selected
+            val ok = sel.startsWith("__") || cats.any { it.id == sel }
+            selectCategory(if (ok) sel else CAT_ALL, focusGrid = false)
         }
     }
 
