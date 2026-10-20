@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Bwat detay pwogram nan lis chanèl la: transparan pou videyo a parèt dèyè l -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#59000000"/><corners android:radius="14dp"/>
+    <solid android:color="#73000000"/><corners android:radius="14dp"/>
 </shape>
