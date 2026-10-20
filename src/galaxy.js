@@ -319,6 +319,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       if (cs === "suspended") status = "blocked";
       else if (cs === "expired" || (customer.expiry && toEpochSec(customer.expiry, zone, true) < now)) status = "expired";
     }
+    // TV san kliyan: sèvi ak dat founisè a TV a voye a (menm dat panel la montre a), pou TV a ak panel la toujou dakò
+    else if (playlists.length && ((Number(device.providerExp) > 0 && Number(device.providerExp) < now) || String(device.providerStatus || "").toLowerCase() === "expired")) status = "expired";
     if (device.blocked) status = "blocked";
     if (s.maintenanceMode) {
       status = "maintenance";
