@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Menm jan ak bg_focus, men fon an transparan: videyo a parèt dèyè lis la -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape><solid android:color="#D91E5FD8"/><stroke android:width="3dp" android:color="#FFFFFF"/><corners android:radius="8dp"/></shape>
+    </item>
+    <item android:state_activated="true">
+        <shape><solid android:color="#9914233F"/><stroke android:width="2dp" android:color="@color/accent"/><corners android:radius="8dp"/></shape>
+    </item>
+    <item android:state_selected="true">
+        <shape><solid android:color="#991A3566"/><corners android:radius="8dp"/></shape>
+    </item>
+    <item>
+        <shape><solid android:color="#661B1B20"/><corners android:radius="8dp"/></shape>
+    </item>
+</selector>
