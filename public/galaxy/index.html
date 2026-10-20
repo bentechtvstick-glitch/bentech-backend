@@ -1599,7 +1599,7 @@ $("#dvSave").addEventListener("click", async () => {
 $("#dvResetKey").addEventListener("click", () => confirmIn("#dvConfirm", t("TV a ap resevwa yon nouvo Device Key pwochen fwa l konekte. Itilize sa sèlman si kliyan an chanje aparèy oswa reyenstale sistèm nan."), t("Reyinisyalize"), async () => {
   try { await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { resetDeviceKey: true }); selectDevice(dev.mac); } catch (err) { setMsg($("#dvMsg"), err.message); }
 }));
-$("#dvDelete").addEventListener("click", () => confirmIn("#dvConfirm", t("Aparèy la ak tout playlist li yo ap efase. TV a ap retounen sou ekran aktivasyon an."), t("Efase"), async (delC) => {
+$("#dvDelete").addEventListener("click", () => confirmIn("#dvConfirm", t("Aparèy la ak tout playlist li yo ap efase. TV a ap retounen sou ekran aktivasyon an."), t("Efase l"), async (delC) => {
   try { const r = await api("DELETE", delPath(dev.mac, delC)); dev = null; $("#deviceView").hidden = true; $("#mac").value = ""; loadDevices(); delToast(r); } catch (err) { setMsg($("#dvMsg"), err.message); }
 }, delCustHtml(dev?.customer)));
 function confirmIn(sel, text, yes, fn, extra = "") {
