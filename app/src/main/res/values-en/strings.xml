@@ -215,4 +215,7 @@
     <string name="help_8_t">📲 Updates and settings</string>
     <string name="help_8_b">When a new version is ready, a message appears: press «Update». The ≡ button on the remote opens settings while watching (language, subtitles, audio…).</string>
     <string name="help_back">BACK to go back</string>
+    <string name="vod_cw_remove">Remove from the list</string>
+    <string name="vod_cw_clear">Clear all of “Continue watching”</string>
+    <string name="vod_cw_hint">Hold OK to remove a title from the list.</string>
 </resources>

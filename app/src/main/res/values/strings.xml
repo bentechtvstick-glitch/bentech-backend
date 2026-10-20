@@ -238,4 +238,7 @@
     <string name="help_8_t">📲 Mizajou ak reglaj</string>
     <string name="help_8_b">Lè yon nouvo vèsyon pare, yon mesaj parèt: peze «Mete ajou». Bouton ≡ remòt la louvri reglaj yo pandan w ap gade TV (lang, sou-tit, son…).</string>
     <string name="help_back">BACK pou tounen</string>
+    <string name="vod_cw_remove">Retire l nan lis la</string>
+    <string name="vod_cw_clear">Efase tout lis «Kontinye gade» la</string>
+    <string name="vod_cw_hint">Kenbe bouton OK la pou retire yon fim nan lis la.</string>
 </resources>

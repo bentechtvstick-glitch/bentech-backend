@@ -129,6 +129,20 @@ class WatchHistory(context: Context) {
         val m = load(); if (m.remove(key) != null) save(m)
     }
 
+    /** Retire yon fim (oswa tout epizòd yon seri) nan «Kontinye gade». */
+    fun removeContinue(p: WatchProgress) {
+        val m = load()
+        val gone = m.values.filter { if (p.kind == VodKind.SERIES) it.kind == VodKind.SERIES && it.parentId == p.parentId else it.key == p.key }.map { it.key }
+        if (gone.isNotEmpty()) { gone.forEach { m.remove(it) }; save(m) }
+    }
+
+    /** Efase tout lis «Kontinye gade» pou fim oswa pou seri. */
+    fun clearContinue(kind: VodKind) {
+        val m = load()
+        val gone = m.values.filter { it.kind == kind && it.resumable }.map { it.key }
+        if (gone.isNotEmpty()) { gone.forEach { m.remove(it) }; save(m) }
+    }
+
     /** Fim/epizòd ki kòmanse men ki poko fini (yon sèl epizòd pa seri). */
     fun continueWatching(): List<WatchProgress> =
         load().values.filter { it.resumable }.sortedByDescending { it.updatedAt }

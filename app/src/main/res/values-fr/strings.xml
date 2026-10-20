@@ -215,4 +215,7 @@
     <string name="help_8_t">📲 Mises à jour et réglages</string>
     <string name="help_8_b">Quand une nouvelle version est prête, un message apparaît : appuyez sur «Mettre à jour». Le bouton ≡ ouvre les réglages pendant la lecture (langue, sous-titres, audio…).</string>
     <string name="help_back">RETOUR pour revenir</string>
+    <string name="vod_cw_remove">Retirer de la liste</string>
+    <string name="vod_cw_clear">Effacer toute la liste « Reprendre »</string>
+    <string name="vod_cw_hint">Maintenez OK pour retirer un titre de la liste.</string>
 </resources>

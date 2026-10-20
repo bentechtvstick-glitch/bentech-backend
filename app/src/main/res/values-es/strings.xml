@@ -215,4 +215,7 @@
     <string name="help_8_t">📲 Actualizaciones y ajustes</string>
     <string name="help_8_b">Cuando hay una nueva versión, aparece un mensaje: pulse «Actualizar». El botón ≡ del control abre los ajustes mientras ve TV (idioma, subtítulos, audio…).</string>
     <string name="help_back">ATRÁS para volver</string>
+    <string name="vod_cw_remove">Quitar de la lista</string>
+    <string name="vod_cw_clear">Borrar toda la lista «Seguir viendo»</string>
+    <string name="vod_cw_hint">Mantén OK para quitar un título de la lista.</string>
 </resources>

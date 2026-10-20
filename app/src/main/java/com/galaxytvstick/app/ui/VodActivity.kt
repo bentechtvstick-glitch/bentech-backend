@@ -266,6 +266,22 @@ class VodActivity : AppCompatActivity() {
         startActivity(VodDetailActivity.intent(this, it))
     }
 
+    /** Kenbe bouton OK la sou yon fim nan «Kontinye gade»: retire l, oswa efase tout lis la. */
+    private fun continueMenu(p: WatchProgress) {
+        val opts = arrayOf(getString(R.string.vod_cw_remove), getString(R.string.vod_cw_clear), getString(android.R.string.cancel))
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(p.title.ifBlank { getString(R.string.vod_continue) })
+            .setItems(opts) { d, which ->
+                when (which) {
+                    0 -> history.removeContinue(p)
+                    1 -> history.clearContinue(kind)
+                }
+                d.dismiss()
+                if (which <= 1) selectCategory(CAT_CONTINUE, focusGrid = false)
+            }
+            .show()
+    }
+
     private fun toggleFavorite(e: Entry) {
         val item = e.item ?: return
         history.rememberItem(item)
@@ -328,7 +344,7 @@ class VodActivity : AppCompatActivity() {
             h.b.watched.visibility = if (pct in 1..99 || prog?.finished == true) View.VISIBLE else View.GONE
             h.b.watched.progress = if (prog?.finished == true) 100 else pct
             h.b.root.setOnClickListener { open(e) }
-            h.b.root.setOnLongClickListener { toggleFavorite(e); true }
+            h.b.root.setOnLongClickListener { if (e.item == null && e.progress != null) continueMenu(e.progress) else toggleFavorite(e); true }
             h.b.root.setOnFocusChangeListener { v, has ->
                 v.animate().scaleX(if (has) 1.06f else 1f).scaleY(if (has) 1.06f else 1f).setDuration(120).start()
                 // Remòt la kanpe sou afich la: prepare paj detay la davans
