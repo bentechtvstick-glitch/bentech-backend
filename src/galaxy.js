@@ -578,9 +578,39 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     touchWrite();
     res.json({ ok: true, count: names.length });
   });
+  /** Panel la li menm mande founisè a lis kategori fim ak seri yo (Xtream, oswa M3U ki soti nan yon sèvè Xtream). */
+  const vodFetching = new Set();
+  async function fetchProviderCats(d, { force = false } = {}) {
+    if (!force && d.vodCatsAt && Date.now() - Date.parse(d.vodCatsAt) < 6 * 3600000) return false;
+    let pl = playlistsOf(d.mac)[0]; if (!pl || vodFetching.has(d.mac)) return false;
+    if (plType(pl) === "m3u") {
+      try { const u = new URL(String(pl.server || "").trim()), user = u.searchParams.get("username"), pass = u.searchParams.get("password");
+        if (!user || !pass) return false; pl = { server: `${u.protocol}//${u.host}`, username: user, password: pass }; } catch { return false; }
+    } else if (plType(pl) !== "xtream") return false;
+    const cl = xtreamClient(pl); if (cl.error) return false;
+    vodFetching.add(d.mac);
+    try {
+      const names = (arr) => [...new Set((Array.isArray(arr) ? arr : []).map((c) => String(c?.category_name || "").trim().slice(0, 120)).filter(Boolean))].slice(0, 3000);
+      const [mv, sr] = await Promise.all([cl.get("get_vod_categories", 15000).catch(() => null), cl.get("get_series_categories", 15000).catch(() => null)]);
+      if (!mv && !sr) return false;
+      d.vodCats = { movies: mv ? names(mv) : d.vodCats?.movies || [], series: sr ? names(sr) : d.vodCats?.series || [] };
+      d.vodCatsAt = new Date().toISOString(); touchWrite();
+      return true;
+    } finally { vodFetching.delete(d.mac); }
+  }
+  /** Gwoup/kategori pou granmoun ki VIZIB toujou sou yon TV (pou siveyans lan ak AI a). */
+  function adultVisible(d) {
+    if (d.forceHideAdult) return { live: [], movies: [], series: [] };
+    const bl = d.blockedCats || {}, hid = (k) => new Set((bl[k] || []).map(nkey));
+    const live = [...new Set(channelsOf(d.mac).map((c) => String(c.categoryName || "").trim()).filter(Boolean))];
+    const vis = (names, k) => [...new Set(names)].filter((n) => ADULT_RX.test(n) && !hid(k).has(nkey(n)));
+    return { live: vis(live, "live"), movies: vis(d.vodCats?.movies || [], "movies"), series: vis(d.vodCats?.series || [], "series") };
+  }
+
   /** Sa ki pou granmoun sou TV sa a (chanèl, fim, seri) + sa admin nan deja kache. */
-  app.get("/api/galaxy/devices/:mac/adult", authenticate, (req, res) => {
+  app.get("/api/galaxy/devices/:mac/adult", authenticate, async (req, res) => {
     const d = findDevice(normMac(req.params.mac)); if (!d) return res.status(404).json({ error: "Not found" });
+    await fetchProviderCats(d, { force: req.query.fresh === "1" }).catch(() => false);
     const bl = d.blockedCats || {};
     const pick = (names, blocked) => { const b = new Set((blocked || []).map(nkey)); return [...new Set(names)].filter((n) => ADULT_RX.test(n) || b.has(nkey(n))).map((n) => ({ name: n, adult: ADULT_RX.test(n), hidden: b.has(nkey(n)) })); };
     const live = [...new Set(channelsOf(d.mac).map((c) => String(c.categoryName || "").trim()).filter(Boolean))];
@@ -1047,6 +1077,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
           syncTvs();
         }
       }
+      // Kategori fim/seri yo (pou kontni granmoun): maks 10 TV chak 2 minit, chak 6 è pou chak TV
+      let v = 0;
+      for (const d of (data().devices || [])) { if (v >= 10) break; if (!d.mac || (d.vodCatsAt && now - Date.parse(d.vodCatsAt) < 6 * 3600000)) continue; v++; await fetchProviderCats(d).catch(() => false); }
     } catch { /* n ap eseye ankò nan 2 minit */ }
   }, 2 * 60 * 1000).unref?.();
 
@@ -1582,7 +1615,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
   // Siveyans panel la (pwoblèm + koreksyon pwopoze; admin nan deside)
   mountWatch(app, db, {
-    authenticate, latestBuild, customerOf, toEpochSec, tz, playlistsOf, pkgCheck,
+    authenticate, latestBuild, customerOf, toEpochSec, tz, playlistsOf, pkgCheck, adultVisible,
     isOnline: (dv) => !!dv.lastSeenAt && Date.now() - Date.parse(dv.lastSeenAt) < ONLINE_MS,
     isExpired: (dv) => { const c = customerOf(dv); if (!c) return false; const cs = String(c.status || "").toLowerCase();
       return cs === "suspended" || cs === "expired" || (!!c.expiry && toEpochSec(c.expiry, tz(), true) < Math.floor(Date.now() / 1000)); },

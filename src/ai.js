@@ -80,6 +80,13 @@ export function mountAi(app, db, { authenticate, isOnline }) {
         list: devices.slice(0, 50).map((x) => ({ mac: x.mac, customer: x.customer || "", online: isOnline(x.mac), app: x.appVersion || "", lastSeen: x.lastSeenAt || "" })) },
       customers: { total: customers.length, expiringWithin14Days: soon },
       channelAndVideoProblemsLast48h: alerts,
+      // Kategori fim/seri pou granmoun ki toujou vizib sou chak TV (panel la li yo kay founisè a)
+      adultVodVisible: devices.filter((x) => !x.forceHideAdult && x.vodCats).map((x) => {
+        const rx = /(xxx|porn|adult(?!\s*swim)|adulte|adulto|18\s*\+|\+\s*18)/i, bl = x.blockedCats || {};
+        const hid = (k) => new Set((bl[k] || []).map((n) => String(n).toUpperCase()));
+        const vis = (names, k) => (names || []).filter((n) => rx.test(n) && !hid(k).has(String(n).toUpperCase()));
+        return { tv: `${x.customer || ""} · ${x.mac}`, movies: vis(x.vodCats.movies, "movies").slice(0, 10), series: vis(x.vodCats.series, "series").slice(0, 10) };
+      }).filter((r) => r.movies.length || r.series.length).slice(0, 30),
       weakChannels: weak.slice(0, 15),
     };
   }

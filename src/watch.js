@@ -10,7 +10,7 @@ import { createNotifier, mountNotify } from "./notify.js";
 const H = 3600000;
 
 export function mountWatch(app, db, h) {
-  const { authenticate, latestBuild, customerOf, toEpochSec, tz, playlistsOf, isOnline, isExpired, pkgCheck } = h;
+  const { authenticate, latestBuild, customerOf, toEpochSec, tz, playlistsOf, isOnline, isExpired, pkgCheck, adultVisible } = h;
   const data = () => db.data;
   const state = () => (data().watch ??= {});
 
@@ -125,6 +125,13 @@ export function mountWatch(app, db, h) {
     // 5b) Modpas pwopriyetè a twò fèb (oswa li rete valè egzanp lan)
     const ap = process.env.ADMIN_PASS || "";
     if (!(db.data.ownerAuth?.passwordHash && process.env.RESET_OWNER !== "1") && (!ap || ap === "changeme" || ap.length < 10)) out.push({ id: "weakpw", kind: "weak_password", level: "crit", actions: [] });
+
+    // 5b2) Kontni pou granmoun ki toujou vizib sou yon TV (chanèl, fim, seri): admin nan deside si l kache yo
+    if (adultVisible) for (const dv of devices) {
+      const a = adultVisible(dv), n = a.live.length + a.movies.length + a.series.length;
+      if (n) out.push({ id: `adult:${dv.mac}:${n}`, kind: "adult_found", level: "info", mac: dv.mac, name: devName(dv), count: n,
+        live: a.live.length, movies: a.movies.length, series: a.series.length, examples: [...a.live, ...a.movies, ...a.series].slice(0, 4), actions: [{ type: "goto_channels", mac: dv.mac }] });
+    }
 
     // 5c) Peman pou sonje (sèvè, domèn…): X jou anvan dat la, jiskaske admin nan di li peye
     {
