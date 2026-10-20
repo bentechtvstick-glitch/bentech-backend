@@ -13,7 +13,7 @@
 
     <!-- Enfo chanèl -->
     <LinearLayout android:id="@+id/infoPanel" android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:layout_gravity="top|start" android:layout_margin="24dp" android:background="@drawable/bg_panel"
+        android:layout_gravity="top|start" android:layout_margin="24dp" android:background="@drawable/bg_panel_glass"
         android:orientation="horizontal" android:gravity="center_vertical" android:padding="18dp" android:visibility="gone">
         <ImageView android:id="@+id/infoLogo" android:layout_width="84dp" android:layout_height="56dp" android:layout_marginEnd="16dp"
             android:scaleType="fitCenter" android:importantForAccessibility="no"/>
@@ -75,7 +75,7 @@
     </LinearLayout>
 
     <TextView android:id="@+id/numberEntry" android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal" android:layout_marginTop="32dp" android:background="@drawable/bg_panel"
+        android:layout_gravity="top|center_horizontal" android:layout_marginTop="32dp" android:background="@drawable/bg_panel_glass"
         android:paddingStart="28dp" android:paddingEnd="28dp" android:paddingTop="8dp" android:paddingBottom="8dp"
         android:textColor="@color/text" android:textSize="48sp" android:textStyle="bold" android:visibility="gone"/>
 
@@ -85,13 +85,13 @@
         android:alpha="0.18" android:importantForAccessibility="no" android:visibility="gone"/>
 
     <TextView android:id="@+id/errorText" android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:layout_gravity="center" android:background="@drawable/bg_panel" android:padding="20dp"
+        android:layout_gravity="center" android:background="@drawable/bg_panel_glass" android:padding="20dp"
         android:textColor="@color/text" android:textSize="18sp" android:visibility="gone"
         android:maxWidth="720dp" android:gravity="center" android:lineSpacingMultiplier="1.15"/>
 
     <!-- Piblisite preroll -->
     <LinearLayout android:id="@+id/adBox" android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end" android:layout_margin="40dp" android:background="@drawable/bg_panel"
+        android:layout_gravity="bottom|end" android:layout_margin="40dp" android:background="@drawable/bg_panel_glass"
         android:orientation="vertical" android:padding="14dp" android:visibility="gone">
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ad_label"
             android:textColor="@color/accent2" android:textSize="12sp" android:textStyle="bold"/>

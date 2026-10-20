@@ -211,7 +211,7 @@ class GraphicsView @JvmOverloads constructor(
     }
 
     private fun scoreboard(s: GfxScoreboard): View {
-        val dark = 0xF0080C1A.toInt()
+        val dark = 0xB3080C1A.toInt()
         val root = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             background = GradientDrawable().apply { setColor(dark); cornerRadius = dp(6f).toFloat() }
@@ -260,7 +260,7 @@ class GraphicsView @JvmOverloads constructor(
     private fun countdown(c: GfxCountdown): View = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER_HORIZONTAL
-        if (c.box) background = GradientDrawable().apply { setColor(0xCC080C1A.toInt()); cornerRadius = dp(10f).toFloat() }
+        if (c.box) background = GradientDrawable().apply { setColor(0x73080C1A.toInt()); cornerRadius = dp(10f).toFloat() }
         setPadding(dp(16f), dp(6f), dp(16f), dp(8f))
         val c1 = TextFx.color(c.color, Color.WHITE); val c2 = TextFx.color(c.color2, 0xFF1D4ED8.toInt())
         if (c.title.isNotBlank()) addView(FxTextView(context, if (c.style == "box") "classic" else c.style, c1, c2).apply {
