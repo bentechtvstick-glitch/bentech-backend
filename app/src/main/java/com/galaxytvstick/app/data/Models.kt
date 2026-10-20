@@ -85,10 +85,10 @@ object ChannelStore {
                 !gHidden && n !in r.hiddenChannels
             }
         }
-        if (hideAdult) {
-            val adult = rawCategories.filter { isAdult(it.name) }.map { it.id }.toHashSet()
-            if (adult.isNotEmpty()) all = all.filter { it.categoryId !in adult }
-        }
+        // Kontni granmoun (paran oswa panel la fòse l) + gwoup panel la kache pa non
+        val adultOff = hideAdult || cfg.forceHideAdult
+        val bad = rawCategories.filter { (adultOff && isAdult(it.name)) || it.name.trim().uppercase() in cfg.blockedLive }.map { it.id }.toHashSet()
+        if (bad.isNotEmpty()) all = all.filter { it.categoryId !in bad }
         if (sortAz) {
             val col = java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
             all = all.sortedWith(Comparator { a, b -> col.compare(sortKey(a.name), sortKey(b.name)) })

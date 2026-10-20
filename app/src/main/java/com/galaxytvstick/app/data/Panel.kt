@@ -267,6 +267,12 @@ data class PanelConfig(
     val categoryNames: Map<String, String> = emptyMap(),
     val channelNames: Map<Int, String> = emptyMap(),
     val pkgRules: PkgRules? = null,
+    /** Panel la mande kache tout kontni granmoun (kliyan an pa ka retire sa nan Settings). */
+    val forceHideAdult: Boolean = false,
+    /** Kategori panel la kache pa non (an majiskil): chanèl, fim, seri. */
+    val blockedLive: Set<String> = emptySet(),
+    val blockedMovies: Set<String> = emptySet(),
+    val blockedSeries: Set<String> = emptySet(),
     /** Kont kliyan an nan panel la (vid si aparèy la pa lye ak yon kliyan). */
     val accountName: String = "",
     val accountPlan: String = "",
@@ -490,6 +496,10 @@ data class PanelConfig(
                     featured = it.optBoolean("featured", false)
                 )
             },
+            forceHideAdult = o.optBoolean("forceHideAdult", false),
+            blockedLive = o.optJSONObject("blockedCats")?.optJSONArray("live").strings().map { it.trim().uppercase() }.toSet(),
+            blockedMovies = o.optJSONObject("blockedCats")?.optJSONArray("movies").strings().map { it.trim().uppercase() }.toSet(),
+            blockedSeries = o.optJSONObject("blockedCats")?.optJSONArray("series").strings().map { it.trim().uppercase() }.toSet(),
             pkgRules = o.optJSONObject("pkgRules")?.let { r ->
                 fun set(k: String) = r.optJSONArray(k).strings().map { it.trim().uppercase() }.toHashSet()
                 PkgRules(r.optString("mode") == "only", set("shownGroups"), set("hiddenGroups"), set("hiddenChannels"), set("extraGroups"), set("extraChannels"), set("removedGroups"), set("removedChannels"))
@@ -624,6 +634,17 @@ class PanelApi(private val prefs: Prefs) {
             Request.Builder().url("$base/devices/${enc(deviceId)}/channels")
                 .header("X-Device-Key", prefs.deviceKey)
                 .post(body.toString().toRequestBody(jsonType)).build()
+        )
+    }
+
+    /** Voye non kategori fim oswa seri yo bay panel la (pou admin nan wè/kache kontni granmoun yo). */
+    suspend fun uploadVodCats(kind: String, categories: List<Category>) {
+        val arr = JSONArray()
+        categories.take(3000).forEach { arr.put(JSONObject().put("id", it.id).put("name", it.name)) }
+        call(
+            Request.Builder().url("$base/devices/${enc(deviceId)}/vodcats")
+                .header("X-Device-Key", prefs.deviceKey)
+                .post(JSONObject().put("kind", kind).put("categories", arr).toString().toRequestBody(jsonType)).build()
         )
     }
 

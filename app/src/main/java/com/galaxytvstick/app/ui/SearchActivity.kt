@@ -71,11 +71,13 @@ class SearchActivity : AppCompatActivity() {
         // Fim ak seri yo chaje dèyè; chanèl yo disponib touswit
         lifecycleScope.launch {
             // Kontwòl paran: pa montre sa ki nan kategori pou granmoun
-            val hide = ChannelStore.hideAdult
+            val cfg = PanelState.config
+            val hide = ChannelStore.hideAdult || cfg.forceHideAdult
             for (k in VodKind.values()) {
                 val d = VodStore.cached(this@SearchActivity, account, k)
                     ?: runCatching { VodStore.fetch(this@SearchActivity, account, k) }.getOrNull() ?: continue
-                val bad = if (hide) d.categories.filter { ChannelStore.isAdult(it.name) }.map { it.id }.toHashSet() else HashSet()
+                val blocked = if (k == VodKind.MOVIE) cfg.blockedMovies else cfg.blockedSeries
+                val bad = d.categories.filter { (hide && ChannelStore.isAdult(it.name)) || it.name.trim().uppercase() in blocked }.map { it.id }.toHashSet()
                 val l = d.items.filter { it.categoryId !in bad }
                 if (k == VodKind.MOVIE) movies = l else series = l
                 refresh()

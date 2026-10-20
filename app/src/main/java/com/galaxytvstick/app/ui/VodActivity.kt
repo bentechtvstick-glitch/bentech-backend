@@ -140,7 +140,7 @@ class VodActivity : AppCompatActivity() {
     private val adultCats = HashMap<VodKind, Set<String>>()
     private fun noAdult(list: List<VodItem>): List<VodItem> {
         val bad = adultCats[kind]
-        return if (!ChannelStore.hideAdult || bad.isNullOrEmpty()) list else list.filter { it.categoryId !in bad }
+        return if (bad.isNullOrEmpty()) list else list.filter { it.categoryId !in bad }
     }
 
     private fun loadCategories() {
@@ -168,8 +168,12 @@ class VodActivity : AppCompatActivity() {
         if (isFinishing || isDestroyed) return
         data = d
         val raw = d.categories
-        val cats = if (ChannelStore.hideAdult) raw.filter { !ChannelStore.isAdult(it.name) } else raw
-        adultCats[kind] = if (ChannelStore.hideAdult) raw.filter { ChannelStore.isAdult(it.name) }.map { it.id }.toHashSet() else emptySet()
+        val cfg = PanelState.config
+        val adultOff = ChannelStore.hideAdult || cfg.forceHideAdult
+        val blocked = if (kind == VodKind.MOVIE) cfg.blockedMovies else cfg.blockedSeries
+        fun isBad(c: com.galaxytvstick.app.data.Category) = (adultOff && ChannelStore.isAdult(c.name)) || c.name.trim().uppercase() in blocked
+        val cats = raw.filter { !isBad(it) }
+        adultCats[kind] = raw.filter { isBad(it) }.map { it.id }.toHashSet()
         val newCats = specialCategories() + cats
         if (newCats != catAdapter.items) catAdapter.items = newCats
         if (first) {

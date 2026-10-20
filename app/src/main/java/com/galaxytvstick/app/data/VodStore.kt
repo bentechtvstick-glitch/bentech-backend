@@ -55,6 +55,8 @@ object VodStore {
     }
 
     /** Telechaje lis la (si l pa la oswa li twò ansyen) an aryè plan. */
+    private val sentCats = java.util.Collections.synchronizedSet(HashSet<String>())
+
     fun prefetch(ctx: Context, a: Account, force: Boolean = false) {
         if (!a.isXtream) return
         val app = ctx.applicationContext
@@ -80,6 +82,12 @@ object VodStore {
         val items = if (k == VodKind.MOVIE) api.vodStreams(null) else api.series(null)
         val d = Data(cats, items.sortedByDescending { it.added }, System.currentTimeMillis())
         checkAccount(a)
+        // Voye non kategori yo bay panel la (yon fwa pa lis), pou admin nan ka wè/kache kontni granmoun yo
+        val sig = "${k.name}:${cats.joinToString("|") { it.name }.hashCode()}"
+        if (sentCats.add(sig)) {
+            val prefs = Prefs(ctx.applicationContext)
+            com.galaxytvstick.app.GalaxyApp.scope.launch { runCatching { PanelApi(prefs).uploadVodCats(if (k == VodKind.MOVIE) "movies" else "series", cats) } }
+        }
         synchronized(mem) { mem[k] = d }
         runCatching { write(file(ctx, a, k), d) }
         onUpdated?.invoke(k)
