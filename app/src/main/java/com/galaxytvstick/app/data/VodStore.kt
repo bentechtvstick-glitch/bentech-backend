@@ -22,7 +22,8 @@ object VodStore {
     private const val REFRESH_AFTER_MS = 3 * 60 * 60 * 1000L
 
     class Data(val categories: List<Category>, val items: List<VodItem>, val savedAt: Long) {
-        private val byCat: Map<String, List<VodItem>> by lazy { items.groupBy { it.categoryId } }
+        // Kalkile touswit (sou fil an aryè plan kote Data kreye a), pa lè kliyan an klike sou yon kategori
+        private val byCat: Map<String, List<VodItem>> = items.groupBy { it.categoryId }
         fun inCategory(id: String): List<VodItem> = byCat[id] ?: emptyList()
     }
 
@@ -100,9 +101,14 @@ object VodStore {
     /** Telechaje kounye a (sèvi sèlman lè pa gen anyen ditou sou aparèy la). */
     suspend fun fetch(ctx: Context, a: Account, k: VodKind): Data {
         val api = XtreamApi(a)
-        val cats = if (k == VodKind.MOVIE) api.vodCategories() else api.seriesCategories()
-        val items = if (k == VodKind.MOVIE) api.vodStreams(null) else api.series(null)
-        val d = Data(cats, items.sortedByDescending { it.added }, System.currentTimeMillis())
+        // Kategori ak lis la an menm tan (pa youn apre lòt), epi tout kalkil la an aryè plan
+        val d = kotlinx.coroutines.withContext(Dispatchers.IO) {
+            val catsJob = async { if (k == VodKind.MOVIE) api.vodCategories() else api.seriesCategories() }
+            val items = if (k == VodKind.MOVIE) api.vodStreams(null) else api.series(null)
+            val cats = catsJob.await()
+            Data(cats, items.sortedByDescending { it.added }, System.currentTimeMillis())
+        }
+        val cats = d.categories
         checkAccount(a)
         report(ctx, k, cats)
         synchronized(mem) { mem[k] = d }

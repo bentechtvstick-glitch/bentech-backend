@@ -214,6 +214,9 @@ class PlayerActivity : AppCompatActivity() {
             onConfig = { cfg -> onPanelConfig(cfg) },
             onCommand = { cmd -> onRemoteCommand(cmd) }
         )
+        // Prepare Movies ak Series an aryè plan (disk → memwa, oswa rezo si lis la twò ansyen),
+        // pou yo louvri touswit lè kliyan an ale ladan yo apre Live TV.
+        prefs.account?.let { acc -> lifecycleScope.launch { kotlinx.coroutines.delay(8000); com.galaxytvstick.app.data.VodStore.prefetch(this@PlayerActivity, acc) } }
     }
 
     override fun onStart() {
