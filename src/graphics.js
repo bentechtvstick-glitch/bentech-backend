@@ -238,7 +238,7 @@ export function buildGraphics(g, ctx) {
   // Meteyo: otomatik (Open-Meteo) oswa alamen
   const m = g.weather || {};
   // Plizyè vil youn apre lòt (tankou CNN): tout depatman Ayiti, gran vil nan mond lan, oswa pwòp lis admin nan
-  const multi = m.scope === "haiti" ? WX_HAITI : m.scope === "world" ? WX_WORLD
+  const multi = m.rotate === false ? null : m.scope === "haiti" ? WX_HAITI : m.scope === "world" ? WX_WORLD
     : m.scope === "list" ? String(m.cities || "").split(/[\n,;]+/).map((c) => str(c, 40)).filter(Boolean).slice(0, 20) : null;
   if (m.on && multi && multi.length) {
     const unit = m.unit === "F" ? "F" : "C";
