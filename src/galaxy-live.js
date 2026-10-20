@@ -25,6 +25,7 @@ export const COMMAND_TYPES = {
   play: "Chanje chanèl",
   reload: "Rechaje lis chanèl yo",
   channels: "Voye lis chanèl la bay panel la (an silans)",
+  vodcats: "Voye lis kategori fim ak seri yo bay panel la (an silans)",
   restart: "Redemare app la",
   logout: "Dekonekte playlist la sou TV a",
   refresh: "Aplike chanjman panel la kounye a",
@@ -59,7 +60,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     return Date.now() - t < ONLINE_MS;
   };
 
-  const askedChannels = new Map();
+  const askedChannels = new Map(), askedVod = new Map();
   const pendingFor = (mac) => {
     const q = (queues.get(mac) || []).filter((c) => Date.now() - c.createdAt < COMMAND_TTL_MS);
     queues.set(mac, q);
@@ -142,6 +143,12 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     if (!hasList && (db.data.devicePlaylists?.[mac] || []).length && Date.now() - (askedChannels.get(mac) || 0) > 10 * 60000 && !q.some((c) => c.type === "channels")) {
       askedChannels.set(mac, Date.now());
       q.push({ id: Math.random().toString(36).slice(2, 10), type: "channels", createdAt: Date.now() });
+    }
+    // Panel la pa gen lis kategori fim/seri TV a (app 1.0.134+): mande l an silans, maks yon fwa chak 10 minit
+    const build = Number(/^1\.0\.(\d+)/.exec(String(device.appVersion || ""))?.[1] || 0);
+    if (build >= 134 && !device.vodCatsAt && Date.now() - (askedVod.get(mac) || 0) > 10 * 60000 && !q.some((c) => c.type === "vodcats")) {
+      askedVod.set(mac, Date.now());
+      q.push({ id: Math.random().toString(36).slice(2, 10), type: "vodcats", createdAt: Date.now() });
     }
     if (q.length) { const cmds = q.splice(0); tvEvents.delivered(device, cmds); return res.json({ commands: cmds }); }
 

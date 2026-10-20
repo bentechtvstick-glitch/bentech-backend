@@ -15,7 +15,7 @@ export const tvEvents = {
   /** TV a fèk resevwa kòmand yo (long-poll). "sync" konfime lè l rechache config la. */
   delivered(d, cmds) {
     for (const c of cmds || []) {
-      if (c.type === "channels") continue;
+      if (c.type === "channels" || c.type === "vodcats") continue;
       if (c.type === "sync" || c.type === "refresh") pendingSync.set(d?.mac, Date.now());
       else push(d, c.type);
     }

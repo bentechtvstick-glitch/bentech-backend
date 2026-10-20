@@ -774,7 +774,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="cardhead"><div><h2>🔞 Kontni pou granmoun</h2><p class="sub">Panel la chèche gwoup chanèl, fim ak seri ki pou granmoun (XXX, Adult, 18+…) sou TV sa a. Etenn sa ou vle kache.</p></div></div>
         <div class="inline" style="gap:10px;margin-bottom:10px"><label class="sw"><input type="checkbox" id="adForce"><i></i></label><label for="adForce"><b>Toujou kache tout kontni granmoun sou TV sa a</b> <span class="note">(kliyan an pa ka remete l nan Settings)</span></label></div>
         <div id="adLists"></div>
-        <div class="btns" style="justify-content:flex-start;margin-top:10px"><button class="btn small red" id="adHideAll" type="button">Kache tout sa ki pou granmoun</button><button class="btn primary small" id="adSave" type="button">Sove</button><span class="msg" id="adMsg"></span></div>
+        <div class="btns" style="justify-content:flex-start;margin-top:10px"><button class="btn small" id="adAsk" type="button">🔄 Mande TV a lis fim/seri yo</button><button class="btn small red" id="adHideAll" type="button">Kache tout sa ki pou granmoun</button><button class="btn primary small" id="adSave" type="button">Sove</button><span class="msg" id="adMsg"></span></div>
       </div>
     </main>
 
@@ -2206,11 +2206,16 @@ function renderAdult() {
   $("#adLists").innerHTML = sec.map(([k, label]) => {
     const items = adState[k] || [];
     const body = items.length ? items.map((it, n) => `<div class="inline" style="gap:10px;margin:4px 0"><label class="sw"><input type="checkbox" data-ad="${k}" data-n="${n}"${it.hidden ? "" : " checked"}><i></i></label><span>${esc(it.name)}</span>${it.adult ? ' <span class="note">🔞</span>' : ""}</div>`).join("")
-      : `<div class="note">${esc(k !== "live" && !adState.vodKnown ? t("TV a poko voye lis fim/seri li yo (li voye l lè kliyan an louvri Fim oswa Seri, app 1.0.133+).") : t("Pa jwenn anyen pou granmoun."))}</div>`;
+      : `<div class="note">${esc(k !== "live" && !adState.vodKnown ? t("TV a poko voye lis fim/seri li yo. Peze «Mande TV a lis fim/seri yo» (app 1.0.134+).") : t("Pa jwenn anyen pou granmoun."))}</div>`;
     return `<div style="margin:10px 0"><div class="label">${esc(t(label))} <span class="note">(${items.length})</span></div>${body}</div>`;
   }).join("");
 }
 $("#adLists").addEventListener("change", (e) => { const c = e.target.closest("[data-ad]"); if (!c) return; adState[c.dataset.ad][+c.dataset.n].hidden = !c.checked; });
+$("#adAsk").addEventListener("click", async () => {
+  if (!dev) return;
+  try { await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/commands`, { type: "vodcats" }); setMsg($("#adMsg"), "Demann lan voye. Lis la ap parèt nan kèk segonn (TV a dwe limen, app 1.0.134+).", true);
+    setTimeout(loadAdult, 8000); setTimeout(loadAdult, 20000); } catch (e) { setMsg($("#adMsg"), e.message); }
+});
 $("#adHideAll").addEventListener("click", () => { for (const k of ["live", "movies", "series"]) (adState[k] || []).forEach((it) => { if (it.adult) it.hidden = true; }); renderAdult(); });
 $("#adSave").addEventListener("click", async () => {
   if (!dev || !adState) return;
