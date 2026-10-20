@@ -1064,6 +1064,27 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     return true;
   }
 
+  // Lè yon abònman rive nan dat li (oswa renouvle), TV a dwe konnen l touswit: chak 20 segonn,
+  // si estati "ekspire" yon TV chanje, voye siyal la bay TV yo (yo rechaje konfig la nan kèk segonn).
+  const expState = new Map();
+  const expiredNow = (d) => {
+    const c = customerOf(d), now = Math.floor(Date.now() / 1000);
+    if (c) { const cs = String(c.status || "").toLowerCase(); return cs === "suspended" || cs === "expired" || (!!c.expiry && toEpochSec(c.expiry, tz(), true) < now); }
+    return (Number(d.providerExp) > 0 && Number(d.providerExp) < now) || String(d.providerStatus || "").toLowerCase() === "expired";
+  };
+  setInterval(() => {
+    try {
+      let changed = false;
+      for (const d of (data().devices || [])) {
+        if (!d.mac) continue;
+        const x = expiredNow(d), was = expState.get(d.mac);
+        if (was !== undefined && was !== x) changed = true;
+        expState.set(d.mac, x);
+      }
+      if (changed) syncTvs();
+    } catch {}
+  }, 20 * 1000).unref?.();
+
   // Siveyans an aryè plan: chak 2 minit, mande founisè a pou kliyan ki pa t tcheke depi 10 minit (maks 40 chak fwa,
   // pou pa chaje founisè a). Lè dat la chanje, TV kliyan an mete l ajou touswit.
   setInterval(async () => {
@@ -1082,6 +1103,21 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
           auditLog("customer-sync", `Customer ${c.name || c.id}: provider expiry ${before.split("|")[0] || "—"} → ${r.expiry || "—"}`, "system");
           syncTvs();
         }
+      }
+      // TV san kliyan: mete dat founisè a ajou chak 10 minit (pou yon renouvèlman debloke TV a poukont li)
+      let k = 0;
+      for (const d of (data().devices || [])) {
+        if (k >= 20) break;
+        if (!d.mac || customerOf(d) || (d.providerSyncAt && now - Date.parse(d.providerSyncAt) < SYNC_EVERY_MS)) continue;
+        let pl = playlistsOf(d.mac)[0]; if (!pl) continue;
+        if (plType(pl) === "m3u") { try { const u = new URL(String(pl.server || "").trim()), user = u.searchParams.get("username"), pass = u.searchParams.get("password"); if (!user || !pass) continue; pl = { server: `${u.protocol}//${u.host}`, username: user, password: pass }; } catch { continue; } }
+        else if (plType(pl) !== "xtream") continue;
+        const cl = xtreamClient(pl); if (cl.error) continue;
+        k++; d.providerSyncAt = new Date().toISOString();
+        const u = (await cl.get("").catch(() => null))?.user_info;
+        if (!u || Number(u.auth) === 0) continue;
+        const exp = Math.max(0, Math.floor(Number(u.exp_date) || 0)), st = String(u.status || "").slice(0, 30);
+        if (d.providerExp !== exp || (d.providerStatus || "") !== st) { d.providerExp = exp; d.providerStatus = st; d.providerExpAt = new Date().toISOString(); touchWrite(); syncTvs(); }
       }
       // Kategori fim/seri yo (pou kontni granmoun): maks 10 TV chak 2 minit, chak 6 è pou chak TV
       let v = 0;
