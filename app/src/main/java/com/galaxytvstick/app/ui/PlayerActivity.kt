@@ -284,6 +284,8 @@ class PlayerActivity : AppCompatActivity() {
         dataSourceFactory = dataSource
 
         player = ExoPlayer.Builder(this, Renderers.factory(this))
+            .setTrackSelector(Renderers.trackSelector(this))
+            .setBandwidthMeter(Renderers.bandwidth(this))
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSource))
             .setLoadControl(loadControl())
             .build().also { p ->

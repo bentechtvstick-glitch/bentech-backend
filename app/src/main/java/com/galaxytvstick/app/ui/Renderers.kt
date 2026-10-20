@@ -15,4 +15,19 @@ object Renderers {
     fun factory(ctx: Context): DefaultRenderersFactory = DefaultRenderersFactory(ctx)
         .setEnableDecoderFallback(true)
         .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+
+    /**
+     * Pi bon kalite imaj la toujou: si sous la gen plizyè kalite (HLS), pran pi wo a TV a ka jwe
+     * olye pou l kòmanse ba epi monte dousman.
+     */
+    fun trackSelector(ctx: Context) = androidx.media3.exoplayer.trackselection.DefaultTrackSelector(ctx).apply {
+        setParameters(buildUponParameters()
+            .setForceHighestSupportedBitrate(true)
+            .setExceedVideoConstraintsIfNecessary(true)
+            .setExceedRendererCapabilitiesIfNecessary(true))
+    }
+
+    /** Kòmanse ak yon estimasyon vitès entènèt wo (20 Mb/s) pou premye imaj yo pa flou. */
+    fun bandwidth(ctx: Context) = androidx.media3.exoplayer.upstream.DefaultBandwidthMeter.Builder(ctx)
+        .setInitialBitrateEstimate(20_000_000L).build()
 }

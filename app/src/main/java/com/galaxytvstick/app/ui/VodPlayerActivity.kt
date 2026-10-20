@@ -179,6 +179,8 @@ class VodPlayerActivity : AppCompatActivity() {
             .build()
         val dataSource = OkHttpDataSource.Factory(XtreamApi.http).setUserAgent(XtreamApi.USER_AGENT)
         player = ExoPlayer.Builder(this, renderers)
+            .setTrackSelector(Renderers.trackSelector(this))
+            .setBandwidthMeter(Renderers.bandwidth(this))
             .setLoadControl(loadControl)
             .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(dataSource))
             .setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(), true)

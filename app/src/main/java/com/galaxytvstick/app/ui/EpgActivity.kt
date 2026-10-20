@@ -275,6 +275,8 @@ class EpgActivity : AppCompatActivity() {
         b.previewLogo.visibility = View.VISIBLE
         b.previewLogo.load(ch.icon) { error(R.drawable.ic_tv) }
         val p = player ?: ExoPlayer.Builder(this, Renderers.factory(this))
+            .setTrackSelector(Renderers.trackSelector(this))
+            .setBandwidthMeter(Renderers.bandwidth(this))
             .setLoadControl(PlayerActivity.loadControl())
             .setMediaSourceFactory(
                 DefaultMediaSourceFactory(OkHttpDataSource.Factory(XtreamApi.http).setUserAgent(XtreamApi.USER_AGENT).also { previewFactory = it })
