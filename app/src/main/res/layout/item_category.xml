@@ -2,6 +2,6 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="4dp"
     android:background="@drawable/bg_focus_glass" android:focusable="true" android:clickable="true" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="9dp" android:paddingBottom="9dp">
-    <TextView android:id="@+id/name" android:layout_width="match_parent" android:layout_height="wrap_content"
+    <TextView android:shadowColor="#E6000000" android:shadowRadius="5" android:shadowDx="0" android:shadowDy="1" android:id="@+id/name" android:layout_width="match_parent" android:layout_height="wrap_content"
         android:singleLine="true" android:ellipsize="end" android:textColor="@color/text" android:textSize="15sp"/>
 </FrameLayout>
