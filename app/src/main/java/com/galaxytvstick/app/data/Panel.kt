@@ -644,13 +644,13 @@ class PanelApi(private val prefs: Prefs) {
     }
 
     /** Voye non kategori fim oswa seri yo bay panel la (pou admin nan wè/kache kontni granmoun yo). */
-    suspend fun uploadVodCats(kind: String, categories: List<Category>) {
+    suspend fun uploadVodCats(kind: String, categories: List<Category>, count: Int = -1) {
         val arr = JSONArray()
         categories.take(3000).forEach { arr.put(JSONObject().put("id", it.id).put("name", it.name)) }
         call(
             Request.Builder().url("$base/devices/${enc(deviceId)}/vodcats")
                 .header("X-Device-Key", prefs.deviceKey)
-                .post(JSONObject().put("kind", kind).put("categories", arr).toString().toRequestBody(jsonType)).build()
+                .post(JSONObject().put("kind", kind).put("categories", arr).put("count", count).toString().toRequestBody(jsonType)).build()
         )
     }
 
