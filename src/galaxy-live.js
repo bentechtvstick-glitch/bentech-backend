@@ -318,13 +318,16 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   const broadcastSync = () => {
     clearTimeout(syncTimer);
     syncTimer = setTimeout(() => {
-      for (const [mac, set] of waiters) {
-        if (!set?.size) continue;
+      // Tout TV ki online yo, pa sèlman sa k ap tann kounye a: yon TV ki ant 2 demann (li fèk resevwa yon repons)
+      // pa dwe rate siyal la. Li rete nan file a epi TV a pran l nan pwochen demann li (kèk milisegonn apre).
+      const macs = new Set([...waiters.keys()].filter((m) => waiters.get(m)?.size));
+      for (const d of db.data.devices || []) if (d.mac && isOnline(d.mac)) macs.add(d.mac);
+      for (const mac of macs) {
         const q = pendingFor(mac);
         if (!q.some((c) => c.type === "sync")) q.push({ id: Math.random().toString(36).slice(2, 10), type: "sync", createdAt: Date.now() });
         flush(mac);
       }
-    }, 400);
+    }, 150);
   };
 
   // =========================================================================
