@@ -189,6 +189,8 @@ class VodPlayerActivity : AppCompatActivity() {
             .build().also { p ->
                 p.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                 b.playerView.player = p
+                Captions.apply(this, p)
+                Captions.onChanged = { player?.let { Captions.apply(this, it) } }
                 p.addListener(listener)
             }
     }

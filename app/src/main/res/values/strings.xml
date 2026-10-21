@@ -241,4 +241,8 @@
     <string name="vod_cw_remove">Retire l nan lis la</string>
     <string name="vod_cw_clear">Efase tout lis «Kontinye gade» la</string>
     <string name="vod_cw_hint">Kenbe bouton OK la pou retire yon fim nan lis la.</string>
+    <string name="set_captions">Soutit (CC): %1$s</string>
+    <string name="captions_title">Soutit (CC)</string>
+    <string name="captions_off">Etenn</string>
+    <string name="captions_any">Nenpòt lang ki disponib</string>
 </resources>

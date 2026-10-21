@@ -124,6 +124,7 @@ class SettingsMenu(
                 onListsChanged()
                 show()
             },
+            a.getString(R.string.set_captions, captionName(prefs.captions)) to { chooseCaptions() },
             a.getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off) to { parentalControl() },
             a.getString(R.string.set_autostart, onOff(prefs.autoStart)) to { prefs.autoStart = !prefs.autoStart; show() },
             a.getString(R.string.set_last_channel, onOff(prefs.startLastChannel)) to { prefs.startLastChannel = !prefs.startLastChannel; show() },
@@ -185,6 +186,24 @@ class SettingsMenu(
     }
 
     /** Kliyan an chwazi lang app la; ekran yo rechaje nan nouvo lang nan. */
+    private fun captionName(code: String): String = when (code) {
+        "off" -> a.getString(R.string.captions_off)
+        "any" -> a.getString(R.string.captions_any)
+        else -> Captions.NAMES.getOrNull(Captions.CODES.indexOf(code))?.ifBlank { null } ?: code
+    }
+
+    /** Soutit: etenn, nenpòt lang, oswa yon lang presi. Aplike touswit sou videyo k ap jwe a. */
+    private fun chooseCaptions() {
+        val cur = prefs.captions
+        menuDialog(R.string.captions_title, Captions.CODES.map { code ->
+            ((if (code == cur) "✓  " else "     ") + captionName(code)) to {
+                prefs.captions = code
+                Captions.onChanged?.invoke()
+                show()
+            }
+        })
+    }
+
     private fun chooseLanguage() {
         val cur = currentLang()
         menuDialog(R.string.language, LANG_CODES.mapIndexed { i, code ->

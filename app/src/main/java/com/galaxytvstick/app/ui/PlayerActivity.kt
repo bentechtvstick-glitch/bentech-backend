@@ -276,6 +276,8 @@ class PlayerActivity : AppCompatActivity() {
             p.addListener(listener)
             p.addAnalyticsListener(analytics)
             p.volume = 1f
+            Captions.apply(this, p)
+            Captions.onChanged = { player?.let { Captions.apply(this, it) } }
             adopted = true
             return
         }
@@ -295,7 +297,9 @@ class PlayerActivity : AppCompatActivity() {
                 b.playerView.player = p
                 p.addListener(listener)
                 p.addAnalyticsListener(analytics)
+                Captions.apply(this, p)
             }
+        Captions.onChanged = { player?.let { Captions.apply(this, it) } }
     }
 
     // Pou dyagnostik: ki dekodè k ap travay, ak konbyen imaj li sote

@@ -218,4 +218,8 @@
     <string name="vod_cw_remove">Retirer de la liste</string>
     <string name="vod_cw_clear">Effacer toute la liste « Reprendre »</string>
     <string name="vod_cw_hint">Maintenez OK pour retirer un titre de la liste.</string>
+    <string name="set_captions">Sous-titres (CC) : %1$s</string>
+    <string name="captions_title">Sous-titres (CC)</string>
+    <string name="captions_off">Désactivés</string>
+    <string name="captions_any">Toute langue disponible</string>
 </resources>

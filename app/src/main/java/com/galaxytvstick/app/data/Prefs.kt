@@ -72,6 +72,11 @@ class Prefs(context: Context) {
     }
 
     /** Chanèl yo nan lòd alfabetik (A → Z); false = lòd sèvè a / panel la. */
+    /** Soutit: "off", "any" oswa kòd yon lang ("en", "fr"…). */
+    var captions: String
+        get() = sp.getString("captions", "off") ?: "off"
+        set(value) = sp.edit().putString("captions", value).apply()
+
     var sortAz: Boolean
         get() = sp.getBoolean("sort_az", true)
         set(value) = sp.edit().putBoolean("sort_az", value).apply()

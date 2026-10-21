@@ -218,4 +218,8 @@
     <string name="vod_cw_remove">Remove from the list</string>
     <string name="vod_cw_clear">Clear all of “Continue watching”</string>
     <string name="vod_cw_hint">Hold OK to remove a title from the list.</string>
+    <string name="set_captions">Captions (CC): %1$s</string>
+    <string name="captions_title">Captions (CC)</string>
+    <string name="captions_off">Off</string>
+    <string name="captions_any">Any available language</string>
 </resources>
