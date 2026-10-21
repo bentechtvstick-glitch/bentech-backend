@@ -1,3 +1,4 @@
+import { visibleDevices } from "./visible.js";
 import { tvEvents } from "./tvevents.js";
 // ---------------------------------------------------------------------------
 // Galaxy TV Stick — koneksyon ant app TV a ak panel BenTech la.
@@ -679,8 +680,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     let linked = false;
     // TV admin nan efase: si l toujou limen, li tounen sou ekran aktivasyon an epi li re-anrejistre l poukont li.
     // Pa montre l nan lis la (sinon li sanble efase a pa t mache); li tounen nan lis la lè admin nan ba l yon playlist ankò.
-    const gone = new Set(data().deletedDevices);
-    const visible = data().devices.filter((d) => !(d.mac && gone.has(d.mac) && !(data().devicePlaylists[d.mac] || []).length));
+    const visible = visibleDevices(data());
     for (const d of visible) if (linkCustomerByMac(d)) { activateCustomer(d); linked = true; }
     if (linked) { touchWrite(); syncTvs(); }
     // Tout aparèy yo: TV Galaxy yo (ak MAC) ak aparèy ki te deja nan panel la (DVC-…)

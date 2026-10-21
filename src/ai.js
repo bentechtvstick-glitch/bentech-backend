@@ -1,3 +1,4 @@
+import { visibleDevices } from "./visible.js";
 import fs from "node:fs";
 import path from "node:path";
 // Asistan AI panel la (Claude Haiku): li gade eta panel la epi li reponn kesyon admin nan.
@@ -60,7 +61,7 @@ export function mountAi(app, db, { authenticate, isOnline }) {
   /** Ti rezime eta panel la (san modpas, san kle, san lyen playlist). */
   function snapshot() {
     const d = db.data, now = Date.now();
-    const devices = (d.devices || []).filter((x) => x.mac);
+    const devices = visibleDevices(d).filter((x) => x.mac);
     const online = devices.filter((x) => isOnline(x.mac));
     const versions = {};
     for (const x of devices) versions[x.appVersion || "?"] = (versions[x.appVersion || "?"] || 0) + 1;

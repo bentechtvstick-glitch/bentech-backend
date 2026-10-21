@@ -6,6 +6,7 @@
 //   an mwens pase yon segonn (chanje chanèl, mesaj, rechaje, redemare, dekonekte).
 // - Tout sa rete an memwa: yo pa chaje db.json, epi yo pa gen enpòtans si sèvè a redemare.
 // ---------------------------------------------------------------------------
+import { visibleDevices } from "./visible.js";
 import express from "express";
 import { deviceIndex, gzipStatic } from "./perf.js";
 import path from "node:path";
@@ -217,7 +218,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
 
   /** Tout TV Galaxy yo, sa ki online an premye, ak sa yo ap gade. */
   app.get("/api/galaxy/live", authenticate, (req, res) => {
-    const list = (db.data.devices || []).filter((d) => d.mac).map(liveView);
+    const list = visibleDevices(db.data).filter((d) => d.mac).map(liveView);
     list.sort((a, b) => ((b.online && b.configured) - (a.online && a.configured)) || ((b.live?.updatedAt || 0) - (a.live?.updatedAt || 0)));
     res.json({
       online: list.filter((x) => x.online && x.configured).length,
@@ -357,7 +358,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       persistent: !!process.env.DB_FILE && process.env.DB_FILE !== "./db.json",
       ...diskInfo(),
       memTotalMb: Math.round(os.totalmem() / 1048576), memFreeMb: Math.round(os.freemem() / 1048576), cpus: os.cpus().length,
-      devices: count(d.devices), online, connected: [...waiters.values()].filter((s) => s.size).length,
+      devices: visibleDevices(d).length, online, connected: [...waiters.values()].filter((s) => s.size).length,
       playlists: Object.values(d.devicePlaylists || {}).reduce((n, l) => n + count(l), 0), channelLists: count(d.channelLists), channels,
       customers: count(d.customers), auditLogs: count(d.auditLogs),
       tv: ["tickers", "chyrons", "banners", "popups", "liveEvents", "mediaAds"].reduce((n, k) => n + count(d[k]), 0),

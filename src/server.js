@@ -1,3 +1,4 @@
+import { visibleDevices } from "./visible.js";
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
@@ -521,7 +522,7 @@ app.get("/api/version", (req, res) => {
 app.get("/api/dashboard", guard, (req, res) => {
   res.json({
     customers: (db.data.customers || []).length,
-    devices: (db.data.devices || []).length,
+    devices: visibleDevices(db.data).length,
     activationCodes: (db.data.activationCodes || []).length,
     channels: (db.data.channels || []).length,
   });
