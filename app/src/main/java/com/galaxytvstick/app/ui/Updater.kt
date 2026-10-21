@@ -219,8 +219,9 @@ object Updater {
         //    Men Android 10+ entèdi yon app relouvri tèt li apre yon mizajou an silans (sof si TV a ba l pèmisyon
         //    "afiche sou lòt app"). San pèmisyon sa a, sèvi ak ekran enstalasyon Android la: li fini ak bouton "Open"
         //    ki gen fokis la, kliyan an jis peze OK pou retounen nan app la.
-        val canReopen = Build.VERSION.SDK_INT < 29 || android.provider.Settings.canDrawOverlays(ctx)
-        if (canReopen && installSession(ctx, file)) return
+        //    Chwa admin nan: toujou ekran enstalasyon Android la, pou kliyan an wè "Open" a lafen epi retounen nan app la.
+        val useSession = false
+        if (useSession && installSession(ctx, file)) return
         // 2) Si sa pa mache: ansyen fason an (ekran enstalasyon Android la)
         val uri: Uri = if (Build.VERSION.SDK_INT >= 24) FileProvider.getUriForFile(ctx, "${BuildConfig.APPLICATION_ID}.files", file)
         else { file.setReadable(true, false); Uri.fromFile(file) }
@@ -228,7 +229,8 @@ object Updater {
             .setDataAndType(uri, "application/vnd.android.package-archive")
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { ctx.startActivity(intent) }.onFailure {
-            Toast.makeText(ctx, ctx.getString(R.string.update_failed, it.message ?: ""), Toast.LENGTH_LONG).show()
+            // Ekran enstalasyon an pa louvri sou aparèy sa a: eseye enstalatè sistèm nan dirèkteman
+            if (!installSession(ctx, file)) Toast.makeText(ctx, ctx.getString(R.string.update_failed, it.message ?: ""), Toast.LENGTH_LONG).show()
         }
     }
 }
