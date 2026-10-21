@@ -277,6 +277,7 @@ class PlayerActivity : AppCompatActivity() {
             p.addAnalyticsListener(analytics)
             p.volume = 1f
             Captions.apply(this, p)
+                b.playerView.subtitleView?.apply { setUserDefaultStyle(); setUserDefaultTextSize(); visibility = android.view.View.VISIBLE }
             Captions.onChanged = { player?.let { Captions.apply(this, it) } }
             adopted = true
             return
@@ -298,6 +299,7 @@ class PlayerActivity : AppCompatActivity() {
                 p.addListener(listener)
                 p.addAnalyticsListener(analytics)
                 Captions.apply(this, p)
+                b.playerView.subtitleView?.apply { setUserDefaultStyle(); setUserDefaultTextSize(); visibility = android.view.View.VISIBLE }
             }
         Captions.onChanged = { player?.let { Captions.apply(this, it) } }
     }

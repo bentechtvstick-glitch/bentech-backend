@@ -190,6 +190,7 @@ class VodPlayerActivity : AppCompatActivity() {
                 p.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                 b.playerView.player = p
                 Captions.apply(this, p)
+                b.playerView.subtitleView?.apply { setUserDefaultStyle(); setUserDefaultTextSize(); visibility = android.view.View.VISIBLE }
                 Captions.onChanged = { player?.let { Captions.apply(this, it) } }
                 p.addListener(listener)
             }

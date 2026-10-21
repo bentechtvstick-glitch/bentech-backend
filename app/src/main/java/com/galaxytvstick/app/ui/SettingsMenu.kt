@@ -199,6 +199,11 @@ class SettingsMenu(
             ((if (code == cur) "✓  " else "     ") + captionName(code)) to {
                 prefs.captions = code
                 Captions.onChanged?.invoke()
+                // Di kliyan an touswit si videyo k ap jwe a gen soutit (anpil chanèl pa genyen)
+                if (code != "off") android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    val n = Captions.available()
+                    if (n == 0) android.widget.Toast.makeText(a, R.string.captions_none, android.widget.Toast.LENGTH_LONG).show()
+                }, 1500)
                 show()
             }
         })

@@ -17,8 +17,17 @@ object Captions {
 
     /** Ekran player ki ouvè kounye a: aplike chanjman an touswit san rekòmanse videyo a. */
     @Volatile var onChanged: (() -> Unit)? = null
+    /** Player k ap jwe kounye a (pou di kliyan an si videyo a gen soutit). */
+    @Volatile var current: java.lang.ref.WeakReference<Player>? = null
+
+    /** Konbyen soutit/CC videyo k ap jwe a genyen (null = pa gen videyo k ap jwe). */
+    fun available(): Int? {
+        val p = current?.get() ?: return null
+        return p.currentTracks.groups.count { it.type == C.TRACK_TYPE_TEXT }
+    }
 
     fun apply(ctx: Context, p: Player) {
+        current = java.lang.ref.WeakReference(p)
         val pref = Prefs(ctx).captions
         val b = p.trackSelectionParameters.buildUpon()
         if (pref == "off") {
@@ -30,6 +39,7 @@ object Captions {
                 .setPreferredTextLanguages(*langs.toTypedArray())
                 .setSelectUndeterminedTextLanguage(true)
                 .setIgnoredTextSelectionFlags(0)
+                .setPreferredTextRoleFlags(C.ROLE_FLAG_CAPTION or C.ROLE_FLAG_SUBTITLE)
         }
         p.trackSelectionParameters = b.build()
     }

@@ -222,4 +222,5 @@
     <string name="captions_title">Subtítulos (CC)</string>
     <string name="captions_off">Desactivados</string>
     <string name="captions_any">Cualquier idioma disponible</string>
+    <string name="captions_none">Este video no tiene subtítulos (CC). Prueba un canal de EE. UU. (CNN, ABC…) o una película con subtítulos.</string>
 </resources>

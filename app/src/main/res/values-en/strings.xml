@@ -222,4 +222,5 @@
     <string name="captions_title">Captions (CC)</string>
     <string name="captions_off">Off</string>
     <string name="captions_any">Any available language</string>
+    <string name="captions_none">This video has no captions (CC). Try a US channel (CNN, ABC…) or a movie with subtitles.</string>
 </resources>
