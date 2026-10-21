@@ -1714,7 +1714,7 @@ function renderDevTable() {
     capRows("dev", devices).map((d) => {
       const l = d.galaxy ? on.get(d.mac) : null;
       const online = l ? l.online : String(d.status).toLowerCase() === "online";
-      const st = d.blocked ? `<span class="st-block">${t("Bloke")}</span>` : !(d.playlists || []).length ? `<span class="st-off" title="${esc(t("Pa konfigire"))}">—</span>` : `<span class="${online ? "st-on" : "st-off"}">${t(online ? "Online" : "Offline")}</span>`;
+      const st = d.blocked ? `<span class="st-block">${t("Bloke")}</span>` : !(d.playlists || []).length ? (d.galaxy ? `<span class="st-off" title="${esc(t("TV a sou ekran aktivasyon an: ajoute yon playlist pou l konekte."))}">⏳ ${esc(t("Ap tann aktivasyon"))}</span>` : `<span class="st-off" title="${esc(t("Pa konfigire"))}">—</span>`) : `<span class="${online ? "st-on" : "st-off"}">${t(online ? "Online" : "Offline")}</span>`;
       const key = d.galaxy ? `data-mac="${esc(d.mac)}"` : `data-id="${esc(d.deviceId)}"`;
       return `<tr class="click${dev && d.galaxy && dev.mac === d.mac ? " sel" : ""}" ${key}><td class="mono">${d.galaxy ? esc(d.mac) : "-"}</td><td>${esc(shortId(d))}</td><td>${esc(d.model ? devType(d.model) : (d.type || "Android TV"))}</td><td>${st}</td>
         <td>${d.playlists.map((p) => esc(p.name)).join(", ") || t("Pa konfigire")}</td><td>${d.galaxy ? devExpHtml(d) : "—"}</td><td>${esc(d.lastSeen || "—")}</td><td>${Number(d.providerMaxConn) > 0 ? esc(d.providerMaxConn) : "—"}</td>

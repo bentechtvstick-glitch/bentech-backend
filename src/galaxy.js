@@ -1,4 +1,4 @@
-import { visibleDevices } from "./visible.js";
+import { visibleDevices, isGhost } from "./visible.js";
 import { tvEvents } from "./tvevents.js";
 // ---------------------------------------------------------------------------
 // Galaxy TV Stick — koneksyon ant app TV a ak panel BenTech la.
@@ -200,6 +200,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
    */
   function linkCustomerByMac(device) {
     if (!device?.mac || device.customer) return false;
+    if (isGhost(data(), device)) return false; // TV admin nan efase: pa re-lye l ak ansyen kliyan an poukont li
     const c = (data().customers || []).find((x) => x.mac && normMac(x.mac) === device.mac);
     if (!c) return false;
     device.customer = c.name || c.id;
@@ -644,6 +645,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       ...rest,
       deviceKey: mac ? d.deviceKey || "" : undefined,
       galaxy: !!mac,
+      waiting: isGhost(data(), d), // efase, men toujou limen sou ekran aktivasyon an
       playlists: mac ? playlistsOf(mac).map(({ id, name, server, username, createdAt, restored, type, epgUrl }) => ({
         id, name, server, username, createdAt, restored: !!restored, type: type || "xtream", epgUrl: epgUrl || "",
       })) : [],
