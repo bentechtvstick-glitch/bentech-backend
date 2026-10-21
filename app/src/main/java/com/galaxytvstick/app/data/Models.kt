@@ -68,7 +68,14 @@ object ChannelStore {
     fun isAdult(name: String) = adultRx.containsMatchIn(name)
 
     /** Aplike règ panel la (hide/show, limit) sou lis sèvè a. */
+    private var lastApplySig = 0
     fun applyPanel(cfg: PanelConfig) {
+        // Panel la voye konfig la chak minit: si anyen ki chanje lis la pa chanje, pa refè travay la
+        // (sou dè dizèn milye chanèl, sa te fè ekran an bloke yon ti moman chak minit).
+        val sig = listOf(cfg.hiddenChannels, cfg.hiddenCategories, cfg.maxChannels, cfg.channelNames, cfg.categoryNames, cfg.pkgRules,
+            cfg.forceHideAdult, cfg.blockedLive, hideAdult, sortAz, System.identityHashCode(rawChannels), System.identityHashCode(rawCategories), rawChannels.size).hashCode()
+        if (sig == lastApplySig && all.isNotEmpty()) return
+        lastApplySig = sig
         all = cfg.filterChannels(rawChannels)
         // Pakè chanèl panel la, aplike pa NON sou tout lis la (menm gwoup panel la poko wè yo)
         cfg.pkgRules?.let { r ->
