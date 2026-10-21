@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Mizajou app la: louvri enstalatè a ak APK app la telechaje a -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Si TV a bay pèmisyon sa a, app la ka relouvri poukont li apre yon mizajou an silans (Android 10+) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Mache sou Fire Stick / Android TV, men tou sou aparèy san ekran touch -->

@@ -215,8 +215,12 @@ object Updater {
             }.isSuccess
             if (opened) return
         }
-        // 1) Enstalatè sistèm nan dirèkteman (PackageInstaller): yon sèl ti konfimasyon, oswa okenn sou Android 12+
-        if (installSession(ctx, file)) return
+        // 1) Enstalatè sistèm nan dirèkteman (PackageInstaller): yon sèl ti konfimasyon, oswa okenn sou Android 12+.
+        //    Men Android 10+ entèdi yon app relouvri tèt li apre yon mizajou an silans (sof si TV a ba l pèmisyon
+        //    "afiche sou lòt app"). San pèmisyon sa a, sèvi ak ekran enstalasyon Android la: li fini ak bouton "Open"
+        //    ki gen fokis la, kliyan an jis peze OK pou retounen nan app la.
+        val canReopen = Build.VERSION.SDK_INT < 29 || android.provider.Settings.canDrawOverlays(ctx)
+        if (canReopen && installSession(ctx, file)) return
         // 2) Si sa pa mache: ansyen fason an (ekran enstalasyon Android la)
         val uri: Uri = if (Build.VERSION.SDK_INT >= 24) FileProvider.getUriForFile(ctx, "${BuildConfig.APPLICATION_ID}.files", file)
         else { file.setReadable(true, false); Uri.fromFile(file) }
