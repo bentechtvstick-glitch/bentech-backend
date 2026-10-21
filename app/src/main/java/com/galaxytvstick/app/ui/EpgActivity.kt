@@ -688,7 +688,8 @@ class EpgActivity : AppCompatActivity() {
                 (if (ch.canCatchup(p)) "    ${getString(R.string.epg_catchup_hint)}" else "")
             b.detailDesc.text = p.desc
         } else {
-            b.detailTitle.text = getString(if (EpgRepository.isLoaded) R.string.epg_no_info else R.string.epg_loading)
+            // Pa ekri "Gid la ap chaje…": pwogram nan parèt poukont li lè l rive
+            b.detailTitle.text = if (EpgRepository.isLoaded && !EpgRepository.needsSingle(ch)) getString(R.string.epg_no_info) else ""
             b.detailTime.text = ""
             b.detailDesc.text = ""
         }
