@@ -782,8 +782,9 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         </details>
         <div class="pkgnote" id="chHealthNote" hidden></div>
         <p class="note" id="chCount"></p>
-        <div class="label" style="margin-top:4px">Gwoup ki kache sou TV a</div>
-        <div class="chlist" id="chTop"></div>
+        <details id="chTopBox" open style="margin-top:4px"><summary class="label" style="cursor:pointer">Gwoup ki kache sou TV a</summary>
+          <div class="chlist" id="chTop"></div>
+        </details>
         <details id="chAllBox" style="margin-top:8px"><summary class="note" style="cursor:pointer">Wè tout lis la <span id="chAllN"></span></summary>
           <input type="text" id="chSearch" placeholder="Chèche yon chanèl" style="margin:6px 0">
           <div class="chlist" id="chList"></div>
@@ -2588,6 +2589,9 @@ for (const box of [$("#chList"), $("#chTop")]) box.addEventListener("change", (e
     setMsg($("#chMsg"), "Chanjman yo poko sove.", false); $("#chMsg").className = "msg"; return; }
   const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep; setMsg($("#chMsg"), "Chanjman yo poko sove.", false); $("#chMsg").className = "msg";
 });
+// Seksyon «Gwoup ki kache sou TV a»: louvri/fèmen, epi sonje chwa a
+try { if (localStorage.getItem("galaxy_chtop_open") === "0") $("#chTopBox").open = false; } catch {}
+$("#chTopBox").addEventListener("toggle", () => { try { localStorage.setItem("galaxy_chtop_open", $("#chTopBox").open ? "1" : "0"); } catch {} });
 // Tankou kat kontni granmoun lan: chak switch sove poukont li (TV a aplike l touswit, an silans)
 let chAutoT = 0;
 for (const box of [$("#chList"), $("#chTop")]) box.addEventListener("change", (e) => {
