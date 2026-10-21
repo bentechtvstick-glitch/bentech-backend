@@ -100,6 +100,9 @@ object ChannelStore {
             val col = java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
             all = all.sortedWith(Comparator { a, b -> col.compare(sortKey(a.name), sortKey(b.name)) })
         }
+        // Nimewo chanèl yo: 1, 2, 3… nan lòd lis la (founisè yo souvan bay gwo nimewo tankou 1391305).
+        // Se menm nimewo sa yo kliyan an tape sou telekòmand lan pou chanje chanèl.
+        all = all.mapIndexed { i, c -> if (c.num == i + 1) c else c.copy(num = i + 1) }
         val withChannels = all.map { it.categoryId }.toHashSet()
         categories = cfg.filterCategories(rawCategories).filter { it.id in withChannels }
         val allowedIds = all.map { it.streamId }.toHashSet()
