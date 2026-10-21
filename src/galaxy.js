@@ -579,6 +579,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const kind = req.body?.kind === "series" ? "series" : "movies";
     const names = [...new Set((Array.isArray(req.body?.categories) ? req.body.categories : []).map((c) => String(c?.name || "").trim().slice(0, 120)).filter(Boolean))].slice(0, 3000);
     device.vodCats ??= {}; device.vodCats[kind] = names; device.vodCatsAt = new Date().toISOString();
+    // Konbyen fim / seri app la jwenn (app 1.0.154+)
+    const cnt = Math.floor(Number(req.body?.count));
+    if (Number.isFinite(cnt) && cnt >= 0) { device.vodCounts ??= {}; device.vodCounts[kind] = cnt; }
     touchWrite();
     res.json({ ok: true, count: names.length });
   });
