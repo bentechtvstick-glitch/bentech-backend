@@ -4,7 +4,7 @@
     android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg">
 
     <ImageView android:id="@+id/backdrop" android:layout_width="match_parent" android:layout_height="match_parent"
-        android:alpha="0.35" android:scaleType="centerCrop" android:importantForAccessibility="no"/>
+        android:alpha="0.7" android:scaleType="centerCrop" android:importantForAccessibility="no"/>
     <View android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_detail_gradient"/>
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal"

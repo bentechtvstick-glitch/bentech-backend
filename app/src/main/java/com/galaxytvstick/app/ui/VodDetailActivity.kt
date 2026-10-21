@@ -66,8 +66,8 @@ class VodDetailActivity : AppCompatActivity() {
         )
 
         b.title.text = item.name
-        b.poster.load(item.poster) { crossfade(true); error(R.drawable.ic_tv) }
-        b.backdrop.load(item.poster)
+        b.poster.load(Img.poster(item.poster, big = true)) { crossfade(true); error(R.drawable.ic_tv) }
+        // Pa etire afich la kòm fon (sa te fè l flou): fon an parèt sèlman lè founisè a bay yon vrè imaj fon
         b.meta.text = meta(item.year, item.rating, 0, "")
         b.episodes.layoutManager = TvLinearLayoutManager(this)
         b.episodes.adapter = epAdapter
@@ -131,8 +131,8 @@ class VodDetailActivity : AppCompatActivity() {
         b.plot.text = d.plot
         b.credits.text = credits(d.director, d.cast)
         b.meta.text = meta(item.year.ifBlank { d.releaseDate.take(4) }, if (item.rating > 0) item.rating else d.rating, d.durationSecs, d.genre)
-        d.backdrop?.let { b.backdrop.load(it) }
-        if (item.poster == null) d.poster?.let { b.poster.load(it) }
+        d.backdrop?.let { b.backdrop.load(Img.backdrop(it)) { crossfade(true) } }
+        if (item.poster == null) d.poster?.let { b.poster.load(Img.poster(it, big = true)) }
         // Si sèvè a bay yon lòt ekstansyon (mkv…), itilize l
         d.ext?.takeIf { it.isNotBlank() && it != item.ext }?.let { movieUrl = api.movieUrl(item.id, it) }
     }
@@ -161,7 +161,7 @@ class VodDetailActivity : AppCompatActivity() {
         b.plot.text = d.plot
         b.credits.text = credits(d.director, d.cast)
         b.meta.text = meta(item.year.ifBlank { d.releaseDate.take(4) }, if (item.rating > 0) item.rating else d.rating, 0, d.genre)
-        d.backdrop?.let { b.backdrop.load(it) }
+        d.backdrop?.let { b.backdrop.load(Img.backdrop(it)) { crossfade(true) } }
         seasons = d.seasons
         allEpisodes = d.seasons.keys.sorted().flatMap { d.seasons[it].orEmpty() }
         if (allEpisodes.isEmpty()) {

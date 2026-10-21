@@ -319,7 +319,7 @@ class HomeActivity : AppCompatActivity() {
             h.b.title.text = p.title
             h.b.left.text = leftText(p)
             h.b.progress.progress = p.percent
-            h.b.poster.load(p.poster) { error(R.drawable.ic_tv) }
+            h.b.poster.load(Img.poster(p.poster)) { error(R.drawable.ic_tv) }
             h.b.root.setOnClickListener { resume(p) }
         }
     }

@@ -343,7 +343,7 @@ class VodActivity : AppCompatActivity() {
             val title = item?.name ?: e.progress?.title.orEmpty()
             val poster = item?.poster ?: e.progress?.poster
             h.b.title.text = title
-            h.b.poster.load(poster) { crossfade(true); error(R.drawable.ic_tv); placeholder(android.graphics.drawable.ColorDrawable(0xFF141A2E.toInt())) }
+            h.b.poster.load(Img.poster(poster)) { crossfade(true); error(R.drawable.ic_tv); placeholder(android.graphics.drawable.ColorDrawable(0xFF141A2E.toInt())) }
             h.b.sub.text = when {
                 e.progress != null -> getString(R.string.vod_left, minutesLeft(e.progress))
                 item != null -> listOf(item.year).filter { it.isNotBlank() }.joinToString(" · ")
