@@ -790,6 +790,12 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="chlist" id="chList"></div>
         </details>
       </div>
+      <div class="card" id="cgCard">
+        <div class="cardhead"><div><h2>🏙️ Gwoup pa m</h2><p class="sub">Kreye pwòp kategori ou (egz: Miami, Tampa, New York, Boston). Mete kèk mo kle: tout chanèl ki gen mo sa yo nan non yo (oswa nan non gwoup yo) parèt nan kategori a, anlè lis la, sou tout TV yo.</p></div></div>
+        <div id="cgList"></div>
+        <div class="btns" style="justify-content:flex-start;margin-top:8px"><button class="btn small" id="cgAdd" type="button">＋ Ajoute yon gwoup</button><span class="msg" id="cgMsg"></span></div>
+        <p class="note">Egz: <b>Miami</b> → <code>miami, wsvn, wplg, wfor, wtvj</code> · <b>Tampa</b> → <code>tampa, wfla, wtsp, wfts</code> · <b>New York</b> → <code>new york, nyc, wabc, wnbc, wcbs</code></p>
+      </div>
       <div class="card" id="adCard" hidden>
         <div class="cardhead"><div><h2>🔞 Kontni pou granmoun</h2><p class="sub">Panel la chèche fim ak seri ki pou granmoun (XXX, Adult, 18+…) sou TV sa a. Etenn sa ou vle kache.</p></div></div>
         <div class="inline" style="gap:10px;margin-bottom:10px"><label class="sw"><input type="checkbox" id="adForce"><i></i></label><label for="adForce"><b>Toujou kache tout kontni granmoun sou TV sa a</b> <span class="note">(kliyan an pa ka remete l nan Settings)</span></label></div>
@@ -2218,6 +2224,35 @@ let chState = null;
 const chCache = new Map();
 const chSig = (l) => l.length + ":" + (l[0]?.id ?? "") + ":" + (l[l.length - 1]?.id ?? "") + ":" + l.reduce((a, c) => (a * 31 + (c.id | 0) + (c.name || "").length) | 0, 0);
 const chPrep = (l) => { for (const c of l) c._q = (c.name + "\u0001" + (c.categoryName || "")).toLowerCase(); return l; };
+// ------------------------------------------------------------ Gwoup pa m (kategori pa mo kle)
+let cgGroups = [];
+const cgNorm = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function cgMatches(g) {
+  const chs = chState?.chs || []; const keys = String(g.keywords || "").split(/[,\n;]+/).map((k) => cgNorm(k).trim()).filter(Boolean);
+  if (!keys.length) return null;
+  return chs.filter((c) => { const n = cgNorm(c.name) + " | " + cgNorm(c.categoryName); return keys.some((k) => n.includes(k)); });
+}
+function cgRender() {
+  $("#cgList").innerHTML = cgGroups.map((g, i) => { const m = cgMatches(g);
+    const prev = m == null ? "" : m.length ? `${t("Sou TV sa a: {0} chanèl", m.length)} — ${m.slice(0, 4).map((c) => esc(c.name)).join(", ")}${m.length > 4 ? "…" : ""}` : t("Sou TV sa a: pa gen chanèl ki koresponn");
+    return `<div class="inline" style="gap:10px;margin:6px 0;align-items:flex-start;flex-wrap:wrap"><label class="sw" style="margin-top:8px"><input type="checkbox" data-cgon="${i}"${g.on !== false ? " checked" : ""}><i></i></label>
+      <input type="text" data-cgname="${i}" value="${esc(g.name)}" placeholder="${esc(t("Non (egz: Miami)"))}" maxlength="40" style="max-width:180px">
+      <div class="grow" style="min-width:220px"><input type="text" data-cgkeys="${i}" value="${esc(g.keywords)}" placeholder="${esc(t("Mo kle, separe ak vigil (egz: miami, wsvn)"))}"><div class="note" style="margin-top:2px">${prev}</div></div>
+      <button class="btn small danger" data-cgdel="${i}" type="button">${t("Retire")}</button></div>`; }).join("") || `<div class="note">${t("Poko gen gwoup. Peze «Ajoute yon gwoup».")}</div>`;
+}
+async function cgLoad() { try { cgGroups = (await api("GET", "/galaxy/custom-groups")).map((g) => ({ ...g, keywords: (g.keywords || []).join(", ") })); } catch { cgGroups = []; } cgRender(); }
+let cgT = 0;
+function cgSaveSoon() { clearTimeout(cgT); setMsg($("#cgMsg"), "Ap sove…", true); cgT = setTimeout(async () => {
+  try { await api("PUT", "/galaxy/custom-groups", { groups: cgGroups.filter((g) => g.name.trim()).map((g) => ({ id: g.id, name: g.name, keywords: g.keywords, on: g.on !== false })) }); setMsg($("#cgMsg"), "Sove ✓ TV a aplike l touswit, an silans.", true); }
+  catch (e) { setMsg($("#cgMsg"), e.message); } }, 700); }
+$("#cgAdd").addEventListener("click", () => { cgGroups.push({ name: "", keywords: "", on: true }); cgRender(); $$("#cgList [data-cgname]").pop()?.focus(); });
+$("#cgList").addEventListener("input", (e) => { const el = e.target;
+  if (el.dataset.cgname) { cgGroups[+el.dataset.cgname].name = el.value; cgSaveSoon(); }
+  if (el.dataset.cgkeys) { const i = +el.dataset.cgkeys; cgGroups[i].keywords = el.value; const m = cgMatches(cgGroups[i]); const nt = el.parentElement.querySelector(".note");
+    if (nt) nt.innerHTML = m == null ? "" : m.length ? `${t("Sou TV sa a: {0} chanèl", m.length)} — ${m.slice(0, 4).map((c) => esc(c.name)).join(", ")}${m.length > 4 ? "…" : ""}` : t("Sou TV sa a: pa gen chanèl ki koresponn"); cgSaveSoon(); } });
+$("#cgList").addEventListener("change", (e) => { if (e.target.dataset.cgon) { cgGroups[+e.target.dataset.cgon].on = e.target.checked; cgSaveSoon(); } });
+$("#cgList").addEventListener("click", (e) => { const b = e.target.closest("[data-cgdel]"); if (!b) return; cgGroups.splice(+b.dataset.cgdel, 1); cgRender(); cgSaveSoon(); });
+
 // ------------------------------------------------------------ Kontni granmoun (chanèl, fim, seri)
 let adState = null;
 async function loadAdult() {
@@ -2266,7 +2301,7 @@ async function adSave() {
   } catch (e) { setMsg($("#adMsg"), e.message); }
 }
 async function loadChannels() {
-  loadAdult();
+  loadAdult(); cgLoad();
   if (dev && chCache.has(dev.mac) && !chState?.fromCache) {
     const mac = dev.mac, hit = chCache.get(mac);
     await loadChannelsFrom(hit.chs, hit.profiles, dev, hit.health);
@@ -2308,6 +2343,7 @@ async function loadChannelsFrom(chs, profiles, fresh, health) {
   dev = fresh || dev;
   if (chs.length && chs[0]._q === undefined) chPrep(chs);
   chState = { chs, profiles, open: new Set(), edit: null, dupOnly: false, health: health || {}, weakOnly: false };
+  if (!$("#cgList").contains(document.activeElement)) cgRender(); // apèsi «Gwoup pa m» pou TV sa a
   chHealthUi();
   // Siy sante yo bezwen app 1.0.88+ sou TV a
   const av = String(dev.appVersion || "").split(".").map(Number), oldApp = !dev.appVersion || (av[0] * 1e6 + (av[1] || 0) * 1e3 + (av[2] || 0)) < 1000088;

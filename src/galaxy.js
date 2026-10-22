@@ -530,6 +530,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       channelNames: eff.channelNames,
       // Règ pakè a pa NON (app la aplike yo sou pwòp lis konplè li): konsa gwoup / chanèl panel la poko konnen yo kache tou
       pkgRules: pkgRules(device),
+      // Gwoup pa admin nan (egz: "Miami", "Tampa"): chanèl ki gen mo kle yo nan non yo oswa nan non gwoup yo
+      customGroups: (data().customGroups || []).filter((g) => g.on !== false && g.name && (g.keywords || []).length).map((g) => ({ name: g.name, keywords: g.keywords })),
       forceHideAdult: !!device.forceHideAdult,
       blockedCats: { live: device.blockedCats?.live || [], movies: device.blockedCats?.movies || [], series: device.blockedCats?.series || [] },
       playlists: playlists.map(({ id, name, server, username, password, type, epgUrl }) => ({ id, name, server, username: username || "", password: password || "", type: plType({ type }), epgUrl: epgUrl || "" })),
@@ -550,6 +552,22 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       forceRefreshAt: s.forceRefreshAt || "",
       refreshSec: Number.isFinite(nextEdge) ? Math.max(5, Math.min(refreshSec, nextEdge)) : refreshSec,
     });
+  });
+
+  // ---- Gwoup pa m: kategori admin nan kreye pa mo kle (vil, tèm…), menm sou tout TV yo ----
+  const cgClean = (list) => (Array.isArray(list) ? list : []).slice(0, 60).map((g) => ({
+    id: String(g.id || crypto.randomUUID()).slice(0, 40),
+    name: String(g.name || "").trim().slice(0, 40),
+    keywords: [...new Set(String(Array.isArray(g.keywords) ? g.keywords.join(",") : g.keywords || "").split(/[,\n;]+/).map((k) => k.trim().slice(0, 40)).filter(Boolean))].slice(0, 30),
+    on: g.on !== false,
+  })).filter((g) => g.name);
+  app.get("/api/galaxy/custom-groups", authenticate, (req, res) => res.json(data().customGroups || []));
+  app.put("/api/galaxy/custom-groups", authenticate, async (req, res) => {
+    data().customGroups = cgClean(req.body?.groups);
+    await db.write();
+    auditLog("custom-groups", `Custom groups: ${data().customGroups.map((g) => g.name).join(", ") || "none"}`, admin(req));
+    syncTvs();
+    res.json(data().customGroups);
   });
 
   /** App la voye lis chanèl Xtream kliyan an, pou admin nan ka hide/show yo. */
