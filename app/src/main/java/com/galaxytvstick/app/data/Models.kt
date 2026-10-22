@@ -100,13 +100,19 @@ object ChannelStore {
             val col = java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
             all = all.sortedWith(Comparator { a, b -> col.compare(sortKey(a.name), sortKey(b.name)) })
         }
-        // Nimewo chanèl yo: kenbe nimewo orijinal founisè a lè l nòmal (egz: 7 rete 7).
-        // Sèlman gwo nimewo (egz: 1391305) oswa nimewo ki repete yo pran yon nimewo apre dènye nimewo nòmal la.
+        // Nimewo chanèl yo, menm règ pou tout founisè:
+        //  - si nimewo founisè a nòmal (pifò ant 1 ak kantite chanèl yo, san repete) → kenbe yo (7 rete 7);
+        //  - sinon (gwo nimewo tankou 1391305, oswa nimewo ki pa fè sans) → 1, 2, 3… nan lòd lis la.
         run {
-            val used = HashSet<Int>()
-            val keep = BooleanArray(all.size) { i -> val n = all[i].num; n in 1..9999 && used.add(n) }
-            var next = (used.maxOrNull() ?: 0) + 1
-            all = all.mapIndexed { i, c -> if (keep[i]) c else { while (!used.add(next)) next++; c.copy(num = next) } }
+            val limit = maxOf(999, all.size * 3)
+            val seen = HashSet<Int>()
+            val okCount = all.count { val n = it.num; n in 1..limit && seen.add(n) }
+            all = if (all.isNotEmpty() && okCount * 10 >= all.size * 9) {
+                val used = HashSet<Int>()
+                val keep = BooleanArray(all.size) { i -> val n = all[i].num; n in 1..limit && used.add(n) }
+                var next = (used.maxOrNull() ?: 0) + 1
+                all.mapIndexed { i, c -> if (keep[i]) c else { while (!used.add(next)) next++; c.copy(num = next) } }
+            } else all.mapIndexed { i, c -> if (c.num == i + 1) c else c.copy(num = i + 1) }
         }
         val withChannels = all.map { it.categoryId }.toHashSet()
         categories = cfg.filterCategories(rawCategories).filter { it.id in withChannels }
