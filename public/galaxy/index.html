@@ -193,6 +193,9 @@ td.up,input.up{text-transform:uppercase}input.up::placeholder{text-transform:non
 /* Gwoup yo an vèt, chanèl yo (lis la) an ble */
 .chlist .chrow .sw input:checked+i{background:#2563eb}
 details.chtools>summary{cursor:pointer;color:var(--dim);font-size:13px;margin:6px 0}
+.lkbox{border:1px solid var(--line2);border-radius:12px;padding:10px 12px;margin:8px 0;background:rgba(255,255,255,.02)}
+.lkbox>summary{cursor:pointer}
+.chip.on{background:var(--blue2);border-color:var(--blue2);color:#fff}
 .pkgnote{border:1px solid var(--accent,#7C4DFF);background:rgba(124,77,255,.12);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45}
 .chedit{flex:1;min-width:0;height:30px;padding:2px 8px;font-size:14px;text-transform:none;letter-spacing:0}
 .chrow .catx{background:none;border:0;color:var(--dim);cursor:pointer;font-size:13px;width:24px;height:22px;padding:0;flex:none}
@@ -781,6 +784,15 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <p class="note sigleg"><span>📶 = sante chanèl la, selon sa TV kliyan yo mezire lè yo gade l:</span> <span class="sig s4"><i></i><i></i><i></i><i></i></span> fò <span class="sig s3"><i></i><i></i><i></i><i></i></span> bon <span class="sig s2"><i></i><i></i><i></i><i></i></span> mwayen <span class="sig s1"><i></i><i></i><i></i><i></i></span> fèb <span class="sig s0"><i></i><i></i><i></i><i></i></span> pa mache <span class="sig"><i></i><i></i><i></i><i></i></span> poko gen done</p>
         </details>
         <div class="pkgnote" id="chHealthNote" hidden></div>
+        <details id="lkBox" class="lkbox" open><summary><b>📍 Lis kliyan an: chanèl lokal vil li + gwoup ou ajoute</b></summary>
+          <p class="note" style="margin:6px 0">1) Chwazi vil kliyan an → panel la jwenn chanèl lokal vil sa a. 2) Klike sou gwoup ou vle ajoute (Sports, NBA, Haiti…). 3) Peze «Aplike». TV a montre sèlman sa.</p>
+          <div class="row2"><div class="field"><label for="lkCity">Vil kliyan an</label><select id="lkCity"></select></div>
+            <div class="field"><label for="lkKeys">Mo kle chanèl lokal yo (ou ka ajoute oswa retire)</label><input type="text" id="lkKeys" placeholder="san francisco, kgo, kpix…"></div></div>
+          <div class="note" id="lkLocN"></div>
+          <div class="field" style="margin-top:8px"><label for="lkGrpQ">Gwoup pou ajoute</label><input type="text" id="lkGrpQ" placeholder="Chèche yon gwoup (egz: sport, nba, haiti)" style="max-width:320px"></div>
+          <div class="chips" id="lkGroups" style="max-height:180px;overflow:auto;margin-top:6px"></div>
+          <div class="btns" style="justify-content:flex-start;margin-top:10px"><button class="btn primary small" id="lkApply" type="button">✅ Aplike sou TV sa a</button><span class="msg" id="lkMsg"></span></div>
+        </details>
         <p class="note" id="chCount"></p>
         <details id="chTopBox" open style="margin-top:4px"><summary class="label" style="cursor:pointer">Gwoup ki kache sou TV a</summary>
           <div class="chlist" id="chTop"></div>
@@ -2224,6 +2236,68 @@ let chState = null;
 const chCache = new Map();
 const chSig = (l) => l.length + ":" + (l[0]?.id ?? "") + ":" + (l[l.length - 1]?.id ?? "") + ":" + l.reduce((a, c) => (a * 31 + (c.id | 0) + (c.name || "").length) | 0, 0);
 const chPrep = (l) => { for (const c of l) c._q = (c.name + "\u0001" + (c.categoryName || "")).toLowerCase(); return l; };
+// ------------------------------------------------------------ Lis kliyan an: lokal yon vil + gwoup
+// Chak vil: non vil la ak lèt idantifikasyon gwo chèn lokal yo (ABC, CBS, NBC, FOX…). Admin nan ka modifye mo kle yo.
+const LK_CITIES = [
+  ["San Francisco, CA", "san francisco, bay area, kgo, kpix, kntv, ktvu, kron, kbcw, kqed, kofy"],
+  ["Los Angeles, CA", "los angeles, kabc, kcbs, knbc, kttv, ktla, kcal, kcop"],
+  ["New York, NY", "new york, nyc, wabc, wcbs, wnbc, wnyw, wpix, wwor"],
+  ["Miami, FL", "miami, wplg, wfor, wtvj, wsvn, wsfl"],
+  ["Tampa, FL", "tampa, wfts, wtsp, wfla, wtvt"],
+  ["Orlando, FL", "orlando, wftv, wkmg, wesh, wofl"],
+  ["Boston, MA", "boston, wcvb, wbz, wbts, wfxt"],
+  ["Chicago, IL", "chicago, wls, wbbm, wmaq, wfld, wgn"],
+  ["Atlanta, GA", "atlanta, wsb, wgcl, wxia, waga"],
+  ["Houston, TX", "houston, ktrk, khou, kprc, kriv"],
+  ["Dallas, TX", "dallas, wfaa, ktvt, kxas, kdfw"],
+  ["Philadelphia, PA", "philadelphia, wpvi, kyw, wcau, wtxf, phl17"],
+  ["Washington, DC", "washington, wjla, wusa, wrc, wttg"],
+  ["Seattle, WA", "seattle, komo, kiro, kcpq, king 5"],
+  ["Phoenix, AZ", "phoenix, knxv, kpho, kpnx, ksaz"],
+  ["Detroit, MI", "detroit, wxyz, wwj, wdiv, wjbk"],
+  ["Denver, CO", "denver, kmgh, kcnc, kusa, kdvr"],
+  ["Charlotte, NC", "charlotte, wsoc, wbtv, wcnc, wjzy"],
+  ["Las Vegas, NV", "las vegas, ktnv, klas, ksnv, kvvu"],
+  ["Newark, NJ", "new jersey, njtv, wwor"],
+];
+const lkSel = new Set();
+const lkNorm = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const lkKeys = () => $("#lkKeys").value.split(/[,;\n]+/).map((k) => lkNorm(k).trim()).filter(Boolean);
+// Mo antye sèlman (pou "wls" pa jwenn "bowls", "kgo" pa jwenn "kgold")
+const lkRx = () => { const ks = lkKeys(); return ks.length ? new RegExp("(^|[^a-z0-9])(" + ks.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")($|[^a-z0-9])") : null; };
+function lkLocals() { const rx = lkRx(); if (!rx || !chState) return []; return chState.chs.filter((c) => rx.test(lkNorm(c.name))); }
+function lkRender() {
+  if (!chState) return;
+  $("#lkCity").innerHTML = `<option value="">${esc(t("— Chwazi vil la —"))}</option>` + LK_CITIES.map(([n], i) => `<option value="${i}"${$("#lkCity").dataset.v === String(i) ? " selected" : ""}>${esc(n)}</option>`).join("");
+  const loc = lkLocals(); $("#lkLocN").textContent = lkKeys().length ? t("{0} chanèl lokal jwenn sou TV sa a", loc.length) + (loc.length ? " — " + loc.slice(0, 5).map((c) => c.name).join(", ") + (loc.length > 5 ? "…" : "") : "") : "";
+  const q = lkNorm($("#lkGrpQ").value.trim()), cats = new Map(); for (const c of chState.chs) if (!cats.has(c.categoryId)) cats.set(c.categoryId, c.categoryName || "");
+  const list = [...cats].filter(([cid, n]) => lkSel.has(cid) || !q || lkNorm(n).includes(q)).slice(0, 200);
+  $("#lkGroups").innerHTML = list.map(([cid, n]) => `<button type="button" class="chip${lkSel.has(cid) ? " on" : ""}" data-lkg="${esc(cid)}">${lkSel.has(cid) ? "✓ " : ""}${esc(n || t("San kategori"))}</button>`).join("") || `<span class="note">${esc(t("Pa gen gwoup ki koresponn."))}</span>`;
+}
+$("#lkCity").addEventListener("change", () => { const i = $("#lkCity").value; $("#lkCity").dataset.v = i; if (i !== "") $("#lkKeys").value = LK_CITIES[+i][1]; lkRender(); });
+$("#lkKeys").addEventListener("input", () => { clearTimeout(lkRender.t); lkRender.t = setTimeout(lkRender, 250); });
+$("#lkGrpQ").addEventListener("input", () => { clearTimeout(lkRender.t); lkRender.t = setTimeout(lkRender, 200); });
+$("#lkGroups").addEventListener("click", (e) => { const b = e.target.closest("[data-lkg]"); if (!b) return; const cid = b.dataset.lkg; lkSel.has(cid) ? lkSel.delete(cid) : lkSel.add(cid); lkRender(); });
+$("#lkApply").addEventListener("click", () => {
+  if (!chState) return;
+  const loc = new Set(lkLocals().map((c) => c.id));
+  if (!loc.size && !lkSel.size) return setMsg($("#lkMsg"), "Chwazi yon vil oswa omwen yon gwoup.");
+  const city = $("#lkCity").value !== "" ? LK_CITIES[+$("#lkCity").value][0].split(",")[0] : "";
+  // Pa gen pakè sou TV sa a: chwa yo pou li sèlman
+  if ($("#chProfile").value) { $("#chProfile").value = ""; chState.mode = null; }
+  chState.hid = new Set(); chState.hidC = new Set();
+  const byCat = new Map(); for (const c of chState.chs) { if (!byCat.has(c.categoryId)) byCat.set(c.categoryId, []); byCat.get(c.categoryId).push(c); }
+  for (const [cid, items] of byCat) {
+    if (lkSel.has(cid)) continue; // gwoup admin nan ajoute: tout chanèl li yo
+    const here = items.filter((c) => loc.has(c.id));
+    if (!here.length) { chState.hidC.add(cid); continue; }
+    for (const c of items) if (!loc.has(c.id)) chState.hid.add(c.id);
+    if (city && !chState.catN[cid]) chState.catN[cid] = "📍 " + city; // gwoup lokal yo parèt ak non vil la sou TV a
+  }
+  chRerender(); setMsg($("#lkMsg"), t("Aplike: {0} chanèl lokal + {1} gwoup. Ap sove…", loc.size, lkSel.size), true);
+  $("#chSave").click();
+});
+
 // ------------------------------------------------------------ Gwoup pa m (kategori pa mo kle)
 let cgGroups = [];
 const cgNorm = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -2344,6 +2418,7 @@ async function loadChannelsFrom(chs, profiles, fresh, health) {
   if (chs.length && chs[0]._q === undefined) chPrep(chs);
   chState = { chs, profiles, open: new Set(), edit: null, dupOnly: false, health: health || {}, weakOnly: false };
   if (!$("#cgList").contains(document.activeElement)) cgRender(); // apèsi «Gwoup pa m» pou TV sa a
+  lkSel.clear(); lkRender();
   chHealthUi();
   // Siy sante yo bezwen app 1.0.88+ sou TV a
   const av = String(dev.appVersion || "").split(".").map(Number), oldApp = !dev.appVersion || (av[0] * 1e6 + (av[1] || 0) * 1e3 + (av[2] || 0)) < 1000088;
