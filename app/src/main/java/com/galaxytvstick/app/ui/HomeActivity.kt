@@ -177,6 +177,7 @@ class HomeActivity : AppCompatActivity() {
         for (c in all) counts[c.categoryId] = (counts[c.categoryId] ?: 0) + 1
         val list = ArrayList<HomeCat>()
         list.add(HomeCat(null, getString(R.string.home_all_channels), all.size))
+        for (c in ChannelLists.customCategories()) list.add(HomeCat(c.id, "🏙️ " + c.name, ChannelLists.customChannels(c.id).size))
         for (c in ChannelStore.categories) list.add(HomeCat(c.id, c.name, counts[c.id] ?: 0))
         catAdapter.items = list
         catAdapter.notifyDataSetChanged()
@@ -340,7 +341,7 @@ class HomeActivity : AppCompatActivity() {
             h.b.count.text = c.count.toString()
             Marquee.bind(h.b.root, h.b.name)
             h.b.root.setOnClickListener {
-                openList(if (c.id == null) ChannelStore.all else ChannelStore.all.filter { it.categoryId == c.id })
+                openList(if (c.id == null) ChannelStore.all else if (c.id.startsWith(ChannelLists.CG)) ChannelLists.customChannels(c.id) else ChannelStore.all.filter { it.categoryId == c.id })
             }
         }
     }

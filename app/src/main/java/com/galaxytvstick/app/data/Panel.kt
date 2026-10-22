@@ -271,6 +271,8 @@ data class PanelConfig(
     val pkgRules: PkgRules? = null,
     /** Panel la mande kache tout kontni granmoun (kliyan an pa ka retire sa nan Settings). */
     val forceHideAdult: Boolean = false,
+    /** Gwoup admin nan kreye pa mo kle (egz: "Miami" → miami, wsvn…). */
+    val customGroups: List<Pair<String, List<String>>> = emptyList(),
     /** Kategori panel la kache pa non (an majiskil): chanèl, fim, seri. */
     val blockedLive: Set<String> = emptySet(),
     val blockedMovies: Set<String> = emptySet(),
@@ -503,6 +505,10 @@ data class PanelConfig(
                 )
             },
             forceHideAdult = o.optBoolean("forceHideAdult", false),
+            customGroups = o.optJSONArray("customGroups")?.let { arr -> (0 until arr.length()).mapNotNull { i -> arr.optJSONObject(i)?.let { g ->
+                val keys = g.optJSONArray("keywords")?.let { k -> (0 until k.length()).map { k.optString(it) }.filter { it.isNotBlank() } } ?: emptyList()
+                if (g.optString("name").isBlank() || keys.isEmpty()) null else g.optString("name") to keys
+            } } } ?: emptyList(),
             blockedLive = o.optJSONObject("blockedCats")?.optJSONArray("live").strings().map { it.trim().uppercase() }.toSet(),
             blockedMovies = o.optJSONObject("blockedCats")?.optJSONArray("movies").strings().map { it.trim().uppercase() }.toSet(),
             blockedSeries = o.optJSONObject("blockedCats")?.optJSONArray("series").strings().map { it.trim().uppercase() }.toSet(),
