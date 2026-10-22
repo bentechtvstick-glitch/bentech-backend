@@ -17,7 +17,12 @@ import com.galaxytvstick.app.ui.LoginActivity
 class UpdateReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
-            runCatching { context.startActivity(Intent(context, LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            // Relouvri app la sèlman si kliyan an te peze "Mete ajou" (pa pou yon mizajou an silans an aryè plan)
+            val sp = context.getSharedPreferences("galaxy_update", Context.MODE_PRIVATE)
+            if (sp.getBoolean("relaunch", false)) {
+                sp.edit().putBoolean("relaunch", false).apply()
+                runCatching { context.startActivity(Intent(context, LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            }
             return
         }
         when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -999)) {

@@ -30,9 +30,54 @@ object Updater {
     /** APK ki telechaje men ki tann otorizasyon "Install unknown apps" la. */
     @Volatile private var pendingFile: File? = null
 
+    // ---------------------------------------------------------------- Mizajou an silans (Android 12+)
+    /**
+     * Android 12+ kite yon app mete tèt li ajou san okenn ekran, depi se li menm ki te enstale vèsyon ki la a
+     * (sa vrè apre premye mizajou ki fèt pa app la). Lè sa a: telechaje an aryè plan pandan kliyan an ap gade,
+     * epi enstale lè app la pa sou ekran an (Home, TV etenn). Kliyan an pa wè anyen.
+     */
+    fun canSilent(ctx: android.content.Context): Boolean = runCatching {
+        Build.VERSION.SDK_INT >= 31 && ctx.packageManager.canRequestPackageInstalls() &&
+            ctx.packageManager.getInstallSourceInfo(ctx.packageName).installingPackageName == ctx.packageName
+    }.getOrDefault(false)
+
+    @Volatile private var readyFile: File? = null
+    @Volatile private var readyBuild = 0
+    @Volatile private var preparing = false
+
+    /** Telechaje nouvo vèsyon an an silans (pa gen okenn ekran). */
+    fun prepareSilent(ctx: android.content.Context, build: Int, url: String) {
+        if (build <= BuildConfig.VERSION_CODE || build == readyBuild || preparing) return
+        preparing = true
+        val app = ctx.applicationContext
+        GalaxyApp.scope.launch {
+            val f = File(app.filesDir, "update-$build.apk")
+            val ok = runCatching {
+                XtreamApi.http.newBuilder().readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).build()
+                    .newCall(Request.Builder().url(url).build()).execute().use { r ->
+                        if (!r.isSuccessful) error("HTTP ${r.code}")
+                        f.outputStream().use { out -> r.body!!.byteStream().copyTo(out, 64 * 1024) }
+                        if (f.length() < 1_000_000) error("file too small")
+                    }
+            }.isSuccess
+            if (ok) { readyFile = f; readyBuild = build } else f.delete()
+            preparing = false
+        }
+    }
+
+    /** App la pa sou ekran an: enstale vèsyon ki pare a an silans. */
+    fun installIfReady(ctx: android.content.Context) {
+        val f = readyFile ?: return
+        if (!f.exists() || readyBuild <= BuildConfig.VERSION_CODE || !canSilent(ctx)) return
+        readyFile = null
+        GalaxyApp.scope.launch { installSession(ctx.applicationContext, f) }
+    }
+
     /** Retounen true si yon mesaj mizajou parèt (oswa deja sou ekran an). */
     fun maybePrompt(activity: Activity, u: AppUpdate?, prefs: Prefs): Boolean {
         if (u == null || u.build <= BuildConfig.VERSION_CODE) return false
+        // Mizajou an silans posib: pa deranje kliyan an, telechaje l an aryè plan
+        if (canSilent(activity)) { prepareSilent(activity, u.build, u.url.ifBlank { APK_URL }); return false }
         if (showing || downloading) return true
         // Kliyan an te otorize enstalasyon an nan Settings: enstale APK ki t ap tann nan touswit
         pendingFile?.let { f ->
@@ -78,6 +123,7 @@ object Updater {
                 }
             }.getOrDefault(0)
             if (b <= BuildConfig.VERSION_CODE || b == autoPromptedBuild) return@launch
+            if (canSilent(activity)) { prepareSilent(activity, b, APK_URL); return@launch }
             withContext(Dispatchers.Main) {
                 if (showing || downloading || activity.isFinishing || activity.isDestroyed) return@withContext
                 autoPromptedBuild = b
@@ -205,6 +251,7 @@ object Updater {
 
     private fun install(activity: Activity, file: File) {
         val ctx = activity.applicationContext
+        ctx.getSharedPreferences("galaxy_update", android.content.Context.MODE_PRIVATE).edit().putBoolean("relaunch", true).apply()
         // Fire OS / Android 8+: fòk aparèy la otorize app la enstale APK (yon sèl fwa).
         // Louvri paj otorizasyon an dirèkteman; lè kliyan an tounen, enstalasyon an kontinye poukont li.
         if (Build.VERSION.SDK_INT >= 26 && !ctx.packageManager.canRequestPackageInstalls()) {
@@ -219,8 +266,10 @@ object Updater {
         //    Men Android 10+ entèdi yon app relouvri tèt li apre yon mizajou an silans (sof si TV a ba l pèmisyon
         //    "afiche sou lòt app"). San pèmisyon sa a, sèvi ak ekran enstalasyon Android la: li fini ak bouton "Open"
         //    ki gen fokis la, kliyan an jis peze OK pou retounen nan app la.
-        //    Chwa admin nan: toujou ekran enstalasyon Android la, pou kliyan an wè "Open" a lafen epi retounen nan app la.
-        val useSession = false
+        //    Android 12+: enstalatè sistèm nan dirèkteman. Apre premye fwa sa a, app la vin "enstalatè" pa l,
+        //    epi tout lòt mizajou yo fèt an silans (an aryè plan, lè kliyan an pa sou app la).
+        //    Android 11 oswa mwens: ekran enstalasyon Android la, ak bouton "Open" a lafen.
+        val useSession = Build.VERSION.SDK_INT >= 31
         if (useSession && installSession(ctx, file)) return
         // 2) Si sa pa mache: ansyen fason an (ekran enstalasyon Android la)
         val uri: Uri = if (Build.VERSION.SDK_INT >= 24) FileProvider.getUriForFile(ctx, "${BuildConfig.APPLICATION_ID}.files", file)

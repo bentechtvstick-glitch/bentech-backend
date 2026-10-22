@@ -33,6 +33,20 @@ class GalaxyApp : Application() {
         com.galaxytvstick.app.data.EpgRepository.init(this)
         com.galaxytvstick.app.data.ChannelStore.hideAdult = com.galaxytvstick.app.data.Prefs(this).parentalOn
         com.galaxytvstick.app.data.ChannelStore.sortAz = com.galaxytvstick.app.data.Prefs(this).sortAz
+        // Mizajou an silans: lè app la pa sou ekran an ankò (kliyan an peze Home, oswa TV a etenn),
+        // enstale vèsyon ki deja telechaje a. Pwochen fwa kliyan an louvri app la, se nouvo vèsyon an.
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            private var started = 0
+            private val ui = android.os.Handler(android.os.Looper.getMainLooper())
+            private val bg = Runnable { if (started == 0) com.galaxytvstick.app.ui.Updater.installIfReady(this@GalaxyApp) }
+            override fun onActivityStarted(a: android.app.Activity) { started++; ui.removeCallbacks(bg) }
+            override fun onActivityStopped(a: android.app.Activity) { started = (started - 1).coerceAtLeast(0); if (started == 0) ui.postDelayed(bg, 4000) }
+            override fun onActivityCreated(a: android.app.Activity, b: android.os.Bundle?) {}
+            override fun onActivityResumed(a: android.app.Activity) {}
+            override fun onActivityPaused(a: android.app.Activity) {}
+            override fun onActivitySaveInstanceState(a: android.app.Activity, b: android.os.Bundle) {}
+            override fun onActivityDestroyed(a: android.app.Activity) {}
+        })
         EmojiCompat.init(
             BundledEmojiCompatConfig(this)
                 .setReplaceAll(true) // menm desen imoji sou tout aparèy
