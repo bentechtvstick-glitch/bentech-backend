@@ -1583,10 +1583,23 @@ function renderDevice() {
   $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${String(c.name).toUpperCase() === String(dev.customer || "").toUpperCase() ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
   $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span> <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
 }
+/** Menm règ nimewo ak app la (1.0.165+): nimewo founisè a si yo nòmal, sinon 1, 2, 3… sou chanèl vizib yo, nan lòd founisè a. */
+function tvNumbers(list) {
+  const out = new Map(); if (!list.length) return out;
+  const limit = Math.max(999, list.length * 3), seen = new Set();
+  const ok = list.filter((c) => { const n = +c.num; if (n >= 1 && n <= limit && !seen.has(n)) { seen.add(n); return true; } return false; }).length;
+  if (ok * 10 >= list.length * 9) {
+    const used = new Set(), keep = list.map((c) => { const n = +c.num; if (n >= 1 && n <= limit && !used.has(n)) { used.add(n); return true; } return false; });
+    let next = Math.max(0, ...used) + 1;
+    list.forEach((c, i) => { if (keep[i]) out.set(c.id, +c.num); else { while (used.has(next)) next++; used.add(next); out.set(c.id, next); } });
+  } else list.forEach((c, i) => out.set(c.id, i + 1));
+  return out;
+}
 function renderRemoteChannels() {
   const cur = devLive?.live?.channel?.id;
+  const rn = tvNumbers(devChannels.filter((c) => !c.hidden && !c.categoryHidden));
   $("#rcChannel").innerHTML = devChannels.length
-    ? devChannels.map((c) => `<option value="${c.id}"${c.id === cur ? " selected" : ""}${c.hidden || c.categoryHidden ? " disabled" : ""}>${c.num}. ${esc(c.name)}${c.hidden || c.categoryHidden ? " " + t("(kache)") : ""}</option>`).join("")
+    ? devChannels.map((c) => `<option value="${c.id}"${c.id === cur ? " selected" : ""}${c.hidden || c.categoryHidden ? " disabled" : ""}>${rn.has(c.id) ? rn.get(c.id) + ". " : ""}${esc(c.name)}${c.hidden || c.categoryHidden ? " " + t("(kache)") : ""}</option>`).join("")
     : `<option value="">${t("TV a poko voye lis chanèl li")}</option>`;
   $("#rcPlay").disabled = !devChannels.length;
 }
@@ -2499,6 +2512,7 @@ function renderChList() {
   $("#chCount").textContent = t("{0} sou {1} chanèl vizib (anvan limit Channel Profile la).", shown, chs.length);
   const byCat = new Map(); for (const c of chs) { if (!chMatch(c, q)) continue; if (chState.weakOnly && !(chState.health[c.id]?.s <= 2)) continue; if (!byCat.has(c.categoryId)) byCat.set(c.categoryId, { name: c.categoryName, items: [] }); byCat.get(c.categoryId).items.push(c); }
   // Pa mete dè milye liy nan paj la an menm tan (se sa ki te fè l lou): yon limit pa gwoup ak an tout
+  const tvN = tvNumbers(chs.filter((c) => !hid.has(c.id) && !hidC.has(c.categoryId))); // nimewo kliyan an wè sou TV a
   const CAP_GROUP = 300, CAP_TOTAL = 600;
   const draw = (byCat, q, pre = "") => { let drawn = 0, skipped = 0;
   let h = ""; for (const [cid, g] of byCat) {
@@ -2508,7 +2522,7 @@ function renderChList() {
     let list = g.items;
     if (open) { const room = Math.max(0, Math.min(chState.full?.has(cid) ? Infinity : CAP_GROUP, CAP_TOTAL * (chState.full?.has(cid) ? 50 : 1) - drawn));
       if (list.length > room) { skipped += list.length - room; list = list.slice(0, room); } drawn += list.length; }
-    if (open) for (const c of list) { const off = hid.has(c.id) || hidC.has(cid); h += `<div class="chrow${off ? " off" : ""}"><label class="sw sm"><input type="checkbox" data-ch="${c.id}" id="${pre}chk_${c.id}"${hid.has(c.id) ? "" : " checked"}${hidC.has(cid) ? " disabled" : ""}><i></i></label> ${chState.edit === "h:" + c.id ? `${c.num}. ` + editBox("ch", c.id, chName(c)) : `<label for="${pre}chk_${c.id}" style="flex:1;min-width:0">${c.num}. ${esc(chName(c))}${chState.dupCount?.get(c.id) > 1 ? ` <span class="pill p-info" title="${esc(t("Menm chanèl la parèt {0} fwa nan lis la", chState.dupCount.get(c.id)))}">×${chState.dupCount.get(c.id)}</span>` : ""}${chState.chN[c.id] ? ` <span class="note">(${esc(c.name)})</span>` : ""}</label>${sigHtml(chState.health[c.id])}${penBtn("ch", c.id)}`}</div>`; }
+    if (open) for (const c of list) { const off = hid.has(c.id) || hidC.has(cid); h += `<div class="chrow${off ? " off" : ""}"><label class="sw sm"><input type="checkbox" data-ch="${c.id}" id="${pre}chk_${c.id}"${hid.has(c.id) ? "" : " checked"}${hidC.has(cid) ? " disabled" : ""}><i></i></label> ${chState.edit === "h:" + c.id ? `${tvN.has(c.id) ? tvN.get(c.id) + ". " : "— "}` + editBox("ch", c.id, chName(c)) : `<label for="${pre}chk_${c.id}" style="flex:1;min-width:0">${tvN.has(c.id) ? tvN.get(c.id) + ". " : "— "}${esc(chName(c))}${chState.dupCount?.get(c.id) > 1 ? ` <span class="pill p-info" title="${esc(t("Menm chanèl la parèt {0} fwa nan lis la", chState.dupCount.get(c.id)))}">×${chState.dupCount.get(c.id)}</span>` : ""}${chState.chN[c.id] ? ` <span class="note">(${esc(c.name)})</span>` : ""}</label>${sigHtml(chState.health[c.id])}${penBtn("ch", c.id)}`}</div>`; }
     if (open && list.length < g.items.length) h += `<div class="chrow"><button class="btn small" type="button" data-full="${esc(cid)}">${esc(t("Montre tout ({0})", g.items.length))}</button></div>`;
   }
   return [h, skipped]; };
