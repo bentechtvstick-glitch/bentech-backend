@@ -96,11 +96,7 @@ object ChannelStore {
         val adultOff = hideAdult || cfg.forceHideAdult
         val bad = rawCategories.filter { (adultOff && isAdult(it.name)) || it.name.trim().uppercase() in cfg.blockedLive }.map { it.id }.toHashSet()
         if (bad.isNotEmpty()) all = all.filter { it.categoryId !in bad }
-        if (sortAz) {
-            val col = java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
-            all = all.sortedWith(Comparator { a, b -> col.compare(sortKey(a.name), sortKey(b.name)) })
-        }
-        // Nimewo chanèl yo, menm règ pou tout founisè:
+        // Nimewo chanèl yo (kalkile nan lòd founisè a, ANVAN triye A→Z, pou panel la ka montre menm nimewo yo):
         //  - si nimewo founisè a nòmal (pifò ant 1 ak kantite chanèl yo, san repete) → kenbe yo (7 rete 7);
         //  - sinon (gwo nimewo tankou 1391305, oswa nimewo ki pa fè sans) → 1, 2, 3… nan lòd lis la.
         run {
@@ -113,6 +109,10 @@ object ChannelStore {
                 var next = (used.maxOrNull() ?: 0) + 1
                 all.mapIndexed { i, c -> if (keep[i]) c else { while (!used.add(next)) next++; c.copy(num = next) } }
             } else all.mapIndexed { i, c -> if (c.num == i + 1) c else c.copy(num = i + 1) }
+        }
+        if (sortAz) {
+            val col = java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
+            all = all.sortedWith(Comparator { a, b -> col.compare(sortKey(a.name), sortKey(b.name)) })
         }
         val withChannels = all.map { it.categoryId }.toHashSet()
         categories = cfg.filterCategories(rawCategories).filter { it.id in withChannels }
