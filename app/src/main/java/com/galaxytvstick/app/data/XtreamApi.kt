@@ -29,6 +29,14 @@ class XtreamApi(private val account: Account) {
         val DEFAULT_USER_AGENT = "Galaxy TV"
         @Volatile var USER_AGENT = DEFAULT_USER_AGENT
         /** Lòt non jwè videyo kouran, pou sèvè ki refize non yo pa konnen (menm jan ak reglaj "User-Agent" lòt app IPTV yo). */
+        /**
+         * Relè panel la: si rezo TV a pa ka pale ak API founisè a (li resevwa yon paj web), mande panel la chèche
+         * menm repons lan pou li. (playlistId, paramèt demann lan) → JSON, oswa null.
+         */
+        @Volatile var relay: (suspend (playlistId: String, params: Map<String, String>) -> String?)? = null
+        /** Sèvè ki deja bezwen relè a: pa re-eseye dirèk chak fwa (pi rapid). */
+        private val relayHosts = java.util.Collections.synchronizedSet(HashSet<String>())
+
         /** App la sove User-Agent ki mache a pou sèvè sa a (Prefs.tune), pou pwochen fwa. */
         @Volatile var onUserAgentFound: ((server: String, ua: String) -> Unit)? = null
         val ALT_USER_AGENTS = listOf(
@@ -154,6 +162,16 @@ class XtreamApi(private val account: Account) {
         // Lis M3U / pòtal Stalker: pa gen API Xtream (gid chanèl pa chanèl, fim, seri, catch-up…)
         if (!account.isXtream) throw IOException("Not available for this playlist type.")
         var finalHost = ""
+        val looksJsonR = { s: String -> s.trimStart().let { it.startsWith("{") || it.startsWith("[") } }
+        // Relè panel la (sèlman playlist panel la, pa kont manyèl)
+        suspend fun viaPanel(): String? {
+            val id = account.playlistId ?: return null
+            val r = relay ?: return null
+            val u = url.toHttpUrl()
+            val params = u.queryParameterNames.filter { it != "username" && it != "password" }.associateWith { u.queryParameter(it).orEmpty() }
+            return runCatching { r(id, params) }.getOrNull()?.takeIf { looksJsonR(it) }
+        }
+        if (account.server in relayHosts) viaPanel()?.let { return@withContext it }
         fun fetch(ua: String): Pair<Int, String> {
             val req = Request.Builder().url(url).header("User-Agent", ua).build()
             return http.newCall(req).execute().use { r -> finalHost = r.request.url.host; r.code to (r.body?.string() ?: "") }
@@ -172,6 +190,8 @@ class XtreamApi(private val account: Account) {
                 return@withContext b2
             }
         }
+        // Dènye chans: panel la chèche l pou TV a (rezo TV a bloke API founisè a)
+        if (code !in 200..299 || !looksJson(body)) viaPanel()?.let { relayHosts.add(account.server); return@withContext it }
         if (code !in 200..299) throw IOException("Server replied HTTP $code")
         if (body.isEmpty()) throw IOException("Server sent an empty reply")
         if (!looksJson(body)) {

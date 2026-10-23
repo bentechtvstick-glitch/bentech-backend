@@ -14,6 +14,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
@@ -650,6 +651,17 @@ class PanelApi(private val prefs: Prefs) {
     }
 
     /** Voye non kategori fim oswa seri yo bay panel la (pou admin nan wè/kache kontni granmoun yo). */
+    /** Relè API Xtream pa panel la (lè rezo TV a bloke founisè a). */
+    suspend fun xtreamRelay(playlistId: String, params: Map<String, String>): String = withContext(Dispatchers.IO) {
+        val u = "$base/devices/${enc(deviceId)}/xtream".toHttpUrl().newBuilder().addQueryParameter("pl", playlistId)
+        params.forEach { (k, v) -> u.addQueryParameter(k, v) }
+        val client = XtreamApi.http.newBuilder().readTimeout(60, TimeUnit.SECONDS).build()
+        client.newCall(Request.Builder().url(u.build()).header("X-Device-Key", prefs.deviceKey).header("X-App-Version", BuildConfig.VERSION_NAME).build()).execute().use { r ->
+            if (!r.isSuccessful) throw IOException("Panel relay HTTP ${r.code}")
+            r.body?.string() ?: ""
+        }
+    }
+
     suspend fun uploadVodCats(kind: String, categories: List<Category>, count: Int = -1) {
         val arr = JSONArray()
         categories.take(3000).forEach { arr.put(JSONObject().put("id", it.id).put("name", it.name)) }
