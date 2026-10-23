@@ -29,7 +29,11 @@ class XtreamApi(private val account: Account) {
         val DEFAULT_USER_AGENT = "Galaxy TV"
         @Volatile var USER_AGENT = DEFAULT_USER_AGENT
         /** Lòt non jwè videyo kouran, pou sèvè ki refize non yo pa konnen (menm jan ak reglaj "User-Agent" lòt app IPTV yo). */
+        /** App la sove User-Agent ki mache a pou sèvè sa a (Prefs.tune), pou pwochen fwa. */
+        @Volatile var onUserAgentFound: ((server: String, ua: String) -> Unit)? = null
         val ALT_USER_AGENTS = listOf(
+            "IPTVSmartersPlayer",
+            "Mozilla/5.0 (Linux; Android 11; AFTKA) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
             "VLC/3.0.20 LibVLC/3.0.20",
             "okhttp/4.12.0",
             "Lavf/60.3.100",
@@ -149,11 +153,28 @@ class XtreamApi(private val account: Account) {
     private suspend fun get(url: String): String = withContext(Dispatchers.IO) {
         // Lis M3U / pòtal Stalker: pa gen API Xtream (gid chanèl pa chanèl, fim, seri, catch-up…)
         if (!account.isXtream) throw IOException("Not available for this playlist type.")
-        val req = Request.Builder().url(url).header("User-Agent", USER_AGENT).build()
-        http.newCall(req).execute().use { r ->
-            if (!r.isSuccessful) throw IOException("Server replied HTTP ${r.code}")
-            r.body?.string() ?: throw IOException("Server sent an empty reply")
+        fun fetch(ua: String): Pair<Int, String> {
+            val req = Request.Builder().url(url).header("User-Agent", ua).build()
+            return http.newCall(req).execute().use { r -> r.code to (r.body?.string() ?: "") }
         }
+        val (code, body) = fetch(USER_AGENT)
+        val looksJson = { s: String -> s.trimStart().let { it.startsWith("{") || it.startsWith("[") } }
+        if (code in 200..299 && looksJson(body)) return@withContext body
+        // Kèk sèvè (oswa pwoteksyon tankou Cloudflare) voye yon paj web oswa refize app yo pa rekonèt:
+        // eseye User-Agent lòt app IPTV yo; si youn mache, kenbe l pou tout rès demann yo.
+        for (ua in ALT_USER_AGENTS) {
+            if (ua == USER_AGENT) continue
+            val (c2, b2) = runCatching { fetch(ua) }.getOrNull() ?: continue
+            if (c2 in 200..299 && looksJson(b2)) {
+                USER_AGENT = ua
+                runCatching { onUserAgentFound?.invoke(account.server, ua) }
+                return@withContext b2
+            }
+        }
+        if (code !in 200..299) throw IOException("Server replied HTTP $code")
+        if (body.isEmpty()) throw IOException("Server sent an empty reply")
+        if (!looksJson(body)) throw IOException("The server sent a web page instead of IPTV data (check the server address / port)")
+        body
     }
 
     /** Retounen true si username/password la bon. */

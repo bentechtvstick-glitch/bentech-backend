@@ -31,6 +31,7 @@ class GalaxyApp : Application() {
             previous?.uncaughtException(thread, e)
         }
         com.galaxytvstick.app.data.EpgRepository.init(this)
+        com.galaxytvstick.app.data.XtreamApi.onUserAgentFound = { server, ua -> com.galaxytvstick.app.data.Prefs(this).setTune(server, "ua", ua) }
         com.galaxytvstick.app.data.ChannelStore.hideAdult = com.galaxytvstick.app.data.Prefs(this).parentalOn
         com.galaxytvstick.app.data.ChannelStore.sortAz = com.galaxytvstick.app.data.Prefs(this).sortAz
         // Mizajou an silans: lè app la pa sou ekran an ankò (kliyan an peze Home, oswa TV a etenn),
