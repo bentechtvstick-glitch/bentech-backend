@@ -43,7 +43,15 @@ class LoginActivity : AppCompatActivity() {
     private var registered = false
     private var connecting = false
     private var noAuto = false
-    private val failedIds = mutableSetOf<String>()
+    /** Playlist ki pa t mache: id → lè pou re-eseye l (pa janm rete bloke pou toutan sou ekran sa a). */
+    private val failedIds = mutableMapOf<String, Long>()
+    private fun failed(id: String, network: Boolean) {
+        val n = (failCount[id] ?: 0) + 1; failCount[id] = n
+        // Rezo (sèvè a pa reponn, entènèt TV a poko pare): re-eseye vit; move modpas: re-eseye pi ta
+        val waitMs = if (network) minOf(60_000L, 10_000L * n) else 120_000L
+        failedIds[id] = System.currentTimeMillis() + waitMs
+    }
+    private val failCount = mutableMapOf<String, Int>()
     private var playlists: List<PanelPlaylist> = emptyList()
 
     private val playlistAdapter = CategoryAdapter { cat ->
@@ -145,7 +153,8 @@ class LoginActivity : AppCompatActivity() {
         }
 
         // Konekte otomatikman ak premye playlist ki mache (pou chanje playlist: Settings → Playlist)
-        val auto = cfg.playlists.firstOrNull { it.id !in failedIds }
+        val now = System.currentTimeMillis()
+        val auto = cfg.playlists.firstOrNull { (failedIds[it.id] ?: 0L) <= now }
         if (auto != null && !noAuto) {
             connect(auto)
         } else {
@@ -172,11 +181,11 @@ class LoginActivity : AppCompatActivity() {
         // Xtream, lis M3U oswa pòtal Stalker
         val account = pl.toAccount(BuildConfig.DEFAULT_SERVER)
         if (account == null) {
-            failedIds += pl.id
+            failed(pl.id, network = false)
             showError(getString(R.string.error_no_server, label))
             return
         }
-        login(account, label) { failedIds += pl.id }
+        login(account, label) { network -> failed(pl.id, network) }
     }
 
     private fun manualLogin() {
@@ -187,10 +196,10 @@ class LoginActivity : AppCompatActivity() {
             showError(getString(R.string.error_fill_all))
             return
         }
-        login(Account(XtreamApi.normalizeServer(server), user, pass), user) {}
+        login(Account(XtreamApi.normalizeServer(server), user, pass), user) { _ -> }
     }
 
-    private fun login(account: Account, label: String, onFail: () -> Unit) {
+    private fun login(account: Account, label: String, onFail: (network: Boolean) -> Unit) {
         connecting = true
         b.error.visibility = View.GONE
         setStatus(getString(R.string.connecting_playlist, label), loading = true)
@@ -203,12 +212,12 @@ class LoginActivity : AppCompatActivity() {
                     runCatching { panel.register(account.username) }
                     openMain()
                 } else {
-                    onFail()
+                    onFail(false)
                     showError(getString(R.string.error_playlist_bad, label))
                     setStatus("", loading = false) // pa ekri "Choose a playlist" sou ekran an
                 }
             }.onFailure {
-                onFail()
+                onFail(true)
                 showError(getString(R.string.error_network, it.message ?: ""))
                 setStatus("", loading = false) // pa ekri "Choose a playlist" sou ekran an
             }
