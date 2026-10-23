@@ -214,11 +214,13 @@ class LoginActivity : AppCompatActivity() {
                 } else {
                     onFail(false)
                     showError(getString(R.string.error_playlist_bad, label))
+                    reportError("$label: login refused (wrong username/password, or account expired/disabled)")
                     setStatus("", loading = false) // pa ekri "Choose a playlist" sou ekran an
                 }
             }.onFailure {
                 onFail(true)
                 showError(getString(R.string.error_network, it.message ?: ""))
+                reportError("$label: ${it.javaClass.simpleName} ${it.message ?: ""}".trim())
                 setStatus("", loading = false) // pa ekri "Choose a playlist" sou ekran an
             }
         }
@@ -237,6 +239,11 @@ class LoginActivity : AppCompatActivity() {
         runCatching {
             startActivity(Intent(Intent.ACTION_DELETE, android.net.Uri.parse("package:$old")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
+    }
+
+    /** Di panel la poukisa TV a pa rive konekte ak founisè a (admin nan wè l nan Live / Devices). */
+    private fun reportError(msg: String) {
+        lifecycleScope.launch { runCatching { panel.status(org.json.JSONObject().put("screen", "activation").put("error", msg.take(200))) } }
     }
 
     private fun setStatus(text: String, loading: Boolean) {
