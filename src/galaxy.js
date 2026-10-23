@@ -571,6 +571,31 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     res.json(data().customGroups);
   });
 
+  // ---- Relè API Xtream: lè rezo TV a pa ka pale ak API founisè a (li resevwa yon paj web), panel la chèche lis yo pou li ----
+  // Sèlman pou playlist TV sa a (pa okenn lòt adrès), ak Device Key TV a, epi limite (pa videyo: lis yo sèlman).
+  const relayHits = new Map();
+  const RELAY_KEYS = ["action", "category_id", "stream_id", "vod_id", "series_id", "limit"];
+  app.get("/api/devices/:mac/xtream", async (req, res) => {
+    ensure();
+    const device = findDevice(normMac(req.params.mac));
+    if (!device) return res.status(404).json({ ok: false });
+    if (!device.deviceKey || req.get("X-Device-Key") !== device.deviceKey) return res.status(403).json({ ok: false });
+    const now = Date.now(), h = (relayHits.get(device.mac) || []).filter((t) => now - t < 60000);
+    if (h.length >= 40) return res.status(429).json({ ok: false, error: "Too many requests" });
+    h.push(now); relayHits.set(device.mac, h);
+    const pl = playlistsOf(device.mac).find((p) => p.id === String(req.query.pl || "")) || null;
+    if (!pl || plType(pl) !== "xtream") return res.status(404).json({ ok: false, error: "Playlist not found" });
+    const cl = xtreamClient(pl); if (cl.error) return res.status(400).json({ ok: false, error: cl.error });
+    const act = RELAY_KEYS.filter((k) => req.query[k] != null && String(req.query[k]).length < 60)
+      .map((k, i) => (i === 0 && k === "action" ? encodeURIComponent(String(req.query[k])) : `${k}=${encodeURIComponent(String(req.query[k]))}`));
+    const action = req.query.action ? act[0] + (act.length > 1 ? "&" + act.slice(1).join("&") : "") : "";
+    try {
+      const data = await cl.get(action, 45000);
+      device.relayAt = new Date().toISOString();
+      res.type("application/json").send(JSON.stringify(data));
+    } catch (e) { res.status(502).json({ ok: false, error: e.message }); }
+  });
+
   /** App la voye lis chanèl Xtream kliyan an, pou admin nan ka hide/show yo. */
   /** Sove lis chanèl yon aparèy (pataje ant aparèy ki gen egzakteman menm lis la). */
   async function storeChannels(mac, channels) {
