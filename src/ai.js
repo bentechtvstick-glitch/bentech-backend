@@ -78,7 +78,10 @@ export function mountAi(app, db, { authenticate, isOnline }) {
     return {
       now: new Date().toISOString().slice(0, 16),
       tvs: { total: devices.length, online: online.length, appVersions: versions,
-        list: devices.slice(0, 50).map((x) => ({ mac: x.mac, customer: x.customer || "", online: isOnline(x.mac), app: x.appVersion || "", lastSeen: x.lastSeenAt || "" })) },
+        list: devices.slice(0, 50).map((x) => { const L = globalThis.galaxyLive?.get(x.mac);
+          return { mac: x.mac, customer: x.customer || "", online: isOnline(x.mac), app: x.appVersion || "", lastSeen: x.lastSeenAt || "",
+            screen: L?.screen || "", providerError: L?.screen === "activation" && L?.error ? L.error : "",
+            panelKeyRejected: !!(x.keyConflictAt && Date.parse(x.keyConflictAt) > (Date.parse(x.lastSeenAt || "") || 0)) }; }) },
       customers: { total: customers.length, expiringWithin14Days: soon },
       channelAndVideoProblemsLast48h: alerts,
       // Kategori fim/seri pou granmoun ki toujou vizib sou chak TV (panel la li yo kay founisè a)

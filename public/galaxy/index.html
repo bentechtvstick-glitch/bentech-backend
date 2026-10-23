@@ -2098,6 +2098,8 @@ document.querySelectorAll("[data-aiq]").forEach((b) => b.addEventListener("click
 // ------------------------------------------------------------ Siveyans AI a: pwoblèm + koreksyon (admin nan deside)
 let watchCache = { issues: [] };
 const WT_TEXT = {
+  provider_fail: (i) => [t("📡 TV {0} pa rive konekte ak founisè a", i.name || i.mac), i.error + " — " + t(provHint(i.error))],
+  key_conflict: (i) => [t("🔑 TV {0} pa ka konekte ak panel la", i.name || i.mac), t("Li eseye konekte ak yon lòt Device Key (app la te re-enstale). Louvri aparèy la epi peze «Reset Device Key».")],
   tv_offline: (i) => [t("📴 TV {0} pa konekte depi {1} è", i.name || i.mac, i.hours), t("Kliyan an toujou aktif. TV a ka etenn, li pa gen entènèt, oswa app la fèmen.")],
   provider_refused: (i) => [t("🚫 Founisè a refize kont TV {0} (HTTP {1})", i.name || i.mac, i.code), t("Kont playlist la ka ekspire, gen twòp ekran sou li, oswa modpas la chanje. Teste playlist la nan paj Aparèy la.")],
   tv_many_fail: (i) => [t("📡 {0} chanèl diferan pa mache sou TV {1}", i.count, i.name || i.mac), t("Pwoblèm nan sanble se entènèt TV sa a oswa wouter li. Eseye rechaje TV a an premye.")],

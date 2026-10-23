@@ -133,6 +133,23 @@ export function mountWatch(app, db, h) {
         live: a.live.length, movies: a.movies.length, series: a.series.length, examples: [...a.live, ...a.movies, ...a.series].slice(0, 4), actions: [{ type: "goto_channels", mac: dv.mac }] });
     }
 
+    // 5b3) Koneksyon app ↔ panel ↔ founisè: TV ki limen men ki pa rive konekte
+    {
+      const live = globalThis.galaxyLive;
+      for (const dv of d.devices || []) {
+        if (!dv.mac || dv.blocked) continue;
+        // a) TV a sou ekran aktivasyon an epi founisè a refize l (TV a voye erè a, app 1.0.161+)
+        const L = live?.get(dv.mac);
+        if (L && L.screen === "activation" && L.error && now - (L.updatedAt || 0) < 15 * 60000 && playlistsOf(dv.mac).length)
+          out.push({ id: `provfail:${dv.mac}`, kind: "provider_fail", level: "warn", mac: dv.mac, name: devName(dv), error: String(L.error).slice(0, 160),
+            actions: [{ type: "goto_device", mac: dv.mac }] });
+        // b) TV a eseye konekte ak panel la ak yon lòt Device Key (app la re-enstale): panel la refize l
+        const kc = Date.parse(dv.keyConflictAt || "") || 0;
+        if (kc && kc > (Date.parse(dv.lastSeenAt || "") || 0) && now - kc < 24 * H)
+          out.push({ id: `keyconf:${dv.mac}`, kind: "key_conflict", level: "warn", mac: dv.mac, name: devName(dv), actions: [{ type: "goto_device", mac: dv.mac }] });
+      }
+    }
+
     // 5c) Peman pou sonje (sèvè, domèn…): X jou anvan dat la, jiskaske admin nan di li peye
     {
       const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: tz(), year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(now)).map((x) => [x.type, x.value]));

@@ -36,6 +36,7 @@ import { tvEvents } from "./tvevents.js";
 
 export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   const live = new Map();     // MAC → dènye estati
+  globalThis.galaxyLive = live; // pou siveyans lan (watch.js): TV ki bloke sou ekran aktivasyon an
   const history = new Map();  // MAC → [ {id,num,name,at} ]
   const queues = new Map();   // MAC → [ kòmand ]
   const waiters = new Map();  // MAC → Set(fonksyon pou reponn long-poll la)
