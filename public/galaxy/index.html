@@ -1472,12 +1472,23 @@ function openTab(name) {
 const hue = (s) => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 360; };
 const hhmm = (ms) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 function ago(since) { if (!since) return "—"; const m = Math.floor((Date.now() - since) / 60000); if (m < 1) return t("mwens pase 1 min"); if (m < 60) return t("{0} min", m); const h = Math.floor(m / 60); return h < 24 ? t("{0} è {1} min", h, m % 60) : t("{0} jou", Math.floor(h / 24)); }
+/** Esplike erè koneksyon founisè a an mo senp (TV a voye erè teknik la). */
+function provHint(e) {
+  e = String(e || "");
+  if (/doctype|<html|JSONException|not.*JSON/i.test(e)) return "Sèvè a voye yon paj web olye done IPTV yo: adrès sèvè a (DNS) pa bon, li manke yon pòt (egz: :8080), oswa founisè a bloke TV a. Peze ⚡ Teste sou playlist la epi korije adrès la.";
+  if (/refused|wrong username|expired|disabled/i.test(e)) return "Founisè a refize kont lan: username/password pa bon, oswa kont lan ekspire / dezaktive kay founisè a.";
+  if (/timeout|timed out/i.test(e)) return "Sèvè founisè a pa reponn atan: li ka an pàn, oswa entènèt TV a fèb. TV a ap re-eseye poukont li.";
+  if (/UnknownHost|Unable to resolve|resolve host/i.test(e)) return "Non sèvè a pa egziste oswa entènèt TV a pa mache: tcheke adrès sèvè a (DNS) ak entènèt TV a.";
+  if (/SSL|certificate|handshake|CertPath/i.test(e)) return "Pwoblèm HTTPS: eseye menm adrès la ak http:// olye https://.";
+  if (/ConnectException|failed to connect|unreachable/i.test(e)) return "TV a pa ka rive sou sèvè a: tcheke adrès la ak pòt la, oswa si founisè a bloke rezo/VPN TV a.";
+  return "Peze ⚡ Teste sou playlist la pou wè si sèvè a mache.";
+}
 const SCREEN = { activation: "Sou ekran aktivasyon an (ap tann playlist)", epg: "Ap gade Gid TV a", player: "", movies: "🎬 Ap chèche yon fim", series: "🎞 Ap chèche yon seri" };
 
 function screenHtml(d, big) {
   const L = d.live;
   if (!d.online) return `<div class="screen off${big ? " big" : ""}">${t("⏻ TV a pa online")}${L?.channel ? `<br><span class="note">${esc(t("Dènye chanèl: {0}", L.channel.name))}</span>` : ""}</div>`;
-  if (!L || !L.channel) return `<div class="screen off${big ? " big" : ""}">${esc(t(SCREEN[L?.screen] || "Online — poko gen chanèl"))}${L?.screen === "activation" && L.error ? `<br><span style="color:#ff8a8a">⚠️ ${esc(t("TV a pa rive konekte ak founisè a:"))} ${esc(L.error)}</span>` : ""}</div>`;
+  if (!L || !L.channel) return `<div class="screen off${big ? " big" : ""}">${esc(t(SCREEN[L?.screen] || "Online — poko gen chanèl"))}${L?.screen === "activation" && L.error ? `<br><span style="color:#ff8a8a">⚠️ ${esc(t("TV a pa rive konekte ak founisè a:"))} ${esc(L.error)}</span><br><span style="color:#ffd27a">💡 ${esc(t(provHint(L.error)))}</span>` : ""}</div>`;
   const ch = L.channel, p = L.program, h = hue(ch.name);
   const pct = p && p.end > p.start ? Math.max(0, Math.min(100, (Date.now() - p.start) * 100 / (p.end - p.start))) : 0;
   const state = L.adBreak ? t("📢 Piblisite ap pase") : L.screen === "epg" ? t("📅 Ap gade Gid TV a") : L.error ? esc(t("⚠ Erè: {0}", L.error)) : L.buffering ? t("⏳ Ap chaje (buffering)…") : "";
