@@ -1477,7 +1477,7 @@ const SCREEN = { activation: "Sou ekran aktivasyon an (ap tann playlist)", epg: 
 function screenHtml(d, big) {
   const L = d.live;
   if (!d.online) return `<div class="screen off${big ? " big" : ""}">${t("⏻ TV a pa online")}${L?.channel ? `<br><span class="note">${esc(t("Dènye chanèl: {0}", L.channel.name))}</span>` : ""}</div>`;
-  if (!L || !L.channel) return `<div class="screen off${big ? " big" : ""}">${esc(t(SCREEN[L?.screen] || "Online — poko gen chanèl"))}</div>`;
+  if (!L || !L.channel) return `<div class="screen off${big ? " big" : ""}">${esc(t(SCREEN[L?.screen] || "Online — poko gen chanèl"))}${L?.screen === "activation" && L.error ? `<br><span style="color:#ff8a8a">⚠️ ${esc(t("TV a pa rive konekte ak founisè a:"))} ${esc(L.error)}</span>` : ""}</div>`;
   const ch = L.channel, p = L.program, h = hue(ch.name);
   const pct = p && p.end > p.start ? Math.max(0, Math.min(100, (Date.now() - p.start) * 100 / (p.end - p.start))) : 0;
   const state = L.adBreak ? t("📢 Piblisite ap pase") : L.screen === "epg" ? t("📅 Ap gade Gid TV a") : L.error ? esc(t("⚠ Erè: {0}", L.error)) : L.buffering ? t("⏳ Ap chaje (buffering)…") : "";
