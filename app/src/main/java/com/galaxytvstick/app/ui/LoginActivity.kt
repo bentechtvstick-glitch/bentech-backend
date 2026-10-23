@@ -128,6 +128,8 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun onConfig(cfg: PanelConfig) {
+        // Mizajou app la mache menm sou ekran aktivasyon an (yon TV ki pa rive konekte ka toujou resevwa yon koreksyon)
+        runCatching { Updater.maybePrompt(this, cfg.update, prefs) }
         if (connecting) return
         if (!cfg.known) {
             // Sèvè a poko konnen aparèy la (oswa li pèdi done li yo): re-anrejistre l
