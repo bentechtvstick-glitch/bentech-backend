@@ -153,9 +153,10 @@ class XtreamApi(private val account: Account) {
     private suspend fun get(url: String): String = withContext(Dispatchers.IO) {
         // Lis M3U / pòtal Stalker: pa gen API Xtream (gid chanèl pa chanèl, fim, seri, catch-up…)
         if (!account.isXtream) throw IOException("Not available for this playlist type.")
+        var finalHost = ""
         fun fetch(ua: String): Pair<Int, String> {
             val req = Request.Builder().url(url).header("User-Agent", ua).build()
-            return http.newCall(req).execute().use { r -> r.code to (r.body?.string() ?: "") }
+            return http.newCall(req).execute().use { r -> finalHost = r.request.url.host; r.code to (r.body?.string() ?: "") }
         }
         val (code, body) = fetch(USER_AGENT)
         val looksJson = { s: String -> s.trimStart().let { it.startsWith("{") || it.startsWith("[") } }
@@ -173,7 +174,13 @@ class XtreamApi(private val account: Account) {
         }
         if (code !in 200..299) throw IOException("Server replied HTTP $code")
         if (body.isEmpty()) throw IOException("Server sent an empty reply")
-        if (!looksJson(body)) throw IOException("The server sent a web page instead of IPTV data (check the server address / port)")
+        if (!looksJson(body)) {
+            // Pou admin nan konnen ki paj sa a ye (Cloudflare, "Access denied", paj routè/otèl, 404…)
+            val title = Regex("<title[^>]*>([^<]{1,80})", RegexOption.IGNORE_CASE).find(body)?.groupValues?.get(1)?.trim().orEmpty()
+            val origHost = runCatching { url.toHttpUrl().host }.getOrDefault("")
+            val moved = if (finalHost.isNotBlank() && finalHost != origHost) " → redirected to $finalHost" else ""
+            throw IOException("The server sent a web page instead of IPTV data${if (title.isNotBlank()) " (\"$title\")" else ""}$moved. HTTP $code")
+        }
         body
     }
 
