@@ -218,7 +218,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
     let device = findDevice(mac);
     if (device?.deviceKey && device.deviceKey !== key) {
-      // Yon lòt aparèy ap eseye itilize MAC sa a
+      // Yon lòt aparèy ap eseye itilize MAC sa a (oswa app la te re-enstale): panel la montre l bay admin nan
+      device.keyConflictAt = new Date().toISOString(); touchWrite();
       return res.status(409).json({ ok: false, error: "Device Key pa matche" });
     }
 
