@@ -66,7 +66,7 @@ class SearchActivity : AppCompatActivity() {
         b.results.adapter = adapter
         b.results.itemAnimator = null
         buildKeys()
-        if (intent.getBooleanExtra(EXTRA_VOICE, false)) b.root.post { startVoice() }
+        if (intent.getBooleanExtra(EXTRA_VOICE, false)) b.root.post { startVoice(auto = true) }
 
         // Fim ak seri yo chaje dèyè; chanèl yo disponib touswit
         lifecycleScope.launch {
@@ -111,6 +111,7 @@ class SearchActivity : AppCompatActivity() {
             }
             b.keys.addView(line)
         }
+        firstKey = first
         first?.requestFocus()
     }
 
@@ -128,13 +129,19 @@ class SearchActivity : AppCompatActivity() {
     }
 
     // ---- Vwa ----
-    private fun startVoice() {
+    private var firstKey: View? = null
+    /** Remèt fokis la sou klavye ekran an (pou remòt la toujou ka tape). */
+    private fun focusKeys() { dictation?.let { hideIme(it); it.clearFocus() }; firstKey?.requestFocus() }
+
+    private fun startVoice(auto: Boolean = false) {
         val i = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
             .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             .putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.search_voice_prompt))
             .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
         val ok = i.resolveActivity(packageManager) != null && runCatching { voiceLauncher.launch(i) }.isSuccess
-        if (!ok) dictate()
+        // Fire TV (pa gen rekonesans vwa): pa kache fokis la nan yon chan envizib lè ekran an fèk louvri;
+        // kliyan an rete sou klavye a, epi l ka kenbe 🎤 sou remòt la oswa peze «⌨️ Keyboard».
+        if (!ok) { if (auto) { firstKey?.requestFocus(); Toast.makeText(this, getString(R.string.search_voice_hold), Toast.LENGTH_LONG).show() } else dictate() }
     }
 
     /** Pa gen rekonesans vwa (Fire TV): louvri klavye sistèm nan; kliyan an kenbe 🎤 sou remòt la pou l dikte. */
@@ -149,7 +156,11 @@ class SearchActivity : AppCompatActivity() {
                 override fun onTextChanged(s: CharSequence?, a: Int, c: Int, d: Int) {}
                 override fun afterTextChanged(s: Editable?) { if (hasFocus()) setQuery(s?.toString().orEmpty()) }
             })
-            setOnEditorActionListener { v, _, _ -> hideIme(v); b.results.requestFocus(); true }
+            setOnEditorActionListener { v, _, _ -> hideIme(v); if (adapter.itemCount > 0) b.results.requestFocus() else focusKeys(); true }
+            // Flèch remòt la: soti nan chan envizib la, retounen sou klavye ekran an
+            setOnKeyListener { _, code, ev ->
+                if (ev.action == KeyEvent.ACTION_DOWN && code in listOf(KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_BACK)) { focusKeys(); true } else false
+            }
             (b.root as ViewGroup).addView(this)
             dictation = this
         }
