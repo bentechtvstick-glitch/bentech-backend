@@ -223,4 +223,5 @@
     <string name="captions_off">Désactivés</string>
     <string name="captions_any">Toute langue disponible</string>
     <string name="captions_none">Cette vidéo n\'a pas de sous-titres (CC). Essayez une chaîne US (CNN, ABC…) ou un film sous-titré.</string>
+    <string name="search_kbd_key">⌨️ Clavier</string>
 </resources>

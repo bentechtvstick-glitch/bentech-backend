@@ -87,7 +87,7 @@ class SearchActivity : AppCompatActivity() {
 
     private fun buildKeys() {
         val d = resources.displayMetrics.density
-        val rows = listOf(listOf("VOICE")) + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".chunked(6).map { r -> r.map { it.toString() } } + listOf(listOf("SPACE", "DEL", "CLEAR"))
+        val rows = listOf(listOf("VOICE", "KBD")) + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".chunked(6).map { r -> r.map { it.toString() } } + listOf(listOf("SPACE", "DEL", "CLEAR"))
         var first: View? = null
         for (r in rows) {
             val line = LinearLayout(this).apply {
@@ -98,8 +98,8 @@ class SearchActivity : AppCompatActivity() {
                 val v = TextView(this).apply {
                     layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply { marginEnd = (5 * d).toInt() }
                     gravity = Gravity.CENTER
-                    text = if (k == "VOICE") getString(R.string.search_voice_key) else k
-                    textSize = if (k == "VOICE") 16f else if (k.length > 1) 13f else 18f
+                    text = when (k) { "VOICE" -> getString(R.string.search_voice_key); "KBD" -> getString(R.string.search_kbd_key); else -> k }
+                    textSize = if (k == "VOICE" || k == "KBD") 16f else if (k.length > 1) 13f else 18f
                     setTextColor(ContextCompat.getColorStateList(this@SearchActivity, R.color.epg_cell_text))
                     setBackgroundResource(R.drawable.bg_epg_cell)
                     isFocusable = true
@@ -116,6 +116,7 @@ class SearchActivity : AppCompatActivity() {
 
     private fun press(k: String) {
         if (k == "VOICE") { startVoice(); return }
+        if (k == "KBD") { dictate(showTip = false); return }
         query = when (k) {
             "DEL" -> query.dropLast(1)
             "CLEAR" -> ""
@@ -137,7 +138,7 @@ class SearchActivity : AppCompatActivity() {
     }
 
     /** Pa gen rekonesans vwa (Fire TV): louvri klavye sistèm nan; kliyan an kenbe 🎤 sou remòt la pou l dikte. */
-    private fun dictate() {
+    private fun dictate(showTip: Boolean = true) {
         val e = dictation ?: EditText(this).apply {
             layoutParams = ViewGroup.LayoutParams(1, 1)
             alpha = 0f
@@ -155,7 +156,7 @@ class SearchActivity : AppCompatActivity() {
         e.setText(query)
         e.requestFocus()
         e.post { (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(e, InputMethodManager.SHOW_IMPLICIT) }
-        Toast.makeText(this, getString(R.string.search_voice_hold), Toast.LENGTH_LONG).show()
+        if (showTip) Toast.makeText(this, getString(R.string.search_voice_hold), Toast.LENGTH_LONG).show()
     }
 
     private fun hideIme(v: View) { (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(v.windowToken, 0) }
@@ -169,6 +170,15 @@ class SearchActivity : AppCompatActivity() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         // Bouton rechèch / vwa remòt la (Android TV): kòmanse rechèch vwa a
         if (keyCode == KeyEvent.KEYCODE_SEARCH || keyCode == KeyEvent.KEYCODE_VOICE_ASSIST) { startVoice(); return true }
+        // Klavye fizik, app remòt telefòn nan, oswa bouton chif remòt la: tape dirèkteman (pa sèlman ak klavye sou ekran an)
+        if (dictation?.hasFocus() != true) {
+            when (keyCode) {
+                in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9 -> { press(('0' + (keyCode - KeyEvent.KEYCODE_0)).toString()); return true }
+                in KeyEvent.KEYCODE_A..KeyEvent.KEYCODE_Z -> { press(('A' + (keyCode - KeyEvent.KEYCODE_A)).toString()); return true }
+                KeyEvent.KEYCODE_SPACE -> { press("SPACE"); return true }
+                KeyEvent.KEYCODE_DEL -> { press("DEL"); return true }
+            }
+        }
         return super.onKeyDown(keyCode, event)
     }
 

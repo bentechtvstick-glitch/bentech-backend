@@ -246,4 +246,5 @@
     <string name="captions_off">Etenn</string>
     <string name="captions_any">Nenpòt lang ki disponib</string>
     <string name="captions_none">Videyo sa a pa gen soutit (CC). Eseye yon chanèl US (CNN, ABC…) oswa yon fim ki gen soutit.</string>
+    <string name="search_kbd_key">⌨️ Klavye</string>
 </resources>
