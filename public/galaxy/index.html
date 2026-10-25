@@ -2429,8 +2429,11 @@ function chExtras() {
   for (const [cid, items] of byCat) {
     const gone = items.filter((c) => vis(c, pkBase) && !vis(c, { hid, hidC }));
     if (!gone.length) continue;
-    if (hidC.has(cid) && !pkBase.hidC.has(cid)) rGroups.push(items[0].categoryName || "");
-    else for (const c of gone) rChans.push(c.name);
+    if (hidC.has(cid) && !pkBase.hidC.has(cid)) {
+      rGroups.push(items[0].categoryName || "");
+      // Sonje tou chanèl ki te etenn youn pa youn nan gwoup la: lè w relimen gwoup la, yo rete etenn
+      for (const c of items) if (hid.has(c.id) && !pkBase.hid.has(c.id)) rChans.push(c.name);
+    } else for (const c of gone) rChans.push(c.name);
   }
   return { extraGroups: [...new Set(groups)], extraChannels: [...new Set(chans)], removedGroups: [...new Set(rGroups)], removedChannels: [...new Set(rChans)] };
 }
