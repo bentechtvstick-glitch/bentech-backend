@@ -67,7 +67,9 @@ class PlayerActivity : AppCompatActivity() {
          * Gid la (ti fenèt videyo a) sèvi ak menm reglaj la.
          */
         fun loadControl(): DefaultLoadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(20_000, 60_000, 500, 3_500)
+            // Plis rezèv videyo (30 s) pou entènèt fèb: ti koupi yo pa rive sou ekran an.
+            // 1,2 s avan l kòmanse, 4 s apre yon koupi (pou l pa rebloke touswit).
+            .setBufferDurationsMs(30_000, 60_000, 1_200, 4_000)
             .build()
         /** Fason ki mache ak sèvè playlist la (app la sonje l pou pwochen chanèl yo). */
         private var preferredMode = 0
@@ -221,6 +223,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        watchNetwork(true)
         initPlayer()
         overlay.start()
         // Chaje EPG a si ekran prensipal la poko fè l
@@ -251,6 +254,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
+        watchNetwork(false)
         super.onStop()
         healthFlush()
         overlay.stop()
@@ -521,7 +525,8 @@ class PlayerActivity : AppCompatActivity() {
         val ch = channels.getOrNull(index) ?: return false
         // Si chanèl la te jwe byen pandan 1 minit, kontè a rekòmanse a zewo
         if (readyAt > 0 && System.currentTimeMillis() - readyAt > 60_000) reconnects = 0
-        if (reconnects >= 8) { playedOk = false; return false }
+        // Entènèt fèb oswa koupe: kontinye eseye (jiska ~5 minit) olye pou n bay vag apre kèk segonn
+        if (reconnects >= 40) { playedOk = false; return false }
         reconnects++
         val at = index; val mode = curMode; val alt = curAlt
         handler.removeCallbacks(stallWatch)
@@ -529,8 +534,27 @@ class PlayerActivity : AppCompatActivity() {
             if (index == at && !adPlaying && player === p) {
                 setChannel(p, ch, mode, alt)
             }
-        }, minOf(500L * reconnects, 4_000L))
+        }, minOf(500L * reconnects, 8_000L))
         return true
+    }
+
+    /** Entènèt la tounen (Wi-Fi rekonekte): relanse chanèl la touswit si li te bloke oswa an erè. */
+    private var netCb: android.net.ConnectivityManager.NetworkCallback? = null
+    private fun watchNetwork(on: Boolean) {
+        val cm = getSystemService(CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager ?: return
+        if (!on) { netCb?.let { runCatching { cm.unregisterNetworkCallback(it) } }; netCb = null; return }
+        if (netCb != null || android.os.Build.VERSION.SDK_INT < 24) return
+        val cb = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) {
+                handler.post {
+                    val p = player ?: return@post
+                    if (!adPlaying && (p.playerError != null || p.playbackState == Player.STATE_IDLE || p.playbackState == Player.STATE_BUFFERING)) {
+                        reconnects = 0; playChannel(index)
+                    }
+                }
+            }
+        }
+        if (runCatching { cm.registerDefaultNetworkCallback(cb) }.isSuccess) netCb = cb
     }
 
     private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0, alt: Boolean = XtreamApi.preferAlt, stage: Int = 0, adopt: Boolean = false) {

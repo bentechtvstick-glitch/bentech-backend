@@ -21,8 +21,9 @@ object Renderers {
      * olye pou l kòmanse ba epi monte dousman.
      */
     fun trackSelector(ctx: Context) = androidx.media3.exoplayer.trackselection.DefaultTrackSelector(ctx).apply {
+        // Pa fòse pi wo kalite a: sou yon entènèt fèb, si sous la gen plizyè kalite (HLS), li desann
+        // poukont li olye pou l bloke, epi li remonte depi entènèt la vin bon (li kòmanse wo grasa bandwidth() anba a).
         setParameters(buildUponParameters()
-            .setForceHighestSupportedBitrate(true)
             .setViewportSize(Int.MAX_VALUE, Int.MAX_VALUE, false)
             .setExceedVideoConstraintsIfNecessary(true)
             .setExceedRendererCapabilitiesIfNecessary(true))
