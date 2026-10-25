@@ -33,6 +33,7 @@ import com.galaxytvstick.app.data.XtreamApi
 import com.galaxytvstick.app.databinding.ActivitySearchBinding
 import com.galaxytvstick.app.databinding.ItemCategoryBinding
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 
 /**
  * Chèche: klavye sou ekran an agoch, rezilta (chanèl, fim, seri) adwat pandan kliyan an ap tape.
@@ -68,6 +69,11 @@ class SearchActivity : AppCompatActivity() {
         buildKeys()
         if (intent.getBooleanExtra(EXTRA_VOICE, false)) b.root.post { startVoice(auto = true) }
 
+        // Endèks chanèl yo an aryè plan (rapid), pou rechèch la pa janm bloke ekran an
+        lifecycleScope.launch {
+            chIdx = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { ChannelStore.all.map { Idx(it, norm(it.name)) } }
+            refresh()
+        }
         // Fim ak seri yo chaje dèyè; chanèl yo disponib touswit
         lifecycleScope.launch {
             // Kontwòl paran: pa montre sa ki nan kategori pou granmoun
@@ -80,6 +86,8 @@ class SearchActivity : AppCompatActivity() {
                 val bad = d.categories.filter { (hide && ChannelStore.isAdult(it.name)) || it.name.trim().uppercase() in blocked }.map { it.id }.toHashSet()
                 val l = d.items.filter { it.categoryId !in bad }
                 if (k == VodKind.MOVIE) movies = l else series = l
+                val idx = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { l.map { Idx(it, norm(it.name)) } }
+                if (k == VodKind.MOVIE) mvIdx = idx else srIdx = idx
                 refresh()
             }
         }
@@ -193,11 +201,21 @@ class SearchActivity : AppCompatActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
-    private fun norm(t: String) = Normalizer.normalize(t.lowercase(), Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+    private val rxMarks = Regex("\\p{Mn}+")
+    private fun norm(t: String) = Normalizer.normalize(t.lowercase(), Normalizer.Form.NFD).replace(rxMarks, "")
+
+    /**
+     * Endèks rechèch: non yo normalize YON SÈL FWA, an aryè plan (anvan: chak lèt ou tape te refè sa pou
+     * dè dizèn milye chanèl/fim sou fil prensipal la → ekran an te bloke epi app la te kole).
+     */
+    private class Idx<T>(val item: T, val n: String)
+    @Volatile private var chIdx: List<Idx<Channel>>? = null
+    @Volatile private var mvIdx: List<Idx<VodItem>> = emptyList()
+    @Volatile private var srIdx: List<Idx<VodItem>> = emptyList()
+    private var searchJob: kotlinx.coroutines.Job? = null
 
     /** Pwen: konbyen mo kesyon an ki nan non an (tout mo yo = pi bon). 0 = pa koresponn. */
-    private fun score(name: String, words: List<String>, whole: String): Int {
-        val n = norm(name)
+    private fun score(n: String, words: List<String>, whole: String): Int {
         if (n.contains(whole)) return 100
         val hit = words.count { n.contains(it) }
         return if (hit == words.size) 50 + hit else if (words.size >= 3 && hit >= words.size - 1) hit else 0
@@ -206,18 +224,32 @@ class SearchActivity : AppCompatActivity() {
     private fun refresh() {
         val whole = norm(query.trim())
         val words = whole.split(Regex("[^\\p{L}\\p{N}+]+")).filter { it.length >= 2 }
-        val out = ArrayList<Res>()
-        if (whole.isNotEmpty() && (words.isNotEmpty() || whole.length == 1)) {
-            val w = words.ifEmpty { listOf(whole) }
-            fun <T> best(src: Sequence<T>, name: (T) -> String, max: Int) =
-                src.map { it to score(name(it), w, whole) }.filter { it.second > 0 }.sortedByDescending { it.second }.take(max).map { it.first }
-            best(ChannelStore.all.asSequence(), { it.name }, 40).forEach { out.add(Res("TV   ·   ${it.name}", it, null)) }
-            best(movies.asSequence(), { it.name }, 30).forEach { out.add(Res("${getString(R.string.home_movies)}   ·   ${it.name}", null, it)) }
-            best(series.asSequence(), { it.name }, 30).forEach { out.add(Res("${getString(R.string.home_series)}   ·   ${it.name}", null, it)) }
+        val moviesLabel = getString(R.string.home_movies); val seriesLabel = getString(R.string.home_series)
+        searchJob?.cancel()
+        if (whole.isEmpty()) { adapter.items = emptyList(); adapter.notifyDataSetChanged(); b.empty.visibility = View.GONE; return }
+        searchJob = lifecycleScope.launch {
+            kotlinx.coroutines.delay(150) // tann ti moman: si kliyan an tape yon lòt lèt, pa kalkile pou granmesi
+            val ch = chIdx ?: emptyList(); val mv = mvIdx; val sr = srIdx
+            val out = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                val res = ArrayList<Res>()
+                val scope = this
+                if (words.isNotEmpty() || whole.length == 1) {
+                    val w = words.ifEmpty { listOf(whole) }
+                    fun <T> best(src: List<Idx<T>>, max: Int): List<T> {
+                        val hits = ArrayList<Pair<T, Int>>()
+                        for (x in src) { if (!scope.isActive) break; val sc = score(x.n, w, whole); if (sc > 0) hits.add(x.item to sc) }
+                        return hits.sortedByDescending { it.second }.take(max).map { it.first }
+                    }
+                    best(ch, 40).forEach { res.add(Res("TV   ·   ${it.name}", it, null)) }
+                    best(mv, 30).forEach { res.add(Res("$moviesLabel   ·   ${it.name}", null, it)) }
+                    best(sr, 30).forEach { res.add(Res("$seriesLabel   ·   ${it.name}", null, it)) }
+                }
+                res
+            }
+            adapter.items = out
+            adapter.notifyDataSetChanged()
+            b.empty.visibility = if (out.isEmpty()) View.VISIBLE else View.GONE
         }
-        adapter.items = out
-        adapter.notifyDataSetChanged()
-        b.empty.visibility = if (whole.isNotEmpty() && out.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun open(r: Res) {
