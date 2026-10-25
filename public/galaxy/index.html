@@ -1470,7 +1470,7 @@ function openTab(name) {
 
 // ------------------------------------------------------------ Helpers "TV"
 const hue = (s) => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 360; };
-const hhmm = (ms) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+const hhmm = (ms) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 function ago(since) { if (!since) return "—"; const m = Math.floor((Date.now() - since) / 60000); if (m < 1) return t("mwens pase 1 min"); if (m < 60) return t("{0} min", m); const h = Math.floor(m / 60); return h < 24 ? t("{0} è {1} min", h, m % 60) : t("{0} jou", Math.floor(h / 24)); }
 /** Esplike erè koneksyon founisè a an mo senp (TV a voye erè teknik la). */
 function provHint(e) {
@@ -1702,7 +1702,7 @@ function renderPlTest(r, name) {
   const st = String(r.status).toLowerCase();
   const pill = st === "active" ? "p-on" : st === "expired" ? "p-bad" : "p-warn";
   const left = r.expDate ? Math.ceil((new Date(r.expDate) - Date.now()) / 86400000) : null;
-  const exp = r.expDate ? `${new Date(r.expDate).toLocaleDateString(lang === "ht" ? "fr" : lang)} <span class="note">(${left >= 0 ? esc(t("{0} jou", left)) : esc(t("Ekspire"))})</span>` : esc(t("Pa gen dat (illimite)"));
+  const exp = r.expDate ? `${usDate(r.expDate)} <span class="note">(${left >= 0 ? esc(t("{0} jou", left)) : esc(t("Ekspire"))})</span>` : esc(t("Pa gen dat (illimite)"));
   const cell = (k, v) => `<div><span class="k">${esc(t(k))}</span><span class="v">${v}</span></div>`;
   return `<div class="pltest ok"><div class="pthead"><b>✓ ${esc(name ? t("\"{0}\" mache", name) : t("Playlist la mache"))}</b><span class="pill ${pill}">${esc(r.status)}</span>${r.isTrial ? `<span class="pill p-warn">${esc(t("Esè"))}</span>` : ""}<span class="note" style="margin-left:auto">${esc(r.ms)} ms</span></div>
     <div class="ptgrid">${cell("Ekspirasyon", exp)}${cell("Koneksyon", `${esc(r.activeConnections)} / ${esc(r.maxConnections || "∞")}`)}${cell("Chanèl live", r.liveChannels ?? "—")}${cell("Kategori", r.liveCategories ?? "—")}</div>
@@ -1823,7 +1823,7 @@ function renderLinkBox() {
 }
 $("#devRefresh").addEventListener("click", async (e) => {
   const b = e.currentTarget; if (b.disabled) return; b.disabled = true; b.textContent = t("Ap rafrechi…");
-  try { await Promise.all([loadDevices(), loadLive()]); renderDevTable(); toast(t("Lis la ajou · {0}", new Date().toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))); }
+  try { await Promise.all([loadDevices(), loadLive()]); renderDevTable(); toast(t("Lis la ajou · {0}", new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true }))); }
   catch { toast("Sèvè a pa reponn."); }
   b.disabled = false; b.textContent = t("Rafrechi");
 });
@@ -1833,13 +1833,19 @@ $("#addMacBtn").addEventListener("click", () => { $("#findCard").hidden = false;
 const today = () => new Date().toISOString().slice(0, 10);
 const expDate = (d) => new Date(/^\d{4}-\d{2}-\d{2}$/.test(d) ? d + "T23:59:59" : String(d).replace(" ", "T"));
 const daysLeft = (d) => { if (!d) return null; const x = (expDate(d) - new Date()) / 86400000; return Number.isNaN(x) ? null : x < 0 ? -1 : Math.ceil(x); };
-const fmtExp = (d) => String(d || "").replace("T", " ");
+// Dat ak lè nan tout panel la: M/D/YYYY ak 12 è (AM/PM)
+const US_D = { month: "numeric", day: "numeric", year: "numeric" }, US_T = { hour: "numeric", minute: "2-digit", hour12: true };
+const usDate = (d) => new Date(d).toLocaleDateString("en-US", US_D), usTime = (d) => new Date(d).toLocaleTimeString("en-US", US_T);
+const usDT = (d) => new Date(d).toLocaleString("en-US", { ...US_D, ...US_T });
+/** Dat san zòn (egz: "2026-11-22" oswa "2026-11-22T19:20") → "11/22/2026" / "11/22/2026, 7:20 PM", san chanje jou a. */
+const fmtExp = (d) => { const m = String(d || "").match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/); if (!m) return String(d || "");
+  const date = `${+m[2]}/${+m[3]}/${m[1]}`; if (m[4] == null) return date; const h = +m[4], ap = h < 12 ? "AM" : "PM"; return `${date}, ${h % 12 || 12}:${m[5]} ${ap}`; };
 /** Ekspirasyon yon TV: dat kliyan li a, sinon dat founisè a TV a te voye. HTML ak yon ti pill. */
 function devExpHtml(d) {
   const c = d.customer ? (customers || []).find((x) => String(x.name).toUpperCase() === String(d.customer).toUpperCase() || x.id === d.customer) : null;
   let txt = "", left = null;
   if (c && c.expiry) { txt = fmtExp(c.expiry); left = daysLeft(c.expiry); }
-  else if (d.providerExp > 0) { const dt = new Date(d.providerExp * 1000); txt = dt.toLocaleString(lang === "ht" ? "fr" : lang, { dateStyle: "short", timeStyle: "short" }); const x = (dt - new Date()) / 86400000; left = x < 0 ? -1 : Math.ceil(x); }
+  else if (d.providerExp > 0) { const dt = new Date(d.providerExp * 1000); txt = usDT(dt); const x = (dt - new Date()) / 86400000; left = x < 0 ? -1 : Math.ceil(x); }
   else if (d.providerExp === 0) return `<span class="note">${esc(t("Pa gen dat (illimite)"))}</span>`;
   if (!txt) return "—";
   const pill = left === null ? "" : left < 0 ? ` <span class="pill p-bad">${esc(t("Ekspire"))}</span>` : left <= 14 ? ` <span class="pill p-warn">${esc(t("{0} jou", left))}</span>` : "";
@@ -1862,7 +1868,7 @@ async function loadDashboard() {
   const logs = [...audit].reverse().slice(0, 8);
   $("#dashAudit").innerHTML = logs.length ? logs.map((l) => `<div class="li"><span class="pill p-info">${esc(l.action || "")}</span><span class="grow">${esc(l.detail || "")}</span><span class="note">${esc(fmtWhen(l.timestamp || l.date))}</span></div>`).join("") : `<div class="empty">—</div>`;
 }
-const fmtWhen = (v) => { if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v) : d.toLocaleString(lang === "ht" ? "fr" : lang, { dateStyle: "short", timeStyle: "short" }); };
+const fmtWhen = (v) => { if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v) : usDT(d); };
 $("#dashNew").addEventListener("click", async (e) => { const b = e.target.closest("[data-newdev]"); if (!b) return; await selectDevice(b.dataset.newdev, true); $("#plForm").scrollIntoView({ behavior: "smooth", block: "center" }); $("#plName").focus({ preventScroll: true }); });
 document.addEventListener("click", (e) => { const g = e.target.closest("[data-goto]"); if (g) openTab(g.dataset.goto); });
 
@@ -2001,7 +2007,7 @@ let crudSearchT; $("#crudSearch").addEventListener("input", () => { clearTimeout
 $("#crudRefresh").addEventListener("click", async () => {
   const b = $("#crudRefresh"); if (b.disabled) return;
   b.disabled = true; b.textContent = t("Ap rafrechi…");
-  try { await loadCrud(); toast(t("Lis la ajou · {0}", new Date().toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))); }
+  try { await loadCrud(); toast(t("Lis la ajou · {0}", new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true }))); }
   finally { b.disabled = false; b.textContent = t("Rafrechi"); }
 });
 $("#crudForm").addEventListener("submit", async (e) => {
@@ -2124,7 +2130,7 @@ const WT_TEXT = {
   pkg_problem: (i) => [t("📦 Pakè «{0}» pa aplike sou TV {1}", i.profile, i.name || i.mac), i.why === "notpkg" ? t("Se yon ansyen Channel Profile (limit kantite sèlman): li pa kache okenn chanèl.") : i.why === "missing" ? t("Pakè sa a pa egziste ankò.") : i.why === "nochange" ? t("Pakè a pa kache okenn chanèl sou TV sa a.") : t("Okenn nan {0} gwoup pakè a pa egziste kay founisè TV sa a (non yo diferan).", i.groups)],
   weak_net: (i) => [t("📶 Entènèt TV {0} fèb", i.name || i.mac), t("Li koupe {0} fwa chak 10 minit", i.cuts) + (i.mbps ? " · " + i.mbps + " Mbps" : "") + ". " + t("Se koneksyon kliyan an, pa founisè a: wouter li twò lwen, Wi-Fi a chaje, oswa abònman entènèt li twò piti.")],
   adult_found: (i) => [t("🔞 {0} gwoup pou granmoun vizib sou TV {1}", i.count, i.name || i.mac), t("Chanèl: {0} · Fim: {1} · Seri: {2}", i.live, i.movies, i.series) + (i.examples?.length ? " · " + i.examples.join(", ") : "") + ". " + t("Kache yo nan Channels → 🔞 si kliyan an pa dwe wè yo.")],
-  bill_due: (i) => [t("💳 Peman {0}", i.name) + (i.amount ? " (" + i.amount + ")" : ""), i.days > 0 ? t("Pou peye nan {0} jou ({1}).", i.days, i.date) : i.days === 0 ? t("Pou peye jodi a ({0}).", i.date) : t("Dat la pase depi {0} jou ({1}).", -i.days, i.date)],
+  bill_due: (i) => [t("💳 Peman {0}", i.name) + (i.amount ? " (" + i.amount + ")" : ""), i.days > 0 ? t("Pou peye nan {0} jou ({1}).", i.days, fmtExp(i.date)) : i.days === 0 ? t("Pou peye jodi a ({0}).", fmtExp(i.date)) : t("Dat la pase depi {0} jou ({1}).", -i.days, fmtExp(i.date))],
   weak_password: () => [t("🔑 Modpas login panel la twò fèb"), t("Chanje l nan Sistèm → 🔑 Login pwopriyetè a (12 karaktè oswa plis, ak lèt ak chif).")],
   ai_budget: (i) => [t("🤖 AI a deja itilize ${0} sou ${1} mwa sa a", i.cost, i.limit), t("Lè limit lan rive, AI a kanpe jiska mwa pwochen.")],
 };
@@ -2141,7 +2147,7 @@ function renderWatch() {
   const w = watchCache, list = w.issues || [];
   if (!$("#wtList")) return;
   $("#wtSum").hidden = !w.summary; $("#wtSum").innerHTML = w.summary ? aiMd(w.summary) : "";
-  $("#wtWhen").textContent = w.summaryAt ? t("Dènye analiz: {0}", new Date(w.summaryAt).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })) : "";
+  $("#wtWhen").textContent = w.summaryAt ? t("Dènye analiz: {0}", usTime(w.summaryAt)) : "";
   $("#wtAnalyze").hidden = !w.aiOn;
   $("#wtList").innerHTML = list.length ? list.map((i, n) => {
     const [title, why] = (WT_TEXT[i.kind] || (() => [i.kind, ""]))(i);
@@ -2700,7 +2706,7 @@ document.addEventListener("click", async (e) => {
 let tkEditing = null; // mesaj k ap modifye a (se li ki ID a nan backend la)
 const clock12 = () => String(settings.tickerClockFormat) === "12";
 const fmtTk = (v) => { if (!v) return ""; const d = new Date(String(v).replace(" ", "T")); if (isNaN(d)) return String(v);
-  return d.toLocaleString(lang === "ht" ? "fr" : lang, { day: "2-digit", month: "short", hour: "numeric", minute: "2-digit", hour12: clock12() }); };
+  return usDT(d); };
 function tkState(x) {
   const now = Date.now(), a = x.start ? new Date(String(x.start).replace(" ", "T")).getTime() : 0, b = x.end ? new Date(String(x.end).replace(" ", "T")).getTime() : 0;
   if (a && a > now) return `<span class="pill p-info">${esc(t("Pwograme"))}</span>`;
@@ -3167,7 +3173,7 @@ async function loadSysStats() {
     + (y.diskTotal ? k("Disk sèvè a", fmtGb(y.diskTotal), t("{0} ki lib", fmtGb(y.diskFree))) : "")
     + k("Sèvè a limen depi", fmtUp(y.uptimeSec), y.node + (y.cpus ? " · " + t("{0} CPU", y.cpus) : ""))
     + (y.lastStart ? k("Dènye redemaraj", t(({ update: "Mizajou otomatik", reboot: "Tout sèvè a te redemare", manual: "Redemaraj manyèl", crash: "Erè (crash)", killed: "Kanpe sanzatann", first: "Premye demaraj" })[y.lastStart.reason] || y.lastStart.reason),
-        new Date(y.lastStart.at).toLocaleString() + (y.lastStart.detail ? " · " + y.lastStart.detail : "") + (y.machineUpSec ? " · " + t("Machin nan limen depi {0}", fmtUp(y.machineUpSec)) : "")) : "");
+        usDT(y.lastStart.at) + (y.lastStart.detail ? " · " + y.lastStart.detail : "") + (y.machineUpSec ? " · " + t("Machin nan limen depi {0}", fmtUp(y.machineUpSec)) : "")) : "");
   // Disk sèvè a (kote done yo, imaj ak videyo yo sove)
   $("#sysDiskWrap").hidden = !y.diskTotal;
   if (y.diskTotal) {
@@ -3202,7 +3208,7 @@ $("#bkFile").addEventListener("change", async (ev) => {
   try {
     const j = JSON.parse(await f.text());
     if (!j || !j.galaxyBackup || !j.data) throw new Error(t("Fichye sa a pa yon kopi done panel la."));
-    if (!confirm(t("Remete kopi {0} a? Tout done ki nan panel la kounye a ap ranplase.", String(j.savedAt || "").slice(0, 16).replace("T", " ")))) return;
+    if (!confirm(t("Remete kopi {0} a? Tout done ki nan panel la kounye a ap ranplase.", (j.savedAt ? usDT(j.savedAt) : "")))) return;
     setMsg($("#bkMsg"), "Ap remete kopi a…", true);
     const r = await api("POST", "/galaxy/restore", j);
     setMsg($("#bkMsg"), t("Kopi a remete: {0} aparèy, {1} kliyan.", r.devices, r.customers), true);
@@ -3219,7 +3225,7 @@ async function loadAppUpdate(fresh) {
 }
 $("#upRefresh").addEventListener("click", async () => {
   const b = $("#upRefresh"); if (b.disabled) return; b.disabled = true; b.textContent = t("Ap rafrechi…");
-  try { await loadAppUpdate(true); toast(t("Lis la ajou · {0}", new Date().toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", second: "2-digit" }))); }
+  try { await loadAppUpdate(true); toast(t("Lis la ajou · {0}", new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true }))); }
   finally { b.disabled = false; b.textContent = t("Rafrechi"); }
 });
 $("#upSend").addEventListener("click", async () => {
@@ -3272,7 +3278,7 @@ function renderNotes() {
     return;
   }
   $("#ntList").innerHTML = `<button type="button" class="nt-chip new nt-close" id="ntPileClose" aria-expanded="true">▴ ${esc(t("Fèmen nòt yo"))}</button>` + ntItems.map((n) => {
-    const when = n.updatedAt ? new Date(n.updatedAt).toLocaleDateString(lang) : "";
+    const when = n.updatedAt ? usDate(n.updatedAt) : "";
     const prev = n.secret ? "••••••" : String(n.body || "").split("\n").find((l) => l.trim()) || "";
     return `<div class="nt-chip" tabindex="0" role="button" draggable="true" title="${esc(t("Klike pou louvri l · trennen l pou chanje plas li"))}" data-nt-open="${esc(n.id)}" data-c="${esc(n.color || "yellow")}" aria-label="${esc(n.title || t("San tit"))}"><i></i><span class="tx"><b>${n.secret ? "🔒 " : ""}${esc(n.title || t("San tit"))}</b><span>${esc(prev)}</span></span>${when ? `<small>${esc(when)}</small>` : ""}</div>`;
   }).join("") + `<button type="button" class="nt-chip new" id="ntNew">＋ ${esc(t("Nouvo nòt"))}</button>`;
