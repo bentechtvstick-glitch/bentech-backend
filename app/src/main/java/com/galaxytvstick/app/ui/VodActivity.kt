@@ -30,6 +30,7 @@ import com.galaxytvstick.app.databinding.ItemPosterBinding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import java.text.Normalizer
 
 /**
@@ -258,7 +259,12 @@ class VodActivity : AppCompatActivity() {
         searchJob = lifecycleScope.launch {
             delay(400)
             val all = noAdult(data?.items ?: return@launch)
-            val found = all.filter { norm(it.name).contains(query) }.take(300)
+            // An aryè plan: dè milye fim, pa bloke ekran an pandan kliyan an ap tape
+            val found = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                val out = ArrayList<com.galaxytvstick.app.data.VodItem>()
+                for (it in all) { if (!isActive) break; if (norm(it.name).contains(query)) { out.add(it); if (out.size >= 300) break } }
+                out
+            }
             catAdapter.selectedId = null
             show(getString(R.string.vod_search_results, q.trim()), found.map { Entry(it, null) }, getString(R.string.vod_search_none), focusGrid = false)
         }
