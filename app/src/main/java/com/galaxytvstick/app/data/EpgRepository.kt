@@ -62,8 +62,16 @@ object EpgRepository {
         return true
     }
 
+    /** Non chanèl → kle pou chanèl ki pa gen epg_channel_id (oswa id a pa nan XMLTV a): jwenn yo pa NON. */
+    private val rxNameQ = Regex("\\b(hd|fhd|uhd|4k|sd|hevc|h265|backup|raw|vip)\\b")
+    private val rxNameP = Regex("^[a-z]{2,3}\\s*[|:\\-]\\s*")
+    fun nameKey(name: String): String {
+        val n = java.text.Normalizer.normalize(name.lowercase(), java.text.Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+        return n.replace(rxNameP, "").replace(Regex("[◆★●|\\[\\]()]"), " ").replace(rxNameQ, " ").replace(Regex("[^a-z0-9]+"), "")
+    }
+
     fun programsFor(ch: Channel): List<Program> {
-        val x = ch.epgChannelId?.let { programs[it.lowercase()] } ?: single[ch.streamId] ?: emptyList()
+        val x = ch.epgChannelId?.let { programs[it.lowercase()] } ?: programs["name:" + nameKey(ch.name)] ?: single[ch.streamId] ?: emptyList()
         val a = archive[ch.streamId] ?: return x
         if (x.isEmpty()) return a
         // Pwogram achiv yo ki pase anvan premye pwogram XMLTV a
@@ -175,7 +183,9 @@ object EpgRepository {
                 if (c.tvArchive) keepPast[id] = maxOf(keepPast[id] ?: 0L, c.archiveDays.coerceIn(1, 2) * 86_400_000L)
             }
             // Pa efase gid chanèl pa chanèl yo ANVAN telechajman an: yo rete sou ekran an jiskaske gwo fichye a fini
-            val result = withContext(Dispatchers.IO) { download(api.xmltvUrl(), wanted, keepPast) }
+            // Chanèl san id EPG (oswa ki pa egziste nan XMLTV a): chèche yo pa non nan <display-name> XMLTV a
+            val byName = channels.map { nameKey(it.name) }.filter { it.length >= 3 }.toHashSet()
+            val result = withContext(Dispatchers.IO) { download(api.xmltvUrl(), wanted, keepPast, byName) }
             archive.clear()
             programs = result
             loadedAt = System.currentTimeMillis()
@@ -184,7 +194,7 @@ object EpgRepository {
             true
         }
 
-    private fun download(url: String, wanted: Set<String>, keepPast: Map<String, Long>): Map<String, List<Program>> {
+    private fun download(url: String, wanted: Set<String>, keepPast: Map<String, Long>, byName: Set<String> = emptySet()): Map<String, List<Program>> {
         val req = Request.Builder().url(url).header("User-Agent", XtreamApi.USER_AGENT).build()
         // EPG a ka gwo: bay plis tan pou li
         val client = XtreamApi.http.newBuilder()
@@ -198,11 +208,14 @@ object EpgRepository {
             raw.mark(4)
             val gz = raw.read() == 0x1f && raw.read() == 0x8b
             raw.reset()
-            return parse(if (gz) java.util.zip.GZIPInputStream(raw, 1 shl 16) else raw, wanted, keepPast)
+            return parse(if (gz) java.util.zip.GZIPInputStream(raw, 1 shl 16) else raw, wanted, keepPast, byName)
         }
     }
 
-    private fun parse(input: java.io.InputStream, wanted: Set<String>, keepPast: Map<String, Long>): Map<String, List<Program>> {
+    private fun parse(input: java.io.InputStream, wanted: Set<String>, keepPast: Map<String, Long>, byName: Set<String> = emptySet()): Map<String, List<Program>> {
+        // id XMLTV → "name:<non>" pou chanèl nou jwenn pa non (sèlman si id sa a pa deja vle)
+        val alias = HashMap<String, String>()
+        var chanId: String? = null
         val now = System.currentTimeMillis()
         val minTime = now - KEEP_BEFORE_MS
         val maxTime = now + KEEP_AFTER_MS
@@ -224,12 +237,21 @@ object EpgRepository {
         while (event != XmlPullParser.END_DOCUMENT) {
             when (event) {
                 XmlPullParser.START_TAG -> when (parser.name) {
+                    "channel" -> chanId = parser.getAttributeValue(null, "id")?.lowercase()
+                    "display-name" -> {
+                        val id = chanId
+                        if (id != null && byName.isNotEmpty() && id !in wanted && id !in alias) {
+                            val k = nameKey(parser.nextText())
+                            if (k in byName) alias[id] = "name:$k"
+                        }
+                    }
                     "programme" -> {
-                        val ch = parser.getAttributeValue(null, "channel")?.lowercase()
-                        if (ch != null && ch in wanted) {
+                        val raw = parser.getAttributeValue(null, "channel")?.lowercase()
+                        val ch = if (raw != null && raw !in wanted) alias[raw] else raw
+                        if (ch != null && (ch in wanted || raw in alias)) {
                             start = parseTime(parser.getAttributeValue(null, "start"))
                             stop = parseTime(parser.getAttributeValue(null, "stop"))
-                            val min = keepPast[ch]?.let { now - it } ?: minTime
+                            val min = keepPast[raw ?: ch]?.let { now - it } ?: minTime
                             inProgramme = stop > min && start < maxTime && stop > start
                             channel = ch
                             title = ""; desc = ""
