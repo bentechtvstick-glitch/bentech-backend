@@ -179,6 +179,12 @@ class VodActivity : AppCompatActivity() {
     private fun applyData(d: VodStore.Data, first: Boolean, reselect: Boolean = false) {
         if (isFinishing || isDestroyed) return
         data = d
+        // Prepare endèks rechèch la davans (an aryè plan), pou premye lèt kliyan an tape a reponn touswit
+        searchIndex = null
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            val idx = d to noAdult(d.items).map { it to norm(it.name) }
+            if (data === d) searchIndex = idx
+        }
         val raw = d.categories
         val cfg = PanelState.config
         val adultOff = ChannelStore.hideAdult || cfg.forceHideAdult
@@ -259,7 +265,10 @@ class VodActivity : AppCompatActivity() {
 
     // ------------------------------------------------------------ Rechèch
 
-    private fun norm(s: String) = Normalizer.normalize(s, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "").lowercase()
+    private val rxMarks = Regex("\\p{Mn}+")
+    private fun norm(s: String) = Normalizer.normalize(s, Normalizer.Form.NFD).replace(rxMarks, "").lowercase()
+
+    @Volatile private var searchIndex: Pair<VodStore.Data, List<Pair<com.galaxytvstick.app.data.VodItem, String>>>? = null
 
     private fun onSearch(q: String) {
         searchJob?.cancel()
@@ -269,12 +278,13 @@ class VodActivity : AppCompatActivity() {
             return
         }
         searchJob = lifecycleScope.launch {
-            delay(400)
-            val all = noAdult(data?.items ?: return@launch)
-            // An aryè plan: dè milye fim, pa bloke ekran an pandan kliyan an ap tape
+            delay(120)
+            val d = data ?: return@launch
+            // Non yo normalize YON SÈL FWA pou lis la (anvan: chak lèt te refè sa pou chak fim → rechèch la te lan)
             val found = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                val idx = searchIndex?.takeIf { it.first === d } ?: (d to noAdult(d.items).map { it to norm(it.name) }).also { searchIndex = it }
                 val out = ArrayList<com.galaxytvstick.app.data.VodItem>()
-                for (it in all) { if (!isActive) break; if (norm(it.name).contains(query)) { out.add(it); if (out.size >= 300) break } }
+                for ((it, n) in idx.second) { if (!isActive) break; if (n.contains(query)) { out.add(it); if (out.size >= 300) break } }
                 out
             }
             catAdapter.selectedId = null
