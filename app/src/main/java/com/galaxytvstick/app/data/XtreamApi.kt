@@ -466,9 +466,14 @@ class XtreamApi(private val account: Account) {
     private fun JSONObject.cleanString(key: String): String? =
         optString(key).trim().takeIf { it.isNotEmpty() && it != "null" && it != "[]" }
 
-    private fun yearOf(name: String, year: String): String =
-        year.take(4).takeIf { it.length == 4 && it.all(Char::isDigit) }
-            ?: Regex("""\((19|20)\d{2}\)""").find(name)?.value?.trim('(', ')') ?: ""
+    private val rxYear = Regex("""(?<![0-9])(19[3-9][0-9]|20[0-9]{2})(?![0-9])""")
+    /** Ane fim nan: chan "year" founisè a, sinon yon ane nan non an: "(2025)", "[2025]", "- 2025", "Title 2025"… */
+    private fun yearOf(name: String, year: String): String {
+        year.take(4).takeIf { it.length == 4 && it.all(Char::isDigit) && it != "0000" }?.let { return it }
+        val max = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) + 1
+        // Dènye ane valab nan non an (pou "2001 A Space Odyssey (1968)" → 1968)
+        return rxYear.findAll(name).map { it.value }.filter { it.toInt() <= max }.lastOrNull() ?: ""
+    }
 
     /** Gid EPG konplè a nan fòma XMLTV. */
     fun xmltvUrl(): String = account.epgUrl?.takeIf { it.isNotBlank() }

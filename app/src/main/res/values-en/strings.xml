@@ -224,4 +224,5 @@
     <string name="captions_any">Any available language</string>
     <string name="captions_none">This video has no captions (CC). Try a US channel (CNN, ABC…) or a movie with subtitles.</string>
     <string name="search_kbd_key">⌨️ Keyboard</string>
+    <string name="vod_new_releases">🆕 New releases</string>
 </resources>

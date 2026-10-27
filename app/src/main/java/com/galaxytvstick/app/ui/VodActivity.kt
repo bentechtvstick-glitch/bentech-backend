@@ -45,6 +45,7 @@ class VodActivity : AppCompatActivity() {
         private const val CAT_CONTINUE = "__continue"
         private const val CAT_FAV = "__fav"
         private const val CAT_ALL = "__all"
+        private const val CAT_NEW = "__new"
     }
 
     /** Sa yon kaz nan griy la montre: yon fim/seri oswa yon "Kontinye gade". */
@@ -140,6 +141,7 @@ class VodActivity : AppCompatActivity() {
     private fun specialCategories(): List<Category> = listOf(
         Category(CAT_CONTINUE, getString(R.string.vod_continue)),
         Category(CAT_FAV, getString(R.string.cat_favorites)),
+        Category(CAT_NEW, getString(R.string.vod_new_releases)),
         Category(CAT_ALL, getString(R.string.vod_all))
     )
 
@@ -217,6 +219,16 @@ class VodActivity : AppCompatActivity() {
             CAT_FAV -> {
                 val keys = history.favorites.filter { it.startsWith(if (kind == VodKind.MOVIE) "m:" else "s:") }
                 show(name, history.rememberedItems(keys).map { Entry(it, null) }, getString(R.string.vod_fav_empty), focusGrid)
+            }
+            CAT_NEW -> {
+                // Dènye ane yo: fim/seri ane sa a ak ane pase, pi resan an premye (ane, epi dat founisè a ajoute l)
+                val d = data ?: return
+                val y = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+                val all = noAdult(d.items)
+                var list = all.filter { (it.year.take(4).toIntOrNull() ?: 0) >= y - 1 }
+                if (list.size < 30) list = all.filter { (it.year.take(4).toIntOrNull() ?: 0) >= y - 3 }
+                list = list.sortedWith(compareByDescending<com.galaxytvstick.app.data.VodItem> { it.year.take(4).toIntOrNull() ?: 0 }.thenByDescending { it.added }).take(1000)
+                show(name, list.map { Entry(it, null) }, getString(R.string.empty_list), focusGrid)
             }
             else -> {
                 // Pa gen rezo: kategori a se yon filt sou lis konplè a ki deja sou aparèy la
