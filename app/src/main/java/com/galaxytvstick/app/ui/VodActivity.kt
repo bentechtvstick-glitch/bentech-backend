@@ -179,12 +179,6 @@ class VodActivity : AppCompatActivity() {
     private fun applyData(d: VodStore.Data, first: Boolean, reselect: Boolean = false) {
         if (isFinishing || isDestroyed) return
         data = d
-        // Prepare endèks rechèch la davans (an aryè plan), pou premye lèt kliyan an tape a reponn touswit
-        searchIndex = null
-        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.Default) {
-            val idx = d to noAdult(d.items).map { it to norm(it.name) }
-            if (data === d) searchIndex = idx
-        }
         val raw = d.categories
         val cfg = PanelState.config
         val adultOff = ChannelStore.hideAdult || cfg.forceHideAdult
@@ -192,6 +186,12 @@ class VodActivity : AppCompatActivity() {
         fun isBad(c: com.galaxytvstick.app.data.Category) = (adultOff && ChannelStore.isAdult(c.name)) || c.name.trim().uppercase() in blocked
         val cats = raw.filter { !isBad(it) }
         adultCats[kind] = raw.filter { isBad(it) }.map { it.id }.toHashSet()
+        // Prepare endèks rechèch la davans (an aryè plan), pou premye lèt kliyan an tape a reponn touswit
+        searchIndex = null
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            val idx = d to noAdult(d.items).map { it to norm(it.name) }
+            if (data === d) searchIndex = idx
+        }
         val newCats = specialCategories() + cats
         if (newCats != catAdapter.items) catAdapter.items = newCats
         if (first) {
