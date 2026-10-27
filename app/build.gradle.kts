@@ -66,7 +66,17 @@ android {
         viewBinding = true
         buildConfig = true
     }
+
+    // Kreyòl ayisyen ("ht") eksplisit: san dosye values-ht, Android (ak AppCompat) konbine lang app la ak lang TV a
+    // epi li pran angle a paske se premye lang ki gen tèks. Nou kopye tèks Kreyòl yo (values/) nan values-ht pandan bati a.
+    sourceSets["main"].res.srcDir(layout.buildDirectory.dir("generated/res/ht"))
 }
+
+val copyHaitianStrings by tasks.registering(Copy::class) {
+    from("src/main/res/values/strings.xml")
+    into(layout.buildDirectory.dir("generated/res/ht/values-ht"))
+}
+tasks.named("preBuild") { dependsOn(copyHaitianStrings) }
 
 dependencies {
     val media3 = "1.5.0"
