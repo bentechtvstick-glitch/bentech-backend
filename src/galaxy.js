@@ -280,7 +280,13 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     ensure();
     const mac = normMac(req.params.mac);
     const device = findDevice(mac);
-    const s = settings();
+    // Mak app la (Galaxy oswa Ben Tech): chak mak gen pwòp logo, meteyo, ticker ak piblisite li
+    const brand = /^bentech$/i.test(String(req.get("X-App-Brand") || "")) ? "bentech" : "galaxy";
+    const s0 = settings();
+    const bs = brand === "galaxy" ? null : ((s0.brandSettings || {})[brand] || {});
+    // Yon lòt mak ki poko gen grafik pa l: li pa janm montre logo/watermark/ident Galaxy a
+    const s = !bs ? s0 : { ...s0, ...bs, ...(bs.gfx ? {} : { gfx: { ...(s0.gfx || {}), bug: {}, watermark: {}, ident: {}, bumper: {} } }) };
+    const forBrand = (it) => { const b = String(it?.brand || "galaxy"); return b === "all" || b === brand; };
     // TV yo resevwa chanjman panel la touswit pa siyal "sync" la (long-poll); demann konfig sa a se sèlman yon sekou.
     // 120 s olye 30 s: 4 fwa mwens trafik sou Render (bandwidth la peye), san okenn reta pou kliyan an.
     const refreshSec = Number(s.appRefreshSec) || 120;
@@ -298,6 +304,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     // App 1.0.89+ voye vèsyon li nan chak demann konfig
     const av = String(req.get("X-App-Version") || "").trim().slice(0, 20);
     if (/^\d+\.\d+\.\d+/.test(av)) device.appVersion = av;
+    if (device.brand !== brand) device.brand = brand;
     touchWrite();
     tvEvents.configFetched(device); // panel la wè "✅ aplike sou TV a"
 
@@ -342,12 +349,12 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
     // ---- Ticker (style chèn TV): mesaj ak koulè pa yo, etikèt agoch, separatè, lè adwat ----
     // Chak mesaj ka gen yon orè (start/end nan zòn lè panel la): li parèt sèlman ant de lè sa yo
-    const tickerItems = (data().tickers || []).filter(isActive)
+    const tickerItems = (data().tickers || []).filter(isActive).filter(forBrand)
       .filter((t) => { const a = toEpochSec(t.start, zone), b = toEpochSec(t.end, zone, true); return (!a || a <= now) && (!b || b >= now); })
       .map((t) => ({ text: String(t.message || "").trim(), color: /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(t.color || "") ? t.color : "" }))
       .filter((t) => t.text);
     // Pwochen lè yon mesaj kòmanse oswa fini: TV a rechaje konfig la jis lè sa a
-    const tickerEdge = (data().tickers || []).filter(isActive)
+    const tickerEdge = (data().tickers || []).filter(isActive).filter(forBrand)
       .flatMap((t) => [toEpochSec(t.start, zone), toEpochSec(t.end, zone, true) + 1])
       .filter((x) => x > now).reduce((m, x) => Math.min(m, x - now), Infinity);
     const sep = String(s.tickerSeparator ?? "•");
@@ -389,7 +396,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       : null;
 
     // ---- Banner: imaj (URL) oswa tèks ----
-    const banners = (data().banners || []).filter(isActive).map((b) => {
+    const banners = (data().banners || []).filter(isActive).filter(forBrand).map((b) => {
       const img = b.imageUrl || (isUrl(b.content) ? b.content : "");
       return {
         id: b.id || hashId(b.content || img),
@@ -401,7 +408,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
     // ---- Pop-up nan dat yo ----
     const popups = (data().popups || []).filter((p) => {
-      if (!isActive(p)) return false;
+      if (!isActive(p) || !forBrand(p)) return false;
       const start = toEpochSec(p.start, zone);
       const end = toEpochSec(p.end, zone, true);
       return (!start || start <= now) && (!end || end >= now);
@@ -414,7 +421,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     }));
 
     // ---- Media Ads ----
-    const ads = (data().mediaAds || []).filter(isActive).filter((a) => a.url).map((a) => ({
+    const ads = (data().mediaAds || []).filter(isActive).filter(forBrand).filter((a) => a.url).map((a) => ({
       id: a.id || hashId(a.url),
       name: String(a.name || ""),
       type: a.type === "video" || /\.(mp4|m3u8|webm|mkv)(\?|$)/i.test(a.url) ? "video" : "image",
@@ -467,7 +474,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const num = (v, d, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(Number(v)) && v !== "" && v != null ? Number(v) : d));
     const POS = ["bottom-left", "bottom-center", "bottom-right", "top-left", "top-center", "top-right"];
     const ANIM = ["slide", "fade", "wipe", "none"];
-    const chyrons = (data().chyrons || []).filter(isActive)
+    const chyrons = (data().chyrons || []).filter(isActive).filter(forBrand)
       .map((c) => ({
         id: String(c.id),
         headline: String(c.headline || "").trim(),

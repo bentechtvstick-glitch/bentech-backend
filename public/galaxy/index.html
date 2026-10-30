@@ -302,6 +302,7 @@ body.pvbig-on::before{content:"";position:fixed;inset:0;z-index:89;background:rg
 .brpv-bar{position:absolute;left:0;right:0;bottom:0;height:7px;background:rgba(255,255,255,.18)}.brpv-bar i{display:block;height:100%;width:0;background:#00E5FF}
 .brpv-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.brpv-head .label{margin-right:auto;font-size:16px;font-weight:700;color:var(--text);text-transform:none;letter-spacing:0}
 /* Grafik TV */
+body.brand-bt #brandSel{outline:2px solid #f59e0b;background:#fff7e6;color:#7c4a00}
 main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:inline-size;container-name:gxpane}
 .tk-list .cols{grid-template-columns:minmax(0,1fr)}
 #tkPreview{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end}#tkPreview .empty{color:#fff;text-align:center;padding:0 40px 230px;font-size:20px;text-shadow:0 2px 6px rgba(0,0,0,.6)}
@@ -607,6 +608,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <label class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="text" id="gSearch" placeholder="Chèche MAC, aparèy, kliyan…" autocomplete="off"></label>
       <div class="right">
         <button class="btn small" id="ttvBtn" type="button" hidden>📺 Customer TV</button>
+        <label class="inline" id="brandBox" hidden style="flex-wrap:nowrap;gap:6px"><span class="note" style="margin:0">🏷️ App:</span><select id="brandSel" class="langsel" aria-label="App"><option value="galaxy">Galaxy TV Stick</option><option value="bentech">Ben Tech TV Stick</option></select></label>
         <span class="inline" style="flex-wrap:nowrap"><svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><select class="langsel" data-lang-select aria-label="Lang"></select></span>
         <div class="rel"><button class="iconbtn" id="bellBtn" type="button" aria-label="Notifikasyon"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg><span class="count" id="bellCount" hidden></span></button>
           <div class="menu" id="bellMenu" hidden></div></div>
@@ -1398,7 +1400,33 @@ function tvAckWatch(basePromise) {
     toast([...new Set(msgs)].slice(0, 3).join("\n"), 6000);
   })();
 }
+// ---- Mak app la (Galaxy / Ben Tech): logo, meteyo, ticker, banyè, pop-up, piblisite pa mak ----
+const BRAND_TABS = ["tk", "cy", "bn", "pp", "ads", "gfx", "bc"];
+const BRAND_COLS = /^\/(tickers|banners|popups|media-ads|chyrons)(\/|\?|$)/;
+const BRAND_KEY = (k) => k === "gfx" || /^(ticker|banner|popup|adBreak|chyron)/.test(k);
+let brand = "galaxy"; try { brand = localStorage.getItem("gxBrand") === "bentech" ? "bentech" : "galaxy"; } catch {}
+const brandOf = (it) => String((it && it.brand) || "galaxy");
+const brandNow = () => { try { return BRAND_TABS.includes(tab) ? brand : "galaxy"; } catch { return "galaxy"; } };
+const brandOver = (s, b) => { if (!s || typeof s !== "object") return s; const o = (s.brandSettings || {})[b] || {}; return { ...s, ...o, ...(o.gfx ? {} : { gfx: { ...(s.gfx || {}), bug: {}, watermark: {}, ident: {}, bumper: {} } }) }; };
 async function api(method, path, body) {
+  const brand = brandNow();
+  if (path.startsWith("/settings") && brand !== "galaxy") {
+    if (method === "GET") return brandOver(await apiRaw("GET", path), brand);
+    if (method === "PUT" && body && typeof body === "object") {
+      const mine = {}, rest = {}; for (const [k, v] of Object.entries(body)) (BRAND_KEY(k) ? mine : rest)[k] = v;
+      if (Object.keys(mine).length) { const cur = (await apiRaw("GET", "/settings")) || {}; const bs = { ...(cur.brandSettings || {}) }; bs[brand] = { ...(bs[brand] || {}), ...mine }; rest.brandSettings = bs; }
+      return brandOver(await apiRaw(method, path, rest), brand);
+    }
+  }
+  if (BRAND_COLS.test(path)) {
+    if (method === "POST" && body && typeof body === "object" && !body.brand) body = { ...body, brand };
+    const r = await apiRaw(method, path, body);
+    if (method === "GET" && r && Array.isArray(r.data)) return { ...r, data: r.data.filter((x) => brandOf(x) === brand || brandOf(x) === "all") };
+    return r;
+  }
+  return apiRaw(method, path, body);
+}
+async function apiRaw(method, path, body) {
   const ack = method !== "GET" && !TV_ACK_SKIP.test(path) ? tvEvLast() : null;
   const r = await fetch(API + path, {
     method, headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
@@ -1465,8 +1493,14 @@ function openTab(name) {
   if (name === "sys") loadSystem();
   if (name === "ads") loadAds();
   if (name === "gfx") loadGfx();
+  $("#brandBox").hidden = !BRAND_TABS.includes(name);
   window.scrollTo({ top: 0 });
 }
+$("#brandSel").value = brand;
+const brandPaint = () => { document.body.classList.toggle("brand-bt", brand === "bentech"); };
+brandPaint();
+$("#brandSel").addEventListener("change", (e) => { brand = e.target.value === "bentech" ? "bentech" : "galaxy"; try { localStorage.setItem("gxBrand", brand); } catch {} brandPaint();
+  toast(brand === "bentech" ? t("Kounye a w ap modifye app Ben Tech TV Stick la") : t("Kounye a w ap modifye app Galaxy TV Stick la")); openTab(tab); });
 
 // ------------------------------------------------------------ Helpers "TV"
 const hue = (s) => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 360; };
@@ -1759,7 +1793,7 @@ async function loadDevices() {
 }
 function renderDevTable() {
   const all = devicesCache, q = $("#devFilter").value.trim().toLowerCase();
-  const devices = q ? all.filter((d) => [d.mac, d.deviceId, d.deviceName, d.customer, d.model, ...(d.playlists || []).map((p) => p.name)].join(" ").toLowerCase().includes(q)) : all;
+  const devices = q ? all.filter((d) => [d.mac, d.deviceId, d.deviceName, d.customer, d.model, d.brand === "bentech" ? "ben tech bentech" : "galaxy", ...(d.playlists || []).map((p) => p.name)].join(" ").toLowerCase().includes(q)) : all;
   $("#devCount").textContent = t("{0} eleman", devices.length);
   const on = new Map((liveData?.devices || []).map((d) => [d.mac, d]));
   setHtml($("#devTable"), devices.length ? `<table><thead><tr><th>${t("MAC Address")}</th><th>Device ID</th><th>${t("Tip")}</th><th>${t("Estati")}</th><th>${t("Provider")}</th><th>${t("Ekspirasyon")}</th><th>${t("Dènye fwa")}</th><th>${t("Limit")}</th><th>${t("Aksyon")}</th></tr></thead><tbody>` +
@@ -1768,7 +1802,7 @@ function renderDevTable() {
       const online = l ? l.online : String(d.status).toLowerCase() === "online";
       const st = d.blocked ? `<span class="st-block">${t("Bloke")}</span>` : !(d.playlists || []).length ? (d.galaxy ? `<span class="st-off" title="${esc(t("TV a sou ekran aktivasyon an: ajoute yon playlist pou l konekte."))}">⏳ ${esc(t("Ap tann aktivasyon"))}</span>` : `<span class="st-off" title="${esc(t("Pa konfigire"))}">—</span>`) : `<span class="${online ? "st-on" : "st-off"}">${t(online ? "Online" : "Offline")}</span>`;
       const key = d.galaxy ? `data-mac="${esc(d.mac)}"` : `data-id="${esc(d.deviceId)}"`;
-      return `<tr class="click${dev && d.galaxy && dev.mac === d.mac ? " sel" : ""}" ${key}><td class="mono">${d.galaxy ? esc(d.mac) : "-"}</td><td>${esc(shortId(d))}</td><td>${esc(d.model ? devType(d.model) : (d.type || "Android TV"))}</td><td>${st}</td>
+      return `<tr class="click${dev && d.galaxy && dev.mac === d.mac ? " sel" : ""}" ${key}><td class="mono">${d.galaxy ? esc(d.mac) : "-"}</td><td>${esc(shortId(d))}</td><td>${esc(d.model ? devType(d.model) : (d.type || "Android TV"))}${d.brand === "bentech" ? ` <span class="pill" style="background:#fff3d6;color:#8a5a00;border:1px solid #f3c35a;font-size:11px;padding:1px 6px;border-radius:9px;white-space:nowrap">Ben Tech</span>` : ""}</td><td>${st}</td>
         <td>${d.playlists.map((p) => esc(p.name)).join(", ") || t("Pa konfigire")}</td><td>${d.galaxy ? devExpHtml(d) : "—"}</td><td>${esc(d.lastSeen || "—")}</td><td>${Number(d.providerMaxConn) > 0 ? esc(d.providerMaxConn) : "—"}</td>
         <td class="acts"><button class="btn purple" data-act="provider" type="button">${t("Ajoute provider")}</button><button class="btn ${d.blocked ? "red" : "green"}" data-act="${d.blocked ? "activate" : "block"}" type="button" title="${esc(t(d.blocked ? "Klike pou aktive aparèy la" : "Klike pou dezaktive aparèy la"))}">${t(d.blocked ? "Dezaktive" : "Aktif")}</button><button class="btn red" data-act="delete" type="button">${t("Efase l")}</button></td></tr>`;
     }).join("") + `</tbody></table>` + moreHtml("dev", devices.length)
