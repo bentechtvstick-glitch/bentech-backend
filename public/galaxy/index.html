@@ -2531,7 +2531,7 @@ function renderChList() {
     let list = g.items;
     if (open) { const room = Math.max(0, Math.min(chState.full?.has(cid) ? Infinity : CAP_GROUP, CAP_TOTAL * (chState.full?.has(cid) ? 50 : 1) - drawn));
       if (list.length > room) { skipped += list.length - room; list = list.slice(0, room); } drawn += list.length; }
-    if (open) for (const c of list) { const off = hid.has(c.id) || hidC.has(cid); h += `<div class="chrow${off ? " off" : ""}"><label class="sw sm"><input type="checkbox" data-ch="${c.id}" id="${pre}chk_${c.id}"${hid.has(c.id) || hidC.has(cid) ? "" : " checked"}${hidC.has(cid) ? " disabled" : ""}><i></i></label> ${chState.edit === "h:" + c.id ? `${tvN.has(c.id) ? tvN.get(c.id) + ". " : "— "}` + editBox("ch", c.id, chName(c)) : `<label for="${pre}chk_${c.id}" style="flex:1;min-width:0">${tvN.has(c.id) ? tvN.get(c.id) + ". " : "— "}${esc(chName(c))}${chState.dupCount?.get(c.id) > 1 ? ` <span class="pill p-info" title="${esc(t("Menm chanèl la parèt {0} fwa nan lis la", chState.dupCount.get(c.id)))}">×${chState.dupCount.get(c.id)}</span>` : ""}${chState.chN[c.id] ? ` <span class="note">(${esc(c.name)})</span>` : ""}</label>${sigHtml(chState.health[c.id])}${penBtn("ch", c.id)}`}</div>`; }
+    if (open) for (const c of list) { const off = hid.has(c.id) || hidC.has(cid); h += `<div class="chrow${off ? " off" : ""}"><label class="sw sm"><input type="checkbox" data-ch="${c.id}" id="${pre}chk_${c.id}"${hid.has(c.id) || hidC.has(cid) ? "" : " checked"}><i></i></label> ${chState.edit === "h:" + c.id ? `${tvN.has(c.id) ? tvN.get(c.id) + ". " : "— "}` + editBox("ch", c.id, chName(c)) : `<label for="${pre}chk_${c.id}" style="flex:1;min-width:0">${tvN.has(c.id) ? tvN.get(c.id) + ". " : "— "}${esc(chName(c))}${chState.dupCount?.get(c.id) > 1 ? ` <span class="pill p-info" title="${esc(t("Menm chanèl la parèt {0} fwa nan lis la", chState.dupCount.get(c.id)))}">×${chState.dupCount.get(c.id)}</span>` : ""}${chState.chN[c.id] ? ` <span class="note">(${esc(c.name)})</span>` : ""}</label>${sigHtml(chState.health[c.id])}${penBtn("ch", c.id)}`}</div>`; }
     if (open && list.length < g.items.length) h += `<div class="chrow"><button class="btn small" type="button" data-full="${esc(cid)}">${esc(t("Montre tout ({0})", g.items.length))}</button></div>`;
   }
   return [h, skipped]; };
@@ -2624,7 +2624,17 @@ for (const box of [$("#chList"), $("#chTop")]) box.addEventListener("click", (e)
 });
 for (const box of [$("#chList"), $("#chTop")]) box.addEventListener("change", (e) => {
   const el = e.target; if (el.classList.contains("chedit")) return chCommitEdit(el); if (el.dataset.cat) { el.checked ? chState.hidC.delete(el.dataset.cat) : chState.hidC.add(el.dataset.cat); }
-  if (el.dataset.ch) { const id = +el.dataset.ch; el.checked ? chState.hid.delete(id) : chState.hid.add(id);
+  if (el.dataset.ch) { const id = +el.dataset.ch;
+    // Gwoup la kache epi w limen YON chanèl ladan l: gwoup la relimen ak chanèl sa a SÈLMAN (lòt yo rete kache)
+    const cc = chState.chs.find((c) => c.id === id), gid = cc ? String(cc.categoryId) : "";
+    if (el.checked && gid && chState.hidC.has(gid)) {
+      chState.hidC.delete(gid);
+      for (const c of chState.chs) if (String(c.categoryId) === gid && c.id !== id) chState.hid.add(c.id);
+      chState.hid.delete(id);
+      const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep;
+      setMsg($("#chMsg"), "Chanjman yo poko sove.", false); $("#chMsg").className = "msg"; return;
+    }
+    el.checked ? chState.hid.delete(id) : chState.hid.add(id);
     // Yon sèl chanèl: chanje liy li a sèlman (pa redesine tout lis la)
     el.closest(".chrow")?.classList.toggle("off", !el.checked);
     const { chs, hid, hidC } = chState; $("#chCount").textContent = t("{0} sou {1} chanèl vizib (anvan limit Channel Profile la).", chs.filter((c) => !hid.has(c.id) && !hidC.has(c.categoryId)).length, chs.length);
