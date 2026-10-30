@@ -234,7 +234,8 @@ input[type=range]{accent-color:var(--blue2);width:100%}
 /* ---- Chyron / Lower third ---- */
 main[data-pane="cy"]{container-type:inline-size;container-name:cypane}
 .cy-cols{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}
-@container cypane (max-width:1020px){.cy-cols{grid-template-columns:minmax(0,1fr)}.cy-prevcard{order:-1;z-index:5;box-shadow:0 10px 24px rgba(0,0,0,.35)}.cy-prevcard .cystage{max-width:calc(42vh * 16 / 9)}}
+@container cypane (max-width:1020px){.cy-cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}}
+@container cypane (max-width:760px){.cy-cols{grid-template-columns:minmax(0,1fr)}.cy-prevcard{order:-1;position:static;box-shadow:none}.cy-prevcard .cystage{max-width:calc(30vh * 16 / 9);margin:0 auto}}
 .cy-form{container-type:inline-size;container-name:cyform}
 @container cyform (max-width:600px){.cy-lt{grid-template-columns:1fr}.posgrid{max-width:320px}}
 @container cyform (max-width:480px){.cy-form .row2,.cy-form .row3,.cy-form .swrow{grid-template-columns:1fr}.seg.full button{font-size:12px}}
@@ -309,7 +310,8 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .gx-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px;align-items:start}
 .gx-list{display:flex;flex-direction:column;gap:14px;min-width:0}
 .gx-prevcard{position:sticky;top:84px;background:rgba(22,30,50,.45);background:color-mix(in srgb,var(--surface) 45%,transparent);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
-@container gxpane (max-width:1020px){.gx-cols{grid-template-columns:minmax(0,1fr)}.gx-prevcard{order:-1;z-index:5;box-shadow:0 10px 24px rgba(0,0,0,.35)}.gx-prevcard .cystage{max-width:calc(42vh * 16 / 9)}}
+@container gxpane (max-width:1020px){.gx-cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}}
+@container gxpane (max-width:760px){.gx-cols{grid-template-columns:minmax(0,1fr)}.gx-prevcard{order:-1;position:static;box-shadow:none}.gx-prevcard .cystage{max-width:calc(30vh * 16 / 9);margin:0 auto}}
 .gxhead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}.gxhead .grow{flex:1;min-width:180px}.gxhead b{font-size:15px}
 .flagpop{position:fixed;z-index:60;width:340px;max-height:380px;display:flex;flex-direction:column;gap:8px;background:var(--panel,#141a2e);border:1px solid var(--line2,#2a3150);border-radius:12px;padding:10px;box-shadow:0 12px 32px rgba(0,0,0,.5)}
 .flagpop .fg{overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:4px}
