@@ -609,6 +609,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <div class="right">
         <button class="btn small" id="ttvBtn" type="button" hidden>📺 Customer TV</button>
         <label class="inline" id="brandBox" hidden style="flex-wrap:nowrap;gap:6px"><span class="note" style="margin:0">🏷️ App:</span><select id="brandSel" class="langsel" aria-label="App"><option value="galaxy">Galaxy TV Stick</option><option value="bentech">Ben Tech TV Stick</option></select></label>
+        <label class="inline" id="brandAllBox" hidden style="flex-wrap:nowrap;gap:4px;cursor:pointer" title="Mesaj/piblisite ou ajoute oswa modifye yo ap parèt sou toude app yo"><input type="checkbox" id="brandAll"><span class="note" style="margin:0">Toude app yo</span></label>
         <span class="inline" style="flex-wrap:nowrap"><svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><select class="langsel" data-lang-select aria-label="Lang"></select></span>
         <div class="rel"><button class="iconbtn" id="bellBtn" type="button" aria-label="Notifikasyon"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg><span class="count" id="bellCount" hidden></span></button>
           <div class="menu" id="bellMenu" hidden></div></div>
@@ -1419,7 +1420,9 @@ async function api(method, path, body) {
     }
   }
   if (BRAND_COLS.test(path)) {
-    if (method === "POST" && body && typeof body === "object" && !body.brand) body = { ...body, brand };
+    const both = (() => { try { return $("#brandAll").checked && BRAND_TABS.includes(tab) && tab !== "gfx"; } catch { return false; } })();
+    if (method === "POST" && body && typeof body === "object" && !body.brand) body = { ...body, brand: both ? "all" : brand };
+    if (method === "PUT" && both && body && typeof body === "object") body = { ...body, brand: "all" };
     const r = await apiRaw(method, path, body);
     if (method === "GET" && r && Array.isArray(r.data)) return { ...r, data: r.data.filter((x) => brandOf(x) === brand || brandOf(x) === "all") };
     return r;
@@ -1494,9 +1497,13 @@ function openTab(name) {
   if (name === "ads") loadAds();
   if (name === "gfx") loadGfx();
   $("#brandBox").hidden = !BRAND_TABS.includes(name);
+  $("#brandAllBox").hidden = !BRAND_TABS.includes(name) || name === "gfx";
   window.scrollTo({ top: 0 });
 }
 $("#brandSel").value = brand;
+try { $("#brandAll").checked = localStorage.getItem("gxBrandAll") === "1"; } catch {}
+$("#brandAll").addEventListener("change", (e) => { try { localStorage.setItem("gxBrandAll", e.target.checked ? "1" : "0"); } catch {}
+  toast(e.target.checked ? t("Sa w ajoute oswa modifye kounye a ap parèt sou toude app yo") : t("Sa w ajoute kounye a ap parèt sèlman sou app ou chwazi a")); });
 const brandPaint = () => { document.body.classList.toggle("brand-bt", brand === "bentech"); };
 brandPaint();
 $("#brandSel").addEventListener("change", (e) => { brand = e.target.value === "bentech" ? "bentech" : "galaxy"; try { localStorage.setItem("gxBrand", brand); } catch {} brandPaint();
