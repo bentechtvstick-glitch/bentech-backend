@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kat kontak Ben Tech sou paj akèy la: Tel/WhatsApp, Zelle, adrès -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="40dp" android:layout_marginTop="10dp"
+    android:background="@drawable/bg_contact_card" android:gravity="center" android:orientation="horizontal"
+    android:paddingStart="12dp" android:paddingEnd="12dp">
+    <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ct_phone" android:importantForAccessibility="no"/>
+    <ImageView android:layout_width="22dp" android:layout_height="22dp" android:layout_marginStart="4dp" android:src="@drawable/ct_whatsapp" android:importantForAccessibility="no"/>
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:singleLine="true" android:text="38409090" android:textColor="#1E5BD8" android:textSize="12sp" android:textStyle="bold" />
+    <View android:layout_width="1dp" android:layout_height="20dp" android:layout_marginStart="10dp" android:layout_marginEnd="10dp" android:background="#C9D3EA"/>
+    <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ct_zelle" android:importantForAccessibility="no"/>
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:singleLine="true" android:text="ruedbonsenfants123@gmail.com" android:textColor="#5B2AA8" android:textSize="12sp" android:textStyle="bold" />
+    <View android:layout_width="1dp" android:layout_height="20dp" android:layout_marginStart="10dp" android:layout_marginEnd="10dp" android:background="#C9D3EA"/>
+    <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ct_pin" android:importantForAccessibility="no"/>
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:singleLine="true" android:text="Rue Normande #28, Jacmel, Haiti" android:textColor="#10182B" android:textSize="12sp" android:textStyle="bold" android:ellipsize="end"/>
+</LinearLayout>

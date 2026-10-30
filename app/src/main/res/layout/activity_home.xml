@@ -84,7 +84,6 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
                 <TextView android:id="@+id/status" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                     android:text="@string/home_connecting" android:textColor="#9AA3B5" android:textSize="13sp"/>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="@integer/brand_contact_vis" android:text="@string/brand_contact" android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold" android:lineSpacingExtra="2dp" android:gravity="end" android:layout_marginEnd="18dp"/>
                 <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="end" android:orientation="vertical">
                     <TextView android:id="@+id/clock" android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold"/>
@@ -163,6 +162,7 @@
                 android:text="@string/home_categories" android:textColor="#FFFFFF" android:textSize="17sp" android:textStyle="bold"/>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/catList" android:layout_width="match_parent" android:layout_height="62dp"
                 android:layout_marginTop="8dp" android:clipToPadding="false" android:descendantFocusability="afterDescendants"/>
+            <include layout="@layout/home_contact"/>
         </LinearLayout>
     </LinearLayout>
 
