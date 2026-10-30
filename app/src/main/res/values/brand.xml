@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kontak mak la (vid pou Galaxy; Ben Tech mete telefòn, WhatsApp ak adrès li) -->
+<resources>
+    <string name="brand_contact" translatable="false"></string>
+    <integer name="brand_contact_vis">2</integer>
+</resources>

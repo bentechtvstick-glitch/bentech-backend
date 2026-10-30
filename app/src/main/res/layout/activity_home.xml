@@ -8,8 +8,8 @@
         <!-- Meni agoch -->
         <LinearLayout android:id="@+id/side" android:layout_width="224dp" android:layout_height="match_parent" android:background="#0D1018"
             android:orientation="vertical" android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingTop="14dp" android:paddingBottom="10dp">
-            <ImageView android:layout_width="match_parent" android:layout_height="@dimen/logo_side_h" android:layout_marginBottom="12dp"
-                android:scaleType="fitCenter" android:src="@drawable/logo_brand" android:contentDescription="@string/app_name"/>
+            <ImageView android:layout_width="match_parent" android:layout_height="66dp" android:layout_marginBottom="12dp"
+                android:scaleType="fitCenter" android:src="@drawable/logo_full" android:contentDescription="@string/app_name"/>
             <LinearLayout android:id="@+id/menuHome" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginBottom="4dp"
                 android:background="@drawable/bg_side_item" android:clickable="true" android:focusable="true" android:gravity="center_vertical"
                 android:orientation="horizontal" android:paddingStart="14dp" android:paddingEnd="10dp">
@@ -84,6 +84,7 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
                 <TextView android:id="@+id/status" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                     android:text="@string/home_connecting" android:textColor="#9AA3B5" android:textSize="13sp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="@integer/brand_contact_vis" android:text="@string/brand_contact" android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold" android:lineSpacingExtra="2dp" android:gravity="end" android:layout_marginEnd="18dp"/>
                 <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="end" android:orientation="vertical">
                     <TextView android:id="@+id/clock" android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold"/>

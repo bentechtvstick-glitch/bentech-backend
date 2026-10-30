@@ -12,8 +12,9 @@
             android:gravity="center" android:orientation="vertical" android:paddingTop="20dp" android:paddingBottom="20dp">
 
             <!-- Logo Galaxy TV Stick -->
-            <ImageView android:layout_width="300dp" android:layout_height="150dp" android:src="@drawable/logo_brand"
+            <ImageView android:layout_width="300dp" android:layout_height="150dp" android:src="@drawable/logo_full"
                 android:scaleType="fitCenter" android:contentDescription="@string/app_name"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="@integer/brand_contact_vis" android:text="@string/brand_contact" android:textColor="#1A1F36" android:textSize="16sp" android:textStyle="bold" android:lineSpacingExtra="2dp" android:gravity="center" android:layout_marginTop="2dp"/>
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp"
                 android:text="@string/label_mac" android:textColor="#6B7280" android:textSize="13sp"/>
