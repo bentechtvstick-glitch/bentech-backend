@@ -582,7 +582,7 @@ class PanelApi(private val prefs: Prefs) {
     private suspend fun call(req: Request): String = withContext(Dispatchers.IO) {
         // Vèsyon app la nan chak demann: panel la toujou konnen vèsyon ki enstale sou TV a
         try {
-            XtreamApi.http.newCall(req.newBuilder().header("X-App-Version", BuildConfig.VERSION_NAME).build()).execute().use { r ->
+            XtreamApi.http.newCall(req.newBuilder().header("X-App-Version", BuildConfig.VERSION_NAME).header("X-App-Brand", BuildConfig.BRAND).build()).execute().use { r ->
                 if (!r.isSuccessful) throw IOException("Panel HTTP ${r.code}")
                 r.body?.string() ?: ""
             }

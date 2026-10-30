@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mak Ben Tech: sèlman tèks ki gen non app la (rès tèks yo soti nan src/main) -->
+<resources>
+    <string name="app_name">Ben Tech TV Stick</string>
+    <string name="exit_confirm">¿Salir de Ben Tech TV Stick?</string>
+    <string name="disclaimer">Ben Tech TV Stick es solo un reproductor multimedia. No incluye ni proporciona canales, películas ni contenido.</string>
+    <string name="set_about_fmt">Ben Tech TV Stick\nVersión: %1$s\nDispositivo: %2$s\nAndroid: %3$s</string>
+    <string name="update_msg">La versión %1$s de Ben Tech TV Stick está disponible. Pulsa «Actualizar» para instalarla. Tus ajustes se conservan.</string>
+    <string name="update_msg_force">Debes instalar la versión %1$s para seguir usando Ben Tech TV Stick. Pulsa «Actualizar».</string>
+    <string name="update_allow">Si el instalador no se abre: Settings → My Fire TV → Developer options → Install unknown apps → Ben Tech TV Stick → ON.</string>
+</resources>

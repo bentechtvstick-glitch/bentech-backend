@@ -77,7 +77,7 @@ object Updater {
     fun maybePrompt(activity: Activity, u: AppUpdate?, prefs: Prefs): Boolean {
         if (u == null || u.build <= BuildConfig.VERSION_CODE) return false
         // Mizajou an silans posib: pa deranje kliyan an, telechaje l an aryè plan
-        if (canSilent(activity)) { prepareSilent(activity, u.build, u.url.ifBlank { APK_URL }); return false }
+        if (canSilent(activity)) { prepareSilent(activity, u.build, brandUrl(u.url)); return false }
         if (showing || downloading) return true
         // Kliyan an te otorize enstalasyon an nan Settings: enstale APK ki t ap tann nan touswit
         pendingFile?.let { f ->
@@ -97,8 +97,12 @@ object Updater {
         return true
     }
 
-    private const val APK_URL = "https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/GalaxyTvStick.apk"
-    private const val VERSION_URL = "https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/version.json"
+    // Chak mak gen pwòp APK li ak pwòp fichye vèsyon li (BuildConfig selon mak la)
+    private const val RELEASE = "https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/"
+    private val APK_URL = RELEASE + BuildConfig.APK_NAME
+    private val VERSION_URL = RELEASE + BuildConfig.VERSION_FILE
+    /** Lyen panel la voye a se lyen estanda GitHub la? Sèvi ak APK pwòp mak app sa a (pa APK lòt mak la). */
+    private fun brandUrl(url: String) = if (url.isBlank() || url.contains("/apk-latest/")) APK_URL else url
 
     /**
      * Bouton "Mizajou app la" nan Settings: kliyan an tcheke li menm si gen yon nouvo vèsyon,
@@ -200,7 +204,7 @@ object Updater {
             val file = File(app.externalCacheDir ?: app.cacheDir, "GalaxyTvStick-update.apk")
             val ok = runCatching {
                 XtreamApi.http.newBuilder().readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).build()
-                    .newCall(Request.Builder().url(u.url).build()).execute().use { r ->
+                    .newCall(Request.Builder().url(brandUrl(u.url)).build()).execute().use { r ->
                         if (!r.isSuccessful) error("HTTP ${r.code}")
                         val body = r.body ?: error("empty")
                         val total = body.contentLength()

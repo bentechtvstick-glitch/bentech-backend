@@ -29,6 +29,27 @@ android {
         ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
     }
 
+    // Mak (brand): menm kòd, menm panel; non, logo, icon ak lyen mizajou chak mak apa.
+    // Chak mak se yon app separe sou TV a (applicationId diferan): yo ka menm enstale youn bò kote lòt.
+    flavorDimensions += "brand"
+    productFlavors {
+        create("galaxy") {
+            dimension = "brand"
+            // Pa chanje: TV ki deja gen Galaxy TV Stick yo kontinye resevwa mizajou yo
+            applicationId = "com.galaxytvstick.tv"
+            buildConfigField("String", "BRAND", "\"galaxy\"")
+            buildConfigField("String", "APK_NAME", "\"GalaxyTvStick.apk\"")
+            buildConfigField("String", "VERSION_FILE", "\"version.json\"")
+        }
+        create("bentech") {
+            dimension = "brand"
+            applicationId = "net.bentechtvstick.tv"
+            buildConfigField("String", "BRAND", "\"bentech\"")
+            buildConfigField("String", "APK_NAME", "\"BenTechTvStick.apk\"")
+            buildConfigField("String", "VERSION_FILE", "\"version-bentech.json\"")
+        }
+    }
+
     // Menm kle siyati pou tout bati yo (san sa, Fire Stick la refize mete yon nouvo vèsyon sou ansyen an)
     signingConfigs {
         create("galaxy") {

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mak Ben Tech: sèlman tèks ki gen non app la (rès tèks yo soti nan src/main) -->
+<resources>
+    <string name="app_name">Ben Tech TV Stick</string>
+    <string name="exit_confirm">Ou vle soti nan Ben Tech TV Stick?</string>
+    <string name="disclaimer">Ben Tech TV Stick se yon lektè videyo sèlman. Li pa vini ak okenn chanèl, fim oswa kontni.</string>
+    <string name="set_about_fmt">Ben Tech TV Stick\nVèsyon: %1$s\nAparèy: %2$s\nAndroid: %3$s</string>
+    <string name="update_msg">Vèsyon %1$s Ben Tech TV Stick la disponib. Peze \"Mete ajou\" pou enstale l. Reglaj ou yo ap rete jan yo ye.</string>
+    <string name="update_msg_force">Fòk ou enstale vèsyon %1$s pou kontinye sèvi ak Ben Tech TV Stick. Peze \"Mete ajou\".</string>
+    <string name="update_allow">Si enstalasyon an pa louvri: Settings → My Fire TV → Developer options → Install unknown apps → Ben Tech TV Stick → ON.</string>
+</resources>

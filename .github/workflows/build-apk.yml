@@ -27,7 +27,7 @@ jobs:
       - name: Build debug APK
         run: |
           set -o pipefail
-          gradle assembleRelease --no-daemon 2>&1 | tee build.log
+          gradle assembleGalaxyRelease assembleBentechRelease --no-daemon 2>&1 | tee build.log
 
       # Lè bati a echwe: mete erè yo kòm "annotations" pou yo ka li san telechaje jounal la
       - name: Report build errors
@@ -45,8 +45,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: GalaxyTvStick-apk
-          path: app/build/outputs/apk/release/*.apk
+          name: TvStick-apks
+          path: app/build/outputs/apk/*/release/*.apk
           if-no-files-found: error
 
       # Lyen piblik ki pa janm chanje, pou telechaje APK a sou Fire Stick la (app "Downloader"):
@@ -56,11 +56,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/release/app-release.apk GalaxyTvStick.apk
+          cp app/build/outputs/apk/galaxy/release/app-galaxy-release.apk GalaxyTvStick.apk
+          cp app/build/outputs/apk/bentech/release/app-bentech-release.apk BenTechTvStick.apk
           gh release delete apk-latest --yes --cleanup-tag || true
           sleep 3
           # Ti fichye vèsyon an: panel la li l pou konnen dènye vèsyon an (san limit API GitHub)
           echo "{\"build\": $GITHUB_RUN_NUMBER, \"version\": \"1.0.$GITHUB_RUN_NUMBER\"}" > version.json
-          gh release create apk-latest GalaxyTvStick.apk version.json --target "$GITHUB_SHA" --prerelease \
-            --title "Galaxy TV Stick APK (build $GITHUB_RUN_NUMBER)" \
+          cp version.json version-bentech.json
+          gh release create apk-latest GalaxyTvStick.apk BenTechTvStick.apk version.json version-bentech.json --target "$GITHUB_SHA" --prerelease \
+            --title "Galaxy TV Stick + Ben Tech TV Stick APK (build $GITHUB_RUN_NUMBER)" \
             --notes "APK tès Galaxy TV Stick, bati otomatikman. Vèsyon 1.0.$GITHUB_RUN_NUMBER."
