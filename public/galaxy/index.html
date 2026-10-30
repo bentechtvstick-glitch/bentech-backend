@@ -1936,7 +1936,7 @@ document.addEventListener("click", (e) => { const g = e.target.closest("[data-go
 const PLANS = ["Trial", "1 Month", "3 Months", "6 Months", "12 Months"];
 const CRUD = {
   cust: { upper: 1, col: "customers", id: "id", title: "Kliyan yo", sub: "Kliyan yo, plan yo ak dat ekspirasyon. Ak \"Plan otomatik\" limen, plan ak ekspirasyon an soti nan founisè playlist la poukont yo.", auto: () => "C-" + (1000 + Math.floor(Math.random() * 9000)),
-    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS, def: () => "1 Month" }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "datetime" }, { k: "autoPlan", l: "Plan otomatik (founisè)", type: "bool", def: () => true }, { k: "mac", l: "TV kliyan an (MAC)", dev: 1 }] },
+    fields: [{ k: "id", l: "ID" }, { k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", noUpper: 1 }, { k: "phone", l: "Telefòn (WhatsApp)", ph: "Egz: 38409090 oswa +1 929 555 1234" }, { k: "city", l: "Vil" }, { k: "plan", l: "Plan", opts: PLANS, def: () => "1 Month" }, { k: "status", l: "Estati", opts: ["Active", "Expired", "Suspended"], pill: 1 }, { k: "expiry", l: "Ekspirasyon", type: "datetime" }, { k: "autoPlan", l: "Plan otomatik (founisè)", type: "bool", def: () => true }, { k: "mac", l: "TV kliyan an (MAC)", dev: 1 }] },
   prof: { col: "channel-profiles", id: "name", title: "Channel Profiles", sub: "Pakè chanèl. Kantite chanèl la se limit TV a.",
     fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }, { k: "customers", l: "Kliyan", type: "number" }, { k: "tags", l: "Tags" }] },
   langs: { col: "languages", id: "name", title: "Lang yo", sub: "Lang chanèl yo.", fields: [{ k: "name", l: "Name", req: 1 }, { k: "code", l: "Kòd" }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }] },
@@ -2012,7 +2012,7 @@ function renderCrud() {
   $("#crudCount").textContent = t("{0} eleman", rows.length);
   const cols = C.fields.filter((f) => !f.hide);
   $("#crudTable").innerHTML = rows.length ? `<table><thead><tr>${cols.map((f) => `<th>${esc(t(f.l))}</th>`).join("")}${C.readonly ? "" : `<th>${t("Aksyon")}</th>`}</tr></thead><tbody>` +
-    capRows("crud", rows).map((it) => `<tr class="${C.readonly ? "" : "click"}" data-row="${esc(it[C.id] ?? "")}">${cols.map((f) => `<td${isUpper(C, f) ? ' class="up"' : ""}>${cellHtml(f, it[f.k], it)}</td>`).join("")}${C.readonly ? "" : `<td class="acts">${crud.name === "cust" ? `<button class="btn small green" data-msg-row type="button" title="${esc(t("Voye yon mesaj sou tout TV kliyan sa a"))}">💬 ${t("Mesaj")}</button>` : ""}<button class="btn small purple" data-edit type="button">${t("Modifye")}</button><button class="btn small red" data-del-row type="button">${t("Efase l")}</button></td>`}</tr>`).join("") + `</tbody></table>` + moreHtml("crud", rows.length)
+    capRows("crud", rows).map((it) => `<tr class="${C.readonly ? "" : "click"}" data-row="${esc(it[C.id] ?? "")}">${cols.map((f) => `<td${isUpper(C, f) ? ' class="up"' : ""}>${cellHtml(f, it[f.k], it)}</td>`).join("")}${C.readonly ? "" : `<td class="acts">${crud.name === "cust" && waNum(it.phone) ? `<button class="btn small" data-wa-row type="button" style="background:#25D366;color:#fff;border-color:#1da851" title="${esc(t("Louvri WhatsApp ak kliyan sa a"))}">WhatsApp</button>` : ""}${crud.name === "cust" ? `<button class="btn small green" data-msg-row type="button" title="${esc(t("Voye yon mesaj sou tout TV kliyan sa a"))}">💬 ${t("Mesaj")}</button>` : ""}<button class="btn small purple" data-edit type="button">${t("Modifye")}</button><button class="btn small red" data-del-row type="button">${t("Efase l")}</button></td>`}</tr>`).join("") + `</tbody></table>` + moreHtml("crud", rows.length)
     : `<div class="empty">${t("Pa gen anyen isit la ankò.")}</div>`;
 }
 /** Dat ekspirasyon pou yon plan, apati kounye a: "Trial" = 24 è, "N Month(s)" = N mwa. Fòma datetime-local. */
@@ -2042,7 +2042,7 @@ function openCrudForm(item) {
     else if (f.type === "password") input = `<input type="password" id="${id}" autocomplete="new-password" placeholder="${item && item.hasPassword ? esc(t("•••••• (pa chanje)")) : ""}">`;
     else if (f.list) input = `<input type="text" id="${id}" list="${id}_l" value="${esc(v ?? "")}"><datalist id="${id}_l">${(crud.refs[f.list] || []).filter((x) => x.url).map((x) => `<option value="${esc(x.url)}">${esc(x.name || "")}</option>`).join("")}</datalist>`;
     else if (f.type === "datetime") input = `<input type="datetime-local" id="${id}" value="${esc(!v ? "" : /^\d{4}-\d{2}-\d{2}$/.test(v) ? v + "T23:59" : String(v).replace(" ", "T").slice(0, 16))}">`;
-    else input = `<input type="${f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}" id="${id}" value="${esc(isUpper(C, f) ? String(v ?? "").toUpperCase() : v ?? "")}"${isUpper(C, f) ? ' class="up" autocapitalize="characters"' : ""}>`;
+    else input = `<input type="${f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}" id="${id}" value="${esc(isUpper(C, f) ? String(v ?? "").toUpperCase() : v ?? "")}"${isUpper(C, f) ? ' class="up" autocapitalize="characters"' : ""}${f.ph ? ` placeholder="${esc(t(f.ph))}"` : ""}>`;
     return `<div class="field"${f.wide ? ' style="grid-column:1/-1"' : ""}>${lab}${input}</div>`;
   }).join("");
   // Kliyan: lè w chwazi yon plan, dat ekspirasyon an ranpli poukont li (Trial = 24 è, 1 Month = 1 mwa…). Ou ka chanje l apre.
@@ -2092,6 +2092,36 @@ function confirmDelete(where, id) {
   $("[data-yes]", where).onclick = async () => { try { await api("DELETE", `/${C.col}/${encodeURIComponent(id)}`); toast("Efase"); $("#crudFormCard").hidden = true; loadCrud(); } catch (err) { toast(err.message); } };
 }
 /** Voye yon mesaj sou ekran tout TV yon kliyan (menm kòmand ak "Kontwòl a distans" nan paj Aparèy la). */
+/** Nimewo WhatsApp (wa.me): 8 chif = Ayiti (+509), 10 chif = USA/Kanada (+1), sinon nimewo a jan l ye a ak kòd peyi l. */
+function waNum(p) {
+  const raw = String(p || "").trim(); let d = raw.replace(/\D/g, "");
+  if (!d) return "";
+  if (raw.startsWith("00")) d = d.slice(2);
+  else if (!raw.startsWith("+")) { if (d.length === 8) d = "509" + d; else if (d.length === 10) d = "1" + d; }
+  return d.length >= 8 && d.length <= 15 ? d : "";
+}
+/** Mesaj WhatsApp tou pare pou kliyan an (rapèl ekspirasyon), admin nan ka chanje l anvan l voye l. */
+function waText(c) {
+  const ds = custDevices(c), app = ds.some((d) => d.brand === "bentech") ? "Ben Tech TV Stick" : "Galaxy TV Stick";
+  const name = String(c.name || "").trim(), hi = name ? `Bonjou ${name},` : "Bonjou,";
+  const exp = c.expiry ? new Date(c.expiry) : null;
+  if (exp && !isNaN(exp)) {
+    const left = Math.ceil((exp - Date.now()) / 86400000), day = usDate(exp);
+    if (left < 0) return `${hi} abònman ${app} ou a fini ${day}. Ekri nou pou w renouvle l epi kontinye gade. Mèsi!`;
+    if (left === 0) return `${hi} abònman ${app} ou a ap fini jodi a (${day}). Ekri nou pou w renouvle l pou w pa pèdi chanèl ou yo. Mèsi!`;
+    return `${hi} abònman ${app} ou a ap fini nan ${left} jou (${day}). Ekri nou pou w renouvle l pou w pa pèdi chanèl ou yo. Mèsi!`;
+  }
+  return `${hi} `;
+}
+function custWhatsApp(where, c) {
+  const n = waNum(c.phone);
+  where.innerHTML = `<div class="confirm custmsg" style="flex-wrap:wrap;max-width:min(860px,calc(100vw - 340px));position:sticky;left:0"><span style="flex:1 1 auto">💬 WhatsApp · ${esc(c.name || "")} · +${esc(n)}</span>
+    <button class="btn small" data-no type="button">${t("Anile")}</button><button class="btn small" data-yes type="button" style="background:#25D366;color:#fff;border-color:#1da851">${t("Louvri WhatsApp")}</button>
+    <textarea rows="3" maxlength="1000" style="flex:1 1 100%;min-width:0;resize:vertical"></textarea></div>`;
+  const ta = $("textarea", where); ta.value = waText(c); ta.focus();
+  $("[data-no]", where).onclick = () => where.closest("tr").remove();
+  $("[data-yes]", where).onclick = () => { window.open(`https://wa.me/${n}?text=${encodeURIComponent(ta.value.trim())}`, "_blank", "noopener"); where.closest("tr").remove(); };
+}
 function custMessage(where, c) {
   const ds = custDevices(c);
   if (!ds.length) { where.innerHTML = `<div class="confirm"><span>${esc(t("Kliyan sa a pa gen okenn TV konekte ak li."))}</span><button class="btn small" data-no type="button">OK</button></div>`; $("[data-no]", where).onclick = () => where.closest("tr").remove(); return; }
@@ -2115,6 +2145,7 @@ $("#crudDelete").addEventListener("click", () => confirmDelete($("#crudConfirm")
 $("#crudTable").addEventListener("click", (e) => {
   const row = e.target.closest("tr[data-row]"); const C = CRUD[crud.name]; if (!row || C.readonly) return;
   const item = crud.items.find((it) => String(it[C.id]) === row.dataset.row);
+  if (e.target.closest("[data-wa-row]") && item) { $$("#crudTable .confirmrow").forEach((r) => r.remove()); row.insertAdjacentHTML("afterend", `<tr class="confirmrow"><td colspan="${C.fields.length + 1}"></td></tr>`); return custWhatsApp(row.nextElementSibling.firstElementChild, item); }
   if (e.target.closest("[data-msg-row]") && item) { $$("#crudTable .confirmrow").forEach((r) => r.remove()); row.insertAdjacentHTML("afterend", `<tr class="confirmrow"><td colspan="${C.fields.length + 1}"></td></tr>`); return custMessage(row.nextElementSibling.firstElementChild, item); }
   if (e.target.closest("[data-del-row]")) { $$("#crudTable .confirmrow").forEach((r) => r.remove()); row.insertAdjacentHTML("afterend", `<tr class="confirmrow"><td colspan="${C.fields.length + 1}"></td></tr>`); return confirmDelete(row.nextElementSibling.firstElementChild, row.dataset.row); }
   if (item) openCrudForm(item);
