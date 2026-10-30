@@ -81,24 +81,29 @@
         <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical"
             android:paddingStart="20dp" android:paddingEnd="22dp" android:paddingTop="14dp">
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
-                <TextView android:id="@+id/status" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                    android:text="@string/home_connecting" android:textColor="#9AA3B5" android:textSize="13sp"/>
-                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="end" android:orientation="vertical">
-                    <TextView android:id="@+id/clock" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold"/>
-                    <TextView android:id="@+id/date" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:textColor="#C9CFDD" android:textSize="12sp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
+                    <TextView android:id="@+id/status" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:text="@string/home_connecting" android:textColor="#9AA3B5" android:textSize="13sp"/>
+                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="end" android:orientation="vertical">
+                        <TextView android:id="@+id/clock" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textColor="#FFFFFF" android:textSize="18sp" android:textStyle="bold"/>
+                        <TextView android:id="@+id/date" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:textColor="#C9CFDD" android:textSize="12sp"/>
+                    </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
 
-            <TextView android:id="@+id/contTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
-                android:text="@string/home_continue" android:textColor="#FFFFFF" android:textSize="17sp" android:textStyle="bold"/>
-            <androidx.recyclerview.widget.RecyclerView android:id="@+id/contList" android:layout_width="match_parent" android:layout_height="138dp"
-                android:layout_marginTop="8dp" android:clipToPadding="false" android:descendantFocusability="afterDescendants"/>
-            <TextView android:id="@+id/contEmpty" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="8dp"
-                android:background="@drawable/bg_home_card" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp"
-                android:text="@string/home_continue_empty" android:textColor="#9AA3B5" android:textSize="13sp" android:visibility="gone"/>
+                <TextView android:id="@+id/contTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
+                    android:text="@string/home_continue" android:textColor="#FFFFFF" android:textSize="17sp" android:textStyle="bold"/>
+                <androidx.recyclerview.widget.RecyclerView android:id="@+id/contList" android:layout_width="match_parent" android:layout_height="138dp"
+                    android:layout_marginTop="8dp" android:clipToPadding="false" android:descendantFocusability="afterDescendants"/>
+                <TextView android:id="@+id/contEmpty" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_home_card" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp"
+                    android:text="@string/home_continue_empty" android:textColor="#9AA3B5" android:textSize="13sp" android:visibility="gone"/>
+            </LinearLayout>
+            <include layout="@layout/home_brand_card"/>
+            </LinearLayout>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="92dp" android:layout_marginTop="14dp" android:orientation="horizontal">
                 <LinearLayout android:id="@+id/tileLive" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
@@ -162,7 +167,6 @@
                 android:text="@string/home_categories" android:textColor="#FFFFFF" android:textSize="17sp" android:textStyle="bold"/>
             <androidx.recyclerview.widget.RecyclerView android:id="@+id/catList" android:layout_width="match_parent" android:layout_height="62dp"
                 android:layout_marginTop="8dp" android:clipToPadding="false" android:descendantFocusability="afterDescendants"/>
-            <include layout="@layout/home_contact"/>
         </LinearLayout>
     </LinearLayout>
 
