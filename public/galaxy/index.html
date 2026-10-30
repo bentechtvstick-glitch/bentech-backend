@@ -303,6 +303,10 @@ body.pvbig-on::before{content:"";position:fixed;inset:0;z-index:89;background:rg
 .brpv-bar{position:absolute;left:0;right:0;bottom:0;height:7px;background:rgba(255,255,255,.18)}.brpv-bar i{display:block;height:100%;width:0;background:#00E5FF}
 .brpv-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.brpv-head .label{margin-right:auto;font-size:16px;font-weight:700;color:var(--text);text-transform:none;letter-spacing:0}
 /* Grafik TV */
+.brandSeg{display:inline-flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line2);border-radius:12px;background:var(--field);flex-wrap:wrap}
+.brandSeg span{font-size:13px;color:var(--muted,#9aa3b5);padding:0 6px}
+.brandSeg button{border:0;background:transparent;color:inherit;font:inherit;font-size:14px;font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer}
+.brandSeg button.on.galaxy{background:#2f6bff;color:#fff}.brandSeg button.on.bentech{background:#f59e0b;color:#1a1200}
 body.brand-bt #brandSel{outline:2px solid #f59e0b;background:#fff7e6;color:#7c4a00}
 main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:inline-size;container-name:gxpane}
 .tk-list .cols{grid-template-columns:minmax(0,1fr)}
@@ -1506,10 +1510,23 @@ $("#brandSel").value = brand;
 try { $("#brandAll").checked = localStorage.getItem("gxBrandAll") === "1"; } catch {}
 $("#brandAll").addEventListener("change", (e) => { try { localStorage.setItem("gxBrandAll", e.target.checked ? "1" : "0"); } catch {}
   toast(e.target.checked ? t("Sa w ajoute oswa modifye kounye a ap parèt sou toude app yo") : t("Sa w ajoute kounye a ap parèt sèlman sou app ou chwazi a")); });
-const brandPaint = () => { document.body.classList.toggle("brand-bt", brand === "bentech"); };
+const brandPaint = () => { document.body.classList.toggle("brand-bt", brand === "bentech"); if (typeof brandSegPaint === "function") brandSegPaint(); };
 brandPaint();
-$("#brandSel").addEventListener("change", (e) => { brand = e.target.value === "bentech" ? "bentech" : "galaxy"; try { localStorage.setItem("gxBrand", brand); } catch {} brandPaint();
-  toast(brand === "bentech" ? t("Kounye a w ap modifye app Ben Tech TV Stick la") : t("Kounye a w ap modifye app Galaxy TV Stick la")); openTab(tab); });
+function setBrand(b) { brand = b === "bentech" ? "bentech" : "galaxy"; try { localStorage.setItem("gxBrand", brand); } catch {} $("#brandSel").value = brand; brandPaint();
+  toast(brand === "bentech" ? t("Kounye a w ap modifye app Ben Tech TV Stick la") : t("Kounye a w ap modifye app Galaxy TV Stick la")); openTab(tab); }
+$("#brandSel").addEventListener("change", (e) => setBrand(e.target.value));
+/** Bouton «App: Galaxy / Ben Tech» anlè chak paj ki chanje selon mak la (pi fasil pou wè pase meni anlè a). */
+function brandSegPaint() {
+  for (const name of BRAND_TABS) {
+    const head = $(`main[data-pane="${name}"] .pagehead`); if (!head) continue;
+    let seg = head.querySelector(".brandSeg");
+    if (!seg) { seg = document.createElement("div"); seg.className = "brandSeg"; head.appendChild(seg);
+      seg.addEventListener("click", (e) => { const b = e.target.closest("button[data-brand]"); if (b && b.dataset.brand !== brand) setBrand(b.dataset.brand); }); }
+    seg.innerHTML = `<span>${esc(t("App:"))}</span>` + [["galaxy", "Galaxy TV Stick"], ["bentech", "Ben Tech TV Stick"]]
+      .map(([k, l]) => `<button type="button" data-brand="${k}" class="${k === brand ? "on " + k : ""}">${l}</button>`).join("");
+  }
+}
+brandSegPaint();
 
 // ------------------------------------------------------------ Helpers "TV"
 const hue = (s) => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 360; };

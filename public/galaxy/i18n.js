@@ -86,6 +86,7 @@ window.GALAXY_I18N = {
     "Mesaj/piblisite ou ajoute oswa modifye yo ap parèt sou toude app yo": "Messages/ads you add or edit will show on both apps",
     "Sa w ajoute oswa modifye kounye a ap parèt sou toude app yo": "What you add or edit now will show on both apps",
     "Sa w ajoute kounye a ap parèt sèlman sou app ou chwazi a": "What you add now will show only on the selected app",
+    "App:": "App:",
     "Pa gen chanèl ki koresponn.": "No matching channels.",
     "Chanjman yo poko sove.": "Changes not saved yet.", "Sove. TV a ap aplike l touswit si l online.": "Saved. The TV applies it right away if it's online.",
     // Mesaj
@@ -196,6 +197,7 @@ window.GALAXY_I18N = {
     "Mesaj/piblisite ou ajoute oswa modifye yo ap parèt sou toude app yo": "Les messages/pubs ajoutés ou modifiés s'afficheront sur les deux apps",
     "Sa w ajoute oswa modifye kounye a ap parèt sou toude app yo": "Ce que vous ajoutez ou modifiez maintenant s'affichera sur les deux apps",
     "Sa w ajoute kounye a ap parèt sèlman sou app ou chwazi a": "Ce que vous ajoutez maintenant s'affichera seulement sur l'app choisie",
+    "App:": "App :",
     "Pa gen chanèl ki koresponn.": "Aucune chaîne correspondante.",
     "Chanjman yo poko sove.": "Modifications non enregistrées.", "Sove. TV a ap aplike l touswit si l online.": "Enregistré. La TV l'applique tout de suite si elle est en ligne.",
     "Ticker": "Bandeau défilant", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Tous les messages actifs défilent en bas de chaque TV.",
@@ -302,6 +304,7 @@ window.GALAXY_I18N = {
     "Mesaj/piblisite ou ajoute oswa modifye yo ap parèt sou toude app yo": "Los mensajes/anuncios que agregues o edites se verán en ambas apps",
     "Sa w ajoute oswa modifye kounye a ap parèt sou toude app yo": "Lo que agregues o edites ahora se verá en ambas apps",
     "Sa w ajoute kounye a ap parèt sèlman sou app ou chwazi a": "Lo que agregues ahora se verá solo en la app elegida",
+    "App:": "App:",
     "Pa gen chanèl ki koresponn.": "No hay canales que coincidan.",
     "Chanjman yo poko sove.": "Cambios sin guardar.", "Sove. TV a ap aplike l touswit si l online.": "Guardado. El TV lo aplica al instante si está en línea.",
     "Ticker": "Cintillo", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Todos los mensajes activos se desplazan en la parte inferior de cada TV.",
