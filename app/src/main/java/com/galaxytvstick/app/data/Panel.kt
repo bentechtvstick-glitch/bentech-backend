@@ -287,6 +287,8 @@ data class PanelConfig(
     /** Mesaj "plan an prèske fini" (null = pa montre anyen). */
     val expiryNotice: ExpiryNotice? = null,
     val ticker: Ticker?,
+    /** Lè a sou ekran an lè ticker a pa parèt (menm estil ak lè ticker a). */
+    val clock: Ticker? = null,
     val chyron: Chyron?,
     /** Tout chyron aktif yo (vèsyon pwofesyonèl la). */
     val chyrons: List<ChyronItem> = emptyList(),
@@ -350,37 +352,9 @@ data class PanelConfig(
                 ExpiryNotice(it.optString("text"), it.optInt("daysLeft"), it.optInt("repeatMin", 120).coerceIn(15, 1440), it.optInt("showSec", 12).coerceIn(4, 60))
             }?.takeIf { it.text.isNotBlank() },
             channelNames = o.optJSONObject("channelNames").stringMap().mapNotNull { (k, v) -> k.toIntOrNull()?.let { it to v } }.toMap(),
-            ticker = o.optJSONObject("ticker")?.takeIf { it.optBoolean("enabled", true) }?.let {
-                Ticker(
-                    text = it.optString("text"),
-                    textColor = it.optString("textColor", "#FFFFFF"),
-                    bgColor = it.optString("bgColor", "#CC7C4DFF"),
-                    speed = it.optInt("speed", 5),
-                    items = it.optJSONArray("items").objects().map { x -> TickerItem(x.optString("text"), x.optString("color")) }
-                        .filter { x -> x.text.isNotBlank() },
-                    separator = it.optString("separator", "•"),
-                    label = it.optString("label"),
-                    labelBg = it.optString("labelBg", "#E50914"),
-                    labelColor = it.optString("labelColor", "#FFFFFF"),
-                    showClock = it.optBoolean("showClock", false),
-                    clockFormat = if (it.optString("clockFormat") == "12") "12" else "24",
-                    clockPos = it.optString("clockPos", "right"),
-                    textSize = it.optInt("textSize", 20).coerceIn(12, 40),
-                    transparent = it.optBoolean("transparent", false),
-                    animateEmoji = it.optBoolean("animateEmoji", true),
-                    runner = it.optJSONObject("runner")?.let { r ->
-                        TickerRunner(r.optString("emoji").trim(), r.optInt("speed", 6).coerceIn(1, 10), r.optBoolean("flip", false))
-                    }?.takeIf { r -> r.emoji.isNotBlank() },
-                    direction = it.optString("direction", "left"),
-                    repeat = it.optBoolean("repeat", false),
-                    hideOn = it.optJSONArray("hideOn").strings(),
-                    topOn = it.optJSONArray("topOn").strings(),
-                    font = it.optString("font", "sans"),
-                    textStyle = it.optString("textStyle", "classic"),
-                    fxColor = it.optString("fxColor", "#1D4ED8"),
-                    italic = it.optBoolean("italic", false)
-                )
-            }?.takeIf { it.text.isNotBlank() },
+            ticker = o.optJSONObject("ticker")?.takeIf { it.optBoolean("enabled", true) }?.let { parseTicker(it) }?.takeIf { it.text.isNotBlank() },
+            // Lè a poukont li (ticker a etenn oswa pa gen mesaj): menm estil ak lè ticker a
+            clock = o.optJSONObject("clock")?.let { parseTicker(it) },
             chyron = o.optJSONObject("chyron")?.takeIf { it.optBoolean("enabled", true) }?.let {
                 Chyron(it.optString("title"), it.optString("subtitle"), it.optStringOrNull("logoUrl"))
             }?.takeIf { it.title.isNotBlank() },
@@ -762,6 +736,36 @@ class PanelApi(private val prefs: Prefs) {
 // ---------------------------------------------------------------------------
 
 /** Li yon piblisite nan JSON (kòmand "adbreak" ak konfig adBreak). */
+private fun parseTicker(it: JSONObject) = Ticker(
+        text = it.optString("text"),
+        textColor = it.optString("textColor", "#FFFFFF"),
+        bgColor = it.optString("bgColor", "#CC7C4DFF"),
+        speed = it.optInt("speed", 5),
+        items = it.optJSONArray("items").objects().map { x -> TickerItem(x.optString("text"), x.optString("color")) }
+            .filter { x -> x.text.isNotBlank() },
+        separator = it.optString("separator", "•"),
+        label = it.optString("label"),
+        labelBg = it.optString("labelBg", "#E50914"),
+        labelColor = it.optString("labelColor", "#FFFFFF"),
+        showClock = it.optBoolean("showClock", false),
+        clockFormat = if (it.optString("clockFormat") == "12") "12" else "24",
+        clockPos = it.optString("clockPos", "right"),
+        textSize = it.optInt("textSize", 20).coerceIn(12, 40),
+        transparent = it.optBoolean("transparent", false),
+        animateEmoji = it.optBoolean("animateEmoji", true),
+        runner = it.optJSONObject("runner")?.let { r ->
+            TickerRunner(r.optString("emoji").trim(), r.optInt("speed", 6).coerceIn(1, 10), r.optBoolean("flip", false))
+        }?.takeIf { r -> r.emoji.isNotBlank() },
+        direction = it.optString("direction", "left"),
+        repeat = it.optBoolean("repeat", false),
+        hideOn = it.optJSONArray("hideOn").strings(),
+        topOn = it.optJSONArray("topOn").strings(),
+        font = it.optString("font", "sans"),
+        textStyle = it.optString("textStyle", "classic"),
+        fxColor = it.optString("fxColor", "#1D4ED8"),
+        italic = it.optBoolean("italic", false)
+    )
+
 private fun parseAd(o: JSONObject, placement: String) = Ad(
     o.optString("id"), o.optString("type", "video"), o.optString("url"), o.optString("placement", placement),
     o.optInt("durationSec", 10), o.optInt("skipAfterSec", 0), o.optString("name")

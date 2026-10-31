@@ -247,7 +247,9 @@ class OverlayController(
         // --- Grafik TV: logo bug, watermark, scoreboard, meteyo, countdown, ident (sèlman nan player) ---
         v.gfx.bottomInset = v.chyron.bottomInset
         // Lè ticker a anlè ekran an (pa nan ba a)
-        v.gfx.topClock = t?.takeIf { it.showClock && it.clockPos.startsWith("top") && inPlayer }
+        // Lè a poukont li (menm jan ak logo a, meteyo a): parèt menm lè ticker a etenn oswa pa gen mesaj
+        val solo = if (t == null && inPlayer) cfg.clock?.let { c -> c.copy(clockPos = when (c.clockPos) { "left" -> "bottom-left"; "right" -> "bottom-right"; else -> c.clockPos }) } else null
+        v.gfx.topClock = t?.takeIf { it.showClock && it.clockPos.startsWith("top") && inPlayer } ?: solo
         v.gfx.setGraphics(if (inPlayer) cfg.graphics else null)
 
         startBanners(cfg)
