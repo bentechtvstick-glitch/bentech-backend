@@ -488,6 +488,7 @@ class PlayerActivity : AppCompatActivity() {
     private var droppedFrames = 0
     private var freezeRestarts = 0
     private var firstFreezeAt = 0L
+    private var frozenShown = false
     private val videoWatch: Runnable = object : Runnable {
         override fun run() {
             handler.postDelayed(this, 4_000)
@@ -502,7 +503,10 @@ class PlayerActivity : AppCompatActivity() {
                     val now = System.currentTimeMillis()
                     if (now - firstFreezeAt > 180_000) { firstFreezeAt = now; freezeRestarts = 0 }
                     if (++freezeRestarts <= 3) reconnect()
-                    else {
+                    else if (freezeRestarts == 4) {
+                        // Menm fason an pa ranje l: eseye lòt fòma stream nan (TS ↔ HLS), sa souvan debloke imaj la
+                        playChannel(index, mode = (curMode + 1) % MODES, attempt = attempts + 1, alt = curAlt, stage = repairStage)
+                    } else {
                         // Relanse 3 fwa nan 3 minit pa ranje l: di sa klèman, ak detay pou jwenn kòz la
                         val f = p.videoFormat
                         val soft = videoDecoder.startsWith("OMX.google", true) || videoDecoder.startsWith("c2.android", true)
@@ -513,9 +517,18 @@ class PlayerActivity : AppCompatActivity() {
                         reportAlert(channels.getOrNull(index), diag)
                         lastError = diag
                         reportStatus()
+                        // Pa bay vag: re-eseye an silans chak 30 s; depi imaj la tounen, mesaj erè a disparèt
+                        frozenShown = true
+                        val at = index
+                        handler.postDelayed({ if (index == at && frozenShown && !adPlaying) { reconnects = 0; freezeRestarts = 0; firstFreezeAt = System.currentTimeMillis(); reconnect() } }, 30_000)
                     }
                 }
-            } else { frozenTicks = 0; lastFrames = frames }
+            } else {
+                frozenTicks = 0
+                // Imaj la tounen apre yon erè «frozen picture»: retire mesaj la
+                if (frozenShown && lastFrames >= 0) { frozenShown = false; hidePlayError(); lastError = ""; reportStatus() }
+                lastFrames = frames
+            }
         }
     }
 
@@ -560,7 +573,7 @@ class PlayerActivity : AppCompatActivity() {
     private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0, alt: Boolean = XtreamApi.preferAlt, stage: Int = 0, adopt: Boolean = false) {
         val p = player ?: return
         // Nouvo chanèl (pa yon re-eseye): kontè rekoneksyon an rekòmanse
-        if (attempt == 0 && stage == 0) { playedOk = false; reconnects = 0; readyAt = 0L; healthBegin(channels[i]) }
+        if (attempt == 0 && stage == 0) { playedOk = false; reconnects = 0; readyAt = 0L; frozenShown = false; freezeRestarts = 0; healthBegin(channels[i]) }
         handler.removeCallbacks(stallWatch)
         attempts = attempt
         curMode = mode
