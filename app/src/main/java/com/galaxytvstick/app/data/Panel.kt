@@ -234,7 +234,9 @@ data class GfxScoreboard(
 /** [temp] deja fòmate pa sèvè a (egz: "31°C"); [icon] se yon imoji. */
 data class GfxWeather(val city: String, val temp: String, val icon: String, val position: String,
     /** Plizyè vil youn apre lòt (tankou CNN): vil, tanperati, ikòn. Vid = yon sèl vil. */
-    val list: List<Triple<String, String, String>> = emptyList(), val everySec: Int = 8)
+    val list: List<Triple<String, String, String>> = emptyList(), val everySec: Int = 8,
+    /** > 0: list[0] se vil prensipal la; chak lòt vil parèt [flashSec] segonn epi ekran an tounen sou vil prensipal la. */
+    val flashSec: Int = 0)
 /** [targetAt] an segonn epoch. Apre lè a: [doneText] (si genyen). */
 data class GfxCountdown(val title: String, val targetAt: Long, val doneText: String, val position: String,
     val style: String = "classic", val font: String = "sans", val color: String = "#FFFFFF", val color2: String = "#1D4ED8", val italic: Boolean = false, val box: Boolean = true)
@@ -471,7 +473,7 @@ data class PanelConfig(
                         val arr = it.optJSONArray("list")
                         val list = if (arr == null) emptyList() else (0 until arr.length()).mapNotNull { i -> arr.optJSONObject(i)?.let { o -> Triple(o.optString("city"), o.optString("temp"), o.optString("icon")) } }.filter { t -> t.second.isNotBlank() }
                         // Ak yon lis: pa konte vil "kounye a" sèvè a chwazi a, pou ekran an pa rekòmanse chak minit
-                        if (list.size > 1) GfxWeather(list[0].first, list[0].second, list[0].third, it.optString("position", "top-right"), list, it.optInt("everySec", 8).coerceIn(4, 60))
+                        if (list.size > 1) GfxWeather(list[0].first, list[0].second, list[0].third, it.optString("position", "top-right"), list, it.optInt("everySec", 8).coerceIn(4, 60), it.optInt("flashSec", 0).coerceIn(0, 10))
                         else GfxWeather(it.optString("city"), it.optString("temp"), it.optString("icon"), it.optString("position", "top-right"))
                     }?.takeIf { it.temp.isNotBlank() },
                     countdown = g.optJSONObject("countdown")?.let {

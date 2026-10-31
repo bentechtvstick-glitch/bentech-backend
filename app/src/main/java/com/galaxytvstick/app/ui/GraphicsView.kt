@@ -263,7 +263,33 @@ class GraphicsView @JvmOverloads constructor(
         addView(tempV, gap(8f))
         addView(cityV)
         // Plizyè vil: youn apre lòt, ak yon ti fondu (tankou CNN)
-        if (w.list.size > 1) {
+        if (w.list.size > 1 && w.flashSec > 0) {
+            // Vil prensipal la (list[0]) rete; chak {everySec} s yon lòt vil parèt {flashSec} s, epi li tounen sou vil prensipal la
+            var k = 0
+            val row = this
+            val show = { idx: Int ->
+                row.animate().alpha(0f).setDuration(220).withEndAction {
+                    val (c, t, ic) = w.list[idx]
+                    cityV.text = c; tempV.text = t; iconV.text = ic
+                    row.animate().alpha(1f).setDuration(220).start()
+                }.start()
+            }
+            val r = object : Runnable {
+                var away = false
+                override fun run() {
+                    if (!away) {
+                        k = k % (w.list.size - 1) + 1
+                        show(k); away = true
+                        ui.postDelayed(this, w.flashSec * 1000L + 440L)
+                    } else {
+                        show(0); away = false
+                        ui.postDelayed(this, w.everySec * 1000L)
+                    }
+                }
+            }
+            wxRotate = r
+            ui.postDelayed(r, w.everySec * 1000L)
+        } else if (w.list.size > 1) {
             var i = 0
             val row = this
             val r = object : Runnable {
