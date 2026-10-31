@@ -26,7 +26,7 @@ export function weatherIcon(code, isDay = true) {
   if (c === 0) return isDay ? "☀️" : "🌙";
   if (c === 1 || c === 2) return isDay ? "🌤️" : "☁️";
   if (c === 3) return "☁️";
-  if (c === 45 || c === 48) return "🌫️";
+  if (c === 45 || c === 48) return "☁️"; // bwouya: yon nwaj senp (admin nan pa vle ikòn bwouya a)
   if (c >= 51 && c <= 57) return "🌦️";
   if ((c >= 61 && c <= 67) || (c >= 80 && c <= 82)) return "🌧️";
   if ((c >= 71 && c <= 77) || c === 85 || c === 86) return "🌨️";
