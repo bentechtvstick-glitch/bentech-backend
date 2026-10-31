@@ -52,6 +52,19 @@ const WX_HAITI = [
   { name: "Hinche", lat: 19.15, lon: -72.0167 }, { name: "Port-de-Paix", lat: 19.9397, lon: -72.8306 },
   { name: "Fort-Liberté", lat: 19.6667, lon: -71.8333 }, { name: "Miragoâne", lat: 18.4425, lon: -73.0897 },
 ];
+// Chèf-lye 42 awondisman Ayiti yo
+const WX_HAITI_ARR = [
+  ["Port-au-Prince", 18.5944, -72.3074], ["Arcahaie", 18.7714, -72.5125], ["Croix-des-Bouquets", 18.5769, -72.2269], ["Léogâne", 18.5111, -72.6339], ["Anse-à-Galets", 18.8333, -72.8667],
+  ["Jacmel", 18.2342, -72.5347], ["Bainet", 18.1833, -72.75], ["Belle-Anse", 18.2386, -72.0661],
+  ["Cap-Haïtien", 19.7578, -72.2042], ["Acul-du-Nord", 19.6833, -72.3167], ["Borgne", 19.85, -72.5333], ["Grande-Rivière-du-Nord", 19.5775, -72.1683], ["Limbé", 19.7056, -72.4], ["Plaisance", 19.6, -72.4667], ["Saint-Raphaël", 19.4383, -72.1983],
+  ["Fort-Liberté", 19.6667, -71.8333], ["Ouanaminthe", 19.55, -71.7333], ["Trou-du-Nord", 19.6167, -72.0167], ["Vallières", 19.4333, -71.9167],
+  ["Gonaïves", 19.4475, -72.6889], ["Dessalines", 19.25, -72.5167], ["Gros-Morne", 19.6667, -72.6833], ["Saint-Marc", 19.1081, -72.6936], ["Marmelade", 19.5167, -72.35],
+  ["Hinche", 19.15, -72.0167], ["Cerca-la-Source", 19.1667, -71.7833], ["Lascahobas", 18.8333, -71.9333], ["Mirebalais", 18.8333, -72.1],
+  ["Les Cayes", 18.1933, -73.7461], ["Aquin", 18.2833, -73.4], ["Chardonnières", 18.2667, -74.1667], ["Côteaux", 18.2, -74.0333], ["Port-Salut", 18.0833, -73.9167],
+  ["Jérémie", 18.65, -74.1167], ["Anse-d'Hainault", 18.4833, -74.45], ["Corail", 18.5667, -73.8833],
+  ["Port-de-Paix", 19.9397, -72.8306], ["Môle-Saint-Nicolas", 19.8, -73.3833], ["Saint-Louis-du-Nord", 19.9333, -72.7167],
+  ["Miragoâne", 18.4425, -73.0897], ["Anse-à-Veau", 18.5, -73.35], ["Baradères", 18.4833, -73.6333],
+].map(([name, lat, lon]) => ({ name, lat, lon }));
 const WX_WORLD = [
   { name: "New York", lat: 40.7128, lon: -74.006 }, { name: "Miami", lat: 25.7617, lon: -80.1918 },
   { name: "Montréal", lat: 45.5019, lon: -73.5674 }, { name: "Port-au-Prince", lat: 18.5944, lon: -72.3074 },
@@ -238,7 +251,7 @@ export function buildGraphics(g, ctx) {
   // Meteyo: otomatik (Open-Meteo) oswa alamen
   const m = g.weather || {};
   // Plizyè vil youn apre lòt (tankou CNN): tout depatman Ayiti, gran vil nan mond lan, oswa pwòp lis admin nan
-  const multi = m.rotate === false ? null : m.scope === "haiti" ? WX_HAITI : m.scope === "world" ? WX_WORLD
+  const multi = m.rotate === false ? null : m.scope === "haiti" ? WX_HAITI : m.scope === "haiti_arr" ? WX_HAITI_ARR : m.scope === "world" ? WX_WORLD
     : m.scope === "list" ? String(m.cities || "").split(/[\n,;]+/).map((c) => str(c, 40)).filter(Boolean).slice(0, 20) : null;
   if (m.on && multi && multi.length) {
     const unit = m.unit === "F" ? "F" : "C";
@@ -248,11 +261,26 @@ export function buildGraphics(g, ctx) {
       const t = unit === "F" ? (live.tempC * 9) / 5 + 32 : live.tempC;
       list.push({ city: (typeof place === "string" ? live.city || place : place.name), temp: `${Math.round(t)}°${unit}`, icon: live.icon });
     }
+    // Mòd «flash»: vil prensipal la rete sou ekran an; chak {everySec} s yon lòt vil parèt {flashSec} s epi li tounen sou vil prensipal la
+    let flashSec = 0;
+    if (m.mode === "flash" && str(m.city)) {
+      const home = weatherNow(str(m.city, 30));
+      if (home && Number.isFinite(home.tempC)) {
+        const t = unit === "F" ? (home.tempC * 9) / 5 + 32 : home.tempC;
+        const hc = home.city || str(m.city, 30), same = (x) => x.city.toLowerCase() === hc.toLowerCase() || x.city.toLowerCase() === str(m.city).toLowerCase();
+        const rest = list.filter((x) => !same(x));
+        list.length = 0; list.push({ city: hc, temp: `${Math.round(t)}°${unit}`, icon: home.icon }, ...rest);
+        flashSec = num(m.flash, 3, 2, 10);
+      }
+    }
     if (list.length) {
       const everySec = num(m.every, 8, 4, 60);
+      if (flashSec) { out.weather = { ...list[0], position: pos(m.position, POS6, "top-right"), list, everySec, flashSec }; }
+      else {
       // App ansyen yo (san "list") wè yon lòt vil chak minit; app 1.0.145+ fè yo vire chak {everySec} segonn
       const first = list[Math.floor(now / 60) % list.length];
       out.weather = { ...first, position: pos(m.position, POS6, "top-right"), list, everySec };
+      }
     }
   } else if (m.on && (str(m.city) || m.scope === "client")) {
     const unit = m.unit === "F" ? "F" : "C";
