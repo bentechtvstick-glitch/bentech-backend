@@ -256,10 +256,10 @@ class GraphicsView @JvmOverloads constructor(
         // San fon: tèks la sèlman, ak yon lonbraj pou l rete lizib sou nenpòt imaj
         setPadding(dp(4f), dp(4f), dp(4f), dp(4f))
         val shade = { v: android.widget.TextView -> v.apply { setShadowLayer(dp(4f).toFloat(), 0f, dp(1f).toFloat(), 0xE6000000.toInt()) } }
-        val iconV = shade(label(w.icon, 24f, Color.WHITE, bold = false))
+        val iconV = WxIcon(context).apply { set(w.icon) }
         val tempV = shade(label(w.temp, 20f, Color.WHITE, bold = true))
         val cityV = shade(label(w.city, 13f, Color.WHITE, bold = true)).apply { maxWidth = dp(160f) }
-        if (w.icon.isNotBlank() || w.list.isNotEmpty()) addView(iconV, gap(8f))
+        if (w.icon.isNotBlank() || w.list.isNotEmpty()) addView(iconV, LinearLayout.LayoutParams(dp(30f), dp(30f)).apply { marginEnd = dp(8f) })
         addView(tempV, gap(8f))
         addView(cityV)
         // Plizyè vil: youn apre lòt, ak yon ti fondu (tankou CNN)
@@ -270,7 +270,7 @@ class GraphicsView @JvmOverloads constructor(
             val show = { idx: Int ->
                 row.animate().alpha(0f).setDuration(220).withEndAction {
                     val (c, t, ic) = w.list[idx]
-                    cityV.text = c; tempV.text = t; iconV.text = ic
+                    cityV.text = c; tempV.text = t; iconV.set(ic)
                     row.animate().alpha(1f).setDuration(220).start()
                 }.start()
             }
@@ -297,7 +297,7 @@ class GraphicsView @JvmOverloads constructor(
                     i = (i + 1) % w.list.size
                     row.animate().alpha(0f).setDuration(250).withEndAction {
                         val (c, t, ic) = w.list[i]
-                        cityV.text = c; tempV.text = t; iconV.text = ic
+                        cityV.text = c; tempV.text = t; iconV.set(ic)
                         row.animate().alpha(1f).setDuration(250).start()
                     }.start()
                     ui.postDelayed(this, w.everySec * 1000L)
