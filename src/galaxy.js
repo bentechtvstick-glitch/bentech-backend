@@ -544,6 +544,17 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       blockedCats: { live: device.blockedCats?.live || [], movies: device.blockedCats?.movies || [], series: device.blockedCats?.series || [] },
       playlists: playlists.map(({ id, name, server, username, password, type, epgUrl }) => ({ id, name, server, username: username || "", password: password || "", type: plType({ type }), epgUrl: epgUrl || "" })),
       ticker,
+      // Lè a poukont li (menm jan ak logo a, meteyo a): lè ticker a etenn oswa pa gen mesaj, TV a montre lè a kanmenm
+      clock: !ticker && s.tickerClock ? {
+        text: "", showClock: true, textColor: s.tickerTextColor || "#FFFFFF",
+        textSize: Math.min(40, Math.max(12, Number(s.tickerTextSize) || 20)),
+        clockPos: ["right", "left", "top-left", "top-center", "top-right"].includes(s.tickerClockPos) ? s.tickerClockPos : "right",
+        clockFormat: String(s.tickerClockFormat) === "12" ? "12" : "24",
+        font: TEXT_FONTS.includes(s.tickerFont) ? s.tickerFont : "sans",
+        textStyle: TEXT_STYLES.includes(s.tickerTextStyle) ? s.tickerTextStyle : "classic",
+        fxColor: /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(s.tickerFxColor || "") ? s.tickerFxColor : "#1D4ED8",
+        italic: !!s.tickerItalic,
+      } : null,
       chyrons,
       // Pou ansyen vèsyon app la: premye chyron aktif la
       chyron: chyrons[0] ? { title: chyrons[0].name || chyrons[0].headline, subtitle: chyrons[0].title, logoUrl: chyrons[0].logoUrl } : null,

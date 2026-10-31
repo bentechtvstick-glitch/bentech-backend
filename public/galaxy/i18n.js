@@ -100,6 +100,7 @@ window.GALAXY_I18N = {
     "3 segonn": "3 seconds",
     "Vil prensipal la se sa ki nan «Vil» anlè a (egz: Jacmel).": "The main city is the one in “City” above (e.g. Jacmel).",
     "Yon lòt vil parèt chak": "Another city shows every",
+    "(li rete sou ekran an menm si ticker a etenn, tankou logo a ak meteyo a)": "(it stays on screen even when the ticker is off, like the logo and weather)",
     "Pa gen chanèl ki koresponn.": "No matching channels.",
     "Chanjman yo poko sove.": "Changes not saved yet.", "Sove. TV a ap aplike l touswit si l online.": "Saved. The TV applies it right away if it's online.",
     // Mesaj
@@ -224,6 +225,7 @@ window.GALAXY_I18N = {
     "3 segonn": "3 secondes",
     "Vil prensipal la se sa ki nan «Vil» anlè a (egz: Jacmel).": "La ville principale est celle de « Ville » ci-dessus (ex. : Jacmel).",
     "Yon lòt vil parèt chak": "Une autre ville s'affiche toutes les",
+    "(li rete sou ekran an menm si ticker a etenn, tankou logo a ak meteyo a)": "(elle reste à l'écran même si le ticker est éteint, comme le logo et la météo)",
     "Pa gen chanèl ki koresponn.": "Aucune chaîne correspondante.",
     "Chanjman yo poko sove.": "Modifications non enregistrées.", "Sove. TV a ap aplike l touswit si l online.": "Enregistré. La TV l'applique tout de suite si elle est en ligne.",
     "Ticker": "Bandeau défilant", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Tous les messages actifs défilent en bas de chaque TV.",
@@ -344,6 +346,7 @@ window.GALAXY_I18N = {
     "3 segonn": "3 segundos",
     "Vil prensipal la se sa ki nan «Vil» anlè a (egz: Jacmel).": "La ciudad principal es la de «Ciudad» arriba (ej.: Jacmel).",
     "Yon lòt vil parèt chak": "Otra ciudad aparece cada",
+    "(li rete sou ekran an menm si ticker a etenn, tankou logo a ak meteyo a)": "(se queda en pantalla aunque el ticker esté apagado, como el logo y el clima)",
     "Pa gen chanèl ki koresponn.": "No hay canales que coincidan.",
     "Chanjman yo poko sove.": "Cambios sin guardar.", "Sove. TV a ap aplike l touswit si l online.": "Guardado. El TV lo aplica al instante si está en línea.",
     "Ticker": "Cintillo", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Todos los mensajes activos se desplazan en la parte inferior de cada TV.",
