@@ -68,8 +68,9 @@ class PlayerActivity : AppCompatActivity() {
          */
         fun loadControl(): DefaultLoadControl = DefaultLoadControl.Builder()
             // Plis rezèv videyo (30 s) pou entènèt fèb: ti koupi yo pa rive sou ekran an.
-            // 1,2 s avan l kòmanse, 4 s apre yon koupi (pou l pa rebloke touswit).
-            .setBufferDurationsMs(30_000, 60_000, 1_200, 4_000)
+            // 0,7 s avan l kòmanse (chanje chanèl pi vit), 4 s apre yon koupi (pou l pa rebloke touswit).
+            .setBufferDurationsMs(30_000, 60_000, 700, 4_000)
+            .setPrioritizeTimeOverSizeThresholds(true)
             .build()
         /** Fason ki mache ak sèvè playlist la (app la sonje l pou pwochen chanèl yo). */
         private var preferredMode = 0
@@ -1393,7 +1394,7 @@ class PlayerActivity : AppCompatActivity() {
         zapPending = true
         showInfo()
         handler.removeCallbacks(doZap)
-        handler.postDelayed(doZap, 200)
+        handler.postDelayed(doZap, 120) // ase pou peze plizyè fwa san chaje chak chanèl, men pi vit pou yon sèl peze
     }
 
     private fun jumpToNumber() {
