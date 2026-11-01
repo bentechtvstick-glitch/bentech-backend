@@ -43,7 +43,7 @@ class WxIcon(context: Context) : View(context) {
     override fun onDraw(cv: Canvas) {
         val s = minOf(width, height).toFloat(); if (s <= 0f) return
         cv.save(); cv.translate((width - s) / 2f, (height - s) / 2f)
-        p.setShadowLayer(s * 0.08f, 0f, s * 0.03f, 0xCC000000.toInt())
+        p.setShadowLayer(s * 0.05f, 0f, s * 0.02f, 0x80000000.toInt())
         when (kind) {
             K.SUN -> sun(cv, s * 0.5f, s * 0.5f, s * 0.22f)
             K.MOON -> moon(cv, s)

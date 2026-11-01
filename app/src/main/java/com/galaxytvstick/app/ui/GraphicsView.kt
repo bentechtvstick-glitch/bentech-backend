@@ -255,7 +255,7 @@ class GraphicsView @JvmOverloads constructor(
         gravity = Gravity.CENTER_VERTICAL
         // San fon: tèks la sèlman, ak yon lonbraj pou l rete lizib sou nenpòt imaj
         setPadding(dp(4f), dp(4f), dp(4f), dp(4f))
-        val shade = { v: android.widget.TextView -> v.apply { setShadowLayer(dp(4f).toFloat(), 0f, dp(1f).toFloat(), 0xE6000000.toInt()) } }
+        val shade = { v: android.widget.TextView -> v.apply { setShadowLayer(dp(2.5f).toFloat(), 0f, dp(1f).toFloat(), 0x8C000000.toInt()) } }
         val iconV = WxIcon(context).apply { set(w.icon) }
         val tempV = shade(label(w.temp, 20f, Color.WHITE, bold = true))
         val cityV = shade(label(w.city, 13f, Color.WHITE, bold = true)).apply { maxWidth = dp(160f) }
