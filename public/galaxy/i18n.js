@@ -104,6 +104,7 @@ window.GALAXY_I18N = {
     "Ajoute playlist sa a sou TV a": "Add this playlist to the TV",
     "Tès la pa sove playlist la. Peze bouton an pou TV a resevwa l.": "The test doesn't save the playlist. Press the button so the TV gets it.",
     "➕ Ajoute playlist la": "➕ Add playlist",
+    "Tès la pa sove playlist la: peze Submit pou TV a resevwa l.": "The test doesn't save the playlist: press Submit so the TV gets it.",
     "Pa gen chanèl ki koresponn.": "No matching channels.",
     "Chanjman yo poko sove.": "Changes not saved yet.", "Sove. TV a ap aplike l touswit si l online.": "Saved. The TV applies it right away if it's online.",
     // Mesaj
@@ -232,6 +233,7 @@ window.GALAXY_I18N = {
     "Ajoute playlist sa a sou TV a": "Ajouter cette playlist à la TV",
     "Tès la pa sove playlist la. Peze bouton an pou TV a resevwa l.": "Le test n'enregistre pas la playlist. Appuyez sur le bouton pour que la TV la reçoive.",
     "➕ Ajoute playlist la": "➕ Ajouter la playlist",
+    "Tès la pa sove playlist la: peze Submit pou TV a resevwa l.": "Le test n'enregistre pas la playlist : appuyez sur Submit pour que la TV la reçoive.",
     "Pa gen chanèl ki koresponn.": "Aucune chaîne correspondante.",
     "Chanjman yo poko sove.": "Modifications non enregistrées.", "Sove. TV a ap aplike l touswit si l online.": "Enregistré. La TV l'applique tout de suite si elle est en ligne.",
     "Ticker": "Bandeau défilant", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Tous les messages actifs défilent en bas de chaque TV.",
@@ -356,6 +358,7 @@ window.GALAXY_I18N = {
     "Ajoute playlist sa a sou TV a": "Agregar esta playlist al TV",
     "Tès la pa sove playlist la. Peze bouton an pou TV a resevwa l.": "La prueba no guarda la playlist. Presiona el botón para que el TV la reciba.",
     "➕ Ajoute playlist la": "➕ Agregar playlist",
+    "Tès la pa sove playlist la: peze Submit pou TV a resevwa l.": "La prueba no guarda la playlist: presiona Submit para que el TV la reciba.",
     "Pa gen chanèl ki koresponn.": "No hay canales que coincidan.",
     "Chanjman yo poko sove.": "Cambios sin guardar.", "Sove. TV a ap aplike l touswit si l online.": "Guardado. El TV lo aplica al instante si está en línea.",
     "Ticker": "Cintillo", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Todos los mensajes activos se desplazan en la parte inferior de cada TV.",

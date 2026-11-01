@@ -1779,14 +1779,9 @@ $("#plTestBtn").addEventListener("click", async () => {
     const r = await api("POST", "/galaxy/xtream/test", body);
     $("#plTest").innerHTML = renderPlTest(r, $("#plName").value.trim());
     // Tès la sèlman verifye playlist la: li pa sove l. Bouton sa a ajoute l sou TV a touswit.
-    if (r && r.ok) $("#plTest").insertAdjacentHTML("beforeend", `<div class="btns" style="margin-top:10px;justify-content:flex-start"><button class="btn primary" type="button" data-pladd>➕ ${esc(t("Ajoute playlist sa a sou TV a"))}</button><span class="note">${esc(t("Tès la pa sove playlist la. Peze bouton an pou TV a resevwa l."))}</span></div>`);
+    if (r && r.ok) $("#plTest").insertAdjacentHTML("beforeend", `<p class="note" style="margin:8px 0 0">${esc(t("Tès la pa sove playlist la: peze Submit pou TV a resevwa l."))}</p>`);
   }
   catch (err) { $("#plTest").innerHTML = renderPlTest({ ok: false, error: err.message }); }
-});
-$("#plTest").addEventListener("click", (e) => {
-  if (!e.target.closest("[data-pladd]")) return;
-  if (!$("#plName").value.trim()) $("#plName").value = "Playlist";
-  $("#plForm").requestSubmit();
 });
 $("#plList").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-testpl]"); if (!b || !dev) return;
