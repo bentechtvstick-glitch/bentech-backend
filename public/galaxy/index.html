@@ -759,7 +759,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
               <div class="field"><label for="plEpg">Lyen EPG / gid TV (XMLTV) — opsyonèl</label><input type="text" id="plEpg" placeholder="https://…/epg.xml(.gz)"></div>
               <div class="msg" id="plMsg"></div>
               <div id="plTest"></div>
-              <div class="btns"><button class="btn" type="button" id="plTestBtn" style="margin-right:auto">⚡ Teste playlist la</button><button class="btn" type="button" id="plCancel">Cancel</button><button class="btn primary" type="submit">Submit</button></div>
+              <div class="btns"><button class="btn" type="button" id="plTestBtn" style="margin-right:auto">⚡ Teste playlist la</button><button class="btn" type="button" id="plCancel">Cancel</button><button class="btn primary" type="submit">➕ Ajoute playlist la</button></div>
             </form>
           </div>
         </div>
@@ -1775,8 +1775,18 @@ function renderPlTest(r, name) {
 $("#plTestBtn").addEventListener("click", async () => {
   const body = { type: $("#plType").value, server: $("#plServer").value.trim(), username: $("#plUser").value.trim(), password: $("#plPass").value.trim() };
   $("#plTest").innerHTML = renderPlTest(null);
-  try { $("#plTest").innerHTML = renderPlTest(await api("POST", "/galaxy/xtream/test", body), $("#plName").value.trim()); }
+  try {
+    const r = await api("POST", "/galaxy/xtream/test", body);
+    $("#plTest").innerHTML = renderPlTest(r, $("#plName").value.trim());
+    // Tès la sèlman verifye playlist la: li pa sove l. Bouton sa a ajoute l sou TV a touswit.
+    if (r && r.ok) $("#plTest").insertAdjacentHTML("beforeend", `<div class="btns" style="margin-top:10px;justify-content:flex-start"><button class="btn primary" type="button" data-pladd>➕ ${esc(t("Ajoute playlist sa a sou TV a"))}</button><span class="note">${esc(t("Tès la pa sove playlist la. Peze bouton an pou TV a resevwa l."))}</span></div>`);
+  }
   catch (err) { $("#plTest").innerHTML = renderPlTest({ ok: false, error: err.message }); }
+});
+$("#plTest").addEventListener("click", (e) => {
+  if (!e.target.closest("[data-pladd]")) return;
+  if (!$("#plName").value.trim()) $("#plName").value = "Playlist";
+  $("#plForm").requestSubmit();
 });
 $("#plList").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-testpl]"); if (!b || !dev) return;
