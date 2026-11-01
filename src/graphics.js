@@ -297,6 +297,12 @@ export function buildGraphics(g, ctx) {
     }
   }
 
+  // Switch «Montre non vil la» etenn: tanperati a ak ikòn nan sèlman
+  if (out.weather && m.showCity === false) {
+    out.weather = { ...out.weather, city: "" };
+    if (Array.isArray(out.weather.list)) out.weather.list = out.weather.list.map((x) => ({ ...x, city: "" }));
+  }
+
   // Countdown: konte jiska yon dat/lè
   const c = g.countdown || {};
   if (c.on && c.target) {
