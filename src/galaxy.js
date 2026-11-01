@@ -276,6 +276,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   });
 
   /** Konfigirasyon konplè aparèy la. App la rele l chak minit. */
+  const cfgSigs = new Map(); // mac → siyati dènye konfig TV a resevwa
   app.get("/api/devices/:mac/config", async (req, res) => {
     ensure();
     const mac = normMac(req.params.mac);
@@ -306,7 +307,6 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (/^\d+\.\d+\.\d+/.test(av)) device.appVersion = av;
     if (device.brand !== brand) device.brand = brand;
     touchWrite();
-    tvEvents.configFetched(device); // panel la wè "✅ aplike sou TV a"
 
     const now = Math.floor(Date.now() / 1000);
     const zone = tz();
@@ -519,7 +519,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       ip, deviceCity: device.city || "", customerCity: customer?.city || "" });
     const nextEdge = Math.min(tickerEdge, gfx.edge);
 
-    res.json({
+    const payload = {
       known: true,
       status,
       statusMessage,
@@ -570,7 +570,12 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       liveEvents,
       forceRefreshAt: s.forceRefreshAt || "",
       refreshSec: Number.isFinite(nextEdge) ? Math.max(5, Math.min(refreshSec, nextEdge)) : refreshSec,
-    });
+    };
+    // «✅ Aplike sou TV …» sèlman pou TV ki resevwa yon vrè chanjman (pa pou chak TV ki rechaje san anyen nouvo pou li)
+    const sig = crypto.createHash("sha1").update(JSON.stringify({ ...payload, refreshSec: 0, expiryNotice: null })).digest("hex");
+    const prevSig = cfgSigs.get(device.mac); cfgSigs.set(device.mac, sig);
+    tvEvents.configFetched(device, prevSig === undefined || prevSig !== sig);
+    res.json(payload);
   });
 
   // ---- Gwoup pa m: kategori admin nan kreye pa mo kle (vil, tèm…), menm sou tout TV yo ----

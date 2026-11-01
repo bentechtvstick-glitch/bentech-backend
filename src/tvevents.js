@@ -21,11 +21,11 @@ export const tvEvents = {
     }
   },
   /** TV a fèk chaje config li: si l te gen yon chanjman k ap tann, li aplike kounye a. */
-  configFetched(d) {
+  configFetched(d, changed = true) {
     const t = pendingSync.get(d?.mac);
     if (!t) return;
     pendingSync.delete(d.mac);
-    if (Date.now() - t < 5 * 60000) push(d, "applied");
+    if (changed && Date.now() - t < 5 * 60000) push(d, "applied");
   },
   since(id) { return { last: seq, events: events.filter((e) => e.id > id) }; },
 };
