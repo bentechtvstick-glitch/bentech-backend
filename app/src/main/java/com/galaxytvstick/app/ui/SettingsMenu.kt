@@ -213,9 +213,7 @@ class SettingsMenu(
         val cur = currentLang()
         menuDialog(R.string.language, LANG_CODES.mapIndexed { i, code ->
             ((if (code == cur) "✓  " else "     ") + LANG_NAMES[i]) to {
-                if (code != cur) androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
-                    androidx.core.os.LocaleListCompat.forLanguageTags(code)
-                )
+                if (code != cur) com.galaxytvstick.app.Lang.set(a, code)
             }
         })
     }

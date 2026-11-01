@@ -17,6 +17,7 @@ class GalaxyApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        Lang.restore(this) // lang kliyan an sou tout ekran yo, menm premye a
         // Si app la fèmen sibitman, sove rezon an pou montre l pwochen fwa (ede jwenn pwoblèm nan)
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, e ->

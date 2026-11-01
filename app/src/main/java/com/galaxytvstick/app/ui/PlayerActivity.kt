@@ -1294,9 +1294,7 @@ class PlayerActivity : AppCompatActivity() {
             .setTitle(R.string.language)
             .setSingleChoiceItems(names, codes.indexOf(current).coerceAtLeast(0)) { d, which ->
                 d.dismiss()
-                androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
-                    androidx.core.os.LocaleListCompat.forLanguageTags(codes[which])
-                )
+                com.galaxytvstick.app.Lang.set(this, codes[which])
             }
             .show()
     }
