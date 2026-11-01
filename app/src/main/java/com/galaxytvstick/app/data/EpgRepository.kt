@@ -6,6 +6,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import okhttp3.Request
 import org.xmlpull.v1.XmlPullParser
 import java.io.IOException
@@ -103,7 +104,39 @@ object EpgRepository {
     private var cacheFile: java.io.File? = null
     private const val CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000L
 
-    fun init(ctx: android.content.Context) { cacheFile = java.io.File(ctx.filesDir, "epg_cache.bin") }
+    fun init(ctx: android.content.Context) { cacheFile = java.io.File(ctx.filesDir, "epg_cache.bin"); rawDir = ctx.cacheDir }
+
+    // ------------------------------------------------------------ Telechaje gid la an menm tan ak chanèl yo
+    // Premye fwa (oswa lè kopi a twò ansyen): gwo fichye XMLTV a kòmanse telechaje pandan ekran «Ap chaje chanèl yo»,
+    // olye l tann lis chanèl la fini. Apre sa, ensureLoaded li l sou disk la (pa telechaje l yon dezyèm fwa).
+    private var rawDir: java.io.File? = null
+    @Volatile private var rawJob: kotlinx.coroutines.Deferred<java.io.File?>? = null
+    @Volatile private var rawUrl = ""
+
+    fun prefetchRaw(api: XtreamApi) {
+        val dir = rawDir ?: return
+        val url = runCatching { api.xmltvUrl() }.getOrNull() ?: return
+        val now = System.currentTimeMillis()
+        if (isLoaded && now - loadedAt < REFRESH_MS) return
+        cacheFile?.let { if (it.exists() && now - it.lastModified() < REFRESH_MS) return }
+        if (rawJob?.isActive == true && rawUrl == url) return
+        rawUrl = url
+        rawJob = com.galaxytvstick.app.GalaxyApp.scope.async(Dispatchers.IO) {
+            runCatching {
+                val tmp = java.io.File(dir, "epg_raw.part"); val out = java.io.File(dir, "epg_raw.bin")
+                val req = Request.Builder().url(url).header("User-Agent", XtreamApi.USER_AGENT).build()
+                val client = XtreamApi.http.newBuilder().readTimeout(120, java.util.concurrent.TimeUnit.SECONDS).build()
+                client.newCall(req).execute().use { r ->
+                    if (!r.isSuccessful) throw IOException("EPG HTTP ${r.code}")
+                    val body = r.body ?: throw IOException("EPG empty")
+                    body.byteStream().use { inp -> tmp.outputStream().use { o -> inp.copyTo(o, 1 shl 16) } }
+                }
+                out.delete()
+                if (!tmp.renameTo(out)) throw IOException("rename")
+                out
+            }.getOrNull()
+        }
+    }
 
     private fun cacheKey(api: XtreamApi) = api.xmltvUrl().hashCode().toString()
 
@@ -185,7 +218,16 @@ object EpgRepository {
             // Pa efase gid chanèl pa chanèl yo ANVAN telechajman an: yo rete sou ekran an jiskaske gwo fichye a fini
             // Chanèl san id EPG (oswa ki pa egziste nan XMLTV a): chèche yo pa non nan <display-name> XMLTV a
             val byName = channels.map { nameKey(it.name) }.filter { it.length >= 3 }.toHashSet()
-            val result = withContext(Dispatchers.IO) { download(api.xmltvUrl(), wanted, keepPast, byName) }
+            // Fichye ki te deja telechaje pandan chanèl yo t ap chaje (si genyen)
+            val raw = rawJob?.takeIf { rawUrl == api.xmltvUrl() }?.let { j -> runCatching { j.await() }.getOrNull() }
+            rawJob = null
+            val result = withContext(Dispatchers.IO) {
+                if (raw != null && raw.exists()) {
+                    try { java.io.BufferedInputStream(raw.inputStream(), 1 shl 16).use { s -> parseMaybeGz(s, wanted, keepPast, byName) } }
+                    catch (e: Exception) { download(api.xmltvUrl(), wanted, keepPast, byName) }
+                    finally { raw.delete() }
+                } else download(api.xmltvUrl(), wanted, keepPast, byName)
+            }
             archive.clear()
             programs = result
             loadedAt = System.currentTimeMillis()
@@ -204,12 +246,15 @@ object EpgRepository {
             if (!r.isSuccessful) throw IOException("EPG HTTP ${r.code}")
             val body = r.body ?: throw IOException("EPG empty")
             // Lyen EPG .xml.gz (konprese): dekonprese l pandan l ap li
-            val raw = java.io.BufferedInputStream(body.byteStream(), 1 shl 16)
-            raw.mark(4)
-            val gz = raw.read() == 0x1f && raw.read() == 0x8b
-            raw.reset()
-            return parse(if (gz) java.util.zip.GZIPInputStream(raw, 1 shl 16) else raw, wanted, keepPast, byName)
+            return parseMaybeGz(java.io.BufferedInputStream(body.byteStream(), 1 shl 16), wanted, keepPast, byName)
         }
+    }
+
+    private fun parseMaybeGz(raw: java.io.BufferedInputStream, wanted: Set<String>, keepPast: Map<String, Long>, byName: Set<String>): Map<String, List<Program>> {
+        raw.mark(4)
+        val gz = raw.read() == 0x1f && raw.read() == 0x8b
+        raw.reset()
+        return parse(if (gz) java.util.zip.GZIPInputStream(raw, 1 shl 16) else raw, wanted, keepPast, byName)
     }
 
     private fun parse(input: java.io.InputStream, wanted: Set<String>, keepPast: Map<String, Long>, byName: Set<String> = emptySet()): Map<String, List<Program>> {

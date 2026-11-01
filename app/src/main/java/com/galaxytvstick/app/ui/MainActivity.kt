@@ -71,6 +71,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             // 2) Chajman nòmal (telechaje nan fichye, li objè pa objè: pa plen memwa a)
+            // Gid la (EPG) kòmanse telechaje an menm tan, pa apre chanèl yo
+            com.galaxytvstick.app.data.EpgRepository.prefetchRaw(api)
             val result = runCatching {
                 val e = withContext(Dispatchers.IO) { ChannelCache.fetch(applicationContext, account) }
                 e.categories to e.channels
