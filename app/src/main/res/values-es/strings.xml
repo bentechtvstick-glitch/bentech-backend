@@ -225,12 +225,4 @@
     <string name="captions_none">Este video no tiene subtítulos (CC). Prueba un canal de EE. UU. (CNN, ABC…) o una película con subtítulos.</string>
     <string name="search_kbd_key">⌨️ Teclado</string>
     <string name="vod_new_releases">🆕 Estrenos</string>
-    <string name="set_launcher">Modo launcher (pantalla de inicio del equipo): %1$s</string>
-    <string name="launcher_title">Modo launcher</string>
-    <string name="launcher_pin_new">Crea un PIN de 4 dígitos para el modo launcher</string>
-    <string name="launcher_pin_enter">Introduce el PIN del modo launcher</string>
-    <string name="launcher_pick_home">Elige esta app como pantalla de inicio y pulsa «Siempre».</string>
-    <string name="launcher_android_settings">Abrir los ajustes de Android</string>
-    <string name="launcher_turn_off">Desactivar el modo launcher</string>
-    <string name="launcher_off_done">Modo launcher desactivado. El equipo vuelve a su pantalla de inicio.</string>
 </resources>

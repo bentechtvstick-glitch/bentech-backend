@@ -90,11 +90,6 @@ class Prefs(context: Context) {
         get() = sp.getString("parental_pin", "") ?: ""
         set(value) = sp.edit().putString("parental_pin", value).apply()
 
-    /** PIN admin nan pou mòd launcher a (etenn li oswa louvri paramèt Android yo). */
-    var launcherPin: String
-        get() = sp.getString("launcher_pin", "") ?: ""
-        set(value) = sp.edit().putString("launcher_pin", value).apply()
-
     /** Louvri app la pou kont li lè Fire Stick la limen. */
     var autoStart: Boolean
         get() = sp.getBoolean("auto_start", false)

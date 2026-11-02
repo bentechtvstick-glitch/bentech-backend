@@ -225,12 +225,4 @@
     <string name="captions_none">Cette vidéo n\'a pas de sous-titres (CC). Essayez une chaîne US (CNN, ABC…) ou un film sous-titré.</string>
     <string name="search_kbd_key">⌨️ Clavier</string>
     <string name="vod_new_releases">🆕 Nouveautés</string>
-    <string name="set_launcher">Mode launcher (écran d’accueil du boîtier) : %1$s</string>
-    <string name="launcher_title">Mode launcher</string>
-    <string name="launcher_pin_new">Créez un code PIN à 4 chiffres pour le mode launcher</string>
-    <string name="launcher_pin_enter">Entrez le code PIN du mode launcher</string>
-    <string name="launcher_pick_home">Choisissez cette app comme écran d’accueil, puis appuyez sur « Toujours ».</string>
-    <string name="launcher_android_settings">Ouvrir les paramètres Android</string>
-    <string name="launcher_turn_off">Désactiver le mode launcher</string>
-    <string name="launcher_off_done">Mode launcher désactivé. Le boîtier revient à son écran d’accueil.</string>
 </resources>

@@ -225,12 +225,4 @@
     <string name="captions_none">This video has no captions (CC). Try a US channel (CNN, ABC…) or a movie with subtitles.</string>
     <string name="search_kbd_key">⌨️ Keyboard</string>
     <string name="vod_new_releases">🆕 New releases</string>
-    <string name="set_launcher">Launcher mode (box home screen): %1$s</string>
-    <string name="launcher_title">Launcher mode</string>
-    <string name="launcher_pin_new">Create a 4-digit PIN for launcher mode</string>
-    <string name="launcher_pin_enter">Enter the launcher mode PIN</string>
-    <string name="launcher_pick_home">Choose this app as the home screen, then press “Always”.</string>
-    <string name="launcher_android_settings">Open Android settings</string>
-    <string name="launcher_turn_off">Turn off launcher mode</string>
-    <string name="launcher_off_done">Launcher mode is off. The box goes back to its own home screen.</string>
 </resources>
