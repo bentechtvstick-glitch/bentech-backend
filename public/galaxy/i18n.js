@@ -107,6 +107,7 @@ window.GALAXY_I18N = {
     "Tès la pa sove playlist la: peze Submit pou TV a resevwa l.": "The test doesn't save the playlist: press Submit so the TV gets it.",
     "Montre non vil la": "Show the city name",
     "(etenn li = tanperati a ak ikòn nan sèlman)": "(off = temperature and icon only)",
+    "Lang mesaj la": "Message language",
     "Pa gen chanèl ki koresponn.": "No matching channels.",
     "Chanjman yo poko sove.": "Changes not saved yet.", "Sove. TV a ap aplike l touswit si l online.": "Saved. The TV applies it right away if it's online.",
     // Mesaj
@@ -238,6 +239,7 @@ window.GALAXY_I18N = {
     "Tès la pa sove playlist la: peze Submit pou TV a resevwa l.": "Le test n'enregistre pas la playlist : appuyez sur Submit pour que la TV la reçoive.",
     "Montre non vil la": "Afficher le nom de la ville",
     "(etenn li = tanperati a ak ikòn nan sèlman)": "(désactivé = température et icône seulement)",
+    "Lang mesaj la": "Langue du message",
     "Pa gen chanèl ki koresponn.": "Aucune chaîne correspondante.",
     "Chanjman yo poko sove.": "Modifications non enregistrées.", "Sove. TV a ap aplike l touswit si l online.": "Enregistré. La TV l'applique tout de suite si elle est en ligne.",
     "Ticker": "Bandeau défilant", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Tous les messages actifs défilent en bas de chaque TV.",
@@ -365,6 +367,7 @@ window.GALAXY_I18N = {
     "Tès la pa sove playlist la: peze Submit pou TV a resevwa l.": "La prueba no guarda la playlist: presiona Submit para que el TV la reciba.",
     "Montre non vil la": "Mostrar el nombre de la ciudad",
     "(etenn li = tanperati a ak ikòn nan sèlman)": "(apagado = solo temperatura e icono)",
+    "Lang mesaj la": "Idioma del mensaje",
     "Pa gen chanèl ki koresponn.": "No hay canales que coincidan.",
     "Chanjman yo poko sove.": "Cambios sin guardar.", "Sove. TV a ap aplike l touswit si l online.": "Guardado. El TV lo aplica al instante si está en línea.",
     "Ticker": "Cintillo", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Todos los mensajes activos se desplazan en la parte inferior de cada TV.",

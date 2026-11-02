@@ -2110,24 +2110,46 @@ function waNum(p) {
   return d.length >= 8 && d.length <= 15 ? d : "";
 }
 /** Mesaj WhatsApp tou pare pou kliyan an (rapèl ekspirasyon), admin nan ka chanje l anvan l voye l. */
-function waText(c) {
+/** Mesaj rapèl WhatsApp nan lang admin nan chwazi a (ht, en, fr, es). */
+const WA_LANGS = [["ht", "Kreyòl"], ["en", "English"], ["fr", "Français"], ["es", "Español"]];
+const WA_TPL = {
+  ht: { hi: (n) => (n ? `Bonjou ${n},` : "Bonjou,"), past: (a, d) => `abònman ${a} ou a fini ${d}. Ekri nou pou w renouvle l epi kontinye gade. Mèsi!`,
+    today: (a, d) => `abònman ${a} ou a ap fini jodi a (${d}). Ekri nou pou w renouvle l pou w pa pèdi chanèl ou yo. Mèsi!`,
+    soon: (a, d, n) => `abònman ${a} ou a ap fini nan ${n} jou (${d}). Ekri nou pou w renouvle l pou w pa pèdi chanèl ou yo. Mèsi!` },
+  en: { hi: (n) => (n ? `Hello ${n},` : "Hello,"), past: (a, d) => `your ${a} subscription ended on ${d}. Message us to renew it and keep watching. Thank you!`,
+    today: (a, d) => `your ${a} subscription ends today (${d}). Message us to renew it so you don't lose your channels. Thank you!`,
+    soon: (a, d, n) => `your ${a} subscription ends in ${n} day${n === 1 ? "" : "s"} (${d}). Message us to renew it so you don't lose your channels. Thank you!` },
+  fr: { hi: (n) => (n ? `Bonjour ${n},` : "Bonjour,"), past: (a, d) => `votre abonnement ${a} a pris fin le ${d}. Écrivez-nous pour le renouveler et continuer à regarder. Merci !`,
+    today: (a, d) => `votre abonnement ${a} se termine aujourd'hui (${d}). Écrivez-nous pour le renouveler et ne pas perdre vos chaînes. Merci !`,
+    soon: (a, d, n) => `votre abonnement ${a} se termine dans ${n} jour${n === 1 ? "" : "s"} (${d}). Écrivez-nous pour le renouveler et ne pas perdre vos chaînes. Merci !` },
+  es: { hi: (n) => (n ? `Hola ${n},` : "Hola,"), past: (a, d) => `tu suscripción de ${a} terminó el ${d}. Escríbenos para renovarla y seguir viendo. ¡Gracias!`,
+    today: (a, d) => `tu suscripción de ${a} termina hoy (${d}). Escríbenos para renovarla y no perder tus canales. ¡Gracias!`,
+    soon: (a, d, n) => `tu suscripción de ${a} termina en ${n} día${n === 1 ? "" : "s"} (${d}). Escríbenos para renovarla y no perder tus canales. ¡Gracias!` },
+};
+function waText(c, lg = "ht") {
+  const T = WA_TPL[lg] || WA_TPL.ht;
   const ds = custDevices(c), app = ds.some((d) => d.brand === "bentech") ? "Ben Tech TV Stick" : "Galaxy TV Stick";
-  const name = String(c.name || "").trim(), hi = name ? `Bonjou ${name},` : "Bonjou,";
+  const hi = T.hi(String(c.name || "").trim());
   const exp = c.expiry ? new Date(c.expiry) : null;
   if (exp && !isNaN(exp)) {
     const left = Math.ceil((exp - Date.now()) / 86400000), day = usDate(exp);
-    if (left < 0) return `${hi} abònman ${app} ou a fini ${day}. Ekri nou pou w renouvle l epi kontinye gade. Mèsi!`;
-    if (left === 0) return `${hi} abònman ${app} ou a ap fini jodi a (${day}). Ekri nou pou w renouvle l pou w pa pèdi chanèl ou yo. Mèsi!`;
-    return `${hi} abònman ${app} ou a ap fini nan ${left} jou (${day}). Ekri nou pou w renouvle l pou w pa pèdi chanèl ou yo. Mèsi!`;
+    if (left < 0) return `${hi} ${T.past(app, day)}`;
+    if (left === 0) return `${hi} ${T.today(app, day)}`;
+    return `${hi} ${T.soon(app, day, left)}`;
   }
   return `${hi} `;
 }
 function custWhatsApp(where, c) {
   const n = waNum(c.phone);
   where.innerHTML = `<div class="confirm custmsg" style="flex-wrap:wrap;max-width:min(860px,calc(100vw - 340px));position:sticky;left:0"><span style="flex:1 1 auto">💬 WhatsApp · ${esc(c.name || "")} · +${esc(n)}</span>
+    <select data-walang aria-label="${esc(t("Lang mesaj la"))}" title="${esc(t("Lang mesaj la"))}" style="width:auto">${WA_LANGS.map(([k, l]) => `<option value="${k}">${l}</option>`).join("")}</select>
     <button class="btn small" data-no type="button">${t("Anile")}</button><button class="btn small" data-yes type="button" style="background:#25D366;color:#fff;border-color:#1da851">${t("Louvri WhatsApp")}</button>
     <textarea rows="3" maxlength="1000" style="flex:1 1 100%;min-width:0;resize:vertical"></textarea></div>`;
-  const ta = $("textarea", where); ta.value = waText(c); ta.focus();
+  const ta = $("textarea", where), sel = $("[data-walang]", where);
+  let lg = "ht"; try { lg = localStorage.getItem("gxWaLang") || "ht"; } catch {}
+  if (!WA_TPL[lg]) lg = "ht";
+  sel.value = lg; ta.value = waText(c, lg); ta.focus();
+  sel.onchange = () => { try { localStorage.setItem("gxWaLang", sel.value); } catch {} ta.value = waText(c, sel.value); };
   $("[data-no]", where).onclick = () => where.closest("tr").remove();
   $("[data-yes]", where).onclick = () => { window.open(`https://wa.me/${n}?text=${encodeURIComponent(ta.value.trim())}`, "_blank", "noopener"); where.closest("tr").remove(); };
 }
