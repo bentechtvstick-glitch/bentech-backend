@@ -720,6 +720,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
         id, name, server, username, createdAt, restored: !!restored, type: type || "xtream", epgUrl: epgUrl || "",
       })) : [],
       channelCount: mac ? channelsOf(mac).length : 0,
+      stb: !!d.stb,
+      m3uUrl: d.stb && d.m3uToken ? `/stb/${d.m3uToken}/playlist.m3u` : undefined,
     };
   };
 
@@ -946,6 +948,78 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   });
 
   /** Lis chanèl kliyan an ak eta hide/show chak grenn. */
+  // =========================================================================
+  // STB (MAG, TVIP Linux…): pa gen app Galaxy, men panel la ba l yon lis M3U pa MAC.
+  // Admin nan jere l menm jan ak yon TV Galaxy: playlist, kliyan, ekspirasyon, bloke, chanèl/gwoup kache.
+  // =========================================================================
+  app.post("/api/galaxy/stb", authenticate, async (req, res) => {
+    ensure();
+    const mac = normMac(req.body?.mac);
+    if (!MAC_RE.test(mac)) return res.status(400).json({ ok: false, error: "MAC pa valid (egz: 00:1A:79:12:34:56)" });
+    let device = findDevice(mac);
+    if (device && !device.stb) return res.status(409).json({ ok: false, error: "MAC sa a deja se yon TV Galaxy." });
+    if (!device) {
+      const nowIso = new Date().toISOString();
+      device = {
+        deviceId: mac, mac, stb: true, deviceName: String(req.body?.name || "").trim().slice(0, 60) || "STB",
+        customer: "", type: "STB (M3U)", status: "Offline", activated: "", lastSeen: "", limit: 1, blocked: false,
+        channelProfile: "", maxChannels: 0, hiddenChannels: [], hiddenCategories: [], createdAt: nowIso,
+      };
+      data().devices.push(device);
+      data().deletedDevices = data().deletedDevices.filter((m) => m !== mac);
+      auditLog("stb-add", `STB ${mac} added`, admin(req));
+    }
+    device.m3uToken ||= crypto.randomBytes(18).toString("base64url");
+    await db.write();
+    res.status(201).json({ ok: true, device: adminDevice(device) });
+  });
+
+  app.post("/api/galaxy/stb/:mac/new-link", authenticate, async (req, res) => {
+    const device = loadDevice(req, res);
+    if (!device) return;
+    if (!device.stb) return res.status(400).json({ ok: false, error: "Se pa yon STB." });
+    device.m3uToken = crypto.randomBytes(18).toString("base64url");
+    await db.write();
+    auditLog("stb-link", `New M3U link for ${device.mac}`, admin(req));
+    res.json({ ok: true, device: adminDevice(device) });
+  });
+
+  /** Lis M3U yon STB: sèlman chanèl ki pa kache; vid si STB a bloke oswa abònman an fini. */
+  app.get("/stb/:token/playlist.m3u", async (req, res) => {
+    ensure();
+    const tok = String(req.params.token || "");
+    const device = tok.length >= 20 ? (data().devices || []).find((d) => d.stb && d.m3uToken === tok) : null;
+    if (!device) return res.status(404).type("text/plain").send("Not found");
+    device.lastSeenAt = new Date().toISOString(); touchWrite();
+    const now = Math.floor(Date.now() / 1000), zone = tz();
+    const customer = customerOf(device);
+    let off = device.blocked ? "BLOKE / BLOCKED" : "";
+    if (!off && customer) {
+      const cs = String(customer.status || "").toLowerCase();
+      if (cs === "suspended") off = "BLOKE / BLOCKED";
+      else if (cs === "expired" || (customer.expiry && toEpochSec(customer.expiry, zone, true) < now)) off = "ABÒNMAN FINI / SUBSCRIPTION EXPIRED";
+    }
+    const pl = playlistsOf(device.mac).find((p) => plType(p) === "xtream");
+    res.set("Cache-Control", "no-store");
+    res.type("audio/x-mpegurl; charset=utf-8");
+    if (off || !pl) return res.send(`#EXTM3U\n#EXTINF:-1 group-title="INFO",${off || "PA GEN PLAYLIST / NO PLAYLIST"}\nhttp://0.0.0.0/off.ts\n`);
+    let list = [];
+    try { list = (await fetchLive(pl)).channels; if (list.length) storeChannels(device.mac, list).catch(() => {}); } catch { list = channelsOf(device.mac); }
+    const eff = effectiveChannels(device);
+    const hidC = new Set(eff.hiddenChannels.map(Number)), hidG = new Set(eff.hiddenCategories.map(String));
+    const base = normServer(pl.server), u = encodeURIComponent(pl.username), pw = encodeURIComponent(pl.password);
+    const q = (v) => String(v || "").replace(/["\r\n]/g, " ").trim();
+    const lines = ["#EXTM3U"];
+    for (const ch of list) {
+      if (hidC.has(Number(ch.id)) || hidG.has(String(ch.categoryId))) continue;
+      const group = eff.categoryNames?.[ch.categoryId] || ch.categoryName;
+      const name = eff.channelNames?.[ch.id] || ch.name;
+      lines.push(`#EXTINF:-1 tvg-id="${q(ch.id)}" tvg-chno="${q(ch.num)}"${ch.icon ? ` tvg-logo="${q(ch.icon)}"` : ""} group-title="${q(group)}",${q(name)}`);
+      lines.push(`${base}/live/${u}/${pw}/${ch.id}.ts`);
+    }
+    res.send(lines.join("\n") + "\n");
+  });
+
   app.get("/api/galaxy/devices/:mac/channels", authenticate, async (req, res) => {
     const device = loadDevice(req, res);
     if (!device) return;
