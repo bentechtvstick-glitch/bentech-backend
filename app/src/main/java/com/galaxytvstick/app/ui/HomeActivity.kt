@@ -289,6 +289,8 @@ class HomeActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+        // Mòd launcher: app la se ekran akèy box la, pa gen anyen pou l soti ale
+        if (LauncherHomeActivity.isEnabled(this)) return
         AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
             .setTitle(R.string.exit_title)
             .setMessage(R.string.exit_confirm)

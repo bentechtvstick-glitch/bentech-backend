@@ -127,6 +127,7 @@ class SettingsMenu(
             a.getString(R.string.set_captions, captionName(prefs.captions)) to { chooseCaptions() },
             a.getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off) to { parentalControl() },
             a.getString(R.string.set_autostart, onOff(prefs.autoStart)) to { prefs.autoStart = !prefs.autoStart; show() },
+            a.getString(R.string.set_launcher, onOff(LauncherHomeActivity.isEnabled(a))) to { launcherMode() },
             a.getString(R.string.set_last_channel, onOff(prefs.startLastChannel)) to { prefs.startLastChannel = !prefs.startLastChannel; show() },
             a.getString(R.string.set_update, version) to { Updater.checkNow(a, cfg.update) },
             a.getString(R.string.set_about, version) to { info(R.string.set_about_title, a.getString(R.string.set_about_fmt, version, android.os.Build.MODEL, android.os.Build.VERSION.RELEASE) + "\n\n" + a.getString(R.string.disclaimer)) },
@@ -216,6 +217,37 @@ class SettingsMenu(
                 if (code != cur) com.galaxytvstick.app.Lang.set(a, code)
             }
         })
+    }
+
+    /** Mòd launcher: app la tounen ekran akèy box la. Limen = kreye yon PIN; apre sa PIN lan nesesè pou etenn li oswa louvri paramèt Android. */
+    private fun launcherMode() {
+        if (!LauncherHomeActivity.isEnabled(a)) {
+            askPin(R.string.launcher_pin_new) { pin ->
+                prefs.launcherPin = pin
+                LauncherHomeActivity.setEnabled(a, true)
+                prefs.autoStart = true
+                android.widget.Toast.makeText(a, R.string.launcher_pick_home, android.widget.Toast.LENGTH_LONG).show()
+                LauncherHomeActivity.askDefault(a)
+            }
+            return
+        }
+        menuDialog(R.string.launcher_title, listOf(
+            a.getString(R.string.launcher_android_settings) to {
+                askPin(R.string.launcher_pin_enter) { pin ->
+                    if (pin == prefs.launcherPin) runCatching { a.startActivity(Intent(android.provider.Settings.ACTION_SETTINGS)) }
+                    else android.widget.Toast.makeText(a, R.string.parental_wrong_pin, android.widget.Toast.LENGTH_LONG).show()
+                }
+            },
+            a.getString(R.string.launcher_turn_off) to {
+                askPin(R.string.launcher_pin_enter) { pin ->
+                    if (pin == prefs.launcherPin) {
+                        LauncherHomeActivity.setEnabled(a, false)
+                        android.widget.Toast.makeText(a, R.string.launcher_off_done, android.widget.Toast.LENGTH_LONG).show()
+                        show()
+                    } else android.widget.Toast.makeText(a, R.string.parental_wrong_pin, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        ))
     }
 
     /** Mande yon PIN 4 chif (klavye Fire TV a). */

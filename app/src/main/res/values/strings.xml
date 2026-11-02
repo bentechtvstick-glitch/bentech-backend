@@ -248,4 +248,12 @@
     <string name="captions_none">Videyo sa a pa gen soutit (CC). Eseye yon chanèl US (CNN, ABC…) oswa yon fim ki gen soutit.</string>
     <string name="search_kbd_key">⌨️ Klavye</string>
     <string name="vod_new_releases">🆕 Dènye ane yo</string>
+    <string name="set_launcher">Mòd launcher (ekran akèy box la): %1$s</string>
+    <string name="launcher_title">Mòd launcher</string>
+    <string name="launcher_pin_new">Kreye yon PIN 4 chif pou mòd launcher a</string>
+    <string name="launcher_pin_enter">Antre PIN mòd launcher a</string>
+    <string name="launcher_pick_home">Chwazi app sa a kòm ekran akèy la, epi peze «Always» (Toujou).</string>
+    <string name="launcher_android_settings">Louvri paramèt Android yo</string>
+    <string name="launcher_turn_off">Etenn mòd launcher a</string>
+    <string name="launcher_off_done">Mòd launcher etenn. Box la tounen sou ekran akèy li.</string>
 </resources>
