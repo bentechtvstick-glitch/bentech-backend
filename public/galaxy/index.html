@@ -1818,6 +1818,9 @@ $("#plList").addEventListener("click", (e) => {
 });
 
 $("#stbAddBtn").addEventListener("click", () => { $("#stbAddBox").hidden = !$("#stbAddBox").hidden; if (!$("#stbAddBox").hidden) $("#stbMac").focus(); });
+// MAC STB a: majiskil ak «:» mete poukont yo pandan w ap tape (egz: 10:27:BE:05:4F:C5)
+$("#stbMac").addEventListener("input", (e) => { const v = fmtMac(e.target.value); if (e.target.value !== v) e.target.value = v; });
+$("#stbMac").classList.add("mono");
 $("#stbCancel").addEventListener("click", () => { $("#stbAddBox").hidden = true; setMsg($("#stbMsg"), ""); });
 $("#stbSave").addEventListener("click", async () => {
   const hex = $("#stbMac").value.replace(/[^0-9a-f]/gi, "");
