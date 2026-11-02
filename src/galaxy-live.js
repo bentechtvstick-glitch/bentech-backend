@@ -7,6 +7,7 @@
 // - Tout sa rete an memwa: yo pa chaje db.json, epi yo pa gen enpòtans si sèvè a redemare.
 // ---------------------------------------------------------------------------
 import { visibleDevices } from "./visible.js";
+import { hashPassword, checkPassword } from "./access.js";
 import express from "express";
 import { deviceIndex, gzipStatic } from "./perf.js";
 import path from "node:path";
@@ -402,6 +403,46 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     month: Math.min(12, Math.max(1, Math.round(Number(b?.month) || 1))), // pou "year": ki mwa
     paidMonth: /^\d{4}(-\d{2})?$/.test(String(b?.paidMonth || "")) ? String(b.paidMonth) : "", // "2026-10" (mwa) oswa "2026" (ane)
   });
+  // ---- Launcher box Android (app «GoSmart Home»): PIN admin nan ak app ki pèmèt yo, menm pou tout box yo ----
+  // PIN lan sove kòm hash sèlman; box yo pa janm resevwa l: yo voye PIN yo tape a, sèvè a di si l bon.
+  const DEF_APPS = "YouTube, Netflix";
+  const launcherCfg = () => (db.data.launcher ||= { pinHash: "", apps: DEF_APPS });
+  app.get("/api/launcher/config", (req, res) => {
+    const L = launcherCfg();
+    res.json({ apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, v: Number(L.v) || 0 });
+  });
+  const unlockHits = new Map(); // ip → [lè]
+  app.post("/api/launcher/unlock", (req, res) => {
+    const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "").split(",")[0].trim();
+    const now = Date.now(), h = (unlockHits.get(ip) || []).filter((t) => now - t < 10 * 60_000);
+    if (h.length >= 6) return res.status(429).json({ ok: false, error: "Too many attempts. Try again in 10 minutes." });
+    h.push(now); unlockHits.set(ip, h);
+    if (unlockHits.size > 5000) unlockHits.delete(unlockHits.keys().next().value);
+    const L = launcherCfg();
+    if (!L.pinHash) return res.json({ ok: true }); // poko gen PIN: paramèt yo louvri
+    const ok = checkPassword(String(req.body?.pin || ""), L.pinHash);
+    if (ok) unlockHits.delete(ip);
+    res.json({ ok });
+  });
+  app.get("/api/galaxy/launcher", authenticate, (req, res) => {
+    const L = launcherCfg();
+    res.json({ apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash });
+  });
+  app.put("/api/galaxy/launcher", authenticate, async (req, res) => {
+    if (!["owner", "Super Administrator", "Administrator"].includes(req.role)) return res.status(403).json({ ok: false, error: "Only the owner or an Administrator can change the launcher.", forbidden: true });
+    const L = launcherCfg();
+    const b = req.body || {};
+    if (typeof b.apps === "string") L.apps = b.apps.split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean).slice(0, 30).join(", ");
+    if (b.pin !== undefined) {
+      const pin = String(b.pin || "");
+      if (pin && !/^\d{4,8}$/.test(pin)) return res.status(400).json({ ok: false, error: "The PIN must be 4 to 8 digits." });
+      L.pinHash = pin ? hashPassword(pin) : "";
+    }
+    L.v = (Number(L.v) || 0) + 1;
+    await db.write();
+    res.json({ apps: L.apps, hasPin: !!L.pinHash });
+  });
+
   app.get("/api/galaxy/bills", authenticate, (req, res) => res.json(db.data.bills || []));
   app.put("/api/galaxy/bills", authenticate, async (req, res) => {
     const list = Array.isArray(req.body?.bills) ? req.body.bills : null;

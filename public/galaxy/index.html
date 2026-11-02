@@ -1252,6 +1252,16 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="list" id="abList"></div>
         <p class="note" style="margin:8px 0 0">Kopi sa yo sou menm disk ak sèvè a: yo pwoteje w si yon bagay efase oswa gate. Telechaje youn sou òdinatè w chak semèn konsa, pou w pwoteje kont yon pàn sèvè.</p>
       </div>
+      <div class="card" id="lnCard">
+        <div class="cardhead"><div><h2>📺 GoSmart Home (box Android)</h2><p class="sub">Ekran akèy pou box Android TV ou vann yo: li louvri Galaxy oswa Ben Tech, epi li montre sèlman app ou chwazi yo. PIN lan bloke paramèt Android yo sou tout box yo.</p></div><span class="note" id="lnState"></span></div>
+        <div class="row2">
+          <div class="field"><label for="lnPin">Nouvo PIN (4 a 8 chif)</label><input type="password" id="lnPin" inputmode="numeric" autocomplete="new-password" maxlength="8" placeholder="Kite l vid pou pa chanje l"></div>
+          <div class="field"><label for="lnApps">Lòt app ki parèt sou box la</label><input type="text" id="lnApps" placeholder="YouTube, Netflix, Prime Video"></div>
+        </div>
+        <p class="note" style="margin:0 0 8px">Ekri non app yo, separe ak vigil. Box la montre sèlman app ki enstale ladan l epi ki gen youn nan non sa yo. Galaxy ak Ben Tech toujou parèt an premye.</p>
+        <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="lnSave" type="button">Sove</button><button class="btn" id="lnClear" type="button">Retire PIN lan</button><span class="msg" id="lnMsg"></span></div>
+        <p class="note" style="margin:8px 0 0">Telechaje app la sou box la ak Downloader: <span class="mono" style="user-select:all">https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/GoSmartHome.apk</span></p>
+      </div>
       <div class="card" id="blCard">
         <div class="cardhead"><div><h2>💳 Peman pou sonje</h2><p class="sub">Egz: sèvè Hetzner, domèn. Panel la fè w sonje kèk jou anvan (nan 🔔 ak sou telefòn ou), jiskaske w di li peye.</p></div></div>
         <div id="blList"></div>
@@ -3371,7 +3381,7 @@ $("#upCancel").addEventListener("click", async () => {
   try { await api("POST", "/galaxy/app-update", { cancel: true }); setMsg($("#upMsg"), t("TV yo p ap pwopoze mizajou a ankò."), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
 });
 // ---- Kisa ki pran plas nan baz done a + TV ki pral efase otomatikman ----
-const STORE_LABELS = { channelLists: "Lis chanèl yo", devices: "Aparèy", deviceChannels: "Lyen aparèy → lis chanèl", devicePlaylists: "Playlist", customers: "Kliyan yo", auditLogs: "Jounal aksyon yo", channelProfiles: "Pakè chanèl", tickers: "Ticker", banners: "Banner", popups: "Pop-up", mediaAds: "Piblisite", liveEvents: "Evènman dirèk", chyrons: "Chyron", settings: "Reglaj panel la", users: "Kont admin yo", deletedDevices: "Aparèy ki efase", channelHealth: "Sante chanèl yo", adminNotes: "Nòt mwen yo", notify: "Notifikasyon telefòn", watch: "Siveyans (AI)", bills: "Peman pou sonje", customGroups: "Gwoup pa m", ownerAuth: "Login pwopriyetè a", channelAlerts: "Alèt chanèl yo", deviceStats: "Estatistik TV yo", aiUsage: "Depans AI a" };
+const STORE_LABELS = { channelLists: "Lis chanèl yo", devices: "Aparèy", deviceChannels: "Lyen aparèy → lis chanèl", devicePlaylists: "Playlist", customers: "Kliyan yo", auditLogs: "Jounal aksyon yo", channelProfiles: "Pakè chanèl", tickers: "Ticker", banners: "Banner", popups: "Pop-up", mediaAds: "Piblisite", liveEvents: "Evènman dirèk", chyrons: "Chyron", settings: "Reglaj panel la", users: "Kont admin yo", deletedDevices: "Aparèy ki efase", channelHealth: "Sante chanèl yo", adminNotes: "Nòt mwen yo", notify: "Notifikasyon telefòn", watch: "Siveyans (AI)", bills: "Peman pou sonje", customGroups: "Gwoup pa m", ownerAuth: "Login pwopriyetè a", channelAlerts: "Alèt chanèl yo", deviceStats: "Estatistik TV yo", aiUsage: "Depans AI a", launcher: "GoSmart Home" };
 async function loadStorage() {
   const box = $("#sysStorage"); box.hidden = false; box.innerHTML = `<div class="empty">${t("Ap chaje…")}</div>`;
   let y; try { y = await api("GET", "/galaxy/storage"); } catch (err) { box.innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
@@ -3566,7 +3576,20 @@ $("#blSave").addEventListener("click", async () => {
   readBills();
   try { bills = await api("PUT", "/galaxy/bills", { bills }); renderBills(); setMsg($("#blMsg"), "Sove.", true); loadWatch(); } catch (e) { setMsg($("#blMsg"), e.message); }
 });
-async function loadSystem() { loadBills(); loadAppUpdate(); loadNotes(); loadAutoBackups(); loadNotify(); loadOwner();
+async function loadLauncher() {
+  try { const r = await api("GET", "/galaxy/launcher"); $("#lnApps").value = r.apps || ""; $("#lnState").textContent = r.hasPin ? t("🔒 PIN mete") : t("⚠️ Poko gen PIN"); } catch { $("#lnCard").hidden = true; }
+}
+async function saveLauncher(body, okMsg) {
+  try { const r = await api("PUT", "/galaxy/launcher", body); $("#lnPin").value = ""; $("#lnApps").value = r.apps || ""; $("#lnState").textContent = r.hasPin ? t("🔒 PIN mete") : t("⚠️ Poko gen PIN"); setMsg($("#lnMsg"), okMsg, true); }
+  catch (err) { setMsg($("#lnMsg"), err.message); }
+}
+$("#lnSave").addEventListener("click", () => {
+  const pin = $("#lnPin").value.trim();
+  if (pin && !/^\d{4,8}$/.test(pin)) return setMsg($("#lnMsg"), t("PIN lan dwe gen 4 a 8 chif."));
+  saveLauncher(pin ? { pin, apps: $("#lnApps").value } : { apps: $("#lnApps").value }, t("Sove ✓ Box yo ap pran chanjman an nan kèk minit."));
+});
+$("#lnClear").addEventListener("click", () => saveLauncher({ pin: "" }, t("PIN lan retire: paramèt Android yo louvri sou box yo.")));
+async function loadSystem() { loadBills(); loadLauncher(); loadAppUpdate(); loadNotes(); loadAutoBackups(); loadNotify(); loadOwner();
   loadSysStats();
   settings = await api("GET", "/settings").catch(() => ({}));
   $("#mtOn").checked = !!settings.maintenanceMode; $("#mtMsg").value = settings.maintenanceMessage || "";
