@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="open">Abrir</string>
+    <string name="other_apps">Otras apps</string>
+    <string name="wifi">Wi‑Fi</string>
+    <string name="settings">Ajustes</string>
+    <string name="pin_title">PIN de administrador</string>
+    <string name="pin_wrong">PIN incorrecto.</string>
+    <string name="pin_net">Sin internet: conecta el Wi‑Fi primero.</string>
+    <string name="pin_many">Demasiados intentos. Espera 10 minutos.</string>
+    <string name="no_brand">Instala Galaxy TV Stick o Ben Tech TV Stick en este equipo.</string>
+    <string name="set_default">Para terminar: pulsa Inicio, elige GoSmart Home y luego «Siempre».</string>
+    <string name="cancel">Cancelar</string>
+    <string name="ok">OK</string>
+    <string name="no_apps">No hay otras apps.</string>
+</resources>

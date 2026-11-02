@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="open">Louvri</string>
+    <string name="other_apps">Lòt app</string>
+    <string name="wifi">Wi‑Fi</string>
+    <string name="settings">Paramèt</string>
+    <string name="pin_title">PIN administratè a</string>
+    <string name="pin_wrong">PIN lan pa bon.</string>
+    <string name="pin_net">Pa gen entènèt: konekte Wi‑Fi a anvan.</string>
+    <string name="pin_many">Twòp eseye. Tann 10 minit.</string>
+    <string name="no_brand">Enstale Galaxy TV Stick oswa Ben Tech TV Stick sou box la.</string>
+    <string name="set_default">Pou fini: peze Home sou telekòmand lan, chwazi GoSmart Home, epi «Always».</string>
+    <string name="cancel">Anile</string>
+    <string name="ok">OK</string>
+    <string name="no_apps">Pa gen lòt app.</string>
+</resources>

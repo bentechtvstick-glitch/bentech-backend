@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "GalaxyTvStick"
 include(":app")
+include(":launcher") // GoSmart Home: ekran akèy box Android TV (app apa)
