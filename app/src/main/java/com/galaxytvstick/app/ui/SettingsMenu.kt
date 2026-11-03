@@ -94,7 +94,7 @@ class SettingsMenu(
     /** Fon yon ti jan transparan: videyo a / gid la parèt dèyè meni an. */
     private fun glass(d: android.app.Dialog) {
         d.window?.setBackgroundDrawableResource(R.drawable.bg_dialog_glass)
-        d.window?.setDimAmount(0.2f)
+        d.window?.setDimAmount(0.05f)
     }
 
     fun show() {
