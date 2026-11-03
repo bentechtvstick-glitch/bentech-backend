@@ -15,6 +15,7 @@ import {
 } from "./galaxy.js";
 import { mountGalaxyLive } from "./galaxy-live.js";
 import { mountAutoBackup } from "./autobackup.js";
+import { mountStb } from "./stb.js";
 import { accessControl, findAdminLogin, hashPassword, checkOwnerLogin, ownerAuth } from "./access.js";
 import crypto from "node:crypto";
 import { fastWrites, gzipJson } from "./perf.js";
@@ -65,7 +66,7 @@ app.use((req, res, next) => {
 
 // Nenpòt chanjman admin nan fè nan panel la (kliyan, pakè, grafik, reglaj…): TV ki konekte yo mete yo ajou touswit.
 // (Demann TV yo li menm voye — /api/devices/… — ak tès yo pa konte.)
-const NO_SYNC = /^\/api\/(devices\/|auth\/|galaxy\/xtream\/test|galaxy\/devices\/[^/]+\/(playlists\/[^/]+\/test|commands)|galaxy\/backup|galaxy\/alerts|galaxy\/ai|galaxy\/notes|galaxy\/watch|galaxy\/notify|galaxy\/bills|galaxy\/owner-account|galaxy\/storage|galaxy\/media)/;
+const NO_SYNC = /^\/api\/(devices\/|auth\/|galaxy\/xtream\/test|galaxy\/devices\/[^/]+\/(playlists\/[^/]+\/test|commands)|galaxy\/backup|galaxy\/alerts|galaxy\/ai|galaxy\/notes|galaxy\/watch|galaxy\/notify|galaxy\/bills|galaxy\/owner-account|galaxy\/storage|galaxy\/media|stb\/)/;
 app.use((req, res, next) => {
   if (req.method !== "GET" && req.method !== "OPTIONS" && req.path.startsWith("/api/") && !NO_SYNC.test(req.path)) {
     res.on("finish", () => { if (res.statusCode < 400) syncTvs(); });
@@ -468,6 +469,8 @@ const galaxyLive = mountGalaxyLive(app, db, { authenticate, auditLog });
 syncTvs = galaxyLive.broadcastSync; // TV yo mete yo ajou touswit lè panel la chanje yon bagay
 // Kopi done otomatik chak jou (7 dènye yo) + lis/telechajman nan paj Sistèm nan
 mountAutoBackup(app, db, { authenticate, auditLog });
+// Pòtal STB (MAG / TVIP): modil apa; si l gen yon pwoblèm, rès panel la kontinye mache
+try { mountStb(app, db, { authenticate, auditLog }); } catch (e) { console.error("STB portal disabled:", e?.message || e); }
 
 // Efase tout jounal aksyon yo (bouton "Efase tout" nan paj Audit Logs)
 app.delete("/api/audit-logs", guard, async (req, res) => {
