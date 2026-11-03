@@ -625,8 +625,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   function applyHideByName(device, list) {
     const k = (v) => String(v ?? "").trim().toUpperCase();
     const cats = new Set((device.hideByName.cats || []).map(k)), chans = new Set((device.hideByName.chans || []).map(k));
-    // Repati de zewo: ID ansyen lis la ka vle di lòt chanèl sou yon lòt kont; non yo se sa ki konte
-    const hc = new Set(), hch = new Set();
+    // Ajoute sou sa ki deja kache a (pa janm retire anyen admin nan te kache)
+    const hc = new Set((device.hiddenCategories || []).map(String)), hch = new Set((device.hiddenChannels || []).map(Number));
     for (const ch of list) {
       if (cats.has(k(ch.categoryName))) hc.add(String(ch.categoryId));
       if (chans.has(k(ch.name))) hch.add(Number(ch.id));
@@ -785,6 +785,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       if (b[k] !== undefined) device[k] = b[k];
     }
     if (b.maxChannels !== undefined) device.maxChannels = Math.max(0, parseInt(b.maxChannels, 10) || 0);
+    // Admin nan chanje sa ki kache alamen: chwa li a genyen (pa aplike transfè pa non ki t ap tann nan ankò)
+    if (Array.isArray(b.hiddenChannels) || Array.isArray(b.hiddenCategories)) delete device.hideByName;
     if (Array.isArray(b.hiddenChannels)) device.hiddenChannels = b.hiddenChannels.map(Number).filter(Number.isFinite);
     if (Array.isArray(b.hiddenCategories)) device.hiddenCategories = b.hiddenCategories.map(String);
     // Siplemantè anplis pakè a (pa NON gwoup / chanèl), pou TV sa a sèlman
