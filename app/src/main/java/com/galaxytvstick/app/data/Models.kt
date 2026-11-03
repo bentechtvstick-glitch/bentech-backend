@@ -57,6 +57,8 @@ data class Program(
 object ChannelStore {
     /** Sa sèvè Xtream la voye (anvan règ panel la). */
     var rawChannels: List<Channel> = emptyList()
+    /** Pou ki playlist lis ki nan memwa a ye ("server|username|playlistId"). */
+    var loadedFor: String = ""
     var rawCategories: List<Category> = emptyList()
 
     /** Kontwòl paran aktive: kategori pou granmoun yo pa parèt ditou. */

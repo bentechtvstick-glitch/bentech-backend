@@ -38,6 +38,12 @@ class MainActivity : AppCompatActivity() {
         val account = prefs.account ?: run { toActivation(); return }
 
         useCache = intent.getBooleanExtra(EXTRA_USE_CACHE, true) // toujou louvri ak lis ki sove a (pi rapid); "Try again" ak "reload" rechaje sou sèvè a
+        // App la te fèk fèmen (kliyan an soti epi li tounen): chanèl yo toujou nan memwa, louvri gid la dirèk san ekran chajman
+        val key = "${account.server}|${account.username}|${account.playlistId}"
+        if (useCache && ChannelStore.rawChannels.isNotEmpty() && ChannelStore.loadedFor == key) {
+            ChannelStore.applyPanel(PanelState.config)
+            if (ChannelStore.all.isNotEmpty()) { openTv(); return }
+        }
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
         b.playlistName.visibility = View.GONE // non playlist la pa parèt sou ekran
@@ -49,9 +55,12 @@ class MainActivity : AppCompatActivity() {
     private fun load() {
         val account = prefs.account ?: return
         val api = XtreamApi(account)
-        b.progress.visibility = View.VISIBLE
-        b.status.text = getString(R.string.loading_channels)
         b.errorBox.visibility = View.GONE
+        // Ak lis ki sove a, app la louvri an mwens pase yon segonn: pa montre «Ap chaje chanèl yo» (sèlman logo a).
+        // Mesaj la parèt sèlman si sa pran plis pase 2 s, oswa pou yon vrè chajman (premye fwa, aktivasyon, renouvèlman).
+        val showLoading = Runnable { if (!isFinishing) { b.progress.visibility = View.VISIBLE; b.status.text = getString(R.string.loading_channels) } }
+        if (useCache) { b.progress.visibility = View.INVISIBLE; b.status.text = ""; b.root.postDelayed(showLoading, 2000) }
+        else showLoading.run()
 
         lifecycleScope.launch {
             // Règ panel la (chanèl kache, limit…) ak playlist la chaje an menm tan, pa youn apre lòt
@@ -64,6 +73,7 @@ class MainActivity : AppCompatActivity() {
                 withTimeoutOrNull(400) { cfgJob.await() }?.let { PanelState.config = it } // pa fè TV a tann: gid la aplike règ panel la lè yo rive
                 ChannelStore.rawCategories = cached.categories
                 ChannelStore.rawChannels = cached.channels
+                ChannelStore.loadedFor = "${account.server}|${account.username}|${account.playlistId}"
                 ChannelStore.applyPanel(PanelState.config)
                 if (cached.ageMs > ChannelCache.REFRESH_AFTER_MS) refreshInBackground(account)
                 openTv()
@@ -81,6 +91,7 @@ class MainActivity : AppCompatActivity() {
                 cfgJob.await()?.let { PanelState.config = it }
                 ChannelStore.rawCategories = cats
                 ChannelStore.rawChannels = chans
+                ChannelStore.loadedFor = "${account.server}|${account.username}|${account.playlistId}"
                 ChannelStore.applyPanel(PanelState.config)
                 // Voye lis chanèl yo bay panel la pou admin nan ka hide/show yo
                 GalaxyApp.scope.launch { runCatching { PanelApi(prefs).uploadChannels(chans, cats) } }
@@ -88,6 +99,7 @@ class MainActivity : AppCompatActivity() {
                 if (chans.any { it.tvArchive }) GalaxyApp.scope.launch { api.serverTimezone()?.let { prefs.serverTimezone = it } }
                 openTv()
             }.onFailure {
+                b.root.removeCallbacks(showLoading)
                 b.progress.visibility = View.GONE
                 b.status.text = ""
                 b.errorText.text = getString(R.string.error_network, it.message ?: "")
