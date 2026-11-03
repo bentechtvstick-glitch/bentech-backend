@@ -794,6 +794,36 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     res.json(adminDevice(device));
   });
 
+  // Ranplase aparèy: tout sa ansyen TV a te genyen (playlist, kliyan, chanèl kache, non, vil…) ale sou nouvo a, epi ansyen an efase.
+  const COPY_KEYS = ["customer", "deviceName", "channelProfile", "limit", "city", "maxChannels", "hiddenChannels", "hiddenCategories",
+    "extraGroups", "extraChannels", "removedGroups", "removedChannels", "forceHideAdult", "blockedCats", "categoryNames", "channelNames", "activated"];
+  app.post("/api/galaxy/devices/:mac/replace", authenticate, async (req, res) => {
+    const from = loadDevice(req, res);
+    if (!from) return;
+    const toMac = normMac(req.body?.to);
+    const to = findDevice(toMac);
+    if (!to) return res.status(404).json({ ok: false, error: "Nouvo aparèy la pa jwenn. Louvri app la sou li an premye." });
+    if (to === from) return res.status(400).json({ ok: false, error: "Chwazi yon lòt aparèy." });
+    for (const k of COPY_KEYS) if (from[k] !== undefined) to[k] = JSON.parse(JSON.stringify(from[k]));
+    // Playlist yo: deplase yo (san doub si nouvo a te deja gen menm kont lan)
+    const have = new Set(playlistsOf(to.mac).map((p) => `${p.server}|${p.username}|${p.type || "xtream"}`));
+    for (const p of playlistsOf(from.mac)) if (!have.has(`${p.server}|${p.username}|${p.type || "xtream"}`)) playlistsOf(to.mac).push(p);
+    if (!data().deviceChannels[to.mac] && data().deviceChannels[from.mac]) data().deviceChannels[to.mac] = data().deviceChannels[from.mac];
+    data().deletedDevices = data().deletedDevices.filter((m) => m !== to.mac);
+    // Ansyen an efase (TV a retounen sou ekran aktivasyon an si l limen)
+    data().devices = data().devices.filter((d) => d !== from);
+    delete data().devicePlaylists[from.mac];
+    delete data().deviceChannels[from.mac];
+    if (!data().deletedDevices.includes(from.mac)) data().deletedDevices.push(from.mac);
+    pruneChannelLists();
+    await db.write();
+    auditLog("device-replace", `Device ${from.mac} replaced by ${to.mac}`, admin(req));
+    await syncCustomerFromProvider(to, { force: true }).catch(() => {});
+    if (activateCustomer(to)) await db.write();
+    syncTvs();
+    res.json({ ok: true, device: adminDevice(to) });
+  });
+
   app.delete("/api/galaxy/devices/:mac", authenticate, async (req, res) => {
     const device = loadDevice(req, res);
     if (!device) return;

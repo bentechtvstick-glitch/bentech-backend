@@ -740,7 +740,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="row2"><div class="field"><label for="dvCustomer">Kliyan</label><select id="dvCustomer"></select></div>
               <div class="field"><label>Limit (founisè a)</label><div class="limitbox"><b id="dvLimit">—</b><span class="note" id="dvLimitNote"></span></div></div></div>
             <div class="kv"><span>Bloke aparèy la</span><label class="sw"><input type="checkbox" id="dvBlocked" aria-label="Bloke aparèy la"><i></i></label></div>
-            <div class="btns"><button class="btn small" id="dvResetKey" type="button">Reyinisyalize Device Key</button><button class="btn small red" id="dvDelete" type="button">Efase aparèy la</button><button class="btn small primary" id="dvSave" type="button">Sove</button></div>
+            <div class="btns"><button class="btn small" id="dvResetKey" type="button">Reyinisyalize Device Key</button><button class="btn small" id="dvReplace" type="button">🔁 Ranplase aparèy la</button><button class="btn small red" id="dvDelete" type="button">Efase aparèy la</button><button class="btn small primary" id="dvSave" type="button">Sove</button></div>
             <div class="msg e" id="dvKeyWarn" hidden style="margin:8px 0"></div><div id="dvConfirm"></div>
             <div class="msg" id="dvMsg"></div>
           </div>
@@ -1731,6 +1731,22 @@ $("#dvResetKey").addEventListener("click", () => confirmIn("#dvConfirm", t("TV a
 $("#dvDelete").addEventListener("click", () => confirmIn("#dvConfirm", t("Aparèy la ak tout playlist li yo ap efase. TV a ap retounen sou ekran aktivasyon an."), t("Efase l"), async (delC) => {
   try { const r = await api("DELETE", delPath(dev.mac, delC)); dev = null; $("#deviceView").hidden = true; $("#mac").value = ""; loadDevices(); delToast(r); } catch (err) { setMsg($("#dvMsg"), err.message); }
 }, delCustHtml(dev?.customer)));
+// Ranplase aparèy: chwazi nouvo TV a (sitou sa ki «ap tann aktivasyon»), panel la deplase tout bagay sou li
+$("#dvReplace").addEventListener("click", () => {
+  if (!dev) return;
+  const others = devicesCache.filter((d) => d.galaxy && d.mac !== dev.mac).sort((a, b) => (b.playlists || []).length === 0 ? 1 : -1);
+  const box = $("#dvConfirm");
+  if (!others.length) { box.innerHTML = `<div class="confirm"><span>${esc(t("Pa gen lòt aparèy. Louvri app la sou nouvo TV a an premye: li ap parèt nan lis la."))}</span><button class="btn small" data-no type="button">OK</button></div>`; $("[data-no]", box).onclick = () => (box.innerHTML = ""); return; }
+  box.innerHTML = `<div class="confirm" style="flex-wrap:wrap"><span style="flex-basis:100%">${esc(t("Chwazi nouvo aparèy la. Playlist, kliyan, chanèl kache, non ak vil la ap ale sou li, epi aparèy sa a ({0}) ap efase.", dev.mac))}</span>
+    <select data-to style="width:auto;min-width:260px">${others.map((d) => `<option value="${esc(d.mac)}">${esc(d.mac)} · ${esc(d.deviceName || d.model || "")}${(d.playlists || []).length ? "" : " · " + esc(t("Ap tann aktivasyon"))}</option>`).join("")}</select>
+    <button class="btn small" data-no type="button">${t("Anile")}</button><button class="btn small primary" data-yes type="button">${t("Ranplase")}</button></div>`;
+  $("[data-no]", box).onclick = () => (box.innerHTML = "");
+  $("[data-yes]", box).onclick = async () => {
+    const to = $("[data-to]", box).value; box.innerHTML = "";
+    try { const r = await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/replace`, { to }); toast(t("Aparèy la ranplase: tout bagay ale sou {0}.", to)); await loadDevices(); await selectDevice(r.device.mac, true); }
+    catch (err) { setMsg($("#dvMsg"), err.message); }
+  };
+});
 function confirmIn(sel, text, yes, fn, extra = "") {
   const box = $(sel); box.innerHTML = `<div class="confirm"><span>${esc(text)}</span>${extra}<button class="btn small" data-no type="button">${t("Non")}</button><button class="btn small danger" data-yes type="button">${esc(yes)}</button></div>`;
   $("[data-no]", box).onclick = () => (box.innerHTML = ""); $("[data-yes]", box).onclick = () => { const delC = !!box.querySelector("[data-delcust]")?.checked; box.innerHTML = ""; fn(delC); };
