@@ -51,6 +51,7 @@ import java.util.Locale
  */
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class EpgActivity : AppCompatActivity() {
+    private val noInfo by lazy { getString(R.string.epg_no_info) }
 
     companion object {
         private val LANG_CODES = listOf("ht", "en", "fr", "es")
@@ -828,7 +829,8 @@ class EpgActivity : AppCompatActivity() {
                 ellipsize = TextUtils.TruncateAt.END
                 textSize = 13f
                 val catchup = p != null && ch.canCatchup(p)
-                text = p?.let { "${if (catchup) "⏪ " else ""}${it.title}" } ?: "—"
+                // Pa gen pwogram pou chanèl sa a: "Pa gen enfòmasyon pwogram" (tankou TiviMate), "…" pandan gid la ap chaje
+                text = p?.let { "${if (catchup) "⏪ " else ""}${it.title}" } ?: if (EpgRepository.isLoaded) noInfo else "…"
                 val live = p?.isNow() == true
                 val past = e <= System.currentTimeMillis()
                 setTextColor(ContextCompat.getColorStateList(ctx, if (p == null || past) R.color.epg_cell_text_dim else R.color.epg_cell_text))
