@@ -1883,7 +1883,7 @@ function rbPaint() {
   $("#rbBugSize").value = b.size || 44; $("#rbBugSizeV").textContent = $("#rbBugSize").value;
   rbPrev(); $("#rbTkOn").checked = rbData.tickerOn !== false; rbList();
 }
-function rbPrev() { const u = $("#rbBugUrl").value.trim(), im = $("#rbBugPrev"); if (/^https?:\/\//.test(u)) { im.src = u; im.style.display = "block"; } else im.style.display = "none"; }
+function rbPrev() { const u = $("#rbBugUrl").value.trim(), im = $("#rbBugPrev"); if (/^(https?:\/\/|\/media\/)/.test(u)) { im.src = u; im.style.display = "block"; } else im.style.display = "none"; }
 function rbList() {
   const L = rbData.tickers || [];
   $("#rbTkList").innerHTML = L.length ? L.map((m, i) => `<div class="li" style="display:flex;gap:10px;align-items:center"><label class="sw"><input type="checkbox" data-rbon="${i}"${m.active !== false ? " checked" : ""}><i></i></label><span style="flex:1;min-width:0">${esc(m.message)}</span><button class="btn small red" data-rbdel="${i}" type="button">${t("Efase l")}</button></div>`).join("")
