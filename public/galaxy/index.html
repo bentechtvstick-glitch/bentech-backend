@@ -583,7 +583,6 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <button class="tab navlink" role="tab" data-tab="live" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span>TV an dirèk</span></button>
       <button class="tab navlink" role="tab" data-tab="cust" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 3.1a4 4 0 0 1 0 7.8M22 21a7 7 0 0 0-4-6.3"/></svg><span>Kliyan yo</span></button>
       <button class="tab navlink" role="tab" data-tab="dev" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg><span>Aparèy</span><span class="badge" id="navNew" hidden></span></button>
-      <button class="tab navlink" role="tab" data-tab="stb" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 17v2M17 17v2M7 12h.01M11 12h6"/></svg><span>STB</span></button>
       <button class="tab navlink" role="tab" data-tab="ch" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Chanèl</span></button>
       <div class="navsep"></div>
       <div class="navsep"></div>
@@ -692,42 +691,6 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
     </main>
 
     <!-- Aparèy -->
-    <!-- STB (MAG / TVIP): pòtal Galaxy / Ben Tech pou box STB yo (modil apa) -->
-    <main data-pane="stb" hidden>
-      <div class="pagehead"><div><h1>STB (MAG / TVIP)</h1><p>Pwòp pòtal Galaxy oswa Ben Tech sou box STB yo. Sou box la, nan Portal URL, mete: <b class="mono" id="stbPortalUrl" style="user-select:all"></b></p></div></div>
-      <div class="card">
-        <div class="cardhead"><div><h2>Ajoute yon STB</h2><p class="sub">Oswa louvri pòtal la sou box la: li ap parèt isit la poukont li, «Ap tann aktivasyon».</p></div></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <input type="text" id="sbMac" class="mono" placeholder="MAC (00:1A:79:12:34:56)" maxlength="17" style="max-width:230px">
-          <input type="text" id="sbName" placeholder="Non (egz: Salon Marie)" maxlength="60" style="max-width:230px">
-          <select id="sbBrand" style="width:auto"><option value="galaxy">Galaxy TV Stick</option><option value="bentech">Ben Tech TV Stick</option></select>
-          <button class="btn primary" id="sbAdd" type="button">Ajoute</button><span class="msg" id="sbAddMsg"></span>
-        </div>
-      </div>
-      <div class="card"><div class="cardhead"><div><h2>Box STB yo</h2></div><button class="btn small" id="sbRefresh" type="button">Refresh</button></div><div class="tbl" id="sbTable"></div></div>
-      <div class="card" id="sbEdit" hidden>
-        <div class="cardhead"><div><h2 id="sbEditTitle"></h2><p class="sub" id="sbEditSub"></p></div><button class="btn small red" id="sbDelete" type="button">Efase</button></div>
-        <div class="row2">
-          <div class="field"><label for="sbEName">Non</label><input type="text" id="sbEName" maxlength="60"></div>
-          <div class="field"><label for="sbEBrand">App (logo sou ekran an)</label><select id="sbEBrand"><option value="galaxy">Galaxy TV Stick</option><option value="bentech">Ben Tech TV Stick</option></select></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label for="sbECust">Kliyan (ekspirasyon)</label><select id="sbECust"></select></div>
-          <div class="field"><label>Bloke STB sa a</label><div class="inline"><label class="sw"><input type="checkbox" id="sbEBlock"><i></i></label></div></div>
-        </div>
-        <div class="row3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
-          <div class="field"><label for="sbEServer">Sèvè (DNS)</label><input type="text" id="sbEServer" placeholder="http://dns.example.com:8080" autocomplete="off"></div>
-          <div class="field"><label for="sbEUser">Username</label><input type="text" id="sbEUser" autocomplete="off"></div>
-          <div class="field"><label for="sbEPass">Password</label><input type="password" id="sbEPass" autocomplete="new-password"></div>
-        </div>
-        <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="sbSave" type="button">Sove</button><span class="msg" id="sbMsg"></span></div>
-        <div class="cardhead" style="margin-top:16px"><div><h3 style="margin:0;font-size:15px">Gwoup chanèl yo</h3><p class="sub">Etenn yon gwoup pou kache l sou box sa a. Box la wè chanjman an nan 10 minit, oswa touswit si w rekòmanse l.</p></div><button class="btn small" id="sbGLoad" type="button">Chaje gwoup yo</button></div>
-        <input type="search" id="sbGFilter" placeholder="Chèche yon gwoup…" style="max-width:320px;margin-bottom:8px" hidden>
-        <div id="sbGroups" class="list" style="max-height:420px;overflow:auto"></div>
-        <div class="btns" style="justify-content:flex-start" id="sbGSaveBox" hidden><button class="btn primary" id="sbGSave" type="button">Sove gwoup yo</button><span class="msg" id="sbGMsg"></span></div>
-      </div>
-    </main>
-
     <main data-pane="dev" hidden>
       <div class="pagehead"><div><h1>Galaxy TV Stick Control Center</h1><p>Jesyon aparèy</p></div><button class="btn primary big" id="addMacBtn" type="button">+ Ajoute MAC Address</button></div>
 
@@ -1426,7 +1389,7 @@ function applyRole() {
 
 // ------------------------------------------------------------ API
 // Konfimasyon TV yo: TV a pa di kliyan an anyen, se panel la ki montre "✅ aplike sou TV …"
-const TV_ACK_SKIP = /^\/(stb\/|auth\/|galaxy\/(bills|owner-account|notes|watch|notify|ai|alerts|backup|backups|restore|storage|media|xtream\/test|tv-events)|admin-users)|\/test$/;
+const TV_ACK_SKIP = /^\/(auth\/|galaxy\/(bills|owner-account|notes|watch|notify|ai|alerts|backup|backups|restore|storage|media|xtream\/test|tv-events)|admin-users)|\/test$/;
 let tvAckRun = null;
 async function tvEvLast() { try { const r = await fetch(API + "/galaxy/tv-events?since=999999999", { headers: token ? { Authorization: "Bearer " + token } : {} }); return (await r.json()).last || 0; } catch { return null; } }
 const TV_ACK_TEXT = {
@@ -1546,7 +1509,6 @@ function openTab(name) {
   if (CRUD[name]) openCrud(name);
   if (name === "live" || name === "cust") loadLive();
   if (name === "dev") loadDevices();
-  if (name === "stb") loadStb();
   if (name === "ch") loadChannels();
   if (["bc", "tk", "cy", "bn", "pp"].includes(name)) loadMessages();
   if (name === "cy") loadChyrons();
@@ -1847,82 +1809,6 @@ $("#plList").addEventListener("click", (e) => {
   $("[data-yes]", c).onclick = async () => { try { dev = { ...dev, ...(await api("DELETE", `/galaxy/devices/${encodeURIComponent(dev.mac)}/playlists/${encodeURIComponent(b.dataset.rmpl)}`)) }; renderDevice(); loadDevices(); } catch (err) { setMsg($("#plMsg"), err.message); } };
 });
 
-
-// ------------------------------------------------------------ STB (MAG / TVIP)
-let sbList = [], sbCur = null, sbGroupsData = null, sbHidden = new Set();
-const SB_STATE = { active: ["p-on", "Aktif"], pending: ["p-warn", "Ap tann aktivasyon"], expired: ["p-bad", "Ekspire"], blocked: ["p-bad", "Bloke"] };
-$("#stbPortalUrl").textContent = location.origin + "/stb/c/";
-$("#sbMac").addEventListener("input", (e) => { const v = fmtMac(e.target.value); if (e.target.value !== v) e.target.value = v; });
-async function loadStb() {
-  try { sbList = await api("GET", "/stb/boxes"); } catch (err) { $("#sbTable").innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
-  renderStbTable();
-  if (sbCur) { const x = sbList.find((b) => b.mac === sbCur.mac); if (x) openStb(x, true); else $("#sbEdit").hidden = true; }
-}
-function renderStbTable() {
-  const cust = (b) => { const c = (custCache || []).find((x) => x.id === b.customer || String(x.name || "").toLowerCase() === String(b.customer || "").toLowerCase()); return c ? c.name : (b.customer || "—"); };
-  $("#sbTable").innerHTML = sbList.length ? `<table><thead><tr><th>MAC</th><th>${t("Non")}</th><th>App</th><th>${t("Kliyan")}</th><th>${t("Estati")}</th><th>${t("Dènye fwa")}</th></tr></thead><tbody>` +
-    sbList.map((b) => { const s = SB_STATE[b.state] || ["p-info", b.state];
-      return `<tr class="click${sbCur && sbCur.mac === b.mac ? " sel" : ""}" data-sb="${esc(b.mac)}"><td class="mono">${esc(b.mac)}</td><td>${esc(b.name || "—")}</td><td>${b.brand === "bentech" ? "Ben Tech" : "Galaxy"}</td><td>${esc(cust(b))}</td><td><span class="pill ${s[0]}">${esc(t(s[1]))}</span></td><td>${b.lastSeenAt ? esc(usDT(new Date(b.lastSeenAt))) : "—"}</td></tr>`; }).join("") + `</tbody></table>`
-    : `<div class="empty">${t("Poko gen STB. Ajoute youn anlè a, oswa louvri pòtal la sou box la.")}</div>`;
-}
-let custCache = null;
-async function stbCustomers() { if (!custCache) custCache = await list("customers").catch(() => []); return custCache; }
-async function openStb(b, keepGroups) {
-  sbCur = b; const cs = await stbCustomers();
-  $("#sbEdit").hidden = false; $("#sbEditTitle").textContent = (b.name || "STB") + " · " + b.mac;
-  $("#sbEditSub").textContent = b.ua ? t("Box la: {0}", b.ua) : t("Box la poko louvri pòtal la.");
-  $("#sbEName").value = b.name || ""; $("#sbEBrand").value = b.brand === "bentech" ? "bentech" : "galaxy";
-  $("#sbECust").innerHTML = `<option value="">${esc(t("— San kliyan —"))}</option>` + cs.map((c) => `<option value="${esc(c.id)}">${esc(c.name || c.id)}</option>`).join("");
-  $("#sbECust").value = cs.some((c) => c.id === b.customer) ? b.customer : (cs.find((c) => String(c.name || "").toLowerCase() === String(b.customer || "").toLowerCase())?.id || "");
-  $("#sbEBlock").checked = !!b.blocked;
-  $("#sbEServer").value = b.playlist?.server || ""; $("#sbEUser").value = b.playlist?.username || ""; $("#sbEPass").value = "";
-  $("#sbEPass").placeholder = b.playlist?.hasPassword ? t("•••••• (pa chanje)") : "";
-  setMsg($("#sbMsg"), "");
-  if (!keepGroups) { sbGroupsData = null; $("#sbGroups").innerHTML = ""; $("#sbGFilter").hidden = true; $("#sbGSaveBox").hidden = true; }
-  renderStbTable();
-}
-$("#sbTable").addEventListener("click", (e) => { const r = e.target.closest("[data-sb]"); if (!r) return; const b = sbList.find((x) => x.mac === r.dataset.sb); if (b) { openStb(b); $("#sbEdit").scrollIntoView({ behavior: "smooth", block: "start" }); } });
-$("#sbRefresh").addEventListener("click", loadStb);
-$("#sbAdd").addEventListener("click", async () => {
-  const mac = $("#sbMac").value; if (!isMac(mac)) return setMsg($("#sbAddMsg"), t("MAC la dwe gen 12 karaktè (egz: 00:1A:79:12:34:56)."));
-  try { const b = await api("POST", "/stb/boxes", { mac, name: $("#sbName").value.trim(), brand: $("#sbBrand").value });
-    $("#sbMac").value = ""; $("#sbName").value = ""; setMsg($("#sbAddMsg"), t("Ajoute ✓"), true); await loadStb(); openStb(sbList.find((x) => x.mac === b.mac) || b); }
-  catch (err) { setMsg($("#sbAddMsg"), err.message); }
-});
-$("#sbSave").addEventListener("click", async () => {
-  if (!sbCur) return;
-  const body = { name: $("#sbEName").value, brand: $("#sbEBrand").value, customer: $("#sbECust").value, blocked: $("#sbEBlock").checked };
-  const server = $("#sbEServer").value.trim(), user = $("#sbEUser").value.trim(), pass = $("#sbEPass").value.trim();
-  if (server || user || pass) body.playlist = { server, username: user, password: pass };
-  try { const b = await api("PUT", `/stb/boxes/${encodeURIComponent(sbCur.mac)}`, body); setMsg($("#sbMsg"), t("Sove ✓ Box la ap mete l ajou nan 10 minit, oswa touswit si w rekòmanse l."), true); await loadStb(); openStb(sbList.find((x) => x.mac === b.mac) || b, true); }
-  catch (err) { setMsg($("#sbMsg"), err.message); }
-});
-$("#sbDelete").addEventListener("click", async () => {
-  if (!sbCur) return;
-  const box = $("#sbMsg"); box.innerHTML = `<span class="confirm"><span>${esc(t("Efase STB sa a?"))}</span><button class="btn small" data-no type="button">${t("Non")}</button><button class="btn small red" data-yes type="button">${t("Wi, efase")}</button></span>`;
-  $("[data-no]", box).onclick = () => (box.innerHTML = "");
-  $("[data-yes]", box).onclick = async () => { try { await api("DELETE", `/stb/boxes/${encodeURIComponent(sbCur.mac)}`); sbCur = null; $("#sbEdit").hidden = true; loadStb(); } catch (err) { setMsg(box, err.message); } };
-});
-function renderStbGroups() {
-  if (!sbGroupsData) return;
-  const q = $("#sbGFilter").value.trim().toLowerCase(), count = {};
-  for (const ch of sbGroupsData.channels) count[ch.group] = (count[ch.group] || 0) + 1;
-  const gs = sbGroupsData.groups.filter((g) => !q || g.name.toLowerCase().includes(q));
-  $("#sbGroups").innerHTML = gs.map((g) => `<div class="li" style="display:flex;align-items:center;gap:10px"><label class="sw"><input type="checkbox" data-sbg="${esc(g.id)}"${sbHidden.has(g.id) ? "" : " checked"}><i></i></label><span style="flex:1">${esc(g.name)}</span><span class="note">${count[g.id] || 0}</span></div>`).join("") || `<div class="empty">${t("Pa gen anyen ki koresponn.")}</div>`;
-}
-$("#sbGLoad").addEventListener("click", async () => {
-  if (!sbCur) return; $("#sbGroups").innerHTML = `<div class="note">${t("Ap chaje…")}</div>`;
-  try { sbGroupsData = await api("GET", `/stb/boxes/${encodeURIComponent(sbCur.mac)}/channels`); sbHidden = new Set((sbCur.hiddenGroups || []).map(String));
-    $("#sbGFilter").hidden = false; $("#sbGSaveBox").hidden = false; renderStbGroups(); }
-  catch (err) { $("#sbGroups").innerHTML = `<div class="empty">${esc(err.message)}</div>`; }
-});
-$("#sbGFilter").addEventListener("input", renderStbGroups);
-$("#sbGroups").addEventListener("change", (e) => { const id = e.target.dataset.sbg; if (id == null) return; e.target.checked ? sbHidden.delete(id) : sbHidden.add(id); });
-$("#sbGSave").addEventListener("click", async () => {
-  if (!sbCur) return;
-  try { const b = await api("PUT", `/stb/boxes/${encodeURIComponent(sbCur.mac)}`, { hiddenGroups: [...sbHidden] }); sbCur = { ...sbCur, ...b }; setMsg($("#sbGMsg"), t("Sove ✓ {0} gwoup kache.", sbHidden.size), true); loadStb(); }
-  catch (err) { setMsg($("#sbGMsg"), err.message); }
-});
 let devicesCache = [];
 let linkFrom = null; // aparèy DVC n ap konekte ak yon MAC
 const DEV_MODELS = [
