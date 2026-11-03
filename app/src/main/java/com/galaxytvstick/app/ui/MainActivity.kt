@@ -59,7 +59,8 @@ class MainActivity : AppCompatActivity() {
         // Ak lis ki sove a, app la louvri an mwens pase yon segonn: pa montre «Ap chaje chanèl yo» (sèlman logo a).
         // Mesaj la parèt sèlman si sa pran plis pase 2 s, oswa pou yon vrè chajman (premye fwa, aktivasyon, renouvèlman).
         val showLoading = Runnable { if (!isFinishing) { b.progress.visibility = View.VISIBLE; b.status.text = getString(R.string.loading_channels) } }
-        if (useCache) { b.progress.visibility = View.INVISIBLE; b.status.text = ""; b.root.postDelayed(showLoading, 2000) }
+        // Lis ki sove a: logo a sèlman (pa gen «Ap chaje chanèl yo»). Mesaj la parèt sèlman si app la dwe telechaje lis la ankò.
+        if (useCache) { b.progress.visibility = View.INVISIBLE; b.status.text = "" }
         else showLoading.run()
 
         lifecycleScope.launch {
@@ -81,6 +82,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             // 2) Chajman nòmal (telechaje nan fichye, li objè pa objè: pa plen memwa a)
+            showLoading.run()
             // Gid la (EPG) kòmanse telechaje an menm tan, pa apre chanèl yo
             com.galaxytvstick.app.data.EpgRepository.prefetchRaw(api)
             val result = runCatching {
