@@ -621,12 +621,29 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
   /** App la voye lis chanèl Xtream kliyan an, pou admin nan ka hide/show yo. */
   /** Sove lis chanèl yon aparèy (pataje ant aparèy ki gen egzakteman menm lis la). */
+  /** Transfere chanèl/gwoup kache pa non (ranplasman aparèy): { cats: [non gwoup], chans: [non chanèl] } → ID nouvo lis la. */
+  function applyHideByName(device, list) {
+    const k = (v) => String(v ?? "").trim().toUpperCase();
+    const cats = new Set((device.hideByName.cats || []).map(k)), chans = new Set((device.hideByName.chans || []).map(k));
+    // Repati de zewo: ID ansyen lis la ka vle di lòt chanèl sou yon lòt kont; non yo se sa ki konte
+    const hc = new Set(), hch = new Set();
+    for (const ch of list) {
+      if (cats.has(k(ch.categoryName))) hc.add(String(ch.categoryId));
+      if (chans.has(k(ch.name))) hch.add(Number(ch.id));
+    }
+    device.hiddenCategories = [...hc]; device.hiddenChannels = [...hch];
+    delete device.hideByName;
+    touchWrite();
+  }
   async function storeChannels(mac, channels) {
     const list = (Array.isArray(channels) ? channels : []).slice(0, 80000).map((c) => ({
       id: Number(c.id), num: Number(c.num) || 0, name: String(c.name || "").slice(0, 200),
       categoryId: String(c.categoryId || ""), categoryName: String(c.categoryName || "").slice(0, 200),
     }));
     const hash = crypto.createHash("sha1").update(JSON.stringify(list)).digest("hex");
+    // Aparèy ki fèk ranplase yon lòt: chanèl/gwoup kache yo transfere pa NON sou nouvo lis la (ID yo ka diferan)
+    const dv = findDevice(mac);
+    if (dv?.hideByName && list.length) { applyHideByName(dv, list); }
     if (data().deviceChannels[mac] !== hash) {
       data().channelLists[hash] ??= list;
       data().deviceChannels[mac] = hash;
@@ -804,7 +821,20 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const to = findDevice(toMac);
     if (!to) return res.status(404).json({ ok: false, error: "Nouvo aparèy la pa jwenn. Louvri app la sou li an premye." });
     if (to === from) return res.status(400).json({ ok: false, error: "Chwazi yon lòt aparèy." });
+    // Non gwoup ak chanèl ki kache sou ansyen TV a (pou nouvo TV a, menm si l gen yon lòt playlist ak lòt ID)
+    const oldList = channelsOf(from.mac);
+    const hcSet = new Set((from.hiddenCategories || []).map(String)), hchSet = new Set((from.hiddenChannels || []).map(Number));
+    const byName = {
+      cats: [...new Set(oldList.filter((ch) => hcSet.has(String(ch.categoryId))).map((ch) => ch.categoryName).filter(Boolean))],
+      chans: [...new Set(oldList.filter((ch) => hchSet.has(Number(ch.id))).map((ch) => ch.name).filter(Boolean))],
+    };
+    const newHadList = !!data().deviceChannels[to.mac];
     for (const k of COPY_KEYS) if (from[k] !== undefined) to[k] = JSON.parse(JSON.stringify(from[k]));
+    if (byName.cats.length || byName.chans.length) {
+      to.hideByName = byName;
+      // Nouvo TV a gen pwòp lis li deja: aplike l kounye a; sinon l ap aplike lè TV a voye lis li
+      if (newHadList) applyHideByName(to, channelsOf(to.mac));
+    }
     // Playlist yo: deplase yo (san doub si nouvo a te deja gen menm kont lan)
     const have = new Set(playlistsOf(to.mac).map((p) => `${p.server}|${p.username}|${p.type || "xtream"}`));
     for (const p of playlistsOf(from.mac)) if (!have.has(`${p.server}|${p.username}|${p.type || "xtream"}`)) playlistsOf(to.mac).push(p);
