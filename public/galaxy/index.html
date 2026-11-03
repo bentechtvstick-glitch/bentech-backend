@@ -108,6 +108,7 @@ input[type=text],input[type=password],input[type=datetime-local],input[type=numb
 .dlbar:hover .dl-track{animation-play-state:paused}
 @keyframes dlScroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 @media (prefers-reduced-motion:reduce){.dl-track{animation:none;padding-left:0}}
+body.reseller #crudSync,body.reseller #bellBtn,body.reseller #ttvBtn,body.reseller .navsec-admin{display:none!important}
 .btns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 .savebar{position:sticky;top:var(--stick,76px);z-index:6;background:var(--surface);padding:10px 0;margin:-10px 0 -4px;border-bottom:1px solid var(--line);align-items:center}
 
@@ -1402,6 +1403,11 @@ function applyRole() {
   const owner = role === "owner";
   $$("[data-owner-only]").forEach((el) => (el.hidden = !owner));
   const adminsTab = document.querySelector('[data-tab="admins"]'); if (adminsTab) adminsTab.hidden = !(owner || role === "Super Administrator" || role === "Administrator");
+  // Revandè: sèlman An dirèk, Kliyan, Aparèy ak Chanèl (sèvè a bloke rès la kanmenm)
+  const rs = role === "Reseller";
+  document.body.classList.toggle("reseller", rs);
+  $$(".tab[data-tab]").forEach((b) => { if (rs) b.hidden = !["live", "cust", "dev", "ch"].includes(b.dataset.tab); else if (b.dataset.tab !== "admins") b.hidden = false; });
+  if (rs && !["live", "cust", "dev", "ch"].includes(tab)) tab = "dev";
   let nm = ""; try { nm = localStorage.getItem("galaxy_admin_name") || ""; } catch {}
   const who = $("#whoAmI"); if (who) who.textContent = (nm ? nm + " · " : "") + (owner ? t("Pwopriyetè") : t(role));
 }
@@ -2013,7 +2019,7 @@ const CRUD = {
     fields: [{ k: "name", l: "Name", req: 1 }, { k: "channels", l: "Kantite chanèl", type: "number" }, { k: "customers", l: "Kliyan", type: "number" }, { k: "tags", l: "Tags" }] },
   langs: { col: "languages", id: "name", title: "Lang yo", sub: "Lang chanèl yo.", fields: [{ k: "name", l: "Name", req: 1 }, { k: "code", l: "Kòd" }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }] },
   admins: { col: "admin-users", id: "email", title: "Admin Users", sub: "Moun ki ka konekte nan panel la ak imèl yo ak modpas ou ba yo. Administrator: tout bagay sof kont admin yo ak kopi done yo · Support: kliyan ak TV yo sèlman, san efase · Viewer: gade sèlman.",
-    fields: [{ k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", req: 1, noUpper: 1 }, { k: "role", l: "Wòl", opts: ["Administrator", "Support", "Viewer", "Super Administrator"], def: () => "Support" }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }, { k: "password", l: "Modpas (8 karaktè minimòm)", type: "password", hide: 1 }] },
+    fields: [{ k: "name", l: "Name", req: 1 }, { k: "email", l: "Email", req: 1, noUpper: 1 }, { k: "role", l: "Wòl", opts: ["Administrator", "Support", "Viewer", "Super Administrator", "Reseller"], def: () => "Support" }, { k: "status", l: "Estati", opts: ["Active", "Inactive"], pill: 1 }, { k: "password", l: "Modpas (8 karaktè minimòm)", type: "password", hide: 1 }] },
   audit: { col: "audit-logs", readonly: 1, title: "Audit Logs", sub: "Kiyès ki fè kisa nan panel la.",
     fields: [{ k: "when", l: "Lè" }, { k: "user", l: "Itilizatè" }, { k: "action", l: "Aksyon", pill: 1 }, { k: "detail", l: "Detay" }] },
 };
@@ -3968,9 +3974,10 @@ function startApp() {
   if (window.GalaxyTestTv) { $("#ttvBtn").hidden = false; $("#ttvBtn").title = t("Limen oswa etenn yon TV tès ki konekte ak panel sa a");
     if (!ttv) ttv = GalaxyTestTv.init({ API, t, esc, cyHtml, sigHtml, getToken: () => token, openDevice: (mac) => { openTab("dev"); loadDevices().then(() => selectDevice(mac, true)); } });
     if (ttv.wasOn()) ttv.start(); }
-  openTab(tab); loadLive(); loadDevices(); checkHealth(); loadAlerts();
-  timers.push(setInterval(() => { if (!document.hidden) loadAlerts(); }, 30000));
-  loadWatch(); timers.push(setInterval(() => { if (!document.hidden) loadWatch(); }, 5 * 60000));
+  const rs = role === "Reseller";
+  openTab(tab); loadLive(); loadDevices(); checkHealth(); if (!rs) loadAlerts();
+  timers.push(setInterval(() => { if (!document.hidden && !rs) loadAlerts(); }, 30000));
+  if (!rs) loadWatch(); timers.push(setInterval(() => { if (!document.hidden && !rs) loadWatch(); }, 5 * 60000));
   timers.push(setInterval(() => { if (!document.hidden) checkHealth(); }, 30000));
   timers.push(setInterval(() => { if (!document.hidden) loadLive(); }, 5000));
   liveWaitLoop();

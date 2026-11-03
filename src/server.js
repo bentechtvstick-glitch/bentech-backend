@@ -15,6 +15,7 @@ import {
 } from "./galaxy.js";
 import { mountGalaxyLive } from "./galaxy-live.js";
 import { mountAutoBackup } from "./autobackup.js";
+import { resellerScope } from "./reseller.js";
 import { accessControl, findAdminLogin, hashPassword, checkOwnerLogin, ownerAuth } from "./access.js";
 import crypto from "node:crypto";
 import { fastWrites, gzipJson } from "./perf.js";
@@ -92,6 +93,8 @@ const ADMIN_USER = process.env.ADMIN_USER || "admin";
 const ADMIN_PASS = process.env.ADMIN_PASS || "changeme";
 // Dwa chak kont admin (wòl): aplike sou tout route panel yo anvan yo kouri
 app.use(accessControl(db, JWT_SECRET));
+// Revandè: sèlman pwòp kliyan ak TV yo (yon erè isit la pa janm fè sèvè a tonbe)
+{ const rs = resellerScope(db); app.use((req, res, next) => { Promise.resolve(rs(req, res, next)).catch((e) => { console.error("reseller:", e?.message || e); if (!res.headersSent) res.status(500).json({ ok: false, error: "Server error" }); }); }); }
 
 // ---------- helpers ----------
 

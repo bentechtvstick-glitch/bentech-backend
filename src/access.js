@@ -5,11 +5,12 @@
 //      Administrator       → tout bagay, sof: kont admin yo, nòt prive yo, kopi done yo (backup/restore).
 //      Support             → wè tout bagay; ka sèlman: jere kliyan (san efase), TV yo (kòmand, playlist, tès), AI a.
 //      Viewer              → wè sèlman, pa ka chanje anyen.
+//      Reseller            → wè ak jere SÈLMAN pwòp kliyan ak TV li (src/reseller.js), anyen lòt.
 // Règ yo aplike sou sèvè a (pa sèlman nan panel la), pou yo pa ka kontoune.
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 
-const ROLES = ["Super Administrator", "Administrator", "Support", "Viewer"];
+const ROLES = ["Super Administrator", "Administrator", "Support", "Viewer", "Reseller"];
 
 export function hashPassword(pw) {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -75,10 +76,21 @@ const SUPPORT_WRITE = [
   /^\/api\/galaxy\/(ai|watch\/analyze|watch\/dismiss|alerts\/seen)$/,
 ];
 
+// Revandè: sèlman kliyan ak TV pa l yo (src/reseller.js tcheke se pou li yo ye)
+const RESELLER_PATHS = [
+  /^\/api\/customers(\/[^/]+)?$/,
+  /^\/api\/galaxy\/devices$/,
+  /^\/api\/galaxy\/devices\/[^/]+(\/(live|channels|playlists(\/[^/]+(\/test)?)?|commands|replace|adult|health|pkgcheck))?$/,
+  /^\/api\/galaxy\/xtream\/test$/,
+];
+const RESELLER_READ = [/^\/api\/galaxy\/(live|live\/wait|tv-events|custom-groups)$/, /^\/api\/channel-profiles$/];
+const RESELLER_OK = (method, p) => RESELLER_PATHS.some((r) => r.test(p)) || ((method === "GET" || method === "HEAD") && RESELLER_READ.some((r) => r.test(p)));
+
 /** Kisa wòl sa a ka fè sou demann sa a? Voye yon mesaj erè, oswa null si l otorize. */
 export function denyReason(role, method, p) {
   const write = method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
   if (role === "owner") return null;
+  if (role === "Reseller") return RESELLER_OK(method, p) ? null : "Your reseller account cannot open this.";
   if (NOTES.test(p)) return "Only the owner can open the private notes.";
   if (OWNER_ACC.test(p)) return "Only the owner can change the owner login.";
   if (/^\/api\/galaxy\/ai-key/.test(p) && write) return "Only the owner can change the AI key.";
@@ -118,6 +130,7 @@ export function accessControl(db, secret) {
     else if (ownerAuth(db) || tok.sub === envOwner().user) return res.status(401).json({ ok: false, error: "Token expired or invalid" }); // ansyen sesyon pwopriyetè a
     else role = "Viewer";
     req.role = role;
+    if (tok.uid) req.uid = String(tok.uid).toLowerCase();
     const why = denyReason(role, req.method, p);
     if (why) return res.status(403).json({ ok: false, error: why, forbidden: true });
     next();
