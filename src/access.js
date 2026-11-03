@@ -82,6 +82,8 @@ const RESELLER_PATHS = [
   /^\/api\/galaxy\/devices$/,
   /^\/api\/galaxy\/devices\/[^/]+(\/(live|channels|playlists(\/[^/]+(\/test)?)?|commands|replace|adult|health|pkgcheck))?$/,
   /^\/api\/galaxy\/xtream\/test$/,
+  /^\/api\/reseller\/brand$/,
+  /^\/api\/galaxy\/media$/,
 ];
 const RESELLER_READ = [/^\/api\/galaxy\/(live|live\/wait|tv-events|custom-groups)$/, /^\/api\/channel-profiles$/];
 const RESELLER_OK = (method, p) => RESELLER_PATHS.some((r) => r.test(p)) || ((method === "GET" || method === "HEAD") && RESELLER_READ.some((r) => r.test(p)));

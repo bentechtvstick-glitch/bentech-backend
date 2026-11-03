@@ -593,6 +593,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <button class="tab navlink" role="tab" data-tab="cust" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 3.1a4 4 0 0 1 0 7.8M22 21a7 7 0 0 0-4-6.3"/></svg><span>Kliyan yo</span></button>
       <button class="tab navlink" role="tab" data-tab="dev" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg><span>Aparèy</span><span class="badge" id="navNew" hidden></span></button>
       <button class="tab navlink" role="tab" data-tab="ch" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Chanèl</span></button>
+      <button class="tab navlink" role="tab" data-tab="rb" aria-selected="false" hidden><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M7 21h10M12 17v4M7 9h6"/></svg><span>Mak mwen</span></button>
       <div class="navsep"></div>
       <div class="navsep"></div>
       <button class="tab navlink" role="tab" data-tab="ev" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/></svg><span>Live Events</span></button>
@@ -711,6 +712,27 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
     </main>
 
     <!-- Aparèy -->
+    <!-- Revandè: pwòp ticker ak logo sou TV pa l yo -->
+    <main data-pane="rb" hidden>
+      <div class="pagehead"><div><h1>Mak mwen</h1><p>Logo ak ticker ki parèt sou TV kliyan ou yo sèlman.</p></div><span class="msg" id="rbMsg"></span></div>
+      <div class="card">
+        <div class="cardhead"><div><h2>Logo sou ekran an</h2><p class="sub">Ti logo ou nan yon kwen ekran an pandan kliyan an ap gade (PNG transparan pi bon).</p></div><label class="sw"><input type="checkbox" id="rbBugOn"><i></i></label></div>
+        <div class="field"><label for="rbBugUrl">Lyen imaj logo a</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" id="rbBugUrl" placeholder="https://…/logo.png" style="flex:1;min-width:220px"><button class="btn small" type="button" data-upload="rbBugUrl">📤 Chwazi yon imaj</button></div><span class="note" data-upmsg="rbBugUrl"></span></div>
+        <div class="row2">
+          <div class="field"><label for="rbBugText">Oswa tèks (si pa gen imaj)</label><input type="text" id="rbBugText" maxlength="24" placeholder="Egz: JEAN TV"></div>
+          <div class="field"><label for="rbBugPos">Pozisyon</label><select id="rbBugPos"><option value="top-left">Anlè agoch</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-right">Anba adwat</option></select></div>
+        </div>
+        <div class="field"><label for="rbBugSize">Gwosè: <b id="rbBugSizeV"></b></label><input type="range" id="rbBugSize" min="24" max="120"></div>
+        <img id="rbBugPrev" alt="" style="max-height:60px;max-width:200px;display:none;background:#0b0f1a;padding:6px;border-radius:8px">
+      </div>
+      <div class="card">
+        <div class="cardhead"><div><h2>Ticker</h2><p class="sub">Mesaj ki defile anba ekran an. Si w etenn li, TV ou yo pa montre okenn ticker.</p></div><label class="sw"><input type="checkbox" id="rbTkOn"><i></i></label></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" id="rbTkNew" maxlength="300" placeholder="Ekri yon mesaj…" style="flex:1;min-width:220px" data-emoji><button class="btn" id="rbTkAdd" type="button">＋ Ajoute</button></div>
+        <div class="list" id="rbTkList" style="margin-top:10px"></div>
+      </div>
+      <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="rbSave" type="button">Sove</button></div>
+    </main>
+
     <main data-pane="dev" hidden>
       <div class="pagehead"><div><h1>Galaxy TV Stick Control Center</h1><p>Jesyon aparèy</p></div><button class="btn primary big" id="addMacBtn" type="button">+ Ajoute MAC Address</button></div>
 
@@ -1406,8 +1428,8 @@ function applyRole() {
   // Revandè: sèlman An dirèk, Kliyan, Aparèy ak Chanèl (sèvè a bloke rès la kanmenm)
   const rs = role === "Reseller";
   document.body.classList.toggle("reseller", rs);
-  $$(".tab[data-tab]").forEach((b) => { if (rs) b.hidden = !["live", "cust", "dev", "ch"].includes(b.dataset.tab); else if (b.dataset.tab !== "admins") b.hidden = false; });
-  if (rs && !["live", "cust", "dev", "ch"].includes(tab)) tab = "dev";
+  $$(".tab[data-tab]").forEach((b) => { if (rs) b.hidden = !["live", "cust", "dev", "ch", "rb"].includes(b.dataset.tab); else if (b.dataset.tab !== "admins") b.hidden = b.dataset.tab === "rb"; });
+  if (rs && !["live", "cust", "dev", "ch", "rb"].includes(tab)) tab = "dev";
   let nm = ""; try { nm = localStorage.getItem("galaxy_admin_name") || ""; } catch {}
   const who = $("#whoAmI"); if (who) who.textContent = (nm ? nm + " · " : "") + (owner ? t("Pwopriyetè") : t(role));
 }
@@ -1534,6 +1556,7 @@ function openTab(name) {
   if (CRUD[name]) openCrud(name);
   if (name === "live" || name === "cust") loadLive();
   if (name === "dev") loadDevices();
+  if (name === "rb") loadRb();
   if (name === "ch") loadChannels();
   if (["bc", "tk", "cy", "bn", "pp"].includes(name)) loadMessages();
   if (name === "cy") loadChyrons();
@@ -1850,6 +1873,36 @@ $("#plList").addEventListener("click", (e) => {
   $("[data-yes]", c).onclick = async () => { try { dev = { ...dev, ...(await api("DELETE", `/galaxy/devices/${encodeURIComponent(dev.mac)}/playlists/${encodeURIComponent(b.dataset.rmpl)}`)) }; renderDevice(); loadDevices(); } catch (err) { setMsg($("#plMsg"), err.message); } };
 });
 
+
+// ------------------------------------------------------------ Revandè: Mak mwen (ticker + logo)
+let rbData = null;
+function rbPaint() {
+  const b = rbData.bug || {};
+  $("#rbBugOn").checked = !!b.on; $("#rbBugUrl").value = b.imageUrl || ""; $("#rbBugText").value = b.text || "";
+  $("#rbBugPos").value = b.position && $(`#rbBugPos option[value="${b.position}"]`) ? b.position : "top-right";
+  $("#rbBugSize").value = b.size || 44; $("#rbBugSizeV").textContent = $("#rbBugSize").value;
+  rbPrev(); $("#rbTkOn").checked = rbData.tickerOn !== false; rbList();
+}
+function rbPrev() { const u = $("#rbBugUrl").value.trim(), im = $("#rbBugPrev"); if (/^https?:\/\//.test(u)) { im.src = u; im.style.display = "block"; } else im.style.display = "none"; }
+function rbList() {
+  const L = rbData.tickers || [];
+  $("#rbTkList").innerHTML = L.length ? L.map((m, i) => `<div class="li" style="display:flex;gap:10px;align-items:center"><label class="sw"><input type="checkbox" data-rbon="${i}"${m.active !== false ? " checked" : ""}><i></i></label><span style="flex:1;min-width:0">${esc(m.message)}</span><button class="btn small red" data-rbdel="${i}" type="button">${t("Efase l")}</button></div>`).join("")
+    : `<div class="empty">${t("Poko gen mesaj. Ekri youn anlè a.")}</div>`;
+}
+async function loadRb() { try { rbData = await api("GET", "/reseller/brand"); rbPaint(); } catch (err) { setMsg($("#rbMsg"), err.message); } }
+$("#rbBugUrl").addEventListener("input", rbPrev);
+$("#rbBugSize").addEventListener("input", () => ($("#rbBugSizeV").textContent = $("#rbBugSize").value));
+$("#rbTkAdd").addEventListener("click", () => { const v = $("#rbTkNew").value.trim(); if (!v || !rbData) return; (rbData.tickers ||= []).push({ message: v, active: true }); $("#rbTkNew").value = ""; rbList(); });
+$("#rbTkNew").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#rbTkAdd").click(); });
+$("#rbTkList").addEventListener("click", (e) => { const d = e.target.closest("[data-rbdel]"); if (d) { rbData.tickers.splice(+d.dataset.rbdel, 1); rbList(); } });
+$("#rbTkList").addEventListener("change", (e) => { const i = e.target.dataset.rbon; if (i != null) rbData.tickers[+i].active = e.target.checked; });
+$("#rbSave").addEventListener("click", async () => {
+  if (!rbData) return;
+  const body = { tickerOn: $("#rbTkOn").checked, tickers: rbData.tickers || [],
+    bug: { on: $("#rbBugOn").checked, imageUrl: $("#rbBugUrl").value.trim(), text: $("#rbBugText").value.trim(), position: $("#rbBugPos").value, size: +$("#rbBugSize").value, opacity: 90 } };
+  try { rbData = await api("PUT", "/reseller/brand", body); rbPaint(); setMsg($("#rbMsg"), t("Sove ✓ TV ou yo mete yo ajou touswit."), true); }
+  catch (err) { setMsg($("#rbMsg"), err.message); }
+});
 let devicesCache = [];
 let linkFrom = null; // aparèy DVC n ap konekte ak yon MAC
 const DEV_MODELS = [

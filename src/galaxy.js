@@ -349,7 +349,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
     // ---- Ticker (style chèn TV): mesaj ak koulè pa yo, etikèt agoch, separatè, lè adwat ----
     // Chak mesaj ka gen yon orè (start/end nan zòn lè panel la): li parèt sèlman ant de lè sa yo
-    const tickerItems = (data().tickers || []).filter(isActive).filter(forBrand)
+    // TV yon revandè: se mesaj ticker revandè a ki parèt (pa pa pwopriyetè a), ak logo pa l (pi ba a)
+    const rb = device.owner ? (data().resellerBrand || {})[String(device.owner).toLowerCase()] || {} : null;
+    const tickerItems = rb ? (rb.tickerOn === false ? [] : (rb.tickers || []).filter((t) => t && t.active !== false && String(t.message || "").trim())
+      .slice(0, 30).map((t) => ({ text: String(t.message).trim().slice(0, 300), color: /^#[0-9a-f]{6}$/i.test(t.color || "") ? t.color : "" })))
+      : (data().tickers || []).filter(isActive).filter(forBrand)
       .filter((t) => { const a = toEpochSec(t.start, zone), b = toEpochSec(t.end, zone, true); return (!a || a <= now) && (!b || b >= now); })
       .map((t) => ({ text: String(t.message || "").trim(), color: /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(t.color || "") ? t.color : "" }))
       .filter((t) => t.text);
@@ -517,6 +521,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (geo && device.geoCity !== geo.name) device.geoCity = geo.name;
     const gfx = buildGraphics(s.gfx, { mac, deviceName: device.deviceName || "", customer: customer?.name || device.customer || "", toEpoch: (v) => toEpochSec(v, zone),
       ip, deviceCity: device.city || "", customerCity: customer?.city || "" });
+    // Logo revandè a (nan kwen ekran an) ranplase logo pwopriyetè a sou TV li yo
+    if (rb) {
+      const rbBug = rb.bug && rb.bug.on ? buildGraphics({ bug: rb.bug }, { toEpoch: () => 0 }).graphics.bug : null;
+      if (gfx.graphics) { if (rbBug) gfx.graphics.bug = rbBug; else delete gfx.graphics.bug; }
+    }
     const nextEdge = Math.min(tickerEdge, gfx.edge);
 
     const payload = {
@@ -854,6 +863,28 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (activateCustomer(to)) await db.write();
     syncTvs();
     res.json({ ok: true, device: adminDevice(to) });
+  });
+
+  // ---- Revandè: pwòp ticker ak pwòp logo pou TV pa l yo ----
+  const rbOf = (email) => ((data().resellerBrand ||= {})[String(email).toLowerCase()] ||= { tickerOn: true, tickers: [], bug: { on: false } });
+  app.get("/api/reseller/brand", authenticate, (req, res) => {
+    if (req.role !== "Reseller" || !req.uid) return res.status(400).json({ ok: false, error: "Reseller accounts only." });
+    res.json(rbOf(req.uid));
+  });
+  app.put("/api/reseller/brand", authenticate, async (req, res) => {
+    if (req.role !== "Reseller" || !req.uid) return res.status(400).json({ ok: false, error: "Reseller accounts only." });
+    const b = req.body || {}, rb = rbOf(req.uid);
+    if (typeof b.tickerOn === "boolean") rb.tickerOn = b.tickerOn;
+    if (Array.isArray(b.tickers)) rb.tickers = b.tickers.slice(0, 30).map((t) => ({ message: String(t?.message || "").trim().slice(0, 300), color: /^#[0-9a-f]{6}$/i.test(t?.color || "") ? t.color : "", active: t?.active !== false })).filter((t) => t.message);
+    if (b.bug && typeof b.bug === "object") {
+      const g = b.bug;
+      rb.bug = { on: !!g.on, imageUrl: /^https?:\/\//i.test(g.imageUrl || "") || /^\/media\//.test(g.imageUrl || "") ? String(g.imageUrl).slice(0, 500) : "", text: String(g.text || "").slice(0, 24),
+        position: ["top-left", "top-center", "top-right", "bottom-left", "bottom-center", "bottom-right"].includes(g.position) ? g.position : "top-right",
+        size: Math.min(160, Math.max(16, Number(g.size) || 44)), opacity: Math.min(100, Math.max(10, Number(g.opacity) || 85)) };
+    }
+    await db.write();
+    syncTvs();
+    res.json(rb);
   });
 
   app.delete("/api/galaxy/devices/:mac", authenticate, async (req, res) => {
