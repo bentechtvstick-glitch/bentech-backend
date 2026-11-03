@@ -100,6 +100,14 @@ main{padding:28px 28px 40px;display:flex;flex-direction:column;gap:22px;max-widt
 input[type=text],input[type=password],input[type=datetime-local],input[type=number],input[type=url],select,textarea{width:100%;background:var(--field);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;min-width:0}
 .inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .inline > .grow{flex:1;min-width:160px}
+.dlbar{display:flex;align-items:center;gap:12px;margin:0 0 16px;padding:8px 10px 8px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.dl-lab{font-weight:700;white-space:nowrap;font-size:14px}
+.dl-view{flex:1;min-width:0;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
+.dl-track{display:inline-flex;gap:40px;white-space:nowrap;padding-left:100%;animation:dlScroll 22s linear infinite;font-size:15px}
+.dl-track b{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:17px;letter-spacing:.06em;color:var(--accent,#5b8cff)}
+.dlbar:hover .dl-track{animation-play-state:paused}
+@keyframes dlScroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@media (prefers-reduced-motion:reduce){.dl-track{animation:none;padding-left:0}}
 .btns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 .savebar{position:sticky;top:var(--stick,76px);z-index:6;background:var(--surface);padding:10px 0;margin:-10px 0 -4px;border-bottom:1px solid var(--line);align-items:center}
 
@@ -627,6 +635,17 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
     <!-- Dashboard -->
     <main data-pane="dash">
       <div class="pagehead"><div><h1>Galaxy TV Stick Control Center</h1><p>Dashboard</p></div></div>
+      <div class="dlbar" id="dlBar">
+        <span class="dl-lab">📥 Downloader</span>
+        <div class="dl-view"><div class="dl-track" id="dlTrack"></div></div>
+        <button class="btn small" id="dlEdit" type="button" title="Chanje kòd yo">✏️</button>
+      </div>
+      <div class="confirm" id="dlForm" hidden style="flex-wrap:wrap;margin:-6px 0 16px">
+        <label class="inline note" style="gap:6px">Galaxy TV Stick <input type="text" id="dlGalaxy" inputmode="numeric" maxlength="12" style="width:120px"></label>
+        <label class="inline note" style="gap:6px">Ben Tech TV Stick <input type="text" id="dlBentech" inputmode="numeric" maxlength="12" style="width:120px"></label>
+        <label class="inline note" style="gap:6px">GoSmart Home <input type="text" id="dlHome" inputmode="numeric" maxlength="12" style="width:120px"></label>
+        <button class="btn small" id="dlCancel" type="button">Anile</button><button class="btn small primary" id="dlSave" type="button">Sove</button>
+      </div>
       <div class="kpis" id="dashKpis"></div>
       <div class="card" id="aiCard" style="margin-bottom:16px">
         <div class="cardhead"><div><h2>🤖 Asistan AI</h2><p class="sub">Poze l yon kesyon sou TV yo, kliyan yo oswa chanèl ki pa mache yo.</p></div><span class="note" id="aiUsage"></span></div>
@@ -1946,7 +1965,25 @@ function devExpHtml(d) {
   const pill = left === null ? "" : left < 0 ? ` <span class="pill p-bad">${esc(t("Ekspire"))}</span>` : left <= 14 ? ` <span class="pill p-warn">${esc(t("{0} jou", left))}</span>` : "";
   return esc(txt) + pill;
 }
+// ---- Ti ticker kòd Downloader yo anlè Dashboard la ----
+async function loadDlBar() {
+  const s = await api("GET", "/settings").catch(() => ({}));
+  const d = s.downloaderCodes || {};
+  const items = [["Galaxy TV Stick", d.galaxy], ["Ben Tech TV Stick", d.bentech], ["GoSmart Home", d.home]].filter(([, v]) => v);
+  $("#dlGalaxy").value = d.galaxy || ""; $("#dlBentech").value = d.bentech || ""; $("#dlHome").value = d.home || "";
+  const html = items.length ? items.map(([n, v]) => `<span>${esc(n)}: <b>${esc(v)}</b></span>`).join("") : `<span class="note">${esc(t("Peze ✏️ pou mete kòd Downloader app yo."))}</span>`;
+  $("#dlTrack").innerHTML = html + (items.length ? html : ""); // 2 fwa: defilman an pa janm vid
+}
+$("#dlEdit").addEventListener("click", () => { $("#dlForm").hidden = !$("#dlForm").hidden; if (!$("#dlForm").hidden) $("#dlGalaxy").focus(); });
+$("#dlCancel").addEventListener("click", () => { $("#dlForm").hidden = true; });
+$("#dlSave").addEventListener("click", async () => {
+  const clean = (v) => v.replace(/[^0-9a-z]/gi, "").slice(0, 12);
+  try { await api("PUT", "/settings", { downloaderCodes: { galaxy: clean($("#dlGalaxy").value), bentech: clean($("#dlBentech").value), home: clean($("#dlHome").value) } });
+    $("#dlForm").hidden = true; toast(t("Sove")); loadDlBar(); }
+  catch (err) { toast(err.message); }
+});
 async function loadDashboard() {
+  loadDlBar();
   const [dash, custs, audit] = await Promise.all([
     api("GET", "/dashboard").catch(() => ({})), list("customers").catch(() => []), api("GET", "/audit-logs").catch(() => []),
   ]);
