@@ -80,8 +80,7 @@ class SearchActivity : AppCompatActivity() {
             val cfg = PanelState.config
             val hide = ChannelStore.hideAdult || cfg.forceHideAdult
             for (k in VodKind.values()) {
-                val d = VodStore.cached(this@SearchActivity, account, k)
-                    ?: runCatching { VodStore.fetch(this@SearchActivity, account, k) }.getOrNull() ?: continue
+                val d = runCatching { VodStore.load(this@SearchActivity, account, k) }.getOrNull() ?: continue
                 val blocked = if (k == VodKind.MOVIE) cfg.blockedMovies else cfg.blockedSeries
                 val bad = d.categories.filter { (hide && ChannelStore.isAdult(it.name)) || it.name.trim().uppercase() in blocked }.map { it.id }.toHashSet()
                 val l = d.items.filter { it.categoryId !in bad }

@@ -160,7 +160,7 @@ class VodActivity : AppCompatActivity() {
             // Disk la (kèk milisegonn); rezo a sèlman si pa janm gen anyen sou aparèy la
             val d = VodStore.cached(this@VodActivity, account, kind) ?: run {
                 showLoading(true)
-                val r = runCatching { VodStore.fetch(this@VodActivity, account, kind) }
+                val r = runCatching { VodStore.load(this@VodActivity, account, kind) }
                 showLoading(false)
                 r.getOrElse { showMessage(getString(R.string.error_network, it.message ?: "")); return@launch }
             }

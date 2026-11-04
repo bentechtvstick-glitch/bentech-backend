@@ -82,7 +82,20 @@ object VodStore {
     fun prefetch(ctx: Context, a: Account, force: Boolean = false) {
         if (!a.isXtream) return
         val app = ctx.applicationContext
-        for (k in VodKind.values()) refresh(app, a, k, force)
+        // Fim yo an premye, seri yo apre (pa fè de gwo telechajman an menm tan sou yon ti aparèy)
+        val movies = refresh(app, a, VodKind.MOVIE, force)
+        scope.launch { runCatching { movies?.join() }; refresh(app, a, VodKind.SERIES, force) }
+    }
+
+    /**
+     * Lis la pou ekran an: memwa → disk → telechajman an (si l deja ap fèt depi aktivasyon an, tann li olye pou n kòmanse yon dezyèm).
+     */
+    suspend fun load(ctx: Context, a: Account, k: VodKind): Data {
+        cached(ctx, a, k)?.let { return it }
+        // Menm travay ak refresh(): si l deja ap fèt li reyitilize l, konsa pa janm gen de telechajman pou menm lis la
+        refresh(ctx, a, k)?.join()
+        peek(a, k)?.let { return it }
+        return fetch(ctx, a, k) // refresh pa t reyisi: eseye yon dènye fwa pou montre erè a
     }
 
     fun refresh(ctx: Context, a: Account, k: VodKind, force: Boolean = false): Job? {

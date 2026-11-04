@@ -95,6 +95,9 @@ class MainActivity : AppCompatActivity() {
                 ChannelStore.rawChannels = chans
                 ChannelStore.loadedFor = "${account.server}|${account.username}|${account.playlistId}"
                 ChannelStore.applyPanel(PanelState.config)
+                // Premye chajman (aktivasyon/renouvèlman): kòmanse telechaje Films ak Séries touswit an aryè plan,
+                // pou yo deja la lè kliyan an louvri yo (jan TiviMate fè). Pa bloke TV a.
+                com.galaxytvstick.app.data.VodStore.prefetch(applicationContext, account)
                 // Voye lis chanèl yo bay panel la pou admin nan ka hide/show yo
                 GalaxyApp.scope.launch { runCatching { PanelApi(prefs).uploadChannels(chans, cats) } }
                 // Zòn lè sèvè a pou catch-up: an aryè plan, pou pa fè TV a tann
