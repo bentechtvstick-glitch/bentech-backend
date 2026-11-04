@@ -112,6 +112,8 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0")
     implementation("io.coil-kt:coil:2.7.0")
+    // Imaj anime (GIF, WebP anime) pou logo bug, ads, banner: san sa, Coil montre premye imaj la sèlman
+    implementation("io.coil-kt:coil-gif:2.7.0")
 
     // Tout imoji yo (menm sou ansyen Fire TV ki pa gen nouvo imoji yo): font la anndan app la
     implementation("androidx.emoji2:emoji2:1.4.0")

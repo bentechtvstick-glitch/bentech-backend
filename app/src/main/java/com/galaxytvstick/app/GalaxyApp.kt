@@ -9,7 +9,20 @@ import androidx.emoji2.text.EmojiCompat
  * panel la voye (ticker, mesaj, pop-up) parèt kòrèkteman sou tout Fire TV / Android TV,
  * menm sou ansyen vèsyon Android ki pa konnen nouvo imoji yo.
  */
-class GalaxyApp : Application() {
+class GalaxyApp : Application(), coil.ImageLoaderFactory {
+    /**
+     * Chajè imaj tout app la (tout `load(url)` yo): ajoute dekodè anime yo pou logo bug,
+     * ads ak banner ki se GIF oswa WebP anime bouje sou TV a tou, pa sèlman nan panel la.
+     * Android 9+ (Fire OS 7+): GIF + WebP anime. Ansyen aparèy: GIF.
+     */
+    override fun newImageLoader(): coil.ImageLoader =
+        coil.ImageLoader.Builder(this)
+            .components {
+                if (android.os.Build.VERSION.SDK_INT >= 28) add(coil.decode.ImageDecoderDecoder.Factory())
+                else add(coil.decode.GifDecoder.Factory())
+            }
+            .build()
+
     companion object {
         /** Travay an aryè plan ki dwe kontinye menm lè yon ekran fèmen. */
         val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
