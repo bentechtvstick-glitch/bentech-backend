@@ -4006,7 +4006,7 @@ upInput.addEventListener("change", async () => {
     const r = await fetch(API + "/galaxy/media", { method: "POST", headers: { "Content-Type": f.type || "application/octet-stream", Authorization: "Bearer " + token }, body: f });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || t("Erè {0}", r.status));
-    const inp = $("#" + id); inp.value = d.url; inp.dispatchEvent(new Event("input", { bubbles: true })); inp.dispatchEvent(new Event("change", { bubbles: true })); msg.textContent = "✓ " + t("Fichye a sou panel la. Peze bouton Ajoute a.");
+    const inp = $("#" + id); inp.value = d.url; inp.dispatchEvent(new Event("input", { bubbles: true })); inp.dispatchEvent(new Event("change", { bubbles: true })); msg.textContent = "✓ " + t(inp.dataset.g ? "Imaj la monte epi li sove. TV yo mete yo ajou touswit." : id === "rbBugUrl" ? "Imaj la monte. Peze Sove anba a." : "Fichye a sou panel la. Peze bouton Ajoute a.");
   } catch (err) { msg.textContent = err.message; }
   btn.disabled = false;
 });
