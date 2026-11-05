@@ -176,7 +176,11 @@ class XtreamApi(private val account: Account) {
             val req = Request.Builder().url(url).header("User-Agent", ua).build()
             return http.newCall(req).execute().use { r -> finalHost = r.request.url.host; r.code to (r.body?.string() ?: "") }
         }
-        val (code, body) = fetch(USER_AGENT)
+        // Si rezo TV a pa ka menm konekte sou sèvè founisè a (IP bloke, timeout…), eseye relè panel la anvan nou bay erè a
+        val (code, body) = try { fetch(USER_AGENT) } catch (e: IOException) {
+            viaPanel()?.let { relayHosts.add(account.server); return@withContext it }
+            throw e
+        }
         val looksJson = { s: String -> s.trimStart().let { it.startsWith("{") || it.startsWith("[") } }
         if (code in 200..299 && looksJson(body)) return@withContext body
         // Kèk sèvè (oswa pwoteksyon tankou Cloudflare) voye yon paj web oswa refize app yo pa rekonèt:

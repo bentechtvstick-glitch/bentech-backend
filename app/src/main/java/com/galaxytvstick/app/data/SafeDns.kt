@@ -43,13 +43,17 @@ object SafeDns : Dns {
     override fun lookup(hostname: String): List<InetAddress> {
         if (ipLiteral.containsMatchIn(hostname)) return Dns.SYSTEM.lookup(hostname)
         cache[hostname]?.let { if (System.currentTimeMillis() - it.at < TTL_MS) return it.addrs }
+        var safe: List<InetAddress> = emptyList()
         for (r in resolvers) {
             val found = runCatching { r.lookup(hostname) }.getOrNull()
-            if (!found.isNullOrEmpty()) {
-                cache[hostname] = Entry(found, System.currentTimeMillis())
-                return found
-            }
+            if (!found.isNullOrEmpty()) { safe = found; break }
         }
-        return Dns.SYSTEM.lookup(hostname)
+        if (safe.isEmpty()) return Dns.SYSTEM.lookup(hostname)
+        // Adrès DNS nòmal la ajoute an dènye: si adrès DNS prive a pa ka jwenn sou rezo sa a (sèvè ki bay
+        // yon IP diferan selon zòn nan), OkHttp eseye pwochen adrès la otomatikman, menm jan ak TiviMate.
+        val sys = runCatching { Dns.SYSTEM.lookup(hostname) }.getOrNull().orEmpty()
+        val all = (safe + sys).distinctBy { it.hostAddress }
+        cache[hostname] = Entry(all, System.currentTimeMillis())
+        return all
     }
 }
