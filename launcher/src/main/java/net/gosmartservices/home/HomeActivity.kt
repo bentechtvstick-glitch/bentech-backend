@@ -116,12 +116,12 @@ class HomeActivity : Activity() {
         nav.addView(navPill(getString(R.string.wifi), false) { openSafe(Intent(Settings.ACTION_WIFI_SETTINGS)) })
         nav.addView(navPill(getString(R.string.settings), false) { askPin() })
         nav.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
-        clock = text("", 16f, 0xFFB8C4DE.toInt(), false)
+        clock = text("", 16f, 0xFFE6ECF8.toInt(), false).apply { setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt()) }
         nav.addView(clock)
         hero.addView(nav, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
 
         val left = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(56f), 0, 0, 0) }
-        val words = BuildConfig.HOME_TITLE.split(" ", limit = 2)
+        val words = BuildConfig.HOME_TITLE.let { t -> if (t.endsWith(" TV Stick")) listOf(t.removeSuffix(" TV Stick"), "TV Stick") else t.split(" ", limit = 2) }
         left.addView(text(words[0], 50f, Color.WHITE, true).apply { setShadowLayer(12f, 0f, 3f, 0xAA000000.toInt()) })
         if (words.size > 1) left.addView(text(words[1], 30f, 0xFF4FA8FF.toInt(), true).apply { setShadowLayer(10f, 0f, 2f, 0xAA000000.toInt()) })
         left.addView(text(getString(R.string.tagline), 18f, 0xFFE6ECF8.toInt(), false), LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(8f) })
