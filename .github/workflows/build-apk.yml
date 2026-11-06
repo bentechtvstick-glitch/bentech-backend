@@ -67,6 +67,7 @@ jobs:
           # Ti fichye vèsyon an: panel la li l pou konnen dènye vèsyon an (san limit API GitHub)
           echo "{\"build\": $GITHUB_RUN_NUMBER, \"version\": \"1.0.$GITHUB_RUN_NUMBER\"}" > version.json
           cp version.json version-bentech.json
-          gh release create apk-latest GalaxyTvStick.apk BenTechTvStick.apk GalaxyHome.apk BenTechHome.apk version.json version-bentech.json --target "$GITHUB_SHA" --prerelease \
+          echo "{\"build\": $(cat launcher/version.txt)}" > version-home.json
+          gh release create apk-latest GalaxyTvStick.apk BenTechTvStick.apk GalaxyHome.apk BenTechHome.apk version.json version-bentech.json version-home.json --target "$GITHUB_SHA" --prerelease \
             --title "Galaxy TV Stick + Ben Tech TV Stick APK (build $GITHUB_RUN_NUMBER)" \
             --notes "APK tès Galaxy TV Stick, bati otomatikman. Vèsyon 1.0.$GITHUB_RUN_NUMBER."

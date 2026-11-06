@@ -12,9 +12,11 @@ android {
         applicationId = "net.gosmartservices.home"
         minSdk = 22
         targetSdk = 34
-        val build = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
-        versionCode = build
-        versionName = "1.0.$build"
+        // Vèsyon launcher a pa swiv nimewo CI a: li monte sèlman lè launcher a chanje (launcher/version.txt, pi wo pase 207 = dènye nimewo CI box yo te genyen an),
+        // konsa box yo pa telechaje yon "mizajou" chak fwa app TV a bati.
+        val lv = file("version.txt").readText().trim().toInt()
+        versionCode = lv
+        versionName = "1.$lv"
         buildConfigField("String", "PANEL_URL", "\"https://panel.galaxytvstick.net/api\"")
     }
 
@@ -26,12 +28,16 @@ android {
             applicationId = "com.galaxytvstick.home"
             buildConfigField("String", "BRAND_PKG", "\"com.galaxytvstick.tv\"")
             buildConfigField("String", "HOME_TITLE", "\"Galaxy TV Stick\"")
+            buildConfigField("String", "BRAND_KEY", "\"galaxy\"")
+            buildConfigField("String", "APK_NAME", "\"GalaxyHome.apk\"")
         }
         create("bentech") {
             dimension = "brand"
             applicationId = "net.bentechtvstick.home"
             buildConfigField("String", "BRAND_PKG", "\"net.bentechtvstick.tv\"")
             buildConfigField("String", "HOME_TITLE", "\"Ben Tech TV Stick\"")
+            buildConfigField("String", "BRAND_KEY", "\"bentech\"")
+            buildConfigField("String", "APK_NAME", "\"BenTechHome.apk\"")
         }
     }
 

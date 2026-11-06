@@ -53,6 +53,14 @@ class HomeActivity : Activity() {
     private lateinit var homePill: TextView
     private lateinit var clock: TextView
     private lateinit var hint: TextView
+    private lateinit var heroImg: ImageView
+    private lateinit var heroFade: View
+    private lateinit var titleA: TextView
+    private lateinit var titleB: TextView
+    private lateinit var tagline: TextView
+    private lateinit var dots: LinearLayout
+    private lateinit var msgBar: TextView
+    private var slideIdx = 0
 
     private fun dp(v: Float) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, resources.displayMetrics).toInt()
 
@@ -71,9 +79,22 @@ class HomeActivity : Activity() {
         refresh()
         fetchConfig()
         ui.post(tick)
+        applyHome()
+        ui.removeCallbacks(rotate); ui.postDelayed(rotate, 7000)
+        ui.removeCallbacks(poll); ui.postDelayed(poll, 3 * 60_000L)
+        LauncherUpdater.check(this)
     }
 
-    override fun onPause() { super.onPause(); ui.removeCallbacks(tick) }
+    override fun onPause() { super.onPause(); ui.removeCallbacks(tick); ui.removeCallbacks(rotate); ui.removeCallbacks(poll) }
+
+    /** Pandan ekran akèy la louvri: mande panel la chanjman yo chak 3 minit. */
+    private val poll = object : Runnable { override fun run() { fetchConfig(force = true); ui.postDelayed(this, 3 * 60_000L) } }
+    /** Gwo afich la: afich mak la, apre sa imaj panel la yo, youn apre lòt. */
+    private val rotate = object : Runnable { override fun run() {
+        val n = slides().size + 1
+        if (n > 1) { slideIdx = (slideIdx + 1) % n; showSlide() }
+        ui.postDelayed(this, 7000)
+    } }
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() { /* Ekran akèy: pa gen anyen pou l retounen */ }
@@ -100,11 +121,10 @@ class HomeActivity : Activity() {
 
         // ---- Gwo afich la (imaj mak la adwat, tèks agoch)
         val hero = FrameLayout(this)
-        hero.addView(ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageResource(R.drawable.hero) },
-            FrameLayout.LayoutParams((resources.displayMetrics.widthPixels * 0.6f).toInt(), -1, Gravity.END))
-        hero.addView(View(this).apply {
-            background = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(0xFF0A0F1C.toInt(), 0xFF0A0F1C.toInt(), 0x990A0F1C.toInt(), 0x000A0F1C))
-        }, FrameLayout.LayoutParams(-1, -1))
+        heroImg = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageResource(R.drawable.hero) }
+        hero.addView(heroImg, FrameLayout.LayoutParams(brandHeroW(), -1, Gravity.END))
+        heroFade = View(this).apply { background = fade(true) }
+        hero.addView(heroFade, FrameLayout.LayoutParams(-1, -1))
         hero.addView(View(this).apply {
             background = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(0xFF0A0F1C.toInt(), 0x000A0F1C))
         }, FrameLayout.LayoutParams(-1, dp(60f), Gravity.BOTTOM))
@@ -123,11 +143,23 @@ class HomeActivity : Activity() {
 
         val left = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(56f), 0, 0, 0) }
         val words = BuildConfig.HOME_TITLE.let { t -> if (t.endsWith(" TV Stick")) listOf(t.removeSuffix(" TV Stick"), "TV Stick") else t.split(" ", limit = 2) }
-        left.addView(text(words[0], 50f, Color.WHITE, true).apply { setShadowLayer(12f, 0f, 3f, 0xAA000000.toInt()) })
-        if (words.size > 1) left.addView(text(words[1], 30f, 0xFF4FA8FF.toInt(), true).apply { setShadowLayer(10f, 0f, 2f, 0xAA000000.toInt()) })
-        left.addView(text(getString(R.string.tagline), 18f, 0xFFE6ECF8.toInt(), false), LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(8f) })
+        titleA = text(words[0], 50f, Color.WHITE, true).apply { setShadowLayer(12f, 0f, 3f, 0xAA000000.toInt()); maxLines = 2 }
+        left.addView(titleA, LinearLayout.LayoutParams(dp(520f), -2))
+        titleB = text(words.getOrElse(1) { "" }, 30f, 0xFF4FA8FF.toInt(), true).apply { setShadowLayer(10f, 0f, 2f, 0xAA000000.toInt()); visibility = if (words.size > 1) View.VISIBLE else View.GONE }
+        left.addView(titleB)
+        tagline = text(getString(R.string.tagline), 18f, 0xFFE6ECF8.toInt(), false).apply { setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt()); maxLines = 2 }
+        left.addView(tagline, LinearLayout.LayoutParams(dp(520f), -2).apply { topMargin = dp(8f) })
+        dots = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        left.addView(dots, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(16f) })
         hero.addView(left, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER_VERTICAL or Gravity.START).apply { topMargin = dp(30f) })
         content.addView(hero, LinearLayout.LayoutParams(-1, (resources.displayMetrics.heightPixels * 0.52f).toInt()))
+
+        // ---- Mesaj panel la (pa egzanp: dat peman)
+        msgBar = text("", 16f, 0xFF0A0F1C.toInt(), true).apply {
+            setPadding(dp(18f), dp(9f), dp(18f), dp(9f)); visibility = View.GONE
+            background = GradientDrawable().apply { setColor(0xFFFFD34D.toInt()); cornerRadius = dp(10f).toFloat() }
+        }
+        content.addView(msgBar, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(48f); rightMargin = dp(48f); bottomMargin = dp(4f) })
 
         // ---- Ranje app yo
         appsRow = row()
@@ -263,16 +295,103 @@ class HomeActivity : Activity() {
     }
 
     // ------------------------------------------------------------ Panel la (lis app yo + PIN)
-    private fun fetchConfig() {
+    private fun fetchConfig(force: Boolean = false) {
         val last = prefs.getLong("fetchedAt", 0L)
-        if (System.currentTimeMillis() - last < 3 * 60_000L) return
+        if (!force && System.currentTimeMillis() - last < 3 * 60_000L) return
         Thread {
-            val j = runCatching { http("GET", "/launcher/config", null) }.getOrNull() ?: return@Thread
-            val before = prefs.getString("apps", null)
+            val id = runCatching { Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) }.getOrNull().orEmpty()
+            val q = "?brand=" + BuildConfig.BRAND_KEY + "&v=" + BuildConfig.VERSION_CODE + "&id=" + java.net.URLEncoder.encode(id, "UTF-8") +
+                "&model=" + java.net.URLEncoder.encode((android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL).trim(), "UTF-8")
+            val j = runCatching { http("GET", "/launcher/config$q", null) }.getOrNull() ?: return@Thread
+            val before = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "")
             prefs.edit().putString("apps", j.optString("apps", "YouTube, Netflix")).putBoolean("hasPin", j.optBoolean("hasPin", false))
+                .putString("slides", (j.optJSONArray("slides") ?: org.json.JSONArray()).toString()).putString("message", j.optString("message", ""))
                 .putLong("fetchedAt", System.currentTimeMillis()).apply()
-            if (before != prefs.getString("apps", null)) ui.post { if (!isFinishing) refresh() }
+            val after = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "")
+            if (before != after) ui.post { if (!isFinishing) { refresh(); applyHome() } }
         }.start()
+    }
+
+    // ------------------------------------------------------------ Gwo afich la ak mesaj la (panel la kontwole yo)
+    private data class Slide(val url: String, val title: String, val text: String)
+
+    private fun slides(): List<Slide> = runCatching {
+        val a = org.json.JSONArray(prefs.getString("slides", "[]"))
+        (0 until a.length()).map { a.getJSONObject(it) }.map { o ->
+            var u = o.optString("imageUrl")
+            if (u.startsWith("/")) u = BuildConfig.PANEL_URL.removeSuffix("/api") + u
+            Slide(u, o.optString("title"), o.optString("text"))
+        }.filter { it.url.startsWith("http") }
+    }.getOrDefault(emptyList())
+
+    private fun applyHome() {
+        val m = prefs.getString("message", "").orEmpty().trim()
+        msgBar.text = "📢  $m"; msgBar.visibility = if (m.isEmpty()) View.GONE else View.VISIBLE
+        val n = slides().size + 1
+        if (slideIdx >= n) slideIdx = 0
+        showSlide()
+        slides().forEach { s -> if (cacheFile(s.url).length() == 0L) Thread { runCatching { download(s.url) } }.start() }
+    }
+
+    private fun brandHeroW() = (resources.displayMetrics.widthPixels * 0.6f).toInt()
+    private fun fade(brand: Boolean) = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+        if (brand) intArrayOf(0xFF0A0F1C.toInt(), 0xFF0A0F1C.toInt(), 0x990A0F1C.toInt(), 0x000A0F1C)
+        else intArrayOf(0xE60A0F1C.toInt(), 0x800A0F1C.toInt(), 0x000A0F1C, 0x000A0F1C))
+
+    private fun showSlide() {
+        val list = slides()
+        dots.removeAllViews()
+        if (list.isNotEmpty()) for (i in 0..list.size) dots.addView(View(this).apply {
+            background = GradientDrawable().apply { setColor(if (i == slideIdx) Color.WHITE else 0x66FFFFFF); cornerRadius = dp(4f).toFloat() }
+        }, LinearLayout.LayoutParams(if (i == slideIdx) dp(18f) else dp(7f), dp(7f)).apply { rightMargin = dp(6f) })
+        val words = BuildConfig.HOME_TITLE.let { t -> if (t.endsWith(" TV Stick")) listOf(t.removeSuffix(" TV Stick"), "TV Stick") else t.split(" ", limit = 2) }
+        val s = if (slideIdx == 0) null else list.getOrNull(slideIdx - 1)
+        val bmp = s?.let { loadBitmap(it.url) }
+        if (s == null || bmp == null) {
+            // Afich mak la
+            heroImg.setImageResource(R.drawable.hero)
+            heroImg.layoutParams = (heroImg.layoutParams as FrameLayout.LayoutParams).apply { width = brandHeroW() }
+            heroFade.background = fade(true)
+            titleA.text = words[0]; titleA.setTextSize(TypedValue.COMPLEX_UNIT_SP, 50f)
+            titleB.text = words.getOrElse(1) { "" }; titleB.visibility = if (words.size > 1) View.VISIBLE else View.GONE
+            tagline.text = getString(R.string.tagline); tagline.visibility = View.VISIBLE
+        } else {
+            // Imaj panel la: tout lajè a, ak tit/tèks si genyen
+            heroImg.setImageBitmap(bmp)
+            heroImg.layoutParams = (heroImg.layoutParams as FrameLayout.LayoutParams).apply { width = -1 }
+            heroFade.background = fade(s.title.isNotEmpty() || s.text.isNotEmpty())
+            if (s.title.isEmpty() && s.text.isEmpty()) heroFade.background = null
+            titleA.text = s.title; titleA.setTextSize(TypedValue.COMPLEX_UNIT_SP, 40f); titleA.visibility = View.VISIBLE
+            titleB.visibility = View.GONE
+            tagline.text = s.text; tagline.visibility = if (s.text.isEmpty()) View.GONE else View.VISIBLE
+        }
+        heroImg.alpha = 0f; heroImg.animate().alpha(1f).setDuration(450).start()
+    }
+
+    private fun cacheFile(url: String) = java.io.File(cacheDir, "slide-" + Integer.toHexString(url.hashCode()) + ".img")
+
+    private fun download(url: String) {
+        val f = cacheFile(url); val tmp = java.io.File(f.path + ".tmp")
+        val c = URL(url).openConnection() as HttpURLConnection
+        try {
+            c.connectTimeout = 10000; c.readTimeout = 20000
+            if (c.responseCode !in 200..299) return
+            tmp.outputStream().use { o -> c.inputStream.use { it.copyTo(o) } }
+            if (tmp.length() > 0) tmp.renameTo(f)
+        } finally { c.disconnect(); tmp.delete() }
+    }
+
+    private val bitmaps = HashMap<String, android.graphics.Bitmap>()
+    private fun loadBitmap(url: String): android.graphics.Bitmap? {
+        bitmaps[url]?.let { return it }
+        val f = cacheFile(url); if (f.length() == 0L) return null
+        val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeFile(f.path, o)
+        var sample = 1; while (o.outWidth / (sample * 2) >= 1280) sample *= 2
+        val b = runCatching { android.graphics.BitmapFactory.decodeFile(f.path, android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }) }.getOrNull() ?: return null
+        if (bitmaps.size > 8) bitmaps.clear()
+        bitmaps[url] = b
+        return b
     }
 
     private fun askPin() {
