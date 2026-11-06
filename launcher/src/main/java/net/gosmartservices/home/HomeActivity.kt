@@ -307,6 +307,12 @@ class HomeActivity : Activity() {
             prefs.edit().putString("apps", j.optString("apps", "YouTube, Netflix")).putBoolean("hasPin", j.optBoolean("hasPin", false))
                 .putString("slides", (j.optJSONArray("slides") ?: org.json.JSONArray()).toString()).putString("message", j.optString("message", ""))
                 .putLong("fetchedAt", System.currentTimeMillis()).apply()
+            // Panel la peze "Voye mizajou": tcheke touswit (pa tann 6 èdtan)
+            val upd = j.optString("updateAt", "")
+            if (upd.isNotEmpty() && upd != prefs.getString("updSeen", "")) {
+                prefs.edit().putString("updSeen", upd).putLong("updCheck", 0L).apply()
+                ui.post { LauncherUpdater.check(this) }
+            }
             val after = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "")
             if (before != after) ui.post { if (!isFinishing) { refresh(); applyHome() } }
         }.start()
