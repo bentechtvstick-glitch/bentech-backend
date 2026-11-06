@@ -50,7 +50,7 @@ class HomeActivity : Activity() {
     private lateinit var appsRow: LinearLayout
     private lateinit var moreRow: LinearLayout
     private lateinit var moreTitle: TextView
-    private lateinit var openBtn: TextView
+    private lateinit var homePill: TextView
     private lateinit var clock: TextView
     private lateinit var hint: TextView
 
@@ -111,7 +111,8 @@ class HomeActivity : Activity() {
 
         // Meni anlè a
         val nav = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(dp(40f), dp(18f), dp(40f), 0) }
-        nav.addView(navPill(getString(R.string.home), true) { openBtn.requestFocus() })
+        homePill = navPill(getString(R.string.home), true) { appsRow.getChildAt(0)?.requestFocus() }
+        nav.addView(homePill)
         nav.addView(navPill(getString(R.string.apps), false) { appsRow.getChildAt(1)?.requestFocus() ?: appsRow.getChildAt(0)?.requestFocus() })
         nav.addView(navPill(getString(R.string.wifi), false) { openSafe(Intent(Settings.ACTION_WIFI_SETTINGS)) })
         nav.addView(navPill(getString(R.string.settings), false) { askPin() })
@@ -125,14 +126,6 @@ class HomeActivity : Activity() {
         left.addView(text(words[0], 50f, Color.WHITE, true).apply { setShadowLayer(12f, 0f, 3f, 0xAA000000.toInt()) })
         if (words.size > 1) left.addView(text(words[1], 30f, 0xFF4FA8FF.toInt(), true).apply { setShadowLayer(10f, 0f, 2f, 0xAA000000.toInt()) })
         left.addView(text(getString(R.string.tagline), 18f, 0xFFE6ECF8.toInt(), false), LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(8f) })
-        openBtn = text(getString(R.string.open_now), 17f, Color.WHITE, true).apply {
-            isFocusable = true; isClickable = true; gravity = Gravity.CENTER
-            setPadding(dp(26f), dp(10f), dp(26f), dp(10f))
-            background = pillBg(false, 0x33FFFFFF)
-            setOnFocusChangeListener { v, f -> v.background = pillBg(f, 0x33FFFFFF); (v as TextView).setTextColor(if (f) 0xFF0A0F1C.toInt() else Color.WHITE) }
-            setOnClickListener { brands().firstOrNull()?.let { launch(it) } }
-        }
-        left.addView(openBtn, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(18f) })
         hero.addView(left, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER_VERTICAL or Gravity.START).apply { topMargin = dp(30f) })
         content.addView(hero, LinearLayout.LayoutParams(-1, (resources.displayMetrics.heightPixels * 0.52f).toInt()))
 
@@ -166,7 +159,7 @@ class HomeActivity : Activity() {
         moreRow.visibility = moreTitle.visibility
         if (others.isEmpty() && brand != null) appsRow.addView(text(getString(R.string.no_apps), 14f, 0xFF93A0BD.toInt(), false).apply { gravity = Gravity.CENTER_VERTICAL }, LinearLayout.LayoutParams(-2, dp(100f)).apply { leftMargin = dp(20f) })
         hint.text = if (isDefaultHome()) "" else getString(R.string.set_default, getString(R.string.app_name))
-        (appsRow.getChildAt(0)?.takeIf { it.isFocusable } ?: openBtn).requestFocus()
+        (appsRow.getChildAt(0)?.takeIf { it.isFocusable } ?: homePill).requestFocus()
     }
 
     private fun focusAnim(v: View, f: Boolean, base: Int) {
