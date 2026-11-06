@@ -406,10 +406,33 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   // ---- Launcher box Android (app «GoSmart Home»): PIN admin nan ak app ki pèmèt yo, menm pou tout box yo ----
   // PIN lan sove kòm hash sèlman; box yo pa janm resevwa l: yo voye PIN yo tape a, sèvè a di si l bon.
   const DEF_APPS = "YouTube, Netflix";
-  const launcherCfg = () => (db.data.launcher ||= { pinHash: "", apps: DEF_APPS });
+  const launcherCfg = () => {
+    const L = (db.data.launcher ||= { pinHash: "", apps: DEF_APPS });
+    L.slides ||= { galaxy: [], bentech: [] }; L.message ||= { galaxy: "", bentech: "" };
+    return L;
+  };
+  const LBRANDS = ["galaxy", "bentech"];
+  const lBrand = (v) => (LBRANDS.includes(String(v)) ? String(v) : "galaxy");
+  const boxes = () => (db.data.launcherBoxes ||= {});
+  const cleanSlide = (s) => ({
+    imageUrl: /^(https?:\/\/|\/media\/)/.test(String(s?.imageUrl || "")) ? String(s.imageUrl).slice(0, 500) : "",
+    title: String(s?.title || "").trim().slice(0, 60), text: String(s?.text || "").trim().slice(0, 120),
+  });
+  const boxWrites = new Map(); // id → dènye fwa nou sove l (pa ekri fichye a chak 3 minit pou chak box)
   app.get("/api/launcher/config", (req, res) => {
-    const L = launcherCfg();
-    res.json({ apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, v: Number(L.v) || 0 });
+    const L = launcherCfg(), brand = lBrand(req.query.brand);
+    // Box la idantifye tèt li (ANDROID_ID): panel la wè ki box ki gen launcher a, ki vèsyon, epi si l sou liy
+    const id = String(req.query.id || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 40);
+    if (id) {
+      const B = boxes(), isNew = !B[id];
+      if (isNew && Object.keys(B).length >= 5000) { /* twòp: pa ajoute */ } else {
+        B[id] = { brand, v: Math.max(0, Number(req.query.v) || 0), model: String(req.query.model || "").slice(0, 60), seen: new Date().toISOString(), first: B[id]?.first || new Date().toISOString() };
+        const last = boxWrites.get(id) || 0;
+        if (isNew || Date.now() - last > 15 * 60_000) { boxWrites.set(id, Date.now()); db.write().catch(() => {}); }
+      }
+    }
+    res.json({ apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, v: Number(L.v) || 0,
+      slides: (L.slides[brand] || []).filter((s) => s.imageUrl), message: String(L.message[brand] || "") });
   });
   const unlockHits = new Map(); // ip → [lè]
   app.post("/api/launcher/unlock", (req, res) => {
@@ -424,9 +447,18 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     if (ok) unlockHits.delete(ip);
     res.json({ ok });
   });
-  app.get("/api/galaxy/launcher", authenticate, (req, res) => {
+  const launcherView = () => {
     const L = launcherCfg();
-    res.json({ apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash });
+    const list = Object.entries(boxes()).map(([id, b]) => ({ id, ...b, online: Date.now() - Date.parse(b.seen || 0) < 8 * 60_000 }))
+      .sort((a, b) => String(b.seen).localeCompare(String(a.seen)));
+    return { apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, slides: L.slides, message: L.message, boxes: list };
+  };
+  app.get("/api/galaxy/launcher", authenticate, (req, res) => res.json(launcherView()));
+  app.delete("/api/galaxy/launcher/boxes/:id", authenticate, async (req, res) => {
+    if (!["owner", "Super Administrator", "Administrator"].includes(req.role)) return res.status(403).json({ ok: false, error: "Only the owner or an Administrator can change the launcher.", forbidden: true });
+    delete boxes()[String(req.params.id)];
+    await db.write();
+    res.json(launcherView());
   });
   app.put("/api/galaxy/launcher", authenticate, async (req, res) => {
     if (!["owner", "Super Administrator", "Administrator"].includes(req.role)) return res.status(403).json({ ok: false, error: "Only the owner or an Administrator can change the launcher.", forbidden: true });
@@ -438,9 +470,14 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       if (pin && !/^\d{4,8}$/.test(pin)) return res.status(400).json({ ok: false, error: "The PIN must be 4 to 8 digits." });
       L.pinHash = pin ? hashPassword(pin) : "";
     }
+    if (b.brand !== undefined) {
+      const br = lBrand(b.brand);
+      if (Array.isArray(b.slides)) L.slides[br] = b.slides.slice(0, 8).map(cleanSlide).filter((s) => s.imageUrl);
+      if (typeof b.message === "string") L.message[br] = b.message.trim().slice(0, 200);
+    }
     L.v = (Number(L.v) || 0) + 1;
     await db.write();
-    res.json({ apps: L.apps, hasPin: !!L.pinHash });
+    res.json(launcherView());
   });
 
   app.get("/api/galaxy/bills", authenticate, (req, res) => res.json(db.data.bills || []));
