@@ -153,16 +153,16 @@ class HomeActivity : Activity() {
 
         val left = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(56f), 0, 0, 0) }
         val words = BuildConfig.HOME_TITLE.let { t -> if (t.endsWith(" TV Stick")) listOf(t.removeSuffix(" TV Stick"), "TV Stick") else t.split(" ", limit = 2) }
-        titleA = text(words[0], 50f, Color.WHITE, true).apply { setShadowLayer(12f, 0f, 3f, 0xAA000000.toInt()); maxLines = 2 }
+        titleA = text(words[0], 38f, Color.WHITE, true).apply { setShadowLayer(12f, 0f, 3f, 0xAA000000.toInt()); maxLines = 2 }
         left.addView(titleA, LinearLayout.LayoutParams(dp(520f), -2))
-        titleB = text(words.getOrElse(1) { "" }, 30f, 0xFF4FA8FF.toInt(), true).apply { setShadowLayer(10f, 0f, 2f, 0xAA000000.toInt()); visibility = if (words.size > 1) View.VISIBLE else View.GONE }
+        titleB = text(words.getOrElse(1) { "" }, 24f, 0xFF4FA8FF.toInt(), true).apply { setShadowLayer(10f, 0f, 2f, 0xAA000000.toInt()); visibility = if (words.size > 1) View.VISIBLE else View.GONE }
         left.addView(titleB)
-        tagline = text(getString(R.string.tagline), 18f, 0xFFE6ECF8.toInt(), false).apply { setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt()); maxLines = 2 }
+        tagline = text(getString(R.string.tagline), 16f, 0xFFE6ECF8.toInt(), false).apply { setShadowLayer(8f, 0f, 1f, 0xCC000000.toInt()); maxLines = 2 }
         left.addView(tagline, LinearLayout.LayoutParams(dp(520f), -2).apply { topMargin = dp(8f) })
         dots = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         left.addView(dots, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(16f) })
-        hero.addView(left, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER_VERTICAL or Gravity.START).apply { topMargin = dp(30f) })
-        content.addView(hero, LinearLayout.LayoutParams(-1, (resources.displayMetrics.heightPixels * 0.52f).toInt()))
+        hero.addView(left, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER_VERTICAL or Gravity.START).apply { topMargin = dp(24f) })
+        content.addView(hero, LinearLayout.LayoutParams(-1, (resources.displayMetrics.heightPixels * 0.36f).toInt()))
 
         // ---- Mesaj panel la (pa egzanp: dat peman)
         msgBar = text("", 16f, 0xFF0A0F1C.toInt(), true).apply {
@@ -391,7 +391,7 @@ class HomeActivity : Activity() {
             heroImg.setImageResource(R.drawable.hero)
             heroImg.layoutParams = (heroImg.layoutParams as FrameLayout.LayoutParams).apply { width = brandHeroW() }
             heroFade.background = fade(true)
-            titleA.text = words[0]; titleA.setTextSize(TypedValue.COMPLEX_UNIT_SP, 50f)
+            titleA.text = words[0]; titleA.setTextSize(TypedValue.COMPLEX_UNIT_SP, 38f)
             titleB.text = words.getOrElse(1) { "" }; titleB.visibility = if (words.size > 1) View.VISIBLE else View.GONE
             tagline.text = getString(R.string.tagline); tagline.visibility = View.VISIBLE
         } else {
