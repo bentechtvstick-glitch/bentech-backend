@@ -36,9 +36,9 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * GoSmart Home: ekran akèy yon box Android TV.
- * - Lè box la limen: li louvri Galaxy (oswa Ben Tech) poukont li.
- * - Bouton Home: ekran sa a, ak Galaxy / Ben Tech an premye epi sèlman app admin nan chwazi nan panel la.
+ * Galaxy Home / Ben Tech Home: ekran akèy yon box Android TV (yon launcher pou chak mak).
+ * - Lè box la limen: li louvri app TV mak la poukont li.
+ * - Bouton Home: ekran sa a, ak app TV mak la an premye epi sèlman app admin nan chwazi nan panel la.
  * - Paramèt Android yo mande PIN admin nan (sèvè a verifye l). Wi‑Fi a rete louvri san PIN.
  */
 class HomeActivity : Activity() {
@@ -46,7 +46,7 @@ class HomeActivity : Activity() {
     private data class AppEntry(val pkg: String, val label: String, val intent: Intent, val banner: Drawable?, val icon: Drawable?)
 
     private val ui = Handler(Looper.getMainLooper())
-    private val prefs by lazy { getSharedPreferences("gosmart", Context.MODE_PRIVATE) }
+    private val prefs by lazy { getSharedPreferences("home", Context.MODE_PRIVATE) }
     private lateinit var root: LinearLayout
     private lateinit var heroBox: LinearLayout
     private lateinit var appsRow: LinearLayout
@@ -97,7 +97,7 @@ class HomeActivity : Activity() {
             background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(0xFF0B1630.toInt(), 0xFF060A14.toInt()))
         }
         val top = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        top.addView(text("GoSmart", 20f, Color.WHITE, true), LinearLayout.LayoutParams(0, -2, 1f))
+        top.addView(text(BuildConfig.HOME_TITLE, 20f, Color.WHITE, true), LinearLayout.LayoutParams(0, -2, 1f))
         clock = text("", 16f, 0xFFB8C4DE.toInt(), false)
         top.addView(clock)
         root.addView(top)
@@ -125,7 +125,7 @@ class HomeActivity : Activity() {
         val brands = brands()
         heroBox.removeAllViews()
         if (brands.isEmpty()) {
-            heroBox.addView(text(getString(R.string.no_brand), 20f, Color.WHITE, true).apply { gravity = Gravity.CENTER_VERTICAL }, LinearLayout.LayoutParams(-1, -1))
+            heroBox.addView(text(getString(R.string.no_brand, BuildConfig.HOME_TITLE), 20f, Color.WHITE, true).apply { gravity = Gravity.CENTER_VERTICAL }, LinearLayout.LayoutParams(-1, -1))
         } else for ((i, b) in brands.withIndex()) {
             heroBox.addView(hero(b), LinearLayout.LayoutParams(0, -1, 1f).apply { if (i > 0) leftMargin = dp(20f) })
         }
@@ -133,7 +133,7 @@ class HomeActivity : Activity() {
         val others = otherApps()
         if (others.isEmpty()) appsRow.addView(text(getString(R.string.no_apps), 14f, 0xFF93A0BD.toInt(), false))
         for ((i, a) in others.withIndex()) appsRow.addView(tile(a), LinearLayout.LayoutParams(dp(176f), dp(99f)).apply { if (i > 0) leftMargin = dp(14f) })
-        hint.text = if (isDefaultHome()) "" else getString(R.string.set_default)
+        hint.text = if (isDefaultHome()) "" else getString(R.string.set_default, getString(R.string.app_name))
         heroBox.getChildAt(0)?.takeIf { it.isFocusable }?.requestFocus()
     }
 
@@ -298,7 +298,7 @@ class HomeActivity : Activity() {
     }
 
     companion object {
-        private val BRAND_PKGS = listOf("com.galaxytvstick.tv", "net.bentechtvstick.tv")
+        private val BRAND_PKGS = listOf(BuildConfig.BRAND_PKG)
         @Volatile private var autoOpened = false
     }
 }

@@ -8,8 +8,8 @@
     <string name="pin_wrong">PIN lan pa bon.</string>
     <string name="pin_net">Pa gen entènèt: konekte Wi‑Fi a anvan.</string>
     <string name="pin_many">Twòp eseye. Tann 10 minit.</string>
-    <string name="no_brand">Enstale Galaxy TV Stick oswa Ben Tech TV Stick sou box la.</string>
-    <string name="set_default">Pou fini: peze Home sou telekòmand lan, chwazi GoSmart Home, epi «Always».</string>
+    <string name="no_brand">Enstale %1$s sou box la.</string>
+    <string name="set_default">Pou fini: peze Home sou telekòmand lan, chwazi %1$s, epi «Always».</string>
     <string name="cancel">Anile</string>
     <string name="ok">OK</string>
     <string name="no_apps">Pa gen lòt app.</string>

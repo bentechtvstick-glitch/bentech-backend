@@ -8,8 +8,8 @@
     <string name="pin_wrong">Wrong PIN.</string>
     <string name="pin_net">No internet: connect Wi‑Fi first.</string>
     <string name="pin_many">Too many attempts. Wait 10 minutes.</string>
-    <string name="no_brand">Install Galaxy TV Stick or Ben Tech TV Stick on this box.</string>
-    <string name="set_default">To finish: press Home on the remote, choose GoSmart Home, then “Always”.</string>
+    <string name="no_brand">Install %1$s on this box.</string>
+    <string name="set_default">To finish: press Home on the remote, choose %1$s, then “Always”.</string>
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     <string name="no_apps">No other apps.</string>

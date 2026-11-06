@@ -8,8 +8,8 @@
     <string name="pin_wrong">PIN incorrect.</string>
     <string name="pin_net">Pas d’internet : connectez le Wi‑Fi d’abord.</string>
     <string name="pin_many">Trop d’essais. Attendez 10 minutes.</string>
-    <string name="no_brand">Installez Galaxy TV Stick ou Ben Tech TV Stick sur ce boîtier.</string>
-    <string name="set_default">Pour finir : appuyez sur Accueil, choisissez GoSmart Home, puis « Toujours ».</string>
+    <string name="no_brand">Installez %1$s sur ce boîtier.</string>
+    <string name="set_default">Pour finir : appuyez sur Accueil, choisissez %1$s, puis « Toujours ».</string>
     <string name="cancel">Annuler</string>
     <string name="ok">OK</string>
     <string name="no_apps">Aucune autre app.</string>
