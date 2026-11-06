@@ -432,7 +432,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       }
     }
     res.json({ apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, v: Number(L.v) || 0,
-      slides: (L.slides[brand] || []).filter((s) => s.imageUrl), message: String(L.message[brand] || "") });
+      slides: (L.slides[brand] || []).filter((s) => s.imageUrl), message: String(L.message[brand] || ""), updateAt: String(L.updateAt || "") });
   });
   const unlockHits = new Map(); // ip → [lè]
   app.post("/api/launcher/unlock", (req, res) => {
@@ -451,7 +451,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     const L = launcherCfg();
     const list = Object.entries(boxes()).map(([id, b]) => ({ id, ...b, online: Date.now() - Date.parse(b.seen || 0) < 8 * 60_000 }))
       .sort((a, b) => String(b.seen).localeCompare(String(a.seen)));
-    return { apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, slides: L.slides, message: L.message, boxes: list };
+    return { apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, slides: L.slides, message: L.message, boxes: list, updateAt: String(L.updateAt || "") };
   };
   app.get("/api/galaxy/launcher", authenticate, (req, res) => res.json(launcherView()));
   app.delete("/api/galaxy/launcher/boxes/:id", authenticate, async (req, res) => {
@@ -470,6 +470,8 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       if (pin && !/^\d{4,8}$/.test(pin)) return res.status(400).json({ ok: false, error: "The PIN must be 4 to 8 digits." });
       L.pinHash = pin ? hashPassword(pin) : "";
     }
+    // "Voye mizajou": box yo tcheke touswit (nan 3 minit) si gen yon nouvo vèsyon launcher, olye yo tann 6 èdtan
+    if (b.pushUpdate === true) L.updateAt = new Date().toISOString();
     if (b.brand !== undefined) {
       const br = lBrand(b.brand);
       if (Array.isArray(b.slides)) L.slides[br] = b.slides.slice(0, 8).map(cleanSlide).filter((s) => s.imageUrl);

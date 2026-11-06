@@ -1313,6 +1313,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div style="border-top:1px solid var(--line);margin:14px 0 10px"></div>
         <h3 style="margin:0 0 6px">📦 Box yo</h3>
         <p class="note" style="margin:0 0 8px">Box ki gen launcher a. Launcher a mete tèt li ajou poukont li.</p>
+        <div class="btns" style="justify-content:flex-start;margin:0 0 10px"><button class="btn purple" id="lnPush" type="button">📤 Voye mizajou launcher a bay tout box yo</button><span class="msg" id="lnPushMsg"></span></div>
         <div id="lnBoxes"></div>
         <p class="note" style="margin:8px 0 0">Telechaje launcher a sou box la ak Downloader:<br>Galaxy Home: <span class="mono" style="user-select:all">https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/GalaxyHome.apk</span><br>Ben Tech Home: <span class="mono" style="user-select:all">https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/BenTechHome.apk</span></p>
       </div>
@@ -3732,6 +3733,7 @@ $("#lnSlides").addEventListener("input", (e) => { const f = e.target.dataset.lnf
   if (f === "imageUrl") { const pv = e.target.closest(".li")?.firstElementChild; if (pv) pv.style.backgroundImage = e.target.value ? `url('${e.target.value.replace(/'/g, "")}')` : ""; } });
 $("#lnSlides").addEventListener("click", (e) => { const d = e.target.closest("[data-lndel]"); if (d) { lnData.slides[lnBr].splice(+d.dataset.lndel, 1); lnSlidesPaint(); } });
 $("#lnSaveHome").addEventListener("click", () => saveLauncher({ brand: lnBr, slides: (lnData?.slides || {})[lnBr] || [], message: $("#lnMsgText").value }, t("Sove ✓ Box yo ap pran chanjman an nan kèk minit."), $("#lnHomeMsg")));
+$("#lnPush").addEventListener("click", () => saveLauncher({ pushUpdate: true }, t("Voye ✓ Box ki sou liy yo ap mete launcher a ajou nan anviwon 3 minit."), $("#lnPushMsg")));
 $("#lnBoxes").addEventListener("click", async (e) => { const b = e.target.closest("[data-lnbox]"); if (!b) return;
   try { lnPaint(await api("DELETE", "/galaxy/launcher/boxes/" + encodeURIComponent(b.dataset.lnbox))); } catch (err) { toast(err.message); } });
 $("#lnSave").addEventListener("click", () => {
