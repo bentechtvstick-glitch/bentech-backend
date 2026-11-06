@@ -645,7 +645,8 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <div class="confirm" id="dlForm" hidden style="flex-wrap:wrap;margin:-6px 0 16px">
         <label class="inline note" style="gap:6px">Galaxy TV Stick <input type="text" id="dlGalaxy" inputmode="numeric" maxlength="12" style="width:120px"></label>
         <label class="inline note" style="gap:6px">Ben Tech TV Stick <input type="text" id="dlBentech" inputmode="numeric" maxlength="12" style="width:120px"></label>
-        <label class="inline note" style="gap:6px">GoSmart Home <input type="text" id="dlHome" inputmode="numeric" maxlength="12" style="width:120px"></label>
+        <label class="inline note" style="gap:6px">Galaxy Home <input type="text" id="dlHome" inputmode="numeric" maxlength="12" style="width:120px"></label>
+        <label class="inline note" style="gap:6px">Ben Tech Home <input type="text" id="dlHomeBt" inputmode="numeric" maxlength="12" style="width:120px"></label>
         <button class="btn small" id="dlCancel" type="button">Anile</button><button class="btn small primary" id="dlSave" type="button">Sove</button>
       </div>
       <div class="kpis" id="dashKpis"></div>
@@ -1295,14 +1296,14 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <p class="note" style="margin:8px 0 0">Kopi sa yo sou menm disk ak sèvè a: yo pwoteje w si yon bagay efase oswa gate. Telechaje youn sou òdinatè w chak semèn konsa, pou w pwoteje kont yon pàn sèvè.</p>
       </div>
       <div class="card" id="lnCard">
-        <div class="cardhead"><div><h2>📺 GoSmart Home (box Android)</h2><p class="sub">Ekran akèy pou box Android TV ou vann yo: li louvri Galaxy oswa Ben Tech, epi li montre sèlman app ou chwazi yo. PIN lan bloke paramèt Android yo sou tout box yo.</p></div><span class="note" id="lnState"></span></div>
+        <div class="cardhead"><div><h2>📺 Launcher (box Android)</h2><p class="sub">Ekran akèy pou box Android TV ou vann yo. Galaxy Home louvri Galaxy sèlman, Ben Tech Home louvri Ben Tech sèlman, epi yo montre sèlman app ou chwazi yo. PIN lan bloke paramèt Android yo sou tout box yo.</p></div><span class="note" id="lnState"></span></div>
         <div class="row2">
           <div class="field"><label for="lnPin">Nouvo PIN (4 a 8 chif)</label><input type="password" id="lnPin" inputmode="numeric" autocomplete="new-password" maxlength="8" placeholder="Kite l vid pou pa chanje l"></div>
           <div class="field"><label for="lnApps">Lòt app ki parèt sou box la</label><input type="text" id="lnApps" placeholder="YouTube, Netflix, Prime Video"></div>
         </div>
-        <p class="note" style="margin:0 0 8px">Ekri non app yo, separe ak vigil. Box la montre sèlman app ki enstale ladan l epi ki gen youn nan non sa yo. Galaxy ak Ben Tech toujou parèt an premye.</p>
+        <p class="note" style="margin:0 0 8px">Ekri non app yo, separe ak vigil. Box la montre sèlman app ki enstale ladan l epi ki gen youn nan non sa yo. App TV mak la toujou parèt an premye.</p>
         <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="lnSave" type="button">Sove</button><button class="btn" id="lnClear" type="button">Retire PIN lan</button><span class="msg" id="lnMsg"></span></div>
-        <p class="note" style="margin:8px 0 0">Telechaje app la sou box la ak Downloader: <span class="mono" style="user-select:all">https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/GoSmartHome.apk</span></p>
+        <p class="note" style="margin:8px 0 0">Telechaje launcher a sou box la ak Downloader:<br>Galaxy Home: <span class="mono" style="user-select:all">https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/GalaxyHome.apk</span><br>Ben Tech Home: <span class="mono" style="user-select:all">https://github.com/bentechtvstick-glitch/bentech-backend/releases/download/apk-latest/BenTechHome.apk</span></p>
       </div>
       <div class="card" id="blCard">
         <div class="cardhead"><div><h2>💳 Peman pou sonje</h2><p class="sub">Egz: sèvè Hetzner, domèn. Panel la fè w sonje kèk jou anvan (nan 🔔 ak sou telefòn ou), jiskaske w di li peye.</p></div></div>
@@ -2028,8 +2029,8 @@ function devExpHtml(d) {
 async function loadDlBar() {
   const s = await api("GET", "/settings").catch(() => ({}));
   const d = s.downloaderCodes || {};
-  const items = [["Galaxy TV Stick", d.galaxy], ["Ben Tech TV Stick", d.bentech], ["GoSmart Home", d.home]].filter(([, v]) => v);
-  $("#dlGalaxy").value = d.galaxy || ""; $("#dlBentech").value = d.bentech || ""; $("#dlHome").value = d.home || "";
+  const items = [["Galaxy TV Stick", d.galaxy], ["Ben Tech TV Stick", d.bentech], ["Galaxy Home", d.home], ["Ben Tech Home", d.homeBt]].filter(([, v]) => v);
+  $("#dlGalaxy").value = d.galaxy || ""; $("#dlBentech").value = d.bentech || ""; $("#dlHome").value = d.home || ""; $("#dlHomeBt").value = d.homeBt || "";
   const html = items.length ? items.map(([n, v]) => `<span>${esc(n)}: <b>${esc(v)}</b></span>`).join("") : `<span class="note">${esc(t("Peze ✏️ pou mete kòd Downloader app yo."))}</span>`;
   $("#dlTrack").innerHTML = html + (items.length ? html : ""); // 2 fwa: defilman an pa janm vid
 }
@@ -2037,7 +2038,7 @@ $("#dlEdit").addEventListener("click", () => { $("#dlForm").hidden = !$("#dlForm
 $("#dlCancel").addEventListener("click", () => { $("#dlForm").hidden = true; });
 $("#dlSave").addEventListener("click", async () => {
   const clean = (v) => v.replace(/[^0-9a-z]/gi, "").slice(0, 12);
-  try { await api("PUT", "/settings", { downloaderCodes: { galaxy: clean($("#dlGalaxy").value), bentech: clean($("#dlBentech").value), home: clean($("#dlHome").value) } });
+  try { await api("PUT", "/settings", { downloaderCodes: { galaxy: clean($("#dlGalaxy").value), bentech: clean($("#dlBentech").value), home: clean($("#dlHome").value), homeBt: clean($("#dlHomeBt").value) } });
     $("#dlForm").hidden = true; toast(t("Sove")); loadDlBar(); }
   catch (err) { toast(err.message); }
 });
@@ -3493,7 +3494,7 @@ $("#upCancel").addEventListener("click", async () => {
   try { await api("POST", "/galaxy/app-update", { cancel: true }); setMsg($("#upMsg"), t("TV yo p ap pwopoze mizajou a ankò."), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
 });
 // ---- Kisa ki pran plas nan baz done a + TV ki pral efase otomatikman ----
-const STORE_LABELS = { channelLists: "Lis chanèl yo", devices: "Aparèy", deviceChannels: "Lyen aparèy → lis chanèl", devicePlaylists: "Playlist", customers: "Kliyan yo", auditLogs: "Jounal aksyon yo", channelProfiles: "Pakè chanèl", tickers: "Ticker", banners: "Banner", popups: "Pop-up", mediaAds: "Piblisite", liveEvents: "Evènman dirèk", chyrons: "Chyron", settings: "Reglaj panel la", users: "Kont admin yo", deletedDevices: "Aparèy ki efase", channelHealth: "Sante chanèl yo", adminNotes: "Nòt mwen yo", notify: "Notifikasyon telefòn", watch: "Siveyans (AI)", bills: "Peman pou sonje", customGroups: "Gwoup pa m", ownerAuth: "Login pwopriyetè a", channelAlerts: "Alèt chanèl yo", deviceStats: "Estatistik TV yo", aiUsage: "Depans AI a", launcher: "GoSmart Home" };
+const STORE_LABELS = { channelLists: "Lis chanèl yo", devices: "Aparèy", deviceChannels: "Lyen aparèy → lis chanèl", devicePlaylists: "Playlist", customers: "Kliyan yo", auditLogs: "Jounal aksyon yo", channelProfiles: "Pakè chanèl", tickers: "Ticker", banners: "Banner", popups: "Pop-up", mediaAds: "Piblisite", liveEvents: "Evènman dirèk", chyrons: "Chyron", settings: "Reglaj panel la", users: "Kont admin yo", deletedDevices: "Aparèy ki efase", channelHealth: "Sante chanèl yo", adminNotes: "Nòt mwen yo", notify: "Notifikasyon telefòn", watch: "Siveyans (AI)", bills: "Peman pou sonje", customGroups: "Gwoup pa m", ownerAuth: "Login pwopriyetè a", channelAlerts: "Alèt chanèl yo", deviceStats: "Estatistik TV yo", aiUsage: "Depans AI a", launcher: "Launcher" };
 async function loadStorage() {
   const box = $("#sysStorage"); box.hidden = false; box.innerHTML = `<div class="empty">${t("Ap chaje…")}</div>`;
   let y; try { y = await api("GET", "/galaxy/storage"); } catch (err) { box.innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
