@@ -13,4 +13,7 @@
     <string name="cancel">Annuler</string>
     <string name="ok">OK</string>
     <string name="no_apps">Aucune autre app.</string>
+    <string name="home">Accueil</string>
+    <string name="apps">Apps</string>
+    <string name="open_now">Ouvrir</string>
 </resources>

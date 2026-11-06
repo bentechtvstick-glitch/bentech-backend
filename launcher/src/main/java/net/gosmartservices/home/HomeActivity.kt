@@ -47,9 +47,10 @@ class HomeActivity : Activity() {
 
     private val ui = Handler(Looper.getMainLooper())
     private val prefs by lazy { getSharedPreferences("home", Context.MODE_PRIVATE) }
-    private lateinit var root: LinearLayout
-    private lateinit var heroBox: LinearLayout
     private lateinit var appsRow: LinearLayout
+    private lateinit var moreRow: LinearLayout
+    private lateinit var moreTitle: TextView
+    private lateinit var openBtn: TextView
     private lateinit var clock: TextView
     private lateinit var hint: TextView
 
@@ -89,99 +90,133 @@ class HomeActivity : Activity() {
         }
     }
 
-    // ------------------------------------------------------------ Ekran an
+    // ------------------------------------------------------------ Ekran an (stil Fire TV: meni anlè, gwo afich, ranje app)
     private fun buildUi() {
-        root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(48f), dp(28f), dp(48f), dp(24f))
-            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(0xFF0B1630.toInt(), 0xFF060A14.toInt()))
+        val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val scroll = android.widget.ScrollView(this).apply {
+            isVerticalScrollBarEnabled = false; isFillViewport = true
+            setBackgroundColor(0xFF0A0F1C.toInt()); addView(content)
         }
-        val top = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        top.addView(text(BuildConfig.HOME_TITLE, 20f, Color.WHITE, true), LinearLayout.LayoutParams(0, -2, 1f))
+
+        // ---- Gwo afich la (imaj mak la adwat, tèks agoch)
+        val hero = FrameLayout(this)
+        hero.addView(ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageResource(R.drawable.hero) },
+            FrameLayout.LayoutParams((resources.displayMetrics.widthPixels * 0.6f).toInt(), -1, Gravity.END))
+        hero.addView(View(this).apply {
+            background = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(0xFF0A0F1C.toInt(), 0xF00A0F1C.toInt(), 0x400A0F1C, 0x000A0F1C))
+        }, FrameLayout.LayoutParams(-1, -1))
+        hero.addView(View(this).apply {
+            background = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(0xFF0A0F1C.toInt(), 0x000A0F1C))
+        }, FrameLayout.LayoutParams(-1, dp(60f), Gravity.BOTTOM))
+
+        // Meni anlè a
+        val nav = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(dp(40f), dp(18f), dp(40f), 0) }
+        nav.addView(navPill(getString(R.string.home), true) { openBtn.requestFocus() })
+        nav.addView(navPill(getString(R.string.apps), false) { appsRow.getChildAt(1)?.requestFocus() ?: appsRow.getChildAt(0)?.requestFocus() })
+        nav.addView(navPill(getString(R.string.wifi), false) { openSafe(Intent(Settings.ACTION_WIFI_SETTINGS)) })
+        nav.addView(navPill(getString(R.string.settings), false) { askPin() })
+        nav.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
         clock = text("", 16f, 0xFFB8C4DE.toInt(), false)
-        top.addView(clock)
-        root.addView(top)
+        nav.addView(clock)
+        hero.addView(nav, FrameLayout.LayoutParams(-1, -2, Gravity.TOP))
 
-        heroBox = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        root.addView(heroBox, LinearLayout.LayoutParams(-1, dp(230f)).apply { topMargin = dp(22f) })
+        val left = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(56f), 0, 0, 0) }
+        val words = BuildConfig.HOME_TITLE.split(" ", limit = 2)
+        left.addView(text(words[0], 50f, Color.WHITE, true).apply { setShadowLayer(12f, 0f, 3f, 0xAA000000.toInt()) })
+        if (words.size > 1) left.addView(text(words[1], 30f, 0xFF4FA8FF.toInt(), true).apply { setShadowLayer(10f, 0f, 2f, 0xAA000000.toInt()) })
+        left.addView(text(getString(R.string.tagline), 18f, 0xFFE6ECF8.toInt(), false), LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(8f) })
+        openBtn = text(getString(R.string.open_now), 17f, Color.WHITE, true).apply {
+            isFocusable = true; isClickable = true; gravity = Gravity.CENTER
+            setPadding(dp(26f), dp(10f), dp(26f), dp(10f))
+            background = pillBg(false, 0x33FFFFFF)
+            setOnFocusChangeListener { v, f -> v.background = pillBg(f, 0x33FFFFFF); (v as TextView).setTextColor(if (f) 0xFF0A0F1C.toInt() else Color.WHITE) }
+            setOnClickListener { brands().firstOrNull()?.let { launch(it) } }
+        }
+        left.addView(openBtn, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(18f) })
+        hero.addView(left, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER_VERTICAL or Gravity.START).apply { topMargin = dp(30f) })
+        content.addView(hero, LinearLayout.LayoutParams(-1, (resources.displayMetrics.heightPixels * 0.52f).toInt()))
 
-        root.addView(text(getString(R.string.other_apps), 17f, Color.WHITE, true), LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(26f); bottomMargin = dp(10f) })
-        appsRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; clipToPadding = false; setPadding(dp(4f), dp(6f), dp(4f), dp(6f)) }
-        val scroll = HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; clipToPadding = false; addView(appsRow) }
-        root.addView(scroll, LinearLayout.LayoutParams(-1, dp(120f)))
-
-        val spacer = View(this)
-        root.addView(spacer, LinearLayout.LayoutParams(-1, 0, 1f))
-        val bottom = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        // ---- Ranje app yo
+        appsRow = row()
+        content.addView(hscroll(appsRow), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4f) })
+        moreTitle = text(getString(R.string.other_apps), 17f, 0xFFE6ECF8.toInt(), false)
+        content.addView(moreTitle, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(48f); topMargin = dp(10f) })
+        moreRow = row()
+        content.addView(hscroll(moreRow))
         hint = text("", 13f, 0xFF93A0BD.toInt(), false)
-        bottom.addView(hint, LinearLayout.LayoutParams(0, -2, 1f))
-        bottom.addView(pill("📶  " + getString(R.string.wifi)) { openSafe(Intent(Settings.ACTION_WIFI_SETTINGS)) })
-        bottom.addView(pill("⚙  " + getString(R.string.settings)) { askPin() }, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(12f) })
-        root.addView(bottom)
-        setContentView(root)
+        content.addView(hint, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(48f); topMargin = dp(8f); bottomMargin = dp(16f) })
+        setContentView(scroll)
     }
+
+    private fun row() = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; clipToPadding = false; setPadding(dp(44f), dp(10f), dp(44f), dp(10f)) }
+    private fun hscroll(r: LinearLayout) = HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; clipToPadding = false; clipChildren = false; addView(r) }
 
     private fun refresh() {
-        val brands = brands()
-        heroBox.removeAllViews()
-        if (brands.isEmpty()) {
-            heroBox.addView(text(getString(R.string.no_brand, BuildConfig.HOME_TITLE), 20f, Color.WHITE, true).apply { gravity = Gravity.CENTER_VERTICAL }, LinearLayout.LayoutParams(-1, -1))
-        } else for ((i, b) in brands.withIndex()) {
-            heroBox.addView(hero(b), LinearLayout.LayoutParams(0, -1, 1f).apply { if (i > 0) leftMargin = dp(20f) })
-        }
-        appsRow.removeAllViews()
+        val brand = brands().firstOrNull()
         val others = otherApps()
-        if (others.isEmpty()) appsRow.addView(text(getString(R.string.no_apps), 14f, 0xFF93A0BD.toInt(), false))
-        for ((i, a) in others.withIndex()) appsRow.addView(tile(a), LinearLayout.LayoutParams(dp(176f), dp(99f)).apply { if (i > 0) leftMargin = dp(14f) })
+        appsRow.removeAllViews(); moreRow.removeAllViews()
+        // Premye ranje: app TV mak la + 6 premye app panel la chwazi yo; rès yo nan dezyèm ranje a
+        val first = others.take(6); val rest = others.drop(6)
+        val lp = { i: Int -> LinearLayout.LayoutParams(dp(178f), dp(100f)).apply { if (i > 0) leftMargin = dp(14f) } }
+        if (brand != null) appsRow.addView(brandTile(brand), lp(0))
+        else appsRow.addView(text(getString(R.string.no_brand, BuildConfig.HOME_TITLE), 15f, Color.WHITE, true))
+        first.forEachIndexed { i, a -> appsRow.addView(tile(a), lp(i + 1)) }
+        rest.forEachIndexed { i, a -> moreRow.addView(tile(a), lp(i)) }
+        moreTitle.visibility = if (rest.isEmpty()) View.GONE else View.VISIBLE
+        moreRow.visibility = moreTitle.visibility
+        if (others.isEmpty() && brand != null) appsRow.addView(text(getString(R.string.no_apps), 14f, 0xFF93A0BD.toInt(), false).apply { gravity = Gravity.CENTER_VERTICAL }, LinearLayout.LayoutParams(-2, dp(100f)).apply { leftMargin = dp(20f) })
         hint.text = if (isDefaultHome()) "" else getString(R.string.set_default, getString(R.string.app_name))
-        heroBox.getChildAt(0)?.takeIf { it.isFocusable }?.requestFocus()
+        (appsRow.getChildAt(0)?.takeIf { it.isFocusable } ?: openBtn).requestFocus()
     }
 
-    private fun hero(a: AppEntry): View {
-        val card = FrameLayout(this).apply {
-            isFocusable = true; isClickable = true
-            background = cardBg(0xFF13203F.toInt(), false)
-            setOnFocusChangeListener { v, f -> v.background = cardBg(0xFF13203F.toInt(), f); v.animate().scaleX(if (f) 1.03f else 1f).scaleY(if (f) 1.03f else 1f).setDuration(120).start() }
-            setOnClickListener { launch(a) }
-        }
-        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(22f), dp(18f), dp(22f), dp(18f)) }
-        val img = ImageView(this).apply { scaleType = ImageView.ScaleType.FIT_CENTER; setImageDrawable(a.banner ?: a.icon) }
-        row.addView(img, LinearLayout.LayoutParams(0, -1, 1.2f))
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(20f), 0, 0, 0) }
-        col.addView(text(a.label, 24f, Color.WHITE, true))
-        col.addView(text("▶  " + getString(R.string.open), 16f, 0xFF0B1630.toInt(), true).apply {
-            background = GradientDrawable().apply { setColor(Color.WHITE); cornerRadius = dp(22f).toFloat() }
-            setPadding(dp(20f), dp(8f), dp(20f), dp(8f))
-        }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(14f) })
-        row.addView(col, LinearLayout.LayoutParams(0, -1, 1f))
-        card.addView(row, FrameLayout.LayoutParams(-1, -1))
-        return card
+    private fun focusAnim(v: View, f: Boolean, base: Int) {
+        v.background = cardBg(base, f)
+        v.animate().scaleX(if (f) 1.08f else 1f).scaleY(if (f) 1.08f else 1f).setDuration(120).start()
+        v.elevation = if (f) dp(8f).toFloat() else 0f
+    }
+
+    private fun brandTile(a: AppEntry): View = FrameLayout(this).apply {
+        isFocusable = true; isClickable = true
+        background = cardBg(0xFF0E1A3A.toInt(), false)
+        setPadding(dp(3f), dp(3f), dp(3f), dp(3f))
+        setOnFocusChangeListener { v, f -> focusAnim(v, f, 0xFF0E1A3A.toInt()) }
+        setOnClickListener { launch(a) }
+        addView(ImageView(context).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageResource(R.drawable.tile); clipToOutline = true
+            outlineProvider = object : android.view.ViewOutlineProvider() { override fun getOutline(v: View, o: android.graphics.Outline) { o.setRoundRect(0, 0, v.width, v.height, dp(11f).toFloat()) } } },
+            FrameLayout.LayoutParams(-1, -1))
     }
 
     private fun tile(a: AppEntry): View {
         val box = FrameLayout(this).apply {
             isFocusable = true; isClickable = true
             background = cardBg(0xFF1A2440.toInt(), false)
-            setOnFocusChangeListener { v, f -> v.background = cardBg(0xFF1A2440.toInt(), f); v.animate().scaleX(if (f) 1.06f else 1f).scaleY(if (f) 1.06f else 1f).setDuration(120).start() }
+            setPadding(dp(3f), dp(3f), dp(3f), dp(3f))
+            setOnFocusChangeListener { v, f -> focusAnim(v, f, 0xFF1A2440.toInt()) }
             setOnClickListener { launch(a) }
         }
         if (a.banner != null) {
-            box.addView(ImageView(this).apply { scaleType = ImageView.ScaleType.FIT_CENTER; setImageDrawable(a.banner); setPadding(dp(4f), dp(4f), dp(4f), dp(4f)) }, FrameLayout.LayoutParams(-1, -1))
+            box.addView(ImageView(this).apply { scaleType = ImageView.ScaleType.FIT_CENTER; setImageDrawable(a.banner) }, FrameLayout.LayoutParams(-1, -1))
         } else {
             val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
-            col.addView(ImageView(this).apply { setImageDrawable(a.icon) }, LinearLayout.LayoutParams(dp(44f), dp(44f)))
+            col.addView(ImageView(this).apply { setImageDrawable(a.icon) }, LinearLayout.LayoutParams(dp(42f), dp(42f)))
             col.addView(text(a.label, 13f, Color.WHITE, false).apply { maxLines = 1; gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(6f) })
             box.addView(col, FrameLayout.LayoutParams(-1, -1))
         }
         return box
     }
 
-    private fun pill(label: String, onClick: () -> Unit) = text(label, 15f, Color.WHITE, true).apply {
+    private fun navPill(label: String, selected: Boolean, onClick: () -> Unit) = text(label, 17f, Color.WHITE, selected).apply {
         isFocusable = true; isClickable = true
-        setPadding(dp(18f), dp(10f), dp(18f), dp(10f))
-        background = cardBg(0xFF1A2440.toInt(), false)
-        setOnFocusChangeListener { v, f -> v.background = cardBg(0xFF1A2440.toInt(), f) }
+        setPadding(dp(18f), dp(8f), dp(18f), dp(8f))
+        val base = if (selected) 0x33FFFFFF else 0x00000000
+        background = pillBg(false, base)
+        setOnFocusChangeListener { v, f -> v.background = pillBg(f, base); (v as TextView).setTextColor(if (f) 0xFF0A0F1C.toInt() else Color.WHITE) }
         setOnClickListener { onClick() }
+        layoutParams = LinearLayout.LayoutParams(-2, -2).apply { rightMargin = dp(10f) }
+    }
+
+    private fun pillBg(focused: Boolean, base: Int) = GradientDrawable().apply {
+        setColor(if (focused) Color.WHITE else base); cornerRadius = dp(24f).toFloat()
     }
 
     private fun cardBg(color: Int, focused: Boolean) = GradientDrawable().apply {

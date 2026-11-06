@@ -13,4 +13,7 @@
     <string name="cancel">Anile</string>
     <string name="ok">OK</string>
     <string name="no_apps">Pa gen lòt app.</string>
+    <string name="home">Akèy</string>
+    <string name="apps">App</string>
+    <string name="open_now">Louvri kounye a</string>
 </resources>
