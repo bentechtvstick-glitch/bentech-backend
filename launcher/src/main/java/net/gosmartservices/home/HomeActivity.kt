@@ -61,16 +61,24 @@ class HomeActivity : Activity() {
     private lateinit var dots: LinearLayout
     private lateinit var msgBar: TextView
     private var slideIdx = 0
+    private var cached: Pair<AppEntry?, List<AppEntry>>? = null
+    @Volatile private var dirty = true
+    private val pkgReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(c: Context, i: Intent) { dirty = true }
+    }
 
     private fun dp(v: Float) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, resources.displayMetrics).toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         buildUi()
+        registerReceiver(pkgReceiver, android.content.IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED); addAction(Intent.ACTION_PACKAGE_REMOVED); addAction(Intent.ACTION_PACKAGE_CHANGED); addDataScheme("package")
+        })
         // Premye fwa apre box la fin limen: louvri app TV a dirèk
         if (!autoOpened && SystemClock.elapsedRealtime() < 10 * 60_000L) {
             autoOpened = true
-            brands().firstOrNull()?.let { ui.postDelayed({ launch(it) }, 600) }
+            brandIntent()?.let { i -> ui.postDelayed({ openSafe(i) }, 300) }
         }
     }
 
@@ -84,6 +92,8 @@ class HomeActivity : Activity() {
         ui.removeCallbacks(poll); ui.postDelayed(poll, 3 * 60_000L)
         LauncherUpdater.check(this)
     }
+
+    override fun onDestroy() { runCatching { unregisterReceiver(pkgReceiver) }; super.onDestroy() }
 
     override fun onPause() { super.onPause(); ui.removeCallbacks(tick); ui.removeCallbacks(rotate); ui.removeCallbacks(poll) }
 
@@ -176,9 +186,28 @@ class HomeActivity : Activity() {
     private fun row() = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; clipToPadding = false; setPadding(dp(44f), dp(10f), dp(44f), dp(10f)) }
     private fun hscroll(r: LinearLayout) = HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; clipToPadding = false; clipChildren = false; addView(r) }
 
+    /**
+     * Lis app yo: kalkile an aryè plan (pa bloke ekran an), epi kenbe l an memwa. Ekran an parèt touswit ak
+     * dènye lis la; li rebati sèlman si yon app enstale/retire oswa si panel la chanje lis la.
+     */
     private fun refresh() {
-        val brand = brands().firstOrNull()
-        val others = otherApps()
+        cached?.let { render(it.first, it.second) }
+        if (cached != null && !dirty) { focusFirst(); return }
+        dirty = false
+        Thread {
+            val r = runCatching { loadApps() }.getOrNull() ?: return@Thread
+            ui.post { if (!isFinishing) { cached = r; render(r.first, r.second); focusFirst() } }
+        }.start()
+    }
+
+    private fun focusFirst() { (appsRow.getChildAt(0)?.takeIf { it.isFocusable } ?: homePill).requestFocus() }
+
+    private var shownSig = ""
+    private fun render(brand: AppEntry?, others: List<AppEntry>) {
+        val sig = (listOfNotNull(brand?.pkg) + others.map { it.pkg }).joinToString(",")
+        hint.text = if (isDefaultHome()) "" else getString(R.string.set_default, getString(R.string.app_name))
+        if (sig == shownSig && appsRow.childCount > 0) return
+        shownSig = sig
         appsRow.removeAllViews(); moreRow.removeAllViews()
         // Premye ranje: app TV mak la + 6 premye app panel la chwazi yo; rès yo nan dezyèm ranje a
         val first = others.take(6); val rest = others.drop(6)
@@ -190,8 +219,6 @@ class HomeActivity : Activity() {
         moreTitle.visibility = if (rest.isEmpty()) View.GONE else View.VISIBLE
         moreRow.visibility = moreTitle.visibility
         if (others.isEmpty() && brand != null) appsRow.addView(text(getString(R.string.no_apps), 14f, 0xFF93A0BD.toInt(), false).apply { gravity = Gravity.CENTER_VERTICAL }, LinearLayout.LayoutParams(-2, dp(100f)).apply { leftMargin = dp(20f) })
-        hint.text = if (isDefaultHome()) "" else getString(R.string.set_default, getString(R.string.app_name))
-        (appsRow.getChildAt(0)?.takeIf { it.isFocusable } ?: homePill).requestFocus()
     }
 
     private fun focusAnim(v: View, f: Boolean, base: Int) {
@@ -270,20 +297,26 @@ class HomeActivity : Activity() {
         return AppEntry(pkg, ri.loadLabel(pm).toString(), intent, banner, runCatching { ri.loadIcon(pm) }.getOrNull())
     }
 
-    /** Galaxy ak Ben Tech (sa ki enstale yo). */
-    private fun brands(): List<AppEntry> = launchables().filter { it.activityInfo.packageName in BRAND_PKGS }
-        .sortedBy { BRAND_PKGS.indexOf(it.activityInfo.packageName) }.map { entry(it) }
-
-    /** Lòt app admin nan pèmèt nan panel la (pa non), sèlman sa ki enstale. */
-    private fun otherApps(): List<AppEntry> {
+    /** App TV mak la + app panel la pèmèt yo. Non yo chèche an premye; imaj yo chaje sèlman pou app ki chwazi yo. */
+    private fun loadApps(): Pair<AppEntry?, List<AppEntry>> {
+        val pm = packageManager
+        val all = launchables()
+        val brand = all.firstOrNull { it.activityInfo.packageName in BRAND_PKGS }?.let { entry(it) }
         val words = (prefs.getString("apps", null) ?: "YouTube, Netflix").split(',').map { it.trim().lowercase() }.filter { it.isNotEmpty() }
-        if (words.isEmpty()) return emptyList()
-        return launchables().filter { it.activityInfo.packageName !in BRAND_PKGS }.map { entry(it) }
-            .filter { a -> words.any { w -> a.label.lowercase().contains(w) } }
-            .sortedBy { a -> words.indexOfFirst { w -> a.label.lowercase().contains(w) } }
+        if (words.isEmpty()) return brand to emptyList()
+        val others = all.filter { it.activityInfo.packageName !in BRAND_PKGS }
+            .map { it to it.loadLabel(pm).toString().lowercase() }
+            .filter { (_, l) -> words.any { w -> l.contains(w) } }
+            .sortedBy { (_, l) -> words.indexOfFirst { w -> l.contains(w) } }
+            .map { entry(it.first) }
+        return brand to others
     }
 
-    private fun launch(a: AppEntry) = openSafe(Intent(a.intent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    private fun brandIntent(): Intent? = (packageManager.getLeanbackLaunchIntentForPackage(BuildConfig.BRAND_PKG)
+        ?: packageManager.getLaunchIntentForPackage(BuildConfig.BRAND_PKG))?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+
+    // Menm drapo ak launcher Android la: si app la deja louvri an aryè plan, li retounen touswit (li pa rekòmanse)
+    private fun launch(a: AppEntry) = openSafe(Intent(a.intent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED))
 
     private fun openSafe(i: Intent) {
         runCatching { startActivity(i) }.onFailure { runCatching { startActivity(Intent(Settings.ACTION_SETTINGS)) } }
@@ -314,7 +347,7 @@ class HomeActivity : Activity() {
                 ui.post { LauncherUpdater.check(this) }
             }
             val after = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "")
-            if (before != after) ui.post { if (!isFinishing) { refresh(); applyHome() } }
+            if (before != after) ui.post { if (!isFinishing) { dirty = true; refresh(); applyHome() } }
         }.start()
     }
 
