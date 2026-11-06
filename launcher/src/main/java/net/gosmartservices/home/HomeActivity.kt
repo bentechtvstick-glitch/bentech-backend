@@ -103,7 +103,7 @@ class HomeActivity : Activity() {
         hero.addView(ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageResource(R.drawable.hero) },
             FrameLayout.LayoutParams((resources.displayMetrics.widthPixels * 0.6f).toInt(), -1, Gravity.END))
         hero.addView(View(this).apply {
-            background = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(0xFF0A0F1C.toInt(), 0xF00A0F1C.toInt(), 0x400A0F1C, 0x000A0F1C))
+            background = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(0xFF0A0F1C.toInt(), 0xFF0A0F1C.toInt(), 0x990A0F1C.toInt(), 0x000A0F1C))
         }, FrameLayout.LayoutParams(-1, -1))
         hero.addView(View(this).apply {
             background = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(0xFF0A0F1C.toInt(), 0x000A0F1C))
