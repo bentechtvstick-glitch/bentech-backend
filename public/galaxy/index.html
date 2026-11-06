@@ -1304,10 +1304,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <p class="note" style="margin:0 0 8px">Ekri non app yo, separe ak vigil. Box la montre sèlman app ki enstale ladan l epi ki gen youn nan non sa yo. App TV mak la toujou parèt an premye.</p>
         <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="lnSave" type="button">Sove</button><button class="btn" id="lnClear" type="button">Retire PIN lan</button><span class="msg" id="lnMsg"></span></div>
         <div style="border-top:1px solid var(--line);margin:14px 0 10px"></div>
-        <div class="inline" style="gap:10px;flex-wrap:wrap"><h3 style="margin:0">🖼️ Ekran akèy</h3><div class="seg" id="lnBrand" role="radiogroup"><button type="button" data-v="galaxy" class="on">Galaxy Home</button><button type="button" data-v="bentech">Ben Tech Home</button></div></div>
-        <p class="note" style="margin:6px 0 8px">Imaj yo defile nan gwo afich la chak 7 segonn, apre afich mak la. Pi bon gwosè: 1280×560 (oswa 16:9).</p>
-        <div id="lnSlides"></div>
-        <button class="btn small" id="lnAddSlide" type="button">＋ Ajoute yon imaj</button>
+        <div class="inline" style="gap:10px;flex-wrap:wrap"><h3 style="margin:0">📢 Mesaj sou ekran akèy la</h3><div class="seg" id="lnBrand" role="radiogroup"><button type="button" data-v="galaxy" class="on">Galaxy Home</button><button type="button" data-v="bentech">Ben Tech Home</button></div></div>
         <div class="field" style="margin-top:12px"><label for="lnMsgText">📢 Mesaj sou ekran akèy la (kite l vid pou retire l)</label><input type="text" id="lnMsgText" maxlength="200" data-emoji placeholder="Egz: Peman an pou 5 desanm. Mèsi!"></div>
         <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="lnSaveHome" type="button">Sove ekran akèy la</button><span class="msg" id="lnHomeMsg"></span></div>
         <div style="border-top:1px solid var(--line);margin:14px 0 10px"></div>
@@ -3707,6 +3704,7 @@ function lnPaint(r) {
   lnSlidesPaint(); $("#lnMsgText").value = (r.message || {})[lnBr] || ""; lnBoxesPaint();
 }
 function lnSlidesPaint() {
+  if (!$("#lnSlides")) return; // seksyon imaj yo retire nan panel la (mèt la pa bezwen l)
   const L = ((lnData.slides ||= {})[lnBr] ||= []);
   $("#lnSlides").innerHTML = L.map((s, i) => `<div class="li" style="display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;margin-bottom:8px">
     <div style="width:110px;height:62px;border-radius:8px;background:#0b0f1a center/cover no-repeat;${s.imageUrl ? `background-image:url('${esc(s.imageUrl)}')` : ""}"></div>
@@ -3728,11 +3726,10 @@ async function saveLauncher(body, okMsg, msgEl = $("#lnMsg")) {
 }
 $("#lnBrand").addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (!b || !lnData) return;
   lnBr = b.dataset.v; $$("#lnBrand button").forEach((x) => x.classList.toggle("on", x === b)); lnSlidesPaint(); $("#lnMsgText").value = (lnData.message || {})[lnBr] || ""; });
-$("#lnAddSlide").addEventListener("click", () => { if (!lnData) return; const L = (lnData.slides[lnBr] ||= []); if (L.length >= 8) return toast(t("Maks 8 imaj.")); L.push({ imageUrl: "", title: "", text: "" }); lnSlidesPaint(); });
-$("#lnSlides").addEventListener("input", (e) => { const f = e.target.dataset.lnf; if (!f) return; lnData.slides[lnBr][+e.target.dataset.i][f] = e.target.value;
+$("#lnSlides")?.addEventListener("input", (e) => { const f = e.target.dataset.lnf; if (!f) return; lnData.slides[lnBr][+e.target.dataset.i][f] = e.target.value;
   if (f === "imageUrl") { const pv = e.target.closest(".li")?.firstElementChild; if (pv) pv.style.backgroundImage = e.target.value ? `url('${e.target.value.replace(/'/g, "")}')` : ""; } });
-$("#lnSlides").addEventListener("click", (e) => { const d = e.target.closest("[data-lndel]"); if (d) { lnData.slides[lnBr].splice(+d.dataset.lndel, 1); lnSlidesPaint(); } });
-$("#lnSaveHome").addEventListener("click", () => saveLauncher({ brand: lnBr, slides: (lnData?.slides || {})[lnBr] || [], message: $("#lnMsgText").value }, t("Sove ✓ Box yo ap pran chanjman an nan kèk minit."), $("#lnHomeMsg")));
+$("#lnSlides")?.addEventListener("click", (e) => { const d = e.target.closest("[data-lndel]"); if (d) { lnData.slides[lnBr].splice(+d.dataset.lndel, 1); lnSlidesPaint(); } });
+$("#lnSaveHome").addEventListener("click", () => saveLauncher({ brand: lnBr, slides: [], message: $("#lnMsgText").value }, t("Sove ✓ Box yo ap pran chanjman an nan kèk minit."), $("#lnHomeMsg")));
 $("#lnPush").addEventListener("click", () => saveLauncher({ pushUpdate: true }, t("Voye ✓ Box ki sou liy yo ap mete launcher a ajou nan anviwon 3 minit."), $("#lnPushMsg")));
 $("#lnBoxes").addEventListener("click", async (e) => { const b = e.target.closest("[data-lnbox]"); if (!b) return;
   try { lnPaint(await api("DELETE", "/galaxy/launcher/boxes/" + encodeURIComponent(b.dataset.lnbox))); } catch (err) { toast(err.message); } });

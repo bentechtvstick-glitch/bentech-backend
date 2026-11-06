@@ -166,6 +166,7 @@ window.GALAXY_I18N = {
     "📦 Box yo": "📦 Boxes",
     "📤 Voye mizajou launcher a bay tout box yo": "📤 Send launcher update to all boxes",
     "Voye ✓ Box ki sou liy yo ap mete launcher a ajou nan anviwon 3 minit.": "Sent ✓ Online boxes will update the launcher in about 3 minutes.",
+    "📢 Mesaj sou ekran akèy la": "📢 Home screen message",
     "Pa gen chanèl ki koresponn.": "No matching channels.",
     "Chanjman yo poko sove.": "Changes not saved yet.", "Sove. TV a ap aplike l touswit si l online.": "Saved. The TV applies it right away if it's online.",
     // Mesaj
@@ -356,6 +357,7 @@ window.GALAXY_I18N = {
     "📦 Box yo": "📦 Boîtiers",
     "📤 Voye mizajou launcher a bay tout box yo": "📤 Envoyer la mise à jour du launcher à tous les boîtiers",
     "Voye ✓ Box ki sou liy yo ap mete launcher a ajou nan anviwon 3 minit.": "Envoyé ✓ Les boîtiers en ligne mettront le launcher à jour dans environ 3 minutes.",
+    "📢 Mesaj sou ekran akèy la": "📢 Message sur l'écran d'accueil",
     "Pa gen chanèl ki koresponn.": "Aucune chaîne correspondante.",
     "Chanjman yo poko sove.": "Modifications non enregistrées.", "Sove. TV a ap aplike l touswit si l online.": "Enregistré. La TV l'applique tout de suite si elle est en ligne.",
     "Ticker": "Bandeau défilant", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Tous les messages actifs défilent en bas de chaque TV.",
@@ -542,6 +544,7 @@ window.GALAXY_I18N = {
     "📦 Box yo": "📦 Equipos",
     "📤 Voye mizajou launcher a bay tout box yo": "📤 Enviar actualización del launcher a todos los equipos",
     "Voye ✓ Box ki sou liy yo ap mete launcher a ajou nan anviwon 3 minit.": "Enviado ✓ Los equipos en línea actualizarán el launcher en unos 3 minutos.",
+    "📢 Mesaj sou ekran akèy la": "📢 Mensaje en la pantalla de inicio",
     "Pa gen chanèl ki koresponn.": "No hay canales que coincidan.",
     "Chanjman yo poko sove.": "Cambios sin guardar.", "Sove. TV a ap aplike l touswit si l online.": "Guardado. El TV lo aplica al instante si está en línea.",
     "Ticker": "Cintillo", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Todos los mensajes activos se desplazan en la parte inferior de cada TV.",
