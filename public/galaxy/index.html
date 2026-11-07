@@ -3729,14 +3729,14 @@ $("#lnBrand").addEventListener("click", (e) => { const b = e.target.closest("but
 $("#lnSlides")?.addEventListener("input", (e) => { const f = e.target.dataset.lnf; if (!f) return; lnData.slides[lnBr][+e.target.dataset.i][f] = e.target.value;
   if (f === "imageUrl") { const pv = e.target.closest(".li")?.firstElementChild; if (pv) pv.style.backgroundImage = e.target.value ? `url('${e.target.value.replace(/'/g, "")}')` : ""; } });
 $("#lnSlides")?.addEventListener("click", (e) => { const d = e.target.closest("[data-lndel]"); if (d) { lnData.slides[lnBr].splice(+d.dataset.lndel, 1); lnSlidesPaint(); } });
-$("#lnSaveHome").addEventListener("click", () => saveLauncher({ brand: lnBr, slides: [], message: $("#lnMsgText").value }, t("Sove ✓ Box yo ap pran chanjman an nan kèk minit."), $("#lnHomeMsg")));
-$("#lnPush").addEventListener("click", () => saveLauncher({ pushUpdate: true }, t("Voye ✓ Box ki sou liy yo ap mete launcher a ajou nan anviwon 3 minit."), $("#lnPushMsg")));
+$("#lnSaveHome").addEventListener("click", () => saveLauncher({ brand: lnBr, slides: [], message: $("#lnMsgText").value }, t("Sove ✓ Box yo ap pran chanjman an nan 30 segonn."), $("#lnHomeMsg")));
+$("#lnPush").addEventListener("click", () => saveLauncher({ pushUpdate: true }, t("Voye ✓ Box ki sou ekran akèy la ap mete launcher a ajou nan 30 segonn; lòt yo lè yo tounen sou li."), $("#lnPushMsg")));
 $("#lnBoxes").addEventListener("click", async (e) => { const b = e.target.closest("[data-lnbox]"); if (!b) return;
   try { lnPaint(await api("DELETE", "/galaxy/launcher/boxes/" + encodeURIComponent(b.dataset.lnbox))); } catch (err) { toast(err.message); } });
 $("#lnSave").addEventListener("click", () => {
   const pin = $("#lnPin").value.trim();
   if (pin && !/^\d{4,8}$/.test(pin)) return setMsg($("#lnMsg"), t("PIN lan dwe gen 4 a 8 chif."));
-  saveLauncher(pin ? { pin, apps: $("#lnApps").value } : { apps: $("#lnApps").value }, t("Sove ✓ Box yo ap pran chanjman an nan kèk minit."));
+  saveLauncher(pin ? { pin, apps: $("#lnApps").value } : { apps: $("#lnApps").value }, t("Sove ✓ Box yo ap pran chanjman an nan 30 segonn."));
 });
 $("#lnClear").addEventListener("click", () => saveLauncher({ pin: "" }, t("PIN lan retire: paramèt Android yo louvri sou box yo.")));
 async function loadSystem() { loadBills(); loadLauncher(); loadAppUpdate(); loadNotes(); loadAutoBackups(); loadNotify(); loadOwner();
