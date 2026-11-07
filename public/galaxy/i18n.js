@@ -167,6 +167,7 @@ window.GALAXY_I18N = {
     "📤 Voye mizajou launcher a bay tout box yo": "📤 Send launcher update to all boxes",
     "Voye ✓ Box ki sou ekran akèy la ap mete launcher a ajou nan 30 segonn; lòt yo lè yo tounen sou li.": "Sent ✓ Boxes on the home screen update in 30 seconds; others when they return to it.",
     "📢 Mesaj sou ekran akèy la": "📢 Home screen message",
+    "Bouton Home lan pa louvri launcher a sou box sa a. Sou Google TV ak Firestick, fò w itilize ADB.": "The Home button doesn't open the launcher on this box. On Google TV and Fire TV you need ADB.",
     "Pa gen chanèl ki koresponn.": "No matching channels.",
     "Chanjman yo poko sove.": "Changes not saved yet.", "Sove. TV a ap aplike l touswit si l online.": "Saved. The TV applies it right away if it's online.",
     // Mesaj
@@ -358,6 +359,7 @@ window.GALAXY_I18N = {
     "📤 Voye mizajou launcher a bay tout box yo": "📤 Envoyer la mise à jour du launcher à tous les boîtiers",
     "Voye ✓ Box ki sou ekran akèy la ap mete launcher a ajou nan 30 segonn; lòt yo lè yo tounen sou li.": "Envoyé ✓ Les boîtiers sur l'écran d'accueil se mettent à jour en 30 secondes ; les autres quand ils y reviennent.",
     "📢 Mesaj sou ekran akèy la": "📢 Message sur l'écran d'accueil",
+    "Bouton Home lan pa louvri launcher a sou box sa a. Sou Google TV ak Firestick, fò w itilize ADB.": "Le bouton Accueil n'ouvre pas le launcher sur ce boîtier. Sur Google TV et Fire TV, il faut ADB.",
     "Pa gen chanèl ki koresponn.": "Aucune chaîne correspondante.",
     "Chanjman yo poko sove.": "Modifications non enregistrées.", "Sove. TV a ap aplike l touswit si l online.": "Enregistré. La TV l'applique tout de suite si elle est en ligne.",
     "Ticker": "Bandeau défilant", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Tous les messages actifs défilent en bas de chaque TV.",
@@ -545,6 +547,7 @@ window.GALAXY_I18N = {
     "📤 Voye mizajou launcher a bay tout box yo": "📤 Enviar actualización del launcher a todos los equipos",
     "Voye ✓ Box ki sou ekran akèy la ap mete launcher a ajou nan 30 segonn; lòt yo lè yo tounen sou li.": "Enviado ✓ Los equipos en la pantalla de inicio se actualizan en 30 segundos; los demás cuando vuelvan a ella.",
     "📢 Mesaj sou ekran akèy la": "📢 Mensaje en la pantalla de inicio",
+    "Bouton Home lan pa louvri launcher a sou box sa a. Sou Google TV ak Firestick, fò w itilize ADB.": "El botón Inicio no abre el launcher en este equipo. En Google TV y Fire TV se necesita ADB.",
     "Pa gen chanèl ki koresponn.": "No hay canales que coincidan.",
     "Chanjman yo poko sove.": "Cambios sin guardar.", "Sove. TV a ap aplike l touswit si l online.": "Guardado. El TV lo aplica al instante si está en línea.",
     "Ticker": "Cintillo", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Todos los mensajes activos se desplazan en la parte inferior de cada TV.",

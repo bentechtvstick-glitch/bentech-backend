@@ -426,7 +426,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     if (id) {
       const B = boxes(), isNew = !B[id];
       if (isNew && Object.keys(B).length >= 5000) { /* twòp: pa ajoute */ } else {
-        B[id] = { brand, v: Math.max(0, Number(req.query.v) || 0), model: String(req.query.model || "").slice(0, 60), seen: new Date().toISOString(), first: B[id]?.first || new Date().toISOString() };
+        B[id] = { brand, v: Math.max(0, Number(req.query.v) || 0), model: String(req.query.model || "").slice(0, 60), home: req.query.home === "1" ? true : req.query.home === "0" ? false : undefined, os: Math.max(0, Number(req.query.os) || 0) || undefined, seen: new Date().toISOString(), first: B[id]?.first || new Date().toISOString() };
         // Ekri fichye baz done a pi piti posib: yon nouvo box touswit; "dènye fwa" yo sèlman yon fwa chak 10 minit pou TOUT box yo
         if (isNew || Date.now() - boxWrites.get("_all") > 10 * 60_000) { boxWrites.set("_all", Date.now()); db.write().catch(() => {}); }
       }
