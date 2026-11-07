@@ -251,7 +251,9 @@ class HomeActivity : Activity() {
     private var shownSig = ""
     private fun render(brand: AppEntry?, others: List<AppEntry>) {
         val sig = (listOfNotNull(brand?.pkg) + others.map { it.pkg }).joinToString(",")
-        hint.text = if (isDefaultHome()) "" else getString(R.string.set_default, getString(R.string.app_name))
+        // Pa montre kliyan an enstriksyon "Home → Always" (li pa mache sou Google TV / Firestick).
+        // Panel la montre pou chak box si launcher a se ekran akèy la oswa non.
+        hint.text = ""
         if (sig == shownSig && appsRow.childCount > 0) return
         shownSig = sig
         appsRow.removeAllViews(); moreRow.removeAllViews()
@@ -411,7 +413,8 @@ class HomeActivity : Activity() {
         Thread {
             val id = runCatching { Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) }.getOrNull().orEmpty()
             val q = "?brand=" + BuildConfig.BRAND_KEY + "&v=" + BuildConfig.VERSION_CODE + "&id=" + java.net.URLEncoder.encode(id, "UTF-8") +
-                "&model=" + java.net.URLEncoder.encode((android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL).trim(), "UTF-8")
+                "&model=" + java.net.URLEncoder.encode((android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL).trim(), "UTF-8") +
+                "&home=" + (if (isDefaultHome()) "1" else "0") + "&os=" + android.os.Build.VERSION.SDK_INT
             val j = runCatching { http("GET", "/launcher/config$q", null) }.getOrNull() ?: return@Thread
             val before = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "")
             prefs.edit().putInt("cfgV", j.optInt("v", prefs.getInt("cfgV", 0))).putString("apps", j.optString("apps", "YouTube, Netflix")).putBoolean("hasPin", j.optBoolean("hasPin", false))
