@@ -99,6 +99,8 @@ class VodPlayerActivity : AppCompatActivity() {
     private var parentId = 0
     private var resumeNext = true
     private var triedHls = false
+    /** Kont 1 koneksyon: founisè a ka toujou konte chanèl ki te sot jwe a pandan kèk segonn → eseye ankò anvan erè. */
+    private var vodRetries = 0
 
     private val handler = Handler(Looper.getMainLooper())
     private val saveTick = object : Runnable {
@@ -196,6 +198,20 @@ class VodPlayerActivity : AppCompatActivity() {
             }
     }
 
+    /** Premye ti mòso repons founisè a, si se tèks (egz: "Max connections reached"). Null si se videyo. */
+    private fun probe(url: String): String? = runCatching {
+        val c = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+        try {
+            c.connectTimeout = 8000; c.readTimeout = 8000; c.instanceFollowRedirects = true
+            c.setRequestProperty("User-Agent", XtreamApi.USER_AGENT); c.setRequestProperty("Range", "bytes=0-399")
+            val code = c.responseCode
+            val bytes = (if (code >= 400) c.errorStream else c.inputStream)?.use { s -> ByteArray(400).let { buf -> val n = s.read(buf); if (n > 0) buf.copyOf(n) else ByteArray(0) } } ?: ByteArray(0)
+            val printable = bytes.count { it in 9..13 || it in 32..126 }
+            if (bytes.isNotEmpty() && printable > bytes.size * 0.9) "HTTP $code: " + String(bytes).replace(Regex("<[^>]+>"), " ").replace(Regex("\\s+"), " ").trim().take(120)
+            else if (code >= 400) "HTTP $code" else null
+        } finally { c.disconnect() }
+    }.getOrNull()
+
     private fun mediaItem(it: Item): MediaItem = MediaItem.Builder().setMediaId(it.key).setUri(it.url).apply {
         if (it.url.substringBefore('?').endsWith(".m3u8", ignoreCase = true)) setMimeType(MimeTypes.APPLICATION_M3U8)
     }.build()
@@ -225,6 +241,7 @@ class VodPlayerActivity : AppCompatActivity() {
         }
 
         override fun onPlaybackStateChanged(state: Int) {
+            if (state == Player.STATE_READY) vodRetries = 0
             if (state == Player.STATE_ENDED) {
                 markFinished(index)
                 finish()
@@ -247,8 +264,30 @@ class VodPlayerActivity : AppCompatActivity() {
                 p.playWhenReady = true
                 return
             }
-            showError("v${BuildConfig.VERSION_NAME} · ${error.errorCodeName}" +
-                (error.cause?.message?.let { " · " + it.replace(Regex("https?://\\S+"), "[link]").take(160) } ?: ""))
+            // Sèvè founisè a voye yon bagay ki pa videyo (souvan: "max connections"), oswa rezo a koupe:
+            // eseye ankò 3 fwa (3 s, 6 s, 10 s) — tan pou founisè a lage koneksyon ansyen chanèl la.
+            val retryable = error.errorCode in setOf(PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+                PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT)
+            if (retryable && vodRetries < 3 && cur != null) {
+                vodRetries++
+                val pos = p.currentPosition.coerceAtLeast(0L); val at = index
+                lifecycleScope.launch {
+                    kotlinx.coroutines.delay(longArrayOf(3000, 6000, 10000)[vodRetries - 1])
+                    if (player === p && index == at) { p.seekTo(at, pos); p.prepare(); p.playWhenReady = true }
+                }
+                return
+            }
+            val base = "v${BuildConfig.VERSION_NAME} · ${error.errorCodeName}" +
+                (error.cause?.message?.let { " · " + it.replace(Regex("https?://\\S+"), "[link]").take(160) } ?: "")
+            if (error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED && cur != null) {
+                // Gade sa founisè a voye vre a (ti mòso tèks) pou panel la ka di poukisa
+                val url = cur.url
+                lifecycleScope.launch {
+                    val said = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { probe(url) }
+                    showError(base + (said?.let { " · provider: $it" } ?: ""))
+                }
+            } else showError(base)
         }
     }
 
