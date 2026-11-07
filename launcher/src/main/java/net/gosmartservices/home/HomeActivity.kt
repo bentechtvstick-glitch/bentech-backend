@@ -91,6 +91,7 @@ class HomeActivity : Activity() {
         super.onResume()
         refresh()
         resumed = true
+        startWaiter()
         fetchConfig(force = true) // chak fwa ekran akèy la parèt: pran dènye chanjman panel la touswit
         ui.post(tick)
         applyHome()
@@ -107,7 +108,30 @@ class HomeActivity : Activity() {
         resumed = false; ui.removeCallbacks(poll); ui.postDelayed(poll, POLL_BACK) }
 
     /** Pandan ekran akèy la louvri: mande panel la chanjman yo chak 3 minit. */
-    private var resumed = false
+    @Volatile private var resumed = false
+    @Volatile private var waiter: Thread? = null
+
+    /**
+     * Pandan ekran akèy la louvri: rete konekte ak panel la (long-poll). Depi mèt la sove yon bagay nan panel la,
+     * panel la reponn touswit, epi nou pran nouvo konfigirasyon an — chanjman an parèt nan 1–2 segonn.
+     */
+    private fun startWaiter() {
+        if (waiter?.isAlive == true) return
+        waiter = Thread {
+            var fails = 0
+            while (resumed && !isFinishing) {
+                val v = prefs.getInt("cfgV", 0)
+                val c = runCatching { URL(BuildConfig.PANEL_URL + "/launcher/wait?v=$v").openConnection() as HttpURLConnection }.getOrNull()
+                val nv = runCatching {
+                    c!!.connectTimeout = 8000; c.readTimeout = 35_000
+                    JSONObject(c.inputStream.bufferedReader().use { it.readText() }).optInt("v", v)
+                }.also { c?.disconnect() }.getOrNull()
+                if (nv == null) { fails++; Thread.sleep((5_000L * fails).coerceAtMost(30_000L)); continue }
+                fails = 0
+                if (nv != v) { prefs.edit().putInt("cfgV", nv).apply(); fetchConfig(force = true) }
+            }
+        }.apply { isDaemon = true; start() }
+    }
     /** Ekran akèy la louvri: chak 30 segonn. An aryè plan: chak 5 minit (box la rete "sou liy" nan panel la). */
     private val poll = object : Runnable { override fun run() { fetchConfig(force = true); ui.postDelayed(this, if (resumed) POLL_FRONT else POLL_BACK) } }
     /** Gwo afich la: afich mak la, apre sa imaj panel la yo, youn apre lòt. */
@@ -390,7 +414,7 @@ class HomeActivity : Activity() {
                 "&model=" + java.net.URLEncoder.encode((android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL).trim(), "UTF-8")
             val j = runCatching { http("GET", "/launcher/config$q", null) }.getOrNull() ?: return@Thread
             val before = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "")
-            prefs.edit().putString("apps", j.optString("apps", "YouTube, Netflix")).putBoolean("hasPin", j.optBoolean("hasPin", false))
+            prefs.edit().putInt("cfgV", j.optInt("v", prefs.getInt("cfgV", 0))).putString("apps", j.optString("apps", "YouTube, Netflix")).putBoolean("hasPin", j.optBoolean("hasPin", false))
                 .putString("slides", (j.optJSONArray("slides") ?: org.json.JSONArray()).toString()).putString("message", j.optString("message", ""))
                 .putLong("fetchedAt", System.currentTimeMillis()).apply()
             // Panel la peze "Voye mizajou": tcheke touswit (pa tann 6 èdtan)
