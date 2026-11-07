@@ -372,9 +372,14 @@ class HomeActivity : Activity() {
 
         // Anba: 4 gwo bouton
         val row = LinearLayout(this).apply { gravity = Gravity.CENTER }
-        val lp = { LinearLayout.LayoutParams(0, dp(108f), 1f).apply { leftMargin = dp(9f); rightMargin = dp(9f) } }
-        findPkg(listOf("com.android.chrome", "com.google.android.apps.chrome", "org.chromium.chrome", "com.google.android.tvrecommendations"))
-            ?.let { row.addView(bigTile(it.loadIcon(packageManager), null, it.loadLabel(packageManager).toString(), true) { launchPkg(it.packageName) }, lp()) }
+        val lp = { LinearLayout.LayoutParams(0, dp(100f), 1f).apply { leftMargin = dp(7f); rightMargin = dp(7f) } }
+        // Ben Tech TV an premye, apre sa YouTube ak Downloader (sèlman si yo enstale)
+        findPkg(listOf(BuildConfig.BRAND_PKG))
+            ?.let { row.addView(bigTile(it.loadIcon(packageManager), null, it.loadLabel(packageManager).toString(), false) { brandIntent()?.let { i -> openSafe(i) } }, lp()) }
+        findPkg(listOf("com.google.android.youtube.tv", "com.amazon.firetv.youtube", "com.google.android.youtube.googletv", "com.google.android.youtube"))
+            ?.let { row.addView(bigTile(it.loadIcon(packageManager), null, "YouTube", true) { launchPkg(it.packageName) }, lp()) }
+        findPkg(listOf("com.esaba.downloader"))
+            ?.let { row.addView(bigTile(it.loadIcon(packageManager), null, "Downloader", true) { launchPkg(it.packageName) }, lp()) }
         row.addView(bigTile(null, R.drawable.ic_grid, getString(R.string.my_apps), false) { showMyApps() }, lp())
         findPkg(listOf("com.android.vending"))
             ?.let { row.addView(bigTile(it.loadIcon(packageManager), null, "Play Store", true) { launchPkg(it.packageName) }, lp()) }
@@ -401,8 +406,8 @@ class HomeActivity : Activity() {
             setOnFocusChangeListener { v, f -> v.background = bg(f); v.animate().scaleX(if (f) 1.06f else 1f).scaleY(if (f) 1.06f else 1f).setDuration(120).start(); v.elevation = if (f) dp(8f).toFloat() else 0f }
             setOnClickListener { onClick() }
         }
-        box.addView(ImageView(this).apply { if (icon != null) setImageDrawable(icon) else setImageResource(vec!!) }, LinearLayout.LayoutParams(dp(46f), dp(46f)))
-        box.addView(text(label, 16f, if (light) 0xFF1A2440.toInt() else Color.WHITE, !light).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(6f) })
+        box.addView(ImageView(this).apply { if (icon != null) setImageDrawable(icon) else setImageResource(vec!!) }, LinearLayout.LayoutParams(dp(42f), dp(42f)))
+        box.addView(text(label, 14f, if (light) 0xFF1A2440.toInt() else Color.WHITE, !light).apply { gravity = Gravity.CENTER; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END; setPadding(dp(6f), 0, dp(6f), 0) }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(6f) })
         return box
     }
 
