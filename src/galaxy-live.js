@@ -447,6 +447,17 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     if (ok) unlockHits.delete(ip);
     res.json({ ok });
   });
+  // Long-poll: box ki sou ekran akèy la rete konekte (jiska 25 s). Depi panel la sove yon chanjman, nou reponn
+  // yo tout touswit → chanjman an rive sou box la nan 1–2 segonn olye 30.
+  const lnWaiters = new Set();
+  const lnNotify = () => { const v = Number(launcherCfg().v) || 0; for (const w of lnWaiters) { clearTimeout(w.t); try { w.res.json({ v }); } catch {} } lnWaiters.clear(); };
+  app.get("/api/launcher/wait", (req, res) => {
+    const L = launcherCfg(), cur = Number(L.v) || 0;
+    if ((Number(req.query.v) || 0) !== cur || lnWaiters.size >= 5000) return res.json({ v: cur });
+    const w = { res, t: setTimeout(() => { lnWaiters.delete(w); res.json({ v: cur }); }, 25_000) };
+    lnWaiters.add(w);
+    req.on("close", () => { clearTimeout(w.t); lnWaiters.delete(w); });
+  });
   const launcherView = () => {
     const L = launcherCfg();
     const list = Object.entries(boxes()).map(([id, b]) => ({ id, ...b, online: Date.now() - Date.parse(b.seen || 0) < 8 * 60_000 }))
@@ -479,6 +490,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     }
     L.v = (Number(L.v) || 0) + 1;
     await db.write();
+    lnNotify();
     res.json(launcherView());
   });
 
