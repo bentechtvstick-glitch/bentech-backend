@@ -554,6 +554,11 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .nt-pop .lock{top:18px;right:16px}
 .nt-pop::before{top:-9px;left:12px}.nt-pop::after{top:9px;left:26px}
 @media (prefers-reduced-motion:reduce){.nt-pop,.nt-ov,.nt-pop.closing{animation:none!important}}
+
+/* Tèks ki twò long (egz: playlist): lè sourit la sou li, li defile pou w ka li tout */
+.mqbox{overflow:hidden;white-space:nowrap;min-width:0;display:block}
+.mqbox .mq{display:inline-block;transition:transform 0s}
+.mqbox.run .mq{transition:transform var(--mqdur,4s) linear;transform:translateX(var(--mqx,0))}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Audiowide&family=Bangers&family=Bebas+Neue&family=Great+Vibes&family=Lobster&family=Orbitron:wght@700&family=Oswald:wght@700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,800;1,800&family=Righteous&family=Russo+One&family=Teko:wght@600&display=swap">
@@ -1713,7 +1718,7 @@ function renderDevice() {
     $("#dvCounts").textContent = `📺 ${nf(dev.channelCount)} ${t("chanèl")} · 🎬 ${nf(vc.movies)} ${t("fim")} · 🎞️ ${nf(vc.series)} ${t("seri")}`; } $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : ""; $("#dvBlocked").checked = !!dev.blocked; const lim = Number(dev.providerMaxConn) || 0; $("#dvLimit").textContent = lim ? t("{0} koneksyon", lim) : "—";
   $("#dvLimitNote").textContent = lim ? t("Kantite TV ki ka gade an menm tan ak kont sa a, selon founisè playlist la.") : t("Poko konnen: TV a voye l lè l louvri app la (1.0.90+), oswa peze ⚡ Teste sou playlist la.");
   $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${String(c.name).toUpperCase() === String(dev.customer || "").toUpperCase() ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
-  $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span> <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
+  $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow mqbox"><span class="mq"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span> <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
 }
 /** Menm règ nimewo ak app la (1.0.165+): nimewo founisè a si yo nòmal, sinon 1, 2, 3… sou chanèl vizib yo, nan lòd founisè a. */
 function tvNumbers(list) {
@@ -1912,6 +1917,14 @@ $("#rbSave").addEventListener("click", async () => {
     bug: { on: $("#rbBugOn").checked, imageUrl: $("#rbBugUrl").value.trim(), text: $("#rbBugText").value.trim(), position: $("#rbBugPos").value, size: +$("#rbBugSize").value, opacity: 90 } };
   try { rbData = await api("PUT", "/reseller/brand", body); rbPaint(); setMsg($("#rbMsg"), t("Sove ✓ TV ou yo mete yo ajou touswit."), true); }
   catch (err) { setMsg($("#rbMsg"), err.message); }
+});
+
+// Defile tèks ki koupe yo (playlist) lè sourit la pase sou yo
+document.addEventListener("mouseover", (e) => {
+  const box = e.target.closest?.(".mqbox"); if (!box || box.classList.contains("run")) return;
+  const over = box.scrollWidth - box.clientWidth; if (over <= 4) return;
+  box.style.setProperty("--mqx", -over - 12 + "px"); box.style.setProperty("--mqdur", Math.max(2, over / 45) + "s"); box.classList.add("run");
+  box.addEventListener("mouseleave", () => box.classList.remove("run"), { once: true });
 });
 let devicesCache = [];
 let linkFrom = null; // aparèy DVC n ap konekte ak yon MAC
