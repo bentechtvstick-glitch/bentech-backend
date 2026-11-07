@@ -4,4 +4,6 @@
     <string name="tagline" translatable="false">Live TV, Movies &amp; Series.</string>
     <bool name="stars_bg">false</bool>
     <bool name="full_hero">true</bool>
+    <string name="fx_x" translatable="false">0.728</string>
+    <string name="fx_y" translatable="false">0.385</string>
 </resources>

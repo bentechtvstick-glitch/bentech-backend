@@ -4,4 +4,6 @@
     <string name="tagline" translatable="false">More Channels. A Bigger World.</string>
     <bool name="stars_bg">false</bool>
     <bool name="full_hero">true</bool>
+    <string name="fx_x" translatable="false">0.760</string>
+    <string name="fx_y" translatable="false">0.353</string>
 </resources>

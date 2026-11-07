@@ -61,6 +61,7 @@ class HomeActivity : Activity() {
     private lateinit var dots: LinearLayout
     private lateinit var msgBar: TextView
     private var slideIdx = 0
+    private var heroFx: HeroFx? = null
     private val starsBg by lazy { resources.getBoolean(R.bool.stars_bg) }
     /** Galaxy: gwo afich la se imaj konplè mak la (planèt, G, non an deja ladan l), sou tout lajè ekran an. */
     private val fullHero by lazy { resources.getBoolean(R.bool.full_hero) }
@@ -93,13 +94,14 @@ class HomeActivity : Activity() {
         ui.post(tick)
         applyHome()
         ui.removeCallbacks(rotate); ui.postDelayed(rotate, 7000)
+        heroFx?.start()
         ui.removeCallbacks(poll); ui.postDelayed(poll, 3 * 60_000L)
         LauncherUpdater.check(this)
     }
 
     override fun onDestroy() { runCatching { unregisterReceiver(pkgReceiver) }; super.onDestroy() }
 
-    override fun onPause() { super.onPause(); ui.removeCallbacks(tick); ui.removeCallbacks(rotate); ui.removeCallbacks(poll) }
+    override fun onPause() { super.onPause(); heroFx?.stop(); ui.removeCallbacks(tick); ui.removeCallbacks(rotate); ui.removeCallbacks(poll) }
 
     /** Pandan ekran akèy la louvri: mande panel la chanjman yo chak 3 minit. */
     private val poll = object : Runnable { override fun run() { fetchConfig(force = true); ui.postDelayed(this, 3 * 60_000L) } }
@@ -145,6 +147,11 @@ class HomeActivity : Activity() {
         hero.addView(heroImg, FrameLayout.LayoutParams(if (fullHero) -1 else brandHeroW(), -1, Gravity.END).apply { if (starsBg) { topMargin = dp(52f); rightMargin = dp(40f); bottomMargin = dp(4f) } })
         heroFade = View(this).apply { background = if (starsBg || fullHero) null else fade(true) }
         hero.addView(heroFade, FrameLayout.LayoutParams(-1, -1))
+        // Animasyon (zetwal, limyè G a) sou afich mak la
+        if (fullHero) {
+            heroFx = HeroFx(this, getString(R.string.fx_x).toFloat(), getString(R.string.fx_y).toFloat())
+            hero.addView(heroFx, FrameLayout.LayoutParams(-1, -1))
+        }
         if (!starsBg) hero.addView(View(this).apply {
             background = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(bgColor, bgColor and 0x00FFFFFF))
         }, FrameLayout.LayoutParams(-1, dp(60f), Gravity.BOTTOM))
@@ -435,9 +442,11 @@ class HomeActivity : Activity() {
             titleA.text = words[0]; titleA.setTextSize(TypedValue.COMPLEX_UNIT_SP, 38f)
             titleB.text = words.getOrElse(1) { "" }; titleB.visibility = if (words.size > 1) View.VISIBLE else View.GONE
             tagline.text = getString(R.string.tagline); tagline.visibility = View.VISIBLE
+            heroFx?.visibility = View.VISIBLE
             if (fullHero) { titleA.visibility = View.GONE; titleB.visibility = View.GONE; tagline.visibility = View.GONE } else titleA.visibility = View.VISIBLE
         } else {
             // Imaj panel la: tout lajè a, ak tit/tèks si genyen
+            heroFx?.visibility = View.GONE
             heroImg.setImageBitmap(bmp)
             heroImg.layoutParams = (heroImg.layoutParams as FrameLayout.LayoutParams).apply { width = -1 }
             heroFade.background = fade(s.title.isNotEmpty() || s.text.isNotEmpty())
