@@ -90,21 +90,26 @@ class HomeActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refresh()
-        fetchConfig()
+        resumed = true
+        fetchConfig(force = true) // chak fwa ekran akèy la parèt: pran dènye chanjman panel la touswit
         ui.post(tick)
         applyHome()
         ui.removeCallbacks(rotate); ui.postDelayed(rotate, 7000)
         heroFx?.start()
-        ui.removeCallbacks(poll); ui.postDelayed(poll, 3 * 60_000L)
+        ui.removeCallbacks(poll); ui.postDelayed(poll, POLL_FRONT)
         LauncherUpdater.check(this)
     }
 
     override fun onDestroy() { runCatching { unregisterReceiver(pkgReceiver) }; super.onDestroy() }
 
-    override fun onPause() { super.onPause(); heroFx?.stop(); ui.removeCallbacks(tick); ui.removeCallbacks(rotate); ui.removeCallbacks(poll) }
+    override fun onPause() { super.onPause(); heroFx?.stop(); ui.removeCallbacks(tick); ui.removeCallbacks(rotate)
+        // An aryè plan (kliyan an ap gade TV): kontinye pale ak panel la, men pi ralanti
+        resumed = false; ui.removeCallbacks(poll); ui.postDelayed(poll, POLL_BACK) }
 
     /** Pandan ekran akèy la louvri: mande panel la chanjman yo chak 3 minit. */
-    private val poll = object : Runnable { override fun run() { fetchConfig(force = true); ui.postDelayed(this, 3 * 60_000L) } }
+    private var resumed = false
+    /** Ekran akèy la louvri: chak 30 segonn. An aryè plan: chak 5 minit (box la rete "sou liy" nan panel la). */
+    private val poll = object : Runnable { override fun run() { fetchConfig(force = true); ui.postDelayed(this, if (resumed) POLL_FRONT else POLL_BACK) } }
     /** Gwo afich la: afich mak la, apre sa imaj panel la yo, youn apre lòt. */
     private val rotate = object : Runnable { override fun run() {
         val n = slides().size + 1
@@ -392,7 +397,7 @@ class HomeActivity : Activity() {
             val upd = j.optString("updateAt", "")
             if (upd.isNotEmpty() && upd != prefs.getString("updSeen", "")) {
                 prefs.edit().putString("updSeen", upd).putLong("updCheck", 0L).apply()
-                ui.post { LauncherUpdater.check(this) }
+                ui.post { if (resumed) LauncherUpdater.check(this) } // sinon: l ap fèt lè ekran akèy la parèt
             }
             val after = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "")
             if (before != after) ui.post { if (!isFinishing) { dirty = true; refresh(); applyHome() } }
@@ -536,6 +541,8 @@ class HomeActivity : Activity() {
 
     companion object {
         private val BRAND_PKGS = listOf(BuildConfig.BRAND_PKG)
+        private const val POLL_FRONT = 30_000L
+        private const val POLL_BACK = 5 * 60_000L
         @Volatile private var autoOpened = false
     }
 }
