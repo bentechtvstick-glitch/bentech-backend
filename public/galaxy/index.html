@@ -1311,6 +1311,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div style="border-top:1px solid var(--line);margin:14px 0 10px"></div>
         <div class="inline" style="gap:10px;flex-wrap:wrap"><h3 style="margin:0">📢 Mesaj sou ekran akèy la</h3><div class="seg" id="lnBrand" role="radiogroup"><button type="button" data-v="galaxy" class="on">Galaxy Home</button><button type="button" data-v="bentech">Ben Tech Home</button></div></div>
         <div class="field" style="margin-top:12px"><label for="lnMsgText">📢 Mesaj sou ekran akèy la (kite l vid pou retire l)</label><input type="text" id="lnMsgText" maxlength="200" data-emoji placeholder="Egz: Peman an pou 5 desanm. Mèsi!"></div>
+        <div class="field" id="lnContactsF"><label for="lnContacts">☎️ Kontak sou ekran akèy la (Ben Tech Home) — yon liy pou chak</label><textarea id="lnContacts" rows="5" maxlength="560" placeholder="tel: 39129696&#10;whatsapp: 9295962897&#10;adrès: Rue normande #28 | Jacmel, Haiti"></textarea><span class="note">Kòmanse chak liy ak <b>tel:</b>, <b>whatsapp:</b> oswa <b>adrès:</b>. "|" = nouvo liy. Vid = kontak ki vin ak app la.</span></div>
         <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="lnSaveHome" type="button">Sove ekran akèy la</button><span class="msg" id="lnHomeMsg"></span></div>
         <div style="border-top:1px solid var(--line);margin:14px 0 10px"></div>
         <h3 style="margin:0 0 6px">📦 Box yo</h3>
@@ -3714,7 +3715,7 @@ $("#blSave").addEventListener("click", async () => {
 let lnData = null, lnBr = "galaxy";
 function lnPaint(r) {
   lnData = r; $("#lnApps").value = r.apps || ""; $("#lnState").textContent = r.hasPin ? t("🔒 PIN mete") : t("⚠️ Poko gen PIN");
-  lnSlidesPaint(); $("#lnMsgText").value = (r.message || {})[lnBr] || ""; lnBoxesPaint();
+  lnSlidesPaint(); $("#lnMsgText").value = (r.message || {})[lnBr] || ""; lnContactsPaint(); lnBoxesPaint();
 }
 function lnSlidesPaint() {
   if (!$("#lnSlides")) return; // seksyon imaj yo retire nan panel la (mèt la pa bezwen l)
@@ -3725,6 +3726,7 @@ function lnSlidesPaint() {
       <div class="inline" style="gap:6px"><input type="text" data-lnf="title" data-i="${i}" value="${esc(s.title)}" maxlength="60" placeholder="${esc(t("Tit (opsyonèl)"))}" class="grow"><input type="text" data-lnf="text" data-i="${i}" value="${esc(s.text)}" maxlength="120" placeholder="${esc(t("Tèks (opsyonèl)"))}" class="grow"></div></div>
     <button class="btn small red" type="button" data-lndel="${i}">${t("Efase l")}</button></div>`).join("") || `<div class="empty">${t("Poko gen imaj: se afich mak la sèlman ki parèt.")}</div>`;
 }
+function lnContactsPaint() { $("#lnContactsF").hidden = lnBr !== "bentech"; $("#lnContacts").value = ((lnData || {}).contacts || {})[lnBr] || ""; }
 function lnBoxesPaint() {
   const B = lnData.boxes || [];
   $("#lnBoxes").innerHTML = B.length ? `<div class="tablewrap"><table><thead><tr><th>${t("Estati")}</th><th>Launcher</th><th>${t("Modèl")}</th><th>${t("Ekran akèy")}</th><th>${t("Vèsyon")}</th><th>${t("Dènye fwa")}</th><th></th></tr></thead><tbody>${B.map((b) => `<tr><td>${b.online ? `<span class="pill p-on">${t("Sou liy")}</span>` : `<span class="pill p-warn">${t("Pa sou liy")}</span>`}</td><td>${b.brand === "bentech" ? "Ben Tech Home" : "Galaxy Home"}</td><td>${esc(b.model || "—")}${b.os ? ` <span class="note">(Android ${esc(String({ 21: 5, 22: 5.1, 23: 6, 24: 7, 25: 7.1, 26: 8, 27: 8.1, 28: 9, 29: 10, 30: 11, 31: 12, 32: 12, 33: 13, 34: 14, 35: 15, 36: 16 }[b.os] || "API " + b.os))})</span>` : ""}</td><td>${b.home === true ? `<span class="pill p-on">${t("Wi")}</span>` : b.home === false ? `<span class="pill p-warn" title="${esc(t("Bouton Home lan pa louvri launcher a sou box sa a. Sou Google TV ak Firestick, fò w itilize ADB."))}">${t("Non")}</span>` : "—"}</td><td>${b.v ? esc(String(b.v)) : "—"}</td><td>${esc(new Date(b.seen).toLocaleString())}</td><td><button class="btn small" type="button" data-lnbox="${esc(b.id)}">${t("Retire")}</button></td></tr>`).join("")}</tbody></table></div>`
@@ -3738,11 +3740,11 @@ async function saveLauncher(body, okMsg, msgEl = $("#lnMsg")) {
   catch (err) { setMsg(msgEl, err.message); }
 }
 $("#lnBrand").addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (!b || !lnData) return;
-  lnBr = b.dataset.v; $$("#lnBrand button").forEach((x) => x.classList.toggle("on", x === b)); lnSlidesPaint(); $("#lnMsgText").value = (lnData.message || {})[lnBr] || ""; });
+  lnBr = b.dataset.v; $$("#lnBrand button").forEach((x) => x.classList.toggle("on", x === b)); lnSlidesPaint(); $("#lnMsgText").value = (lnData.message || {})[lnBr] || ""; lnContactsPaint(); });
 $("#lnSlides")?.addEventListener("input", (e) => { const f = e.target.dataset.lnf; if (!f) return; lnData.slides[lnBr][+e.target.dataset.i][f] = e.target.value;
   if (f === "imageUrl") { const pv = e.target.closest(".li")?.firstElementChild; if (pv) pv.style.backgroundImage = e.target.value ? `url('${e.target.value.replace(/'/g, "")}')` : ""; } });
 $("#lnSlides")?.addEventListener("click", (e) => { const d = e.target.closest("[data-lndel]"); if (d) { lnData.slides[lnBr].splice(+d.dataset.lndel, 1); lnSlidesPaint(); } });
-$("#lnSaveHome").addEventListener("click", () => saveLauncher({ brand: lnBr, slides: [], message: $("#lnMsgText").value }, t("Sove ✓ Box yo ap pran chanjman an nan 30 segonn."), $("#lnHomeMsg")));
+$("#lnSaveHome").addEventListener("click", () => saveLauncher({ brand: lnBr, slides: [], message: $("#lnMsgText").value, ...(lnBr === "bentech" ? { contacts: $("#lnContacts").value } : {}) }, t("Sove ✓ Box yo ap pran chanjman an nan 30 segonn."), $("#lnHomeMsg")));
 $("#lnPush").addEventListener("click", () => saveLauncher({ pushUpdate: true }, t("Voye ✓ Box ki sou ekran akèy la ap mete launcher a ajou nan 30 segonn; lòt yo lè yo tounen sou li."), $("#lnPushMsg")));
 $("#lnBoxes").addEventListener("click", async (e) => { const b = e.target.closest("[data-lnbox]"); if (!b) return;
   try { lnPaint(await api("DELETE", "/galaxy/launcher/boxes/" + encodeURIComponent(b.dataset.lnbox))); } catch (err) { toast(err.message); } });

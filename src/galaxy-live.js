@@ -408,7 +408,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   const DEF_APPS = "YouTube, Netflix";
   const launcherCfg = () => {
     const L = (db.data.launcher ||= { pinHash: "", apps: DEF_APPS });
-    L.slides ||= { galaxy: [], bentech: [] }; L.message ||= { galaxy: "", bentech: "" };
+    L.slides ||= { galaxy: [], bentech: [] }; L.message ||= { galaxy: "", bentech: "" }; L.contacts ||= { galaxy: "", bentech: "" };
     return L;
   };
   const LBRANDS = ["galaxy", "bentech"];
@@ -432,7 +432,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       }
     }
     res.json({ apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, v: Number(L.v) || 0,
-      slides: (L.slides[brand] || []).filter((s) => s.imageUrl), message: String(L.message[brand] || ""), updateAt: String(L.updateAt || "") });
+      slides: (L.slides[brand] || []).filter((s) => s.imageUrl), message: String(L.message[brand] || ""), contacts: String(L.contacts[brand] || ""), updateAt: String(L.updateAt || "") });
   });
   const unlockHits = new Map(); // ip → [lè]
   app.post("/api/launcher/unlock", (req, res) => {
@@ -462,7 +462,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     const L = launcherCfg();
     const list = Object.entries(boxes()).map(([id, b]) => ({ id, ...b, online: Date.now() - Date.parse(b.seen || 0) < 8 * 60_000 }))
       .sort((a, b) => String(b.seen).localeCompare(String(a.seen)));
-    return { apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, slides: L.slides, message: L.message, boxes: list, updateAt: String(L.updateAt || "") };
+    return { apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, slides: L.slides, message: L.message, contacts: L.contacts, boxes: list, updateAt: String(L.updateAt || "") };
   };
   app.get("/api/galaxy/launcher", authenticate, (req, res) => res.json(launcherView()));
   app.delete("/api/galaxy/launcher/boxes/:id", authenticate, async (req, res) => {
@@ -487,6 +487,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       const br = lBrand(b.brand);
       if (Array.isArray(b.slides)) L.slides[br] = b.slides.slice(0, 8).map(cleanSlide).filter((s) => s.imageUrl);
       if (typeof b.message === "string") L.message[br] = b.message.trim().slice(0, 200);
+      if (typeof b.contacts === "string") L.contacts[br] = b.contacts.split("\n").map((s) => s.trim().slice(0, 80)).filter(Boolean).slice(0, 7).join("\n");
     }
     L.v = (Number(L.v) || 0) + 1;
     await db.write();
