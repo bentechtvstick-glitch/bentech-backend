@@ -418,7 +418,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     imageUrl: /^(https?:\/\/|\/media\/)/.test(String(s?.imageUrl || "")) ? String(s.imageUrl).slice(0, 500) : "",
     title: String(s?.title || "").trim().slice(0, 60), text: String(s?.text || "").trim().slice(0, 120),
   });
-  const boxWrites = new Map(); // id → dènye fwa nou sove l (pa ekri fichye a chak 3 minit pou chak box)
+  const boxWrites = new Map([["_all", 0]]); // dènye fwa "dènye fwa box yo" te sove sou disk la
   app.get("/api/launcher/config", (req, res) => {
     const L = launcherCfg(), brand = lBrand(req.query.brand);
     // Box la idantifye tèt li (ANDROID_ID): panel la wè ki box ki gen launcher a, ki vèsyon, epi si l sou liy
@@ -427,8 +427,8 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       const B = boxes(), isNew = !B[id];
       if (isNew && Object.keys(B).length >= 5000) { /* twòp: pa ajoute */ } else {
         B[id] = { brand, v: Math.max(0, Number(req.query.v) || 0), model: String(req.query.model || "").slice(0, 60), seen: new Date().toISOString(), first: B[id]?.first || new Date().toISOString() };
-        const last = boxWrites.get(id) || 0;
-        if (isNew || Date.now() - last > 15 * 60_000) { boxWrites.set(id, Date.now()); db.write().catch(() => {}); }
+        // Ekri fichye baz done a pi piti posib: yon nouvo box touswit; "dènye fwa" yo sèlman yon fwa chak 10 minit pou TOUT box yo
+        if (isNew || Date.now() - boxWrites.get("_all") > 10 * 60_000) { boxWrites.set("_all", Date.now()); db.write().catch(() => {}); }
       }
     }
     res.json({ apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, v: Number(L.v) || 0,
