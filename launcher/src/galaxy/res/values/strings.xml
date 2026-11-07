@@ -6,4 +6,6 @@
     <bool name="full_hero">true</bool>
     <string name="fx_x" translatable="false">0.760</string>
     <string name="fx_y" translatable="false">0.353</string>
+    <bool name="contact_home">false</bool>
+    <string name="default_contacts" translatable="false"></string>
 </resources>

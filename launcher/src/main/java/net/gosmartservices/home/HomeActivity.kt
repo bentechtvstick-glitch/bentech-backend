@@ -62,6 +62,11 @@ class HomeActivity : Activity() {
     private lateinit var msgBar: TextView
     private var slideIdx = 0
     private var heroFx: HeroFx? = null
+    /** Ben Tech: ekran akèy ak gwo logo, kontak biznis la (panel la ka chanje yo) ak 4 gwo bouton. */
+    private val contactHome by lazy { resources.getBoolean(R.bool.contact_home) }
+    private var dateView: TextView? = null
+    private var contactsBox: LinearLayout? = null
+    private var logoTile: View? = null
     private val starsBg by lazy { resources.getBoolean(R.bool.stars_bg) }
     /** Galaxy: gwo afich la se imaj konplè mak la (planèt, G, non an deja ladan l), sou tout lajè ekran an. */
     private val fullHero by lazy { resources.getBoolean(R.bool.full_hero) }
@@ -151,13 +156,17 @@ class HomeActivity : Activity() {
 
     private val tick = object : Runnable {
         override fun run() {
-            clock.text = SimpleDateFormat("EEE d MMM · h:mm a", Locale.getDefault()).format(Date())
+            if (contactHome) {
+                clock.text = SimpleDateFormat("hh:mm a", Locale.US).format(Date())
+                dateView?.text = SimpleDateFormat("MM-dd-yyyy", Locale.US).format(Date())
+            } else clock.text = SimpleDateFormat("EEE d MMM · h:mm a", Locale.getDefault()).format(Date())
             ui.postDelayed(this, 20_000)
         }
     }
 
     // ------------------------------------------------------------ Ekran an (stil Fire TV: meni anlè, gwo afich, ranje app)
     private fun buildUi() {
+        if (contactHome) { buildContactUi(); return }
         val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val scroll = android.widget.ScrollView(this).apply {
             isVerticalScrollBarEnabled = false; isFillViewport = true
@@ -246,7 +255,7 @@ class HomeActivity : Activity() {
         }.start()
     }
 
-    private fun focusFirst() { (appsRow.getChildAt(0)?.takeIf { it.isFocusable } ?: homePill).requestFocus() }
+    private fun focusFirst() { if (contactHome) { logoTile?.requestFocus(); return }; (appsRow.getChildAt(0)?.takeIf { it.isFocusable } ?: homePill).requestFocus() }
 
     private var shownSig = ""
     private fun render(brand: AppEntry?, others: List<AppEntry>) {
@@ -306,6 +315,133 @@ class HomeActivity : Activity() {
             box.addView(col, FrameLayout.LayoutParams(-1, -1))
         }
         return box
+    }
+
+
+    // ------------------------------------------------------------ Ben Tech: ekran kontak
+    private fun buildContactUi() {
+        // Vyou rès kòd la itilize yo (pa sou ekran an) pou lis app yo, mesaj la, elatriye.
+        appsRow = LinearLayout(this); moreRow = LinearLayout(this); moreTitle = TextView(this); homePill = TextView(this)
+        hint = TextView(this); heroImg = ImageView(this); heroFade = View(this); titleA = TextView(this); titleB = TextView(this)
+        tagline = TextView(this); dots = LinearLayout(this)
+
+        val root = FrameLayout(this).apply { setBackgroundColor(0xFF061028.toInt()) }
+        root.addView(ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageResource(R.drawable.screen_bg) }, FrameLayout.LayoutParams(-1, -1))
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(44f), dp(20f), dp(44f), dp(24f)) }
+        root.addView(col, FrameLayout.LayoutParams(-1, -1))
+
+        // Anlè adwat: Wi‑Fi, Bluetooth, èdtan nan yon bwat
+        val top = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL or Gravity.END }
+        top.addView(ImageView(this).apply { setImageResource(R.drawable.ic_wifi); alpha = 0.9f }, LinearLayout.LayoutParams(dp(20f), dp(20f)).apply { rightMargin = dp(12f) })
+        top.addView(ImageView(this).apply { setImageResource(R.drawable.ic_bt); alpha = 0.9f }, LinearLayout.LayoutParams(dp(18f), dp(18f)).apply { rightMargin = dp(24f) })
+        val clk = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; setPadding(dp(18f), dp(6f), dp(18f), dp(6f))
+            background = GradientDrawable().apply { setColor(0x66061028); cornerRadius = dp(10f).toFloat(); setStroke(dp(2f), 0xFF3FB8FF.toInt()) }
+        }
+        clock = text("", 22f, Color.WHITE, true); clk.addView(clock)
+        dateView = text("", 11f, 0xFFE6ECF8.toInt(), true); clk.addView(dateView)
+        top.addView(clk)
+        col.addView(top, LinearLayout.LayoutParams(-1, -2))
+
+        // Mitan: gwo logo agoch (peze l pou louvri Ben Tech TV), liy limyè, kontak adwat
+        val mid = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        val logo = FrameLayout(this).apply {
+            isFocusable = true; isClickable = true; setPadding(dp(6f), dp(6f), dp(6f), dp(6f))
+            setOnFocusChangeListener { v, f ->
+                v.background = if (f) GradientDrawable().apply { setColor(0x223FB8FF); cornerRadius = dp(16f).toFloat(); setStroke(dp(2f), 0xFF3FB8FF.toInt()) } else null
+                v.animate().scaleX(if (f) 1.03f else 1f).scaleY(if (f) 1.03f else 1f).setDuration(150).start()
+            }
+            setOnClickListener { brandIntent()?.let { openSafe(it) } }
+            addView(ImageView(context).apply { setImageResource(R.drawable.logo_big); scaleType = ImageView.ScaleType.FIT_CENTER }, FrameLayout.LayoutParams(-1, -1))
+        }
+        logoTile = logo
+        mid.addView(logo, LinearLayout.LayoutParams(0, -1, 1.05f))
+        mid.addView(View(this).apply {
+            background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0x003FB8FF, 0xFF3FB8FF.toInt(), 0x003FB8FF))
+        }, LinearLayout.LayoutParams(dp(2f), -1).apply { leftMargin = dp(18f); rightMargin = dp(28f); topMargin = dp(20f); bottomMargin = dp(20f) })
+        contactsBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_VERTICAL }
+        mid.addView(contactsBox, LinearLayout.LayoutParams(0, -1, 1f))
+        col.addView(mid, LinearLayout.LayoutParams(-1, 0, 1f))
+
+        // Mesaj panel la
+        msgBar = text("", 15f, 0xFF0A0F1C.toInt(), true).apply {
+            setPadding(dp(16f), dp(7f), dp(16f), dp(7f)); visibility = View.GONE
+            background = GradientDrawable().apply { setColor(0xFFFFD34D.toInt()); cornerRadius = dp(10f).toFloat() }
+        }
+        col.addView(msgBar, LinearLayout.LayoutParams(-2, -2).apply { bottomMargin = dp(10f); gravity = Gravity.CENTER_HORIZONTAL })
+
+        // Anba: 4 gwo bouton
+        val row = LinearLayout(this).apply { gravity = Gravity.CENTER }
+        val lp = { LinearLayout.LayoutParams(0, dp(108f), 1f).apply { leftMargin = dp(9f); rightMargin = dp(9f) } }
+        findPkg(listOf("com.android.chrome", "com.google.android.apps.chrome", "org.chromium.chrome", "com.google.android.tvrecommendations"))
+            ?.let { row.addView(bigTile(it.loadIcon(packageManager), null, it.loadLabel(packageManager).toString(), true) { launchPkg(it.packageName) }, lp()) }
+        row.addView(bigTile(null, R.drawable.ic_grid, getString(R.string.my_apps), false) { showMyApps() }, lp())
+        findPkg(listOf("com.android.vending"))
+            ?.let { row.addView(bigTile(it.loadIcon(packageManager), null, "Play Store", true) { launchPkg(it.packageName) }, lp()) }
+        row.addView(bigTile(null, R.drawable.ic_gear, getString(R.string.settings), false) { askPin() }, lp())
+        col.addView(row, LinearLayout.LayoutParams(-1, -2))
+        setContentView(root)
+        paintContacts()
+    }
+
+    private fun findPkg(pkgs: List<String>): android.content.pm.ApplicationInfo? =
+        pkgs.firstNotNullOfOrNull { p -> runCatching { packageManager.getApplicationInfo(p, 0) }.getOrNull()?.takeIf { packageManager.getLeanbackLaunchIntentForPackage(p) != null || packageManager.getLaunchIntentForPackage(p) != null } }
+
+    private fun launchPkg(p: String) {
+        (packageManager.getLeanbackLaunchIntentForPackage(p) ?: packageManager.getLaunchIntentForPackage(p))
+            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)?.let { openSafe(it) }
+    }
+
+    private fun bigTile(icon: android.graphics.drawable.Drawable?, vec: Int?, label: String, light: Boolean, onClick: () -> Unit): View {
+        val base = if (light) 0xFFF2F4F8.toInt() else 0xCC0E2350.toInt()
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; isFocusable = true; isClickable = true
+            fun bg(f: Boolean) = GradientDrawable().apply { setColor(base); cornerRadius = dp(10f).toFloat(); setStroke(dp(if (f) 3f else 1f), if (f) 0xFF3FB8FF.toInt() else 0x553FB8FF) }
+            background = bg(false)
+            setOnFocusChangeListener { v, f -> v.background = bg(f); v.animate().scaleX(if (f) 1.06f else 1f).scaleY(if (f) 1.06f else 1f).setDuration(120).start(); v.elevation = if (f) dp(8f).toFloat() else 0f }
+            setOnClickListener { onClick() }
+        }
+        box.addView(ImageView(this).apply { if (icon != null) setImageDrawable(icon) else setImageResource(vec!!) }, LinearLayout.LayoutParams(dp(46f), dp(46f)))
+        box.addView(text(label, 16f, if (light) 0xFF1A2440.toInt() else Color.WHITE, !light).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(6f) })
+        return box
+    }
+
+    /** Kontak yo: panel la (Sistèm → Launcher) oswa sa ki vin ak app la. Liy: "tel: …", "whatsapp: …", "adrès: … | …". */
+    private fun paintContacts() {
+        val box = contactsBox ?: return
+        box.removeAllViews()
+        val raw = prefs.getString("contacts", "").orEmpty().ifBlank { getString(R.string.default_contacts) }
+        raw.split('\n').map { it.trim() }.filter { it.isNotEmpty() }.take(7).forEach { line ->
+            val k = line.substringBefore(':').trim().lowercase(); val v = line.substringAfter(':', line).trim()
+            val (icon, color, label) = when {
+                k.startsWith("whats") || k == "wa" -> Triple(R.drawable.ic_phone, 0xFF25D366.toInt(), "WhatsApp: $v")
+                k.startsWith("tel") || k.startsWith("phone") || k.startsWith("telefòn") -> Triple(R.drawable.ic_phone, 0xFF1E6FE8.toInt(), "Tel: $v")
+                k.startsWith("adr") || k.startsWith("addr") || k.startsWith("loc") -> Triple(R.drawable.ic_pin, 0xFF1E6FE8.toInt(), v.replace("|", "\n"))
+                else -> Triple(R.drawable.ic_pin, 0xFF1E6FE8.toInt(), line.replace("|", "\n"))
+            }
+            val r = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+            r.addView(FrameLayout(this).apply {
+                background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(color) }
+                addView(ImageView(context).apply { setImageResource(icon) }, FrameLayout.LayoutParams(dp(18f), dp(18f), Gravity.CENTER))
+            }, LinearLayout.LayoutParams(dp(32f), dp(32f)).apply { rightMargin = dp(14f) })
+            r.addView(text(label, 22f, Color.WHITE, true).apply { setShadowLayer(6f, 0f, 1f, 0xAA000000.toInt()) })
+            box.addView(r, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(7f); bottomMargin = dp(7f) })
+        }
+    }
+
+    /** "My Apps": app TV Ben Tech la + app panel la chwazi yo (san PIN). */
+    private fun showMyApps() {
+        Thread {
+            val r = cached ?: runCatching { loadApps() }.getOrNull() ?: return@Thread
+            val list = listOfNotNull(r.first) + r.second
+            ui.post {
+                if (isFinishing) return@post
+                if (list.isEmpty()) { Toast.makeText(this, R.string.no_apps, Toast.LENGTH_SHORT).show(); return@post }
+                AlertDialog.Builder(this).setTitle(R.string.my_apps)
+                    .setItems(list.map { it.label }.toTypedArray()) { _, i -> launch(list[i]) }
+                    .setNegativeButton(R.string.cancel, null).show()
+            }
+        }.start()
     }
 
     private fun allAppsTile(): View {
@@ -416,9 +552,9 @@ class HomeActivity : Activity() {
                 "&model=" + java.net.URLEncoder.encode((android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL).trim(), "UTF-8") +
                 "&home=" + (if (isDefaultHome()) "1" else "0") + "&os=" + android.os.Build.VERSION.SDK_INT
             val j = runCatching { http("GET", "/launcher/config$q", null) }.getOrNull() ?: return@Thread
-            val before = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "")
+            val before = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "") + "|" + prefs.getString("contacts", "")
             prefs.edit().putInt("cfgV", j.optInt("v", prefs.getInt("cfgV", 0))).putString("apps", j.optString("apps", "YouTube, Netflix")).putBoolean("hasPin", j.optBoolean("hasPin", false))
-                .putString("slides", (j.optJSONArray("slides") ?: org.json.JSONArray()).toString()).putString("message", j.optString("message", ""))
+                .putString("slides", (j.optJSONArray("slides") ?: org.json.JSONArray()).toString()).putString("message", j.optString("message", "")).putString("contacts", j.optString("contacts", ""))
                 .putLong("fetchedAt", System.currentTimeMillis()).apply()
             // Panel la peze "Voye mizajou": tcheke touswit (pa tann 6 èdtan)
             val upd = j.optString("updateAt", "")
@@ -426,7 +562,7 @@ class HomeActivity : Activity() {
                 prefs.edit().putString("updSeen", upd).putLong("updCheck", 0L).apply()
                 ui.post { if (resumed) LauncherUpdater.check(this) } // sinon: l ap fèt lè ekran akèy la parèt
             }
-            val after = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "")
+            val after = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "") + "|" + prefs.getString("contacts", "")
             if (before != after) ui.post { if (!isFinishing) { dirty = true; refresh(); applyHome() } }
         }.start()
     }
@@ -444,6 +580,7 @@ class HomeActivity : Activity() {
     }.getOrDefault(emptyList())
 
     private fun applyHome() {
+        paintContacts()
         val m = prefs.getString("message", "").orEmpty().trim()
         msgBar.text = "📢  $m"; msgBar.visibility = if (m.isEmpty()) View.GONE else View.VISIBLE
         val n = slides().size + 1
@@ -458,6 +595,7 @@ class HomeActivity : Activity() {
         else intArrayOf(0xE60A0F1C.toInt(), 0x800A0F1C.toInt(), 0x000A0F1C, 0x000A0F1C))
 
     private fun showSlide() {
+        if (contactHome) return
         val list = slides()
         dots.removeAllViews()
         if (list.isNotEmpty()) for (i in 0..list.size) dots.addView(View(this).apply {

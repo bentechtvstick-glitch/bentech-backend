@@ -6,4 +6,6 @@
     <bool name="full_hero">true</bool>
     <string name="fx_x" translatable="false">0.728</string>
     <string name="fx_y" translatable="false">0.385</string>
+    <bool name="contact_home">true</bool>
+    <string name="default_contacts" translatable="false">tel: 39129696\ntel: 38409090\nwhatsapp: 9295962897\nwhatsapp: 38409090\nadrès: Rue normande #28|Jacmel, Haiti</string>
 </resources>

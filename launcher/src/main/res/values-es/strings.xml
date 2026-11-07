@@ -16,4 +16,5 @@
     <string name="home">Inicio</string>
     <string name="apps">Apps</string>
     <string name="open_now">Abrir ahora</string>
+    <string name="my_apps">Mis apps</string>
 </resources>
