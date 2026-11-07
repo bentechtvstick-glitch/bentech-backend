@@ -62,6 +62,9 @@ class HomeActivity : Activity() {
     private lateinit var msgBar: TextView
     private var slideIdx = 0
     private val starsBg by lazy { resources.getBoolean(R.bool.stars_bg) }
+    /** Galaxy: gwo afich la se imaj konplè mak la (planèt, G, non an deja ladan l), sou tout lajè ekran an. */
+    private val fullHero by lazy { resources.getBoolean(R.bool.full_hero) }
+    private val bgColor get() = if (fullHero) 0xFF121419.toInt() else 0xFF0A0F1C.toInt()
     private var cached: Pair<AppEntry?, List<AppEntry>>? = null
     @Volatile private var dirty = true
     private val pkgReceiver = object : android.content.BroadcastReceiver() {
@@ -127,7 +130,7 @@ class HomeActivity : Activity() {
         val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val scroll = android.widget.ScrollView(this).apply {
             isVerticalScrollBarEnabled = false; isFillViewport = true
-            if (!starsBg) setBackgroundColor(0xFF0A0F1C.toInt())
+            if (!starsBg) setBackgroundColor(bgColor)
             addView(content)
         }
         // Galaxy: tout ekran an plen zetwal (imaj fon an dèyè tout bagay)
@@ -139,11 +142,11 @@ class HomeActivity : Activity() {
         val hero = FrameLayout(this)
         // Galaxy: G a ak sèk la parèt antye (pa koupe); Ben Tech: imaj la ranpli kote dwat la
         heroImg = ImageView(this).apply { scaleType = if (starsBg) ImageView.ScaleType.FIT_END else ImageView.ScaleType.CENTER_CROP; setImageResource(R.drawable.hero) }
-        hero.addView(heroImg, FrameLayout.LayoutParams(brandHeroW(), -1, Gravity.END).apply { if (starsBg) { topMargin = dp(52f); rightMargin = dp(40f); bottomMargin = dp(4f) } })
-        heroFade = View(this).apply { background = if (starsBg) null else fade(true) }
+        hero.addView(heroImg, FrameLayout.LayoutParams(if (fullHero) -1 else brandHeroW(), -1, Gravity.END).apply { if (starsBg) { topMargin = dp(52f); rightMargin = dp(40f); bottomMargin = dp(4f) } })
+        heroFade = View(this).apply { background = if (starsBg || fullHero) null else fade(true) }
         hero.addView(heroFade, FrameLayout.LayoutParams(-1, -1))
         if (!starsBg) hero.addView(View(this).apply {
-            background = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(0xFF0A0F1C.toInt(), 0x000A0F1C))
+            background = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(bgColor, bgColor and 0x00FFFFFF))
         }, FrameLayout.LayoutParams(-1, dp(60f), Gravity.BOTTOM))
 
         // Meni anlè a
@@ -169,7 +172,7 @@ class HomeActivity : Activity() {
         dots = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         left.addView(dots, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(16f) })
         hero.addView(left, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER_VERTICAL or Gravity.START).apply { topMargin = dp(24f) })
-        content.addView(hero, LinearLayout.LayoutParams(-1, (resources.displayMetrics.heightPixels * 0.36f).toInt()))
+        content.addView(hero, LinearLayout.LayoutParams(-1, (resources.displayMetrics.heightPixels * (if (fullHero) 0.5f else 0.36f)).toInt()))
 
         // ---- Mesaj panel la (pa egzanp: dat peman)
         msgBar = text("", 16f, 0xFF0A0F1C.toInt(), true).apply {
@@ -218,14 +221,17 @@ class HomeActivity : Activity() {
         appsRow.removeAllViews(); moreRow.removeAllViews()
         // Premye ranje: app TV mak la + 6 premye app panel la chwazi yo; rès yo nan dezyèm ranje a
         val first = others.take(6); val rest = others.drop(6)
-        val lp = { i: Int -> LinearLayout.LayoutParams(dp(178f), dp(100f)).apply { if (i > 0) leftMargin = dp(14f) } }
-        if (brand != null) appsRow.addView(brandTile(brand), lp(0))
+        val lp = { i: Int -> LinearLayout.LayoutParams(dp(132f), dp(76f)).apply { if (i > 0) leftMargin = dp(12f) } }
+        val lp2 = { i: Int -> LinearLayout.LayoutParams(dp(150f), dp(78f)).apply { if (i > 0) leftMargin = dp(12f) } }
+        if (brand != null) appsRow.addView(brandTile(brand), LinearLayout.LayoutParams(dp(156f), dp(90f)))
         else appsRow.addView(text(getString(R.string.no_brand, BuildConfig.HOME_TITLE), 15f, Color.WHITE, true))
         first.forEachIndexed { i, a -> appsRow.addView(tile(a), lp(i + 1)) }
-        rest.forEachIndexed { i, a -> moreRow.addView(tile(a), lp(i)) }
+        rest.forEachIndexed { i, a -> moreRow.addView(tile(a), lp2(i)) }
+        // Dènye kat la: "App" — tout app ki sou box la (mande PIN, pou kliyan pa louvri nenpòt bagay)
+        appsRow.addView(allAppsTile(), lp(first.size + 1))
         moreTitle.visibility = if (rest.isEmpty()) View.GONE else View.VISIBLE
         moreRow.visibility = moreTitle.visibility
-        if (others.isEmpty() && brand != null) appsRow.addView(text(getString(R.string.no_apps), 14f, 0xFF93A0BD.toInt(), false).apply { gravity = Gravity.CENTER_VERTICAL }, LinearLayout.LayoutParams(-2, dp(100f)).apply { leftMargin = dp(20f) })
+        if (false && others.isEmpty() && brand != null) appsRow.addView(text(getString(R.string.no_apps), 14f, 0xFF93A0BD.toInt(), false).apply { gravity = Gravity.CENTER_VERTICAL }, LinearLayout.LayoutParams(-2, dp(100f)).apply { leftMargin = dp(20f) })
     }
 
     private fun focusAnim(v: View, f: Boolean, base: Int) {
@@ -262,6 +268,34 @@ class HomeActivity : Activity() {
             box.addView(col, FrameLayout.LayoutParams(-1, -1))
         }
         return box
+    }
+
+    private fun allAppsTile(): View {
+        val box = FrameLayout(this).apply {
+            isFocusable = true; isClickable = true
+            background = cardBg(0xFF2A2D35.toInt(), false)
+            setOnFocusChangeListener { v, f -> focusAnim(v, f, 0xFF2A2D35.toInt()) }
+            setOnClickListener { askPin { showAllApps() } }
+        }
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
+        col.addView(text("▦", 26f, Color.WHITE, true).apply { gravity = Gravity.CENTER })
+        col.addView(text(getString(R.string.apps), 14f, Color.WHITE, false).apply { gravity = Gravity.CENTER })
+        box.addView(col, FrameLayout.LayoutParams(-1, -1))
+        return box
+    }
+
+    /** Apre PIN lan: lis tout app ki enstale (pa egzanp Play Store, Downloader) pou admin nan louvri yo. */
+    private fun showAllApps() {
+        Thread {
+            val pm = packageManager
+            val list = launchables().map { it to it.loadLabel(pm).toString() }.sortedBy { it.second.lowercase() }
+            ui.post {
+                if (isFinishing) return@post
+                AlertDialog.Builder(this).setTitle(R.string.apps)
+                    .setItems(list.map { it.second }.toTypedArray()) { _, i -> launch(entry(list[i].first)) }
+                    .setNegativeButton(R.string.cancel, null).show()
+            }
+        }.start()
     }
 
     private fun navPill(label: String, selected: Boolean, onClick: () -> Unit) = text(label, 17f, Color.WHITE, selected).apply {
@@ -396,11 +430,12 @@ class HomeActivity : Activity() {
         if (s == null || bmp == null) {
             // Afich mak la
             heroImg.setImageResource(R.drawable.hero)
-            heroImg.layoutParams = (heroImg.layoutParams as FrameLayout.LayoutParams).apply { width = brandHeroW() }
-            heroFade.background = if (starsBg) null else fade(true)
+            heroImg.layoutParams = (heroImg.layoutParams as FrameLayout.LayoutParams).apply { width = if (fullHero) -1 else brandHeroW() }
+            heroFade.background = if (starsBg || fullHero) null else fade(true)
             titleA.text = words[0]; titleA.setTextSize(TypedValue.COMPLEX_UNIT_SP, 38f)
             titleB.text = words.getOrElse(1) { "" }; titleB.visibility = if (words.size > 1) View.VISIBLE else View.GONE
             tagline.text = getString(R.string.tagline); tagline.visibility = View.VISIBLE
+            if (fullHero) { titleA.visibility = View.GONE; titleB.visibility = View.GONE; tagline.visibility = View.GONE } else titleA.visibility = View.VISIBLE
         } else {
             // Imaj panel la: tout lajè a, ak tit/tèks si genyen
             heroImg.setImageBitmap(bmp)
@@ -440,7 +475,7 @@ class HomeActivity : Activity() {
         return b
     }
 
-    private fun askPin() {
+    private fun askPin(onOk: () -> Unit = { openSafe(Intent(Settings.ACTION_SETTINGS)) }) {
         val input = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
             gravity = Gravity.CENTER; setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f)
@@ -450,12 +485,12 @@ class HomeActivity : Activity() {
             .setTitle(R.string.pin_title)
             .setView(input)
             .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.ok) { _, _ -> checkPin(input.text.toString()) }
+            .setPositiveButton(R.string.ok) { _, _ -> checkPin(input.text.toString(), onOk) }
             .show()
         input.requestFocus()
     }
 
-    private fun checkPin(pin: String) {
+    private fun checkPin(pin: String, onOk: () -> Unit) {
         Thread {
             val r = runCatching { http("POST", "/launcher/unlock", JSONObject().put("pin", pin).toString()) }
             ui.post {
@@ -463,10 +498,10 @@ class HomeActivity : Activity() {
                 when {
                     j == null -> {
                         // San entènèt: sèlman si panel la pa janm mete PIN
-                        if (!prefs.getBoolean("hasPin", true)) openSafe(Intent(Settings.ACTION_SETTINGS))
+                        if (!prefs.getBoolean("hasPin", true)) onOk()
                         else toast(if (r.exceptionOrNull()?.message == "429") R.string.pin_many else R.string.pin_net)
                     }
-                    j.optBoolean("ok") -> openSafe(Intent(Settings.ACTION_SETTINGS))
+                    j.optBoolean("ok") -> onOk()
                     else -> toast(R.string.pin_wrong)
                 }
             }
