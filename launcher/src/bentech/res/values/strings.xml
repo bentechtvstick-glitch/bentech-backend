@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name" translatable="false">Ben Tech Home</string>
     <string name="tagline" translatable="false">Live TV, Movies &amp; Series.</string>
+    <bool name="stars_bg">false</bool>
 </resources>

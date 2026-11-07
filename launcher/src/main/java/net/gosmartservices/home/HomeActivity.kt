@@ -61,6 +61,7 @@ class HomeActivity : Activity() {
     private lateinit var dots: LinearLayout
     private lateinit var msgBar: TextView
     private var slideIdx = 0
+    private val starsBg by lazy { resources.getBoolean(R.bool.stars_bg) }
     private var cached: Pair<AppEntry?, List<AppEntry>>? = null
     @Volatile private var dirty = true
     private val pkgReceiver = object : android.content.BroadcastReceiver() {
@@ -126,16 +127,22 @@ class HomeActivity : Activity() {
         val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val scroll = android.widget.ScrollView(this).apply {
             isVerticalScrollBarEnabled = false; isFillViewport = true
-            setBackgroundColor(0xFF0A0F1C.toInt()); addView(content)
+            if (!starsBg) setBackgroundColor(0xFF0A0F1C.toInt())
+            addView(content)
         }
+        // Galaxy: tout ekran an plen zetwal (imaj fon an dèyè tout bagay)
+        val root = FrameLayout(this).apply { setBackgroundColor(0xFF04081A.toInt()) }
+        if (starsBg) root.addView(ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageResource(R.drawable.screen_bg) }, FrameLayout.LayoutParams(-1, -1))
+        root.addView(scroll, FrameLayout.LayoutParams(-1, -1))
 
         // ---- Gwo afich la (imaj mak la adwat, tèks agoch)
         val hero = FrameLayout(this)
-        heroImg = ImageView(this).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageResource(R.drawable.hero) }
-        hero.addView(heroImg, FrameLayout.LayoutParams(brandHeroW(), -1, Gravity.END))
-        heroFade = View(this).apply { background = fade(true) }
+        // Galaxy: G a ak sèk la parèt antye (pa koupe); Ben Tech: imaj la ranpli kote dwat la
+        heroImg = ImageView(this).apply { scaleType = if (starsBg) ImageView.ScaleType.FIT_END else ImageView.ScaleType.CENTER_CROP; setImageResource(R.drawable.hero) }
+        hero.addView(heroImg, FrameLayout.LayoutParams(brandHeroW(), -1, Gravity.END).apply { if (starsBg) { topMargin = dp(52f); rightMargin = dp(40f); bottomMargin = dp(4f) } })
+        heroFade = View(this).apply { background = if (starsBg) null else fade(true) }
         hero.addView(heroFade, FrameLayout.LayoutParams(-1, -1))
-        hero.addView(View(this).apply {
+        if (!starsBg) hero.addView(View(this).apply {
             background = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, intArrayOf(0xFF0A0F1C.toInt(), 0x000A0F1C))
         }, FrameLayout.LayoutParams(-1, dp(60f), Gravity.BOTTOM))
 
@@ -180,7 +187,7 @@ class HomeActivity : Activity() {
         content.addView(hscroll(moreRow))
         hint = text("", 13f, 0xFF93A0BD.toInt(), false)
         content.addView(hint, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(48f); topMargin = dp(8f); bottomMargin = dp(16f) })
-        setContentView(scroll)
+        setContentView(root)
     }
 
     private fun row() = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; clipToPadding = false; setPadding(dp(44f), dp(10f), dp(44f), dp(10f)) }
@@ -390,7 +397,7 @@ class HomeActivity : Activity() {
             // Afich mak la
             heroImg.setImageResource(R.drawable.hero)
             heroImg.layoutParams = (heroImg.layoutParams as FrameLayout.LayoutParams).apply { width = brandHeroW() }
-            heroFade.background = fade(true)
+            heroFade.background = if (starsBg) null else fade(true)
             titleA.text = words[0]; titleA.setTextSize(TypedValue.COMPLEX_UNIT_SP, 38f)
             titleB.text = words.getOrElse(1) { "" }; titleB.visibility = if (words.size > 1) View.VISIBLE else View.GONE
             tagline.text = getString(R.string.tagline); tagline.visibility = View.VISIBLE

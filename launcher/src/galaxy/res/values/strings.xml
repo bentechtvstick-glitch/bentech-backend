@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name" translatable="false">Galaxy Home</string>
     <string name="tagline" translatable="false">More Channels. A Bigger World.</string>
+    <bool name="stars_bg">true</bool>
 </resources>
