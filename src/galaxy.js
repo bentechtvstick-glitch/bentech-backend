@@ -526,6 +526,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       const rbBug = rb.bug && rb.bug.on ? buildGraphics({ bug: rb.bug }, { toEpoch: () => 0 }).graphics.bug : null;
       if (gfx.graphics) { if (rbBug) gfx.graphics.bug = rbBug; else delete gfx.graphics.bug; }
     }
+    // Sa TV a montre kounye a pou meteyo (panel la montre l nan lis TV yo)
+    { const w = gfx.graphics?.weather; const f = w ? (Array.isArray(w.list) && w.list.length ? w.list[0] : w) : null;
+      device.lastWx = f && f.temp ? { temp: String(f.temp), icon: String(f.icon || ""), city: String(f.city || ""), rotating: Array.isArray(w.list) && w.list.length > 1, at: Date.now() } : null; }
     const nextEdge = Math.min(tickerEdge, gfx.edge);
 
     const payload = {
