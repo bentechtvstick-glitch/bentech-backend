@@ -542,4 +542,7 @@ app.use((err, req, res, _next) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`BenTech backend running on port ${PORT}`));
+const httpServer = app.listen(PORT, () => console.log(`BenTech backend running on port ${PORT}`));
+// Node koupe yon demann apre 5 minit pa defo: yon videyo piblisite ki monte depi yon telefòn ka pran plis tan.
+httpServer.requestTimeout = 30 * 60_000;
+httpServer.headersTimeout = 65_000;

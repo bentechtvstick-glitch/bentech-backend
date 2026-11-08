@@ -4054,9 +4054,21 @@ upInput.addEventListener("change", async () => {
   const f = upInput.files[0], id = upTarget; if (!f || !id) return;
   const msg = document.querySelector(`[data-upmsg="${id}"]`), btn = document.querySelector(`[data-upload="${id}"]`);
   if (f.size > 80 * 1024 * 1024) { msg.textContent = t("Fichye a twò gwo (maks 80 MB)."); return; }
+  if (f.size > 25 * 1024 * 1024 && /^video/.test(f.type || "")) toast(t("Videyo sa a gwo ({0} MB): li ka pran plizyè minit pou l monte, e li ka bloke sou TV ki fèb. Pi bon: mwens pase 20 MB.", (f.size / 1048576).toFixed(0)));
   btn.disabled = true; msg.textContent = t("Ap telechaje… {0} MB", (f.size / 1048576).toFixed(1));
+  const mb = (f.size / 1048576).toFixed(1);
   try {
-    const r = await fetch(API + "/galaxy/media", { method: "POST", headers: { "Content-Type": f.type || ({ mov: "video/quicktime", m4v: "video/x-m4v", mp4: "video/mp4", webm: "video/webm", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp" }[(f.name.split(".").pop() || "").toLowerCase()] || "application/octet-stream"), Authorization: "Bearer " + token }, body: f });
+    // XHR (pa fetch) pou n ka montre pousantaj la pandan videyo a ap monte
+    const ctype = f.type || ({ mov: "video/quicktime", m4v: "video/x-m4v", mp4: "video/mp4", webm: "video/webm", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp" }[(f.name.split(".").pop() || "").toLowerCase()] || "application/octet-stream");
+    const r = await new Promise((res, rej) => {
+      const x = new XMLHttpRequest(); x.open("POST", API + "/galaxy/media");
+      x.setRequestHeader("Content-Type", ctype); x.setRequestHeader("Authorization", "Bearer " + token);
+      x.upload.onprogress = (ev) => { if (ev.lengthComputable) msg.textContent = t("Ap telechaje… {0} MB", mb) + " · " + Math.floor((ev.loaded / ev.total) * 100) + "%"; };
+      x.onload = () => res({ ok: x.status >= 200 && x.status < 300, status: x.status, json: async () => JSON.parse(x.responseText || "{}") });
+      x.onerror = () => rej(new Error(t("Koneksyon an koupe pandan videyo a t ap monte. Eseye ankò sou WiFi, oswa ak yon videyo pi piti.")));
+      x.ontimeout = x.onerror; x.timeout = 30 * 60_000;
+      x.send(f);
+    });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || t("Erè {0}", r.status));
     const inp = $("#" + id); inp.value = d.url; inp.dispatchEvent(new Event("input", { bubbles: true })); inp.dispatchEvent(new Event("change", { bubbles: true })); msg.textContent = "✓ " + t(inp.dataset.g ? "Imaj la monte epi li sove. TV yo mete yo ajou touswit." : id === "rbBugUrl" ? "Imaj la monte. Peze Sove anba a." : "Fichye a sou panel la. Peze bouton Ajoute a.");
