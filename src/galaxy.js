@@ -428,7 +428,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const ads = (data().mediaAds || []).filter(isActive).filter(forBrand).filter((a) => a.url).map((a) => ({
       id: a.id || hashId(a.url),
       name: String(a.name || ""),
-      type: a.type === "video" || /\.(mp4|m3u8|webm|mkv)(\?|$)/i.test(a.url) ? "video" : "image",
+      type: a.type === "video" || /\.(mp4|m3u8|webm|mkv|mov|m4v)(\?|$)/i.test(a.url) ? "video" : "image",
       url: a.url,
       placement: a.placement || "corner",
       durationSec: Number(a.durationSec) || 10,

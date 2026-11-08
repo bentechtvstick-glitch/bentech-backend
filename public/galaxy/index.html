@@ -3927,7 +3927,7 @@ function gxSave() {
   $("#gxWxTest").addEventListener("click", () => gxWeather(true)); }
 
 // ---- Koupi piblisite (tankou chèn TV) ----
-const isVideoUrl = (u) => /\.(mp4|m3u8|webm|mkv|mov)(\?|$)/i.test(u || "");
+const isVideoUrl = (u) => /\.(mp4|m3u8|webm|mkv|mov|m4v)(\?|$)/i.test(u || "");
 function renderBreakSpots() {
   $("#brList").innerHTML = brSpots.map((a, i) => { const st = adStats[a.id] || {}; const vid = a.type === "video" || isVideoUrl(a.url);
     return `<div class="li tkrow${isOn(a.status) ? "" : " off"}">${sw("media-ads|" + a.id, isOn(a.status))}
@@ -4047,7 +4047,7 @@ let brSaveT = null;
 $("#mtOn").addEventListener("change", (e) => putSettings({ maintenanceMode: e.target.checked, maintenanceMessage: $("#mtMsg").value.trim() }, e.target.checked ? "Tout TV yo an mentenans" : "Mentenans fini"));
 $("#forceRefresh").addEventListener("click", () => putSettings({ forceRefreshAt: new Date().toISOString() }, "Tout TV yo ap rechaje"));
 // Telechaje yon imaj / videyo piblisite dirèk nan panel la: lyen an mete tèt li nan bwat URL la
-const upInput = Object.assign(document.createElement("input"), { type: "file", accept: "image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm", hidden: true });
+const upInput = Object.assign(document.createElement("input"), { type: "file", accept: "image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/quicktime,video/x-m4v,.mov,.m4v,.mp4", hidden: true });
 document.body.appendChild(upInput); let upTarget = null;
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-upload]"); if (!b) return; upTarget = b.dataset.upload; upInput.value = ""; upInput.click(); });
 upInput.addEventListener("change", async () => {
@@ -4056,7 +4056,7 @@ upInput.addEventListener("change", async () => {
   if (f.size > 80 * 1024 * 1024) { msg.textContent = t("Fichye a twò gwo (maks 80 MB)."); return; }
   btn.disabled = true; msg.textContent = t("Ap telechaje… {0} MB", (f.size / 1048576).toFixed(1));
   try {
-    const r = await fetch(API + "/galaxy/media", { method: "POST", headers: { "Content-Type": f.type || "application/octet-stream", Authorization: "Bearer " + token }, body: f });
+    const r = await fetch(API + "/galaxy/media", { method: "POST", headers: { "Content-Type": f.type || ({ mov: "video/quicktime", m4v: "video/x-m4v", mp4: "video/mp4", webm: "video/webm", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp" }[(f.name.split(".").pop() || "").toLowerCase()] || "application/octet-stream"), Authorization: "Bearer " + token }, body: f });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || t("Erè {0}", r.status));
     const inp = $("#" + id); inp.value = d.url; inp.dispatchEvent(new Event("input", { bubbles: true })); inp.dispatchEvent(new Event("change", { bubbles: true })); msg.textContent = "✓ " + t(inp.dataset.g ? "Imaj la monte epi li sove. TV yo mete yo ajou touswit." : id === "rbBugUrl" ? "Imaj la monte. Peze Sove anba a." : "Fichye a sou panel la. Peze bouton Ajoute a.");
@@ -4065,7 +4065,7 @@ upInput.addEventListener("change", async () => {
 });
 $("#adForm").addEventListener("submit", async (e) => {
   e.preventDefault(); const url = $("#adUrl").value.trim(); if (!/^https?:\/\//.test(url)) return toast("Mete yon URL ki kòmanse ak https://");
-  await api("POST", "/media-ads", { url, type: /\.(mp4|m3u8|webm)(\?|$)/i.test(url) ? "video" : "image", placement: $("#adPlace").value, durationSec: +$("#adDur").value || 10, skipAfterSec: 5, status: "Active" });
+  await api("POST", "/media-ads", { url, type: isVideoUrl(url) ? "video" : "image", placement: $("#adPlace").value, durationSec: +$("#adDur").value || 10, skipAfterSec: 5, status: "Active" });
   $("#adUrl").value = ""; loadAds();
 });
 

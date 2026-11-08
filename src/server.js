@@ -133,13 +133,13 @@ function authenticate(req, res, next) {
 // ---------- Imaj / videyo piblisite yo (panel la telechaje yo dirèk, pa bezwen yon lòt sit) ----------
 const MEDIA_DIR = path.join(path.dirname(DB_FILE), "media");
 try { fs.mkdirSync(MEDIA_DIR, { recursive: true }); } catch {}
-const MEDIA_TYPES = { "image/png": "png", "image/jpeg": "jpg", "image/jpg": "jpg", "image/gif": "gif", "image/webp": "webp", "video/mp4": "mp4", "video/webm": "webm" };
+const MEDIA_TYPES = { "image/png": "png", "image/jpeg": "jpg", "image/jpg": "jpg", "image/gif": "gif", "image/webp": "webp", "video/mp4": "mp4", "video/webm": "webm", "video/quicktime": "mov", "video/x-m4v": "m4v" };
 const MEDIA_MAX = 80 * 1024 * 1024;
 app.use("/media", express.static(MEDIA_DIR, { maxAge: "30d", immutable: true }));
 app.post("/api/galaxy/media", authenticate, (req, res) => {
   const type = String(req.headers["content-type"] || "").split(";")[0].trim().toLowerCase();
   const ext = MEDIA_TYPES[type];
-  if (!ext) return res.status(400).json({ error: "Fichye sa a pa aksepte. Chwazi yon imaj (PNG, JPG) oswa yon videyo MP4." });
+  if (!ext) return res.status(400).json({ error: "Fichye sa a pa aksepte. Chwazi yon imaj (PNG, JPG) oswa yon videyo (MP4, MOV)." });
   const len = Number(req.headers["content-length"] || 0);
   if (len > MEDIA_MAX) return res.status(413).json({ error: "Fichye a twò gwo (maks 80 MB)." });
   const name = `${Date.now().toString(36)}-${nanoid(8)}.${ext}`;
@@ -162,7 +162,7 @@ app.post("/api/galaxy/media", authenticate, (req, res) => {
 // Apre yon restore, done yo gen lyen ".../media/<non>" ki la sou ansyen sèvè a sèlman.
 // Sèvè sa a telechaje chak fichye ki manke, sove l nan MEDIA_DIR, epi chanje lyen an pou l pwente sou li menm.
 const OLD_MEDIA_BASE = (process.env.OLD_MEDIA_BASE || "https://bentech-backend.onrender.com").replace(/\/+$/, "");
-const MEDIA_URL_RE = /^https?:\/\/([^/\s]+)\/media\/([A-Za-z0-9_-]+\.(?:png|jpe?g|gif|webp|mp4|webm))$/;
+const MEDIA_URL_RE = /^https?:\/\/([^/\s]+)\/media\/([A-Za-z0-9_-]+\.(?:png|jpe?g|gif|webp|mp4|webm|mov|m4v))$/;
 let mediaMig = { running: false, last: 0, base: "" };
 async function migrateMedia(base) {
   if (mediaMig.running) return;
