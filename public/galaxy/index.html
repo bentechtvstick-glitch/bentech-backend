@@ -1719,7 +1719,23 @@ function renderDevice() {
     $("#dvCounts").textContent = `📺 ${nf(dev.channelCount)} ${t("chanèl")} · 🎬 ${nf(vc.movies)} ${t("fim")} · 🎞️ ${nf(vc.series)} ${t("seri")}`; } $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = [dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : "", dev.lastWx?.temp ? t("Sou TV a kounye a: {0}", `${dev.lastWx.icon || ""} ${dev.lastWx.temp}${dev.lastWx.city ? " · " + dev.lastWx.city : ""}`) : ""].filter(Boolean).join(" · "); $("#dvBlocked").checked = !!dev.blocked; const lim = Number(dev.providerMaxConn) || 0; $("#dvLimit").textContent = lim ? t("{0} koneksyon", lim) : "—";
   $("#dvLimitNote").textContent = lim ? t("Kantite TV ki ka gade an menm tan ak kont sa a, selon founisè playlist la.") : t("Poko konnen: TV a voye l lè l louvri app la (1.0.90+), oswa peze ⚡ Teste sou playlist la.");
   $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${String(c.name).toUpperCase() === String(dev.customer || "").toUpperCase() ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
-  $("#plList").innerHTML = (dev.playlists || []).map((p) => `<div class="li"><span class="grow mqbox"><span class="mq"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span> <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
+  $("#plList").innerHTML = (dev.playlists || []).map((p, i) => `<div class="li"><span class="grow mqbox"><span class="mq"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span> <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>${i === 0 ? providerInfoHtml(dev) : ""}`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
+}
+/** Enfòmasyon kont founisè a (sa TV a li nan sèvè playlist la): estati, ekspirasyon, koneksyon, kreyasyon, esè. */
+function providerInfoHtml(d) {
+  if (!d.providerExpAt && !(Number(d.providerMaxConn) > 0)) return `<div class="note" style="margin:2px 0 10px 4px">${t("Enfòmasyon founisè a ap parèt lè TV a konekte ak playlist la.")}</div>`;
+  const exp = Number(d.providerExp) || 0, nowS = Date.now() / 1000, st = String(d.providerStatus || "");
+  const expired = (exp > 0 && exp < nowS) || st.toLowerCase() === "expired";
+  const days = exp > 0 ? Math.ceil((exp - nowS) / 86400) : null;
+  const fmt = (s) => new Date(s * 1000).toLocaleDateString();
+  const bits = [
+    `<span class="pill ${expired ? "p-warn" : st.toLowerCase() === "active" || !st ? "p-on" : "p-warn"}">${esc(expired ? t("Ekspire") : st || t("Aktif"))}</span>`,
+    exp > 0 ? `📅 ${t("Ekspirasyon")}: <b>${esc(fmt(exp))}</b>${days != null && days >= 0 ? ` <span class="note">(${t("{0} jou", days)})</span>` : ""}` : `📅 ${t("Pa gen dat ekspirasyon")}`,
+    Number(d.providerMaxConn) > 0 ? `🔌 <b>${esc(d.providerMaxConn)}</b> ${t("koneksyon")}` : "",
+    Number(d.providerCreated) > 0 ? `🗓 ${t("Kreye")}: ${esc(fmt(Number(d.providerCreated)))}` : "",
+    d.providerTrial ? `<span class="pill p-warn">${t("Esè (trial)")}</span>` : "",
+  ].filter(Boolean);
+  return `<div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:2px 0 12px 4px;font-size:13px">${bits.join("")}</div>`;
 }
 /** Menm règ nimewo ak app la (1.0.165+): nimewo founisè a si yo nòmal, sinon 1, 2, 3… sou chanèl vizib yo, nan lòd founisè a. */
 function tvNumbers(list) {
