@@ -1300,6 +1300,11 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="list" id="abList"></div>
         <p class="note" style="margin:8px 0 0">Kopi sa yo sou menm disk ak sèvè a: yo pwoteje w si yon bagay efase oswa gate. Telechaje youn sou òdinatè w chak semèn konsa, pou w pwoteje kont yon pàn sèvè.</p>
       </div>
+      <div class="card" id="pvCard">
+        <div class="cardhead"><div><h2>🏢 Founisè yo</h2><p class="sub">Bay chak sèvè playlist yon non (egz: «Mega OTT»). Non an parèt sou chak TV ki itilize sèvè sa a nan paj Devices.</p></div></div>
+        <div id="pvList"></div>
+        <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="pvSave" type="button">Sove</button><span class="msg" id="pvMsg"></span></div>
+      </div>
       <div class="card" id="lnCard">
         <div class="cardhead"><div><h2>📺 Launcher (box Android)</h2><p class="sub">Ekran akèy pou box Android TV ou vann yo. Galaxy Home louvri Galaxy sèlman, Ben Tech Home louvri Ben Tech sèlman, epi yo montre sèlman app ou chwazi yo. PIN lan bloke paramèt Android yo sou tout box yo.</p></div><span class="note" id="lnState"></span></div>
         <div class="row2">
@@ -1719,7 +1724,7 @@ function renderDevice() {
     $("#dvCounts").textContent = `📺 ${nf(dev.channelCount)} ${t("chanèl")} · 🎬 ${nf(vc.movies)} ${t("fim")} · 🎞️ ${nf(vc.series)} ${t("seri")}`; } $("#dvName").value = dev.deviceName || ""; $("#dvCity").value = dev.city || ""; $("#dvGeo").textContent = [dev.geoCity ? t("Selon adrès IP li: {0}", dev.geoCity) : "", dev.lastWx?.temp ? t("Sou TV a kounye a: {0}", `${dev.lastWx.icon || ""} ${dev.lastWx.temp}${dev.lastWx.city ? " · " + dev.lastWx.city : ""}`) : ""].filter(Boolean).join(" · "); $("#dvBlocked").checked = !!dev.blocked; const lim = Number(dev.providerMaxConn) || 0; $("#dvLimit").textContent = lim ? t("{0} koneksyon", lim) : "—";
   $("#dvLimitNote").textContent = lim ? t("Kantite TV ki ka gade an menm tan ak kont sa a, selon founisè playlist la.") : t("Poko konnen: TV a voye l lè l louvri app la (1.0.90+), oswa peze ⚡ Teste sou playlist la.");
   $("#dvCustomer").innerHTML = `<option value="">${t("— Okenn —")}</option>` + customers.map((c) => `<option value="${esc(c.name)}"${String(c.name).toUpperCase() === String(dev.customer || "").toUpperCase() ? " selected" : ""}>${esc(c.name)} (${esc(c.status || "")}${c.expiry ? " · " + esc(c.expiry) : ""})</option>`).join("");
-  $("#plList").innerHTML = (dev.playlists || []).map((p, i) => `<div class="li"><span class="grow mqbox"><span class="mq"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span> <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>${i === 0 ? providerInfoHtml(dev) : ""}`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
+  $("#plList").innerHTML = (dev.playlists || []).map((p, i) => `<div class="li"><span class="grow mqbox"><span class="mq"><b>${esc(p.name)}</b> <span class="pill p-info">${esc(p.type === "m3u" ? "M3U" : p.type === "stalker" ? "Stalker" : "Xtream")}</span>${p.provider ? ` <span class="pill p-on">🏢 ${esc(p.provider)}</span>` : ""} <span class="note">${p.username ? "· " + esc(p.username) : ""}${p.server ? " · " + esc(p.server) : ""}${p.epgUrl ? " · EPG" : ""}</span></span></span><button class="btn small" data-testpl="${esc(p.id)}" type="button">⚡ ${t("Teste")}</button><button class="btn small danger" data-rmpl="${esc(p.id)}" type="button">${t("Retire")}</button></div>${i === 0 ? providerInfoHtml(dev) : ""}`).join("") || `<div class="empty">${t("Pa gen playlist. Ajoute youn anba a — TV a ap konekte poukont li.")}</div>`;
 }
 /** Enfòmasyon kont founisè a (sa TV a li nan sèvè playlist la): estati, ekspirasyon, koneksyon, kreyasyon, esè. */
 function providerInfoHtml(d) {
@@ -1943,6 +1948,20 @@ document.addEventListener("mouseover", (e) => {
   box.style.setProperty("--mqx", -over - 12 + "px"); box.style.setProperty("--mqdur", Math.max(2, over / 45) + "s"); box.classList.add("run");
   box.addEventListener("mouseleave", () => box.classList.remove("run"), { once: true });
 });
+
+// ------------------------------------------------------------ Non founisè yo (pa sèvè playlist)
+async function loadProviders() {
+  try {
+    const L = await api("GET", "/galaxy/provider-hosts");
+    $("#pvList").innerHTML = L.length ? `<div class="tablewrap"><table><thead><tr><th>${t("Sèvè")}</th><th>TV</th><th>${t("Non founisè a")}</th></tr></thead><tbody>${L.map((h) => `<tr><td class="mono">${esc(h.host)}</td><td>${h.tvs}</td><td><input type="text" data-pvh="${esc(h.host)}" value="${esc(h.name)}" maxlength="40" placeholder="${esc(t("Egz: Mega OTT"))}"></td></tr>`).join("")}</tbody></table></div>`
+      : `<div class="empty">${t("Poko gen playlist sou okenn TV.")}</div>`;
+  } catch { $("#pvCard").hidden = true; }
+}
+$("#pvSave").addEventListener("click", async () => {
+  const names = {}; $$("#pvList [data-pvh]").forEach((i) => (names[i.dataset.pvh] = i.value));
+  try { await api("PUT", "/galaxy/provider-names", { names }); setMsg($("#pvMsg"), t("Sove ✓"), true); devicesCache = []; }
+  catch (err) { setMsg($("#pvMsg"), err.message); }
+});
 let devicesCache = [];
 let linkFrom = null; // aparèy DVC n ap konekte ak yon MAC
 const DEV_MODELS = [
@@ -1988,7 +2007,7 @@ function renderDevTable() {
       const st = d.blocked ? `<span class="st-block">${t("Bloke")}</span>` : !(d.playlists || []).length ? (d.galaxy ? `<span class="st-off" title="${esc(t("TV a sou ekran aktivasyon an: ajoute yon playlist pou l konekte."))}">⏳ ${esc(t("Ap tann aktivasyon"))}</span>` : `<span class="st-off" title="${esc(t("Pa konfigire"))}">—</span>`) : `<span class="${online ? "st-on" : "st-off"}">${t(online ? "Online" : "Offline")}</span>`;
       const key = d.galaxy ? `data-mac="${esc(d.mac)}"` : `data-id="${esc(d.deviceId)}"`;
       return `<tr class="click${dev && d.galaxy && dev.mac === d.mac ? " sel" : ""}" ${key}><td class="mono">${d.galaxy ? esc(d.mac) : "-"}</td><td>${esc(shortId(d))}</td><td>${esc(d.model ? devType(d.model) : (d.type || "Android TV"))}${d.brand === "bentech" ? ` <span class="pill" style="background:#fff3d6;color:#8a5a00;border:1px solid #f3c35a;font-size:11px;padding:1px 6px;border-radius:9px;white-space:nowrap">Ben Tech</span>` : ""}</td><td>${st}</td><td>${wxCell(d)}</td>
-        <td>${d.playlists.map((p) => esc(p.name)).join(", ") || t("Pa konfigire")}</td><td>${d.galaxy ? devExpHtml(d) : "—"}</td><td>${esc(d.lastSeen || "—")}</td><td>${Number(d.providerMaxConn) > 0 ? esc(d.providerMaxConn) : "—"}</td>
+        <td>${d.playlists.map((p) => esc(p.name) + (p.provider ? ` <span class="pill p-info" title="${esc(t("Founisè"))}">🏢 ${esc(p.provider)}</span>` : "")).join(", ") || t("Pa konfigire")}</td><td>${d.galaxy ? devExpHtml(d) : "—"}</td><td>${esc(d.lastSeen || "—")}</td><td>${Number(d.providerMaxConn) > 0 ? esc(d.providerMaxConn) : "—"}</td>
         <td class="acts"><button class="btn purple" data-act="provider" type="button">${t("Ajoute provider")}</button><button class="btn ${d.blocked ? "red" : "green"}" data-act="${d.blocked ? "activate" : "block"}" type="button" title="${esc(t(d.blocked ? "Klike pou aktive aparèy la" : "Klike pou dezaktive aparèy la"))}">${t(d.blocked ? "Dezaktive" : "Aktif")}</button><button class="btn red" data-act="delete" type="button">${t("Efase l")}</button></td></tr>`;
     }).join("") + `</tbody></table>` + moreHtml("dev", devices.length)
     : `<div class="empty">${q ? t("Pa gen anyen ki koresponn.") : t("Pa gen aparèy Galaxy ankò. Louvri app la sou yon TV pou l parèt isit la.")}</div>`);
@@ -3776,7 +3795,7 @@ $("#lnSave").addEventListener("click", () => {
   saveLauncher(pin ? { pin, apps: $("#lnApps").value } : { apps: $("#lnApps").value }, t("Sove ✓ Box yo ap pran chanjman an nan 30 segonn."));
 });
 $("#lnClear").addEventListener("click", () => saveLauncher({ pin: "" }, t("PIN lan retire: paramèt Android yo louvri sou box yo.")));
-async function loadSystem() { loadBills(); loadLauncher(); loadAppUpdate(); loadNotes(); loadAutoBackups(); loadNotify(); loadOwner();
+async function loadSystem() { loadBills(); loadLauncher(); loadProviders(); loadAppUpdate(); loadNotes(); loadAutoBackups(); loadNotify(); loadOwner();
   loadSysStats();
   settings = await api("GET", "/settings").catch(() => ({}));
   $("#mtOn").checked = !!settings.maintenanceMode; $("#mtMsg").value = settings.maintenanceMessage || "";
