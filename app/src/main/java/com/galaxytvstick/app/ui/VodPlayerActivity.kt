@@ -241,7 +241,7 @@ class VodPlayerActivity : AppCompatActivity() {
         }
 
         override fun onPlaybackStateChanged(state: Int) {
-            if (state == Player.STATE_READY) vodRetries = 0
+            if (state == Player.STATE_READY) { vodRetries = 0; player?.videoFormat?.frameRate?.let { Afr.apply(this@VodPlayerActivity, it, prefs.afr) } }
             if (state == Player.STATE_ENDED) {
                 markFinished(index)
                 finish()

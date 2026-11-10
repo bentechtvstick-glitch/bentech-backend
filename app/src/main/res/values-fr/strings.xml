@@ -225,4 +225,5 @@
     <string name="captions_none">Cette vidéo n\'a pas de sous-titres (CC). Essayez une chaîne US (CNN, ABC…) ou un film sous-titré.</string>
     <string name="search_kbd_key">⌨️ Clavier</string>
     <string name="vod_new_releases">🆕 Nouveautés</string>
+    <string name="set_afr">Mouvement fluide (AFR, fréquence auto) : %1$s</string>
 </resources>

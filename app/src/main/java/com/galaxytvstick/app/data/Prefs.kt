@@ -90,6 +90,11 @@ class Prefs(context: Context) {
         get() = sp.getString("parental_pin", "") ?: ""
         set(value) = sp.edit().putString("parental_pin", value).apply()
 
+    /** AFR: chanje vitès ekran TV a pou l matche vitès chanèl la (mouvman pi lis). Limen pa defo. */
+    var afr: Boolean
+        get() = sp.getBoolean("afr", true)
+        set(value) = sp.edit().putBoolean("afr", value).apply()
+
     /** Louvri app la pou kont li lè Fire Stick la limen. */
     var autoStart: Boolean
         get() = sp.getBoolean("auto_start", false)

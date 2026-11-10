@@ -248,4 +248,5 @@
     <string name="captions_none">Videyo sa a pa gen soutit (CC). Eseye yon chanèl US (CNN, ABC…) oswa yon fim ki gen soutit.</string>
     <string name="search_kbd_key">⌨️ Klavye</string>
     <string name="vod_new_releases">🆕 Dènye ane yo</string>
+    <string name="set_afr">Mouvman lis (AFR, vitès ekran otomatik): %1$s</string>
 </resources>

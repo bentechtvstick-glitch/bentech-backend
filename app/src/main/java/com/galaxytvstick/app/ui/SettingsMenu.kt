@@ -127,6 +127,7 @@ class SettingsMenu(
             a.getString(R.string.set_captions, captionName(prefs.captions)) to { chooseCaptions() },
             a.getString(if (prefs.parentalOn) R.string.set_parental_on else R.string.set_parental_off) to { parentalControl() },
             a.getString(R.string.set_autostart, onOff(prefs.autoStart)) to { prefs.autoStart = !prefs.autoStart; show() },
+            a.getString(R.string.set_afr, onOff(prefs.afr)) to { prefs.afr = !prefs.afr; show() },
             a.getString(R.string.set_last_channel, onOff(prefs.startLastChannel)) to { prefs.startLastChannel = !prefs.startLastChannel; show() },
             a.getString(R.string.set_update, version) to { Updater.checkNow(a, cfg.update) },
             a.getString(R.string.set_about, version) to { info(R.string.set_about_title, a.getString(R.string.set_about_fmt, version, android.os.Build.MODEL, android.os.Build.VERSION.RELEASE) + "\n\n" + a.getString(R.string.disclaimer)) },

@@ -337,6 +337,7 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         override fun onPlaybackStateChanged(state: Int) {
+            if (state == Player.STATE_READY) player?.videoFormat?.frameRate?.let { Afr.apply(this@PlayerActivity, it, prefs.afr) }
             b.loading.visibility = View.GONE // pa gen sèk k ap vire: dènye imaj la rete sou ekran an jiskaske nouvo chanèl la kòmanse
             val nowBuffering = state == Player.STATE_BUFFERING
             if (nowBuffering != buffering) { buffering = nowBuffering; reportStatus() }
