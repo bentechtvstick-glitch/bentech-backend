@@ -2435,6 +2435,10 @@ const WT_TEXT = {
   old_app: (i) => [t("📲 Nouvo vèsyon app {0} pare: {1} TV poko genyen l", i.latest, i.count), (i.names || []).join(", ") + (i.versions?.length ? " · " + t("yo gen {0}", i.versions.join(", ")) : "")],
   update_stuck: (i) => [t("📲 {0} TV poko mete vèsyon {1}", i.count, i.latest), (i.names || []).join(", ") + ". " + t("Mizajou a voye depi plis pase 24 è, men kliyan an poko peze «Mete ajou».") + (i.forced ? "" : " " + t("Ou ka fè l obligatwa: kliyan an p ap ka kontinye san l pa mete ajou."))],
   expiring: (i) => [i.days ? t("⏰ Abònman {0} ap fini nan {1} jou", i.customer, i.days) : t("⏰ Abònman {0} ap fini jodi a", i.customer), t("Kontakte kliyan an pou l renouvle.")],
+  channel_buffering: (i) => [t("⏳ Chanèl {0} ap fè buffering", i.channel), t("Li koupe anviwon {0} fwa chak 10 minit sou TV kliyan yo. Si se sou tout TV yo, se founisè a: chwazi yon lòt vèsyon chanèl la (HD/FHD) oswa kache l.", i.cuts)],
+  launcher_offline: (i) => [t("📦 {0} box launcher pa konekte depi plis pase 24 è", i.count), (i.names || []).join(", ") + ". " + t("Box la ka etenn, san entènèt, oswa launcher a te retire.")],
+  launcher_old: (i) => [t("📦 {0} box gen yon ansyen launcher", i.count), t("Dènye vèsyon an se {0}. Peze «Voye mizajou launcher a» nan Sistèm → Launcher; box ki poko gen 1.301 bezwen Downloader.", i.latest)],
+  launcher_not_home: (i) => [t("📦 {0} box: bouton Home lan pa louvri launcher a", i.count), (i.names || []).join(", ") + ". " + t("Sou Google TV ak Firestick, fò w itilize ADB pou launcher a vin ekran akèy la.")],
   disk_low: (i) => [t("💾 Disk sèvè a prèske plen: {0}% ki rete", i.freePct), t("Gade \"Kisa ki pran plas?\" nan paj Sistèm nan.")],
   pkg_problem: (i) => [t("📦 Pakè «{0}» pa aplike sou TV {1}", i.profile, i.name || i.mac), i.why === "notpkg" ? t("Se yon ansyen Channel Profile (limit kantite sèlman): li pa kache okenn chanèl.") : i.why === "missing" ? t("Pakè sa a pa egziste ankò.") : i.why === "nochange" ? t("Pakè a pa kache okenn chanèl sou TV sa a.") : t("Okenn nan {0} gwoup pakè a pa egziste kay founisè TV sa a (non yo diferan).", i.groups)],
   weak_net: (i) => [t("📶 Entènèt TV {0} fèb", i.name || i.mac), t("Li koupe {0} fwa chak 10 minit", i.cuts) + (i.mbps ? " · " + i.mbps + " Mbps" : "") + ". " + t("Se koneksyon kliyan an, pa founisè a: wouter li twò lwen, Wi-Fi a chaje, oswa abònman entènèt li twò piti.")],
@@ -2472,7 +2476,7 @@ $("#wtList").addEventListener("click", async (e) => {
   const a = (i.actions || [])[+b.dataset.wta]; if (!a) return;
   try {
     if (a.type === "goto_device") return selectDevice(a.mac, true);
-    if (a.type === "goto_channels") { await selectDevice(a.mac, false); return openTab("ch"); }
+    if (a.type === "goto_channels") { if (a.mac) await selectDevice(a.mac, false); return openTab("ch"); }
     if (a.type === "goto_customers") return openTab("cust");
     if (a.type === "goto_system") return openTab("sys");
     if (a.type === "bill_paid") { await api("POST", `/galaxy/bills/${encodeURIComponent(a.id)}/paid`, { month: a.month }); watchCache.issues = watchCache.issues.filter((x) => x !== i); renderWatch(); updateBell(); loadBills(); return toast(t("Byen: panel la p ap fè w sonje l ankò jiska pwochen peman an.")); }

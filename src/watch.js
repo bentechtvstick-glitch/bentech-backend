@@ -118,6 +118,33 @@ export function mountWatch(app, db, h) {
         customer: c.name || "", days, actions: [{ type: "goto_customers" }] });
     }
 
+    // 4c) Chanèl ki fè anpil buffering (koupi pandan kliyan yo ap gade), mezire sou tout TV yo nan dènye 24 è
+    const buf = [];
+    for (const [host, byId] of Object.entries(d.channelHealth || {})) for (const [id, h] of Object.entries(byId || {})) {
+      if (now - (h.at || 0) > 24 * H || (h.n || 0) < 3 || h.cuts == null || h.cuts < 3) continue;
+      buf.push({ host, id, name: h.name || "#" + id, cuts: Math.round(h.cuts * 10) / 10 });
+    }
+    buf.sort((a, b) => b.cuts - a.cuts);
+    for (const c of buf.slice(0, 5)) out.push({ id: `buf:${c.host}:${c.id}`, kind: "channel_buffering", level: c.cuts >= 6 ? "warn" : "info", channel: c.name, cuts: c.cuts,
+      actions: [{ type: "goto_channels" }] });
+
+    // 4d) Box launcher yo (Galaxy Home / Ben Tech Home)
+    const boxes = Object.entries(d.launcherBoxes || {}).map(([id, b]) => ({ id, ...b }));
+    if (boxes.length) {
+      // a) Box ki te aktif semèn sa a men ki pa konekte depi plis pase 24 è (etenn, pa gen entènèt, oswa launcher a retire)
+      const gone = boxes.filter((b) => { const s = Date.parse(b.seen || 0); return now - s > 24 * H && now - s < 7 * 24 * H; });
+      if (gone.length) out.push({ id: "lnoff:" + gone.map((b) => b.id).sort().join(",").slice(0, 200), kind: "launcher_offline", level: "info", count: gone.length,
+        names: gone.slice(0, 5).map((b) => `${b.brand === "bentech" ? "Ben Tech Home" : "Galaxy Home"} · ${b.model || b.id.slice(0, 6)}`), actions: [{ type: "goto_system" }] });
+      // b) Box ki gen yon launcher pi ansyen pase lòt yo (mizajou a pa pase)
+      const top = Math.max(...boxes.map((b) => Number(b.v) || 0));
+      const behind = boxes.filter((b) => (Number(b.v) || 0) > 0 && b.v < top && now - Date.parse(b.seen || 0) < 3 * 24 * H);
+      if (behind.length) out.push({ id: `lnold:${top}:${behind.length}`, kind: "launcher_old", level: "info", count: behind.length, latest: top, actions: [{ type: "goto_system" }] });
+      // c) Box kote bouton Home lan pa louvri launcher a (Google TV / Firestick san ADB)
+      const nohome = boxes.filter((b) => b.home === false && now - Date.parse(b.seen || 0) < 3 * 24 * H);
+      if (nohome.length) out.push({ id: `lnhome:${nohome.length}`, kind: "launcher_not_home", level: "info", count: nohome.length,
+        names: nohome.slice(0, 5).map((b) => b.model || b.id.slice(0, 6)), actions: [{ type: "goto_system" }] });
+    }
+
     // 5) Disk sèvè a
     const free = diskFreePct();
     if (free != null && free < 15) out.push({ id: "disk", kind: "disk_low", level: free < 7 ? "crit" : "warn", freePct: free, actions: [{ type: "goto_system" }] });
