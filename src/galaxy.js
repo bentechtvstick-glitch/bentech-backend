@@ -740,7 +740,16 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   // ---- Non founisè yo: mèt la bay chak sèvè (host playlist la) yon non, panel la montre l sou chak TV ----
   const hostOf = (server) => { try { return new URL(/^https?:\/\//i.test(server) ? server : "http://" + server).hostname.toLowerCase(); } catch { return ""; } };
   const providerNames = () => (data().providerNames ||= {});
-  const providerOf = (server) => providerNames()[hostOf(server)] || "";
+  // Non otomatik: pati prensipal non domèn nan (egz: line.megaott.net → "Megaott"). Pa posib pou yon adrès IP.
+  const autoProvider = (host) => {
+    if (!host || /^[\d.]+$/.test(host) || host.includes(":")) return "";
+    const parts = host.split(".").filter(Boolean);
+    if (parts.length < 2) return "";
+    const sld = parts.length >= 3 && /^(co|com|net|org)$/.test(parts[parts.length - 2]) && parts[parts.length - 1].length === 2 ? parts[parts.length - 3] : parts[parts.length - 2];
+    return sld ? sld.charAt(0).toUpperCase() + sld.slice(1, 30) : "";
+  };
+  const providerOf = (server) => { const h = hostOf(server); return providerNames()[h] || autoProvider(h); };
+  const providerIsAuto = (server) => { const h = hostOf(server); return !providerNames()[h] && !!autoProvider(h); };
   app.get("/api/galaxy/provider-hosts", authenticate, (req, res) => {
     ensure();
     const hosts = new Map();
@@ -748,7 +757,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       const h = hostOf(p.server); if (!h) continue;
       const e = hosts.get(h) || { host: h, tvs: new Set() }; e.tvs.add(mac); hosts.set(h, e);
     }
-    res.json([...hosts.values()].map((e) => ({ host: e.host, tvs: e.tvs.size, name: providerNames()[e.host] || "" })).sort((a, b) => b.tvs - a.tvs));
+    res.json([...hosts.values()].map((e) => ({ host: e.host, tvs: e.tvs.size, name: providerNames()[e.host] || "", auto: autoProvider(e.host) })).sort((a, b) => b.tvs - a.tvs));
   });
   app.put("/api/galaxy/provider-names", authenticate, async (req, res) => {
     if (!["owner", "Super Administrator", "Administrator"].includes(req.role)) return res.status(403).json({ ok: false, error: "Only the owner or an Administrator can name providers.", forbidden: true });
@@ -771,7 +780,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       galaxy: !!mac,
       waiting: isGhost(data(), d), // efase, men toujou limen sou ekran aktivasyon an
       playlists: mac ? playlistsOf(mac).map(({ id, name, server, username, createdAt, restored, type, epgUrl }) => ({
-        id, name, server, username, createdAt, restored: !!restored, type: type || "xtream", epgUrl: epgUrl || "", provider: providerOf(server),
+        id, name, server, username, createdAt, restored: !!restored, type: type || "xtream", epgUrl: epgUrl || "", provider: providerOf(server), providerAuto: providerIsAuto(server),
       })) : [],
       channelCount: mac ? channelsOf(mac).length : 0,
     };
