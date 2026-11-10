@@ -1489,6 +1489,26 @@ function tvAckWatch(basePromise) {
     toast([...new Set(msgs)].slice(0, 3).join("\n"), 6000);
   })();
 }
+
+/**
+ * Apre "Sove": rete tann TV a konfime (jiska 45 s) epi ekri rezilta a bò kote bouton an.
+ * ✅ aplike · ✅ deja ajou · 📴 TV a pa sou liy (l ap aplike lè l limen) · ⚠️ poko konfime.
+ */
+async function waitApplied(mac, msgEl, base) {
+  const my = (waitApplied.run = {}); const start = await (base ?? tvEvLast()); if (start == null) return;
+  const live = (typeof liveData !== "undefined" && liveData?.devices || []).find((d) => d.mac === mac);
+  if (live && !live.online) { setMsg(msgEl, t("💾 Sove. 📴 TV a pa sou liy kounye a: l ap aplike chanjman an depi l limen."), true); return; }
+  setMsg(msgEl, t("💾 Sove. ⏳ Ap tann TV a konfime…"), true);
+  let since = start; const end = Date.now() + 45000;
+  while (Date.now() < end && waitApplied.run === my) {
+    await new Promise((ok) => setTimeout(ok, 2000));
+    let r; try { r = await (await fetch(API + `/galaxy/tv-events?since=${since}`, { headers: { Authorization: "Bearer " + token } })).json(); } catch { continue; }
+    since = r.last || since;
+    const ev = (r.events || []).find((e) => e.mac === mac && ["applied", "uptodate", "reload"].includes(e.type));
+    if (ev) { setMsg(msgEl, ev.type === "uptodate" ? t("✅ TV a resevwa l ({0}).", new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })) : t("✅ Aplike sou TV a ({0}).", new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })), true); return; }
+  }
+  if (waitApplied.run === my) setMsg(msgEl, t("💾 Sove. ⚠️ TV a poko konfime: li ka etenn oswa san entènèt. L ap aplike l depi l konekte."), false);
+}
 // ---- Mak app la (Galaxy / Ben Tech): logo, meteyo, ticker, banyè, pop-up, piblisite pa mak ----
 const BRAND_TABS = ["tk", "cy", "bn", "pp", "ads", "gfx", "bc"];
 const BRAND_COLS = /^\/(tickers|banners|popups|media-ads|chyrons)(\/|\?|$)/;
@@ -1807,7 +1827,10 @@ $("#dvBlocked").addEventListener("change", async (ev) => {
 });
 $("#dvSave").addEventListener("click", async () => {
   try { dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, { deviceName: $("#dvName").value.trim(), city: $("#dvCity").value.trim(), customer: $("#dvCustomer").value, blocked: $("#dvBlocked").checked })) };
-    renderDevice(); setMsg($("#dvMsg"), "Sove. TV a ap aplike l nan pwochen minit lan (oswa klike \"Aplike chanjman yo\").", true); loadDevices(); }
+    renderDevice(); loadDevices();
+    const evBase = tvEvLast();
+    await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/commands`, { type: "refresh" }).catch(() => {});
+    waitApplied(dev.mac, $("#dvMsg"), evBase); }
   catch (err) { setMsg($("#dvMsg"), err.message); }
 });
 $("#dvResetKey").addEventListener("click", () => confirmIn("#dvConfirm", t("TV a ap resevwa yon nouvo Device Key pwochen fwa l konekte. Itilize sa sèlman si kliyan an chanje aparèy oswa reyenstale sistèm nan."), t("Reyinisyalize"), async () => {
@@ -2992,9 +3015,11 @@ $("#chSave").addEventListener("click", async () => {
     const extra = pk && chState.mode === "extra";
     if (pk && !extra) Object.assign(pk, await api("PUT", `/channel-profiles/${encodeURIComponent(pk.name)}`, chPkgBody(pk)));
     dev = { ...dev, ...(await api("PATCH", `/galaxy/devices/${encodeURIComponent(dev.mac)}`, extra ? { ...base, ...chExtras() } : pk ? base : { ...base, hiddenChannels: [...chState.hid], hiddenCategories: [...chState.hidC], categoryNames: chState.catN, channelNames: chState.chN })) };
+    const evBase = tvEvLast();
     await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/commands`, { type: "refresh" }).catch(() => {});
+    waitApplied(dev.mac, $("#chMsg"), evBase);
     if (extra) { const x = (dev.extraGroups || []).length + (dev.extraChannels || []).length, r = (dev.removedGroups || []).length + (dev.removedChannels || []).length; chLoadState(true); setMsg($("#chMsg"), t("Sove: pakè a + {0} ajoute, {1} retire pou TV sa a.", x, r), true); }
-    else setMsg($("#chMsg"), "Sove. TV a ap aplike l touswit si l online.", true); }
+  }
   catch (err) { setMsg($("#chMsg"), err.message); }
 });
 

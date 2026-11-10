@@ -25,7 +25,7 @@ export const tvEvents = {
     const t = pendingSync.get(d?.mac);
     if (!t) return;
     pendingSync.delete(d.mac);
-    if (changed && Date.now() - t < 5 * 60000) push(d, "applied");
+    if (Date.now() - t < 5 * 60000) push(d, changed ? "applied" : "uptodate");
   },
   since(id) { return { last: seq, events: events.filter((e) => e.id > id) }; },
 };
