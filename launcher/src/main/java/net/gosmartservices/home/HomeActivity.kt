@@ -159,7 +159,8 @@ class HomeActivity : Activity() {
             if (contactHome) {
                 clock.text = SimpleDateFormat("hh:mm a", Locale.US).format(Date())
                 dateView?.text = SimpleDateFormat("MM-dd-yyyy", Locale.US).format(Date())
-            } else clock.text = SimpleDateFormat("EEE d MMM · h:mm a", Locale.getDefault()).format(Date())
+            } else clock.text = SimpleDateFormat("EEE d MMM", Locale.getDefault()).format(Date()) + " · " +
+                SimpleDateFormat("h:mm a", Locale.US).format(Date()) // toujou 12 è ak AM/PM, kèlkeswa lang box la
             ui.postDelayed(this, 20_000)
         }
     }
