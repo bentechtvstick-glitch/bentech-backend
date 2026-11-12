@@ -553,6 +553,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       // Gwoup pa admin nan (egz: "Miami", "Tampa"): chanèl ki gen mo kle yo nan non yo oswa nan non gwoup yo
       customGroups: [], // «My groups» retire nan panel la (ranplase pa «Lis kliyan an»)
       forceHideAdult: !!device.forceHideAdult,
+      // Tèks mèt la pou chanèl ki pa gen enfòmasyon nan gid la (pa mak: Galaxy / Ben Tech)
+      epgNoInfo: String(s.epgNoInfo || "").trim().slice(0, 80),
       blockedCats: { live: device.blockedCats?.live || [], movies: device.blockedCats?.movies || [], series: device.blockedCats?.series || [] },
       playlists: playlists.map(({ id, name, server, username, password, type, epgUrl }) => ({ id, name, server, username: username || "", password: password || "", type: plType({ type }), epgUrl: epgUrl || "" })),
       ticker,
