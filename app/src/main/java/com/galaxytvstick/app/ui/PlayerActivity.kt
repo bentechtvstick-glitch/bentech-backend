@@ -1035,13 +1035,13 @@ class PlayerActivity : AppCompatActivity() {
             b.ovDesc.text = now.desc
         } else {
             // Pa ekri "Gid la ap chaje…": gid la chaje an aryè plan, epi pwogram nan parèt poukont li
-            b.ovTitle.text = if (EpgRepository.isLoaded && !EpgRepository.needsSingle(ch)) getString(R.string.epg_no_info) else ""
+            b.ovTitle.text = if (EpgRepository.isLoaded && !EpgRepository.needsSingle(ch)) (PanelState.config.epgNoInfo.ifBlank { getString(R.string.epg_no_info) }) else ""
             b.ovTime.text = ""
             b.ovDesc.text = ""
             // Chanèl sa a sèlman (rapid): mande founisè a pwogram li kounye a
             if (EpgRepository.needsSingle(ch)) lifecycleScope.launch {
                 if (EpgRepository.loadSingle(api, ch) && b.ovChName.text == "${ch.num}  ${ch.name}") showProgramDetail(ch)
-                else if (b.ovChName.text == "${ch.num}  ${ch.name}" && EpgRepository.isLoaded) b.ovTitle.text = getString(R.string.epg_no_info)
+                else if (b.ovChName.text == "${ch.num}  ${ch.name}" && EpgRepository.isLoaded) b.ovTitle.text = (PanelState.config.epgNoInfo.ifBlank { getString(R.string.epg_no_info) })
             }
         }
         b.ovNext.text = next?.let { getString(R.string.epg_next_fmt, timeFmt.format(Date(it.start)), it.title) } ?: ""

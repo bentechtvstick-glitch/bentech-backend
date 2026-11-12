@@ -274,6 +274,8 @@ data class PanelConfig(
     val pkgRules: PkgRules? = null,
     /** Panel la mande kache tout kontni granmoun (kliyan an pa ka retire sa nan Settings). */
     val forceHideAdult: Boolean = false,
+    /** Tèks mèt la chwazi pou chanèl ki pa gen enfòmasyon nan gid la (vid = tèks app la). */
+    val epgNoInfo: String = "",
     /** Gwoup admin nan kreye pa mo kle (egz: "Miami" → miami, wsvn…). */
     val customGroups: List<Pair<String, List<String>>> = emptyList(),
     /** Kategori panel la kache pa non (an majiskil): chanèl, fim, seri. */
@@ -482,6 +484,7 @@ data class PanelConfig(
                 )
             },
             forceHideAdult = o.optBoolean("forceHideAdult", false),
+            epgNoInfo = o.optString("epgNoInfo", "").trim().take(80),
             customGroups = o.optJSONArray("customGroups")?.let { arr -> (0 until arr.length()).mapNotNull { i -> arr.optJSONObject(i)?.let { g ->
                 val keys = g.optJSONArray("keywords")?.let { k -> (0 until k.length()).map { k.optString(it) }.filter { it.isNotBlank() } } ?: emptyList()
                 if (g.optString("name").isBlank() || keys.isEmpty()) null else g.optString("name") to keys

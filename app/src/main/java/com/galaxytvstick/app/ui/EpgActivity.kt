@@ -51,7 +51,7 @@ import java.util.Locale
  */
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class EpgActivity : AppCompatActivity() {
-    private val noInfo by lazy { getString(R.string.epg_no_info) }
+    private val noInfo get() = PanelState.config.epgNoInfo.ifBlank { getString(R.string.epg_no_info) }
 
     companion object {
         private val LANG_CODES = listOf("ht", "en", "fr", "es")
@@ -690,7 +690,7 @@ class EpgActivity : AppCompatActivity() {
             b.detailDesc.text = p.desc
         } else {
             // Pa ekri "Gid la ap chaje…": pwogram nan parèt poukont li lè l rive
-            b.detailTitle.text = if (EpgRepository.isLoaded && !EpgRepository.needsSingle(ch)) getString(R.string.epg_no_info) else ""
+            b.detailTitle.text = if (EpgRepository.isLoaded && !EpgRepository.needsSingle(ch)) (PanelState.config.epgNoInfo.ifBlank { getString(R.string.epg_no_info) }) else ""
             b.detailTime.text = ""
             b.detailDesc.text = ""
         }
