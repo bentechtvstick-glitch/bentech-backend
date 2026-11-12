@@ -276,6 +276,8 @@ data class PanelConfig(
     val forceHideAdult: Boolean = false,
     /** Tèks mèt la chwazi pou chanèl ki pa gen enfòmasyon nan gid la (vid = tèks app la). */
     val epgNoInfo: String = "",
+    /** Menm tèks la pa lang (ht, en, fr, es): app la chwazi selon lang kategori chanèl la. */
+    val epgNoInfoL: Map<String, String> = emptyMap(),
     /** Gwoup admin nan kreye pa mo kle (egz: "Miami" → miami, wsvn…). */
     val customGroups: List<Pair<String, List<String>>> = emptyList(),
     /** Kategori panel la kache pa non (an majiskil): chanèl, fim, seri. */
@@ -485,6 +487,7 @@ data class PanelConfig(
             },
             forceHideAdult = o.optBoolean("forceHideAdult", false),
             epgNoInfo = o.optString("epgNoInfo", "").trim().take(80),
+            epgNoInfoL = o.optJSONObject("epgNoInfoL")?.let { j -> listOf("ht", "en", "fr", "es").associateWith { j.optString(it, "").trim().take(80) }.filterValues { it.isNotEmpty() } } ?: emptyMap(),
             customGroups = o.optJSONArray("customGroups")?.let { arr -> (0 until arr.length()).mapNotNull { i -> arr.optJSONObject(i)?.let { g ->
                 val keys = g.optJSONArray("keywords")?.let { k -> (0 until k.length()).map { k.optString(it) }.filter { it.isNotBlank() } } ?: emptyList()
                 if (g.optString("name").isBlank() || keys.isEmpty()) null else g.optString("name") to keys
