@@ -558,9 +558,9 @@ class HomeActivity : Activity() {
                 "&model=" + java.net.URLEncoder.encode((android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL).trim(), "UTF-8") +
                 "&home=" + (if (isDefaultHome()) "1" else "0") + "&os=" + android.os.Build.VERSION.SDK_INT
             val j = runCatching { http("GET", "/launcher/config$q", null) }.getOrNull() ?: return@Thread
-            val before = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "") + "|" + prefs.getString("contacts", "")
+            val before = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "") + "|" + prefs.getString("contacts", "") + "|" + prefs.getString("messageL", "")
             prefs.edit().putInt("cfgV", j.optInt("v", prefs.getInt("cfgV", 0))).putString("apps", j.optString("apps", "YouTube, Netflix")).putBoolean("hasPin", j.optBoolean("hasPin", false))
-                .putString("slides", (j.optJSONArray("slides") ?: org.json.JSONArray()).toString()).putString("message", j.optString("message", "")).putString("contacts", j.optString("contacts", ""))
+                .putString("slides", (j.optJSONArray("slides") ?: org.json.JSONArray()).toString()).putString("message", j.optString("message", "")).putString("contacts", j.optString("contacts", "")).putString("messageL", (j.optJSONObject("messageL") ?: org.json.JSONObject()).toString())
                 .putLong("fetchedAt", System.currentTimeMillis()).apply()
             // Panel la peze "Voye mizajou": tcheke touswit (pa tann 6 èdtan)
             val upd = j.optString("updateAt", "")
@@ -568,7 +568,7 @@ class HomeActivity : Activity() {
                 prefs.edit().putString("updSeen", upd).putLong("updCheck", 0L).apply()
                 ui.post { if (resumed) LauncherUpdater.check(this) } // sinon: l ap fèt lè ekran akèy la parèt
             }
-            val after = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "") + "|" + prefs.getString("contacts", "")
+            val after = prefs.getString("apps", null) + "|" + prefs.getString("slides", "") + "|" + prefs.getString("message", "") + "|" + prefs.getString("contacts", "") + "|" + prefs.getString("messageL", "")
             if (before != after) ui.post { if (!isFinishing) { dirty = true; refresh(); applyHome() } }
         }.start()
     }
@@ -587,7 +587,10 @@ class HomeActivity : Activity() {
 
     private fun applyHome() {
         paintContacts()
-        val m = prefs.getString("message", "").orEmpty().trim()
+        // Mesaj la nan lang box la (panel la tradui l), sinon mesaj orijinal la
+        val lang = java.util.Locale.getDefault().language.let { if (it == "ht") "ht" else it }
+        val m = runCatching { org.json.JSONObject(prefs.getString("messageL", "{}") ?: "{}").optString(lang, "") }.getOrDefault("").trim()
+            .ifEmpty { prefs.getString("message", "").orEmpty().trim() }
         msgBar.text = "📢  $m"; msgBar.visibility = if (m.isEmpty()) View.GONE else View.VISIBLE
         val n = slides().size + 1
         if (slideIdx >= n) slideIdx = 0
