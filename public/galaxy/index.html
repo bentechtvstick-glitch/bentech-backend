@@ -1339,7 +1339,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="lnSave" type="button">Sove</button><button class="btn" id="lnClear" type="button">Retire PIN lan</button><span class="msg" id="lnMsg"></span></div>
         <div style="border-top:1px solid var(--line);margin:14px 0 10px"></div>
         <div class="inline" style="gap:10px;flex-wrap:wrap"><h3 style="margin:0">📢 Mesaj sou ekran akèy la</h3><div class="seg" id="lnBrand" role="radiogroup"><button type="button" data-v="galaxy" class="on">Galaxy Home</button><button type="button" data-v="bentech">Ben Tech Home</button></div></div>
-        <div class="field" style="margin-top:12px"><label for="lnMsgText">📢 Mesaj sou ekran akèy la (kite l vid pou retire l)</label><input type="text" id="lnMsgText" maxlength="200" data-emoji placeholder="Egz: Peman an pou 5 desanm. Mèsi!"></div>
+        <div class="field" style="margin-top:12px"><label for="lnMsgText">📢 Mesaj sou ekran akèy la (kite l vid pou retire l) · 🌍 tradui otomatikman nan lang chak box</label><input type="text" id="lnMsgText" maxlength="200" data-emoji placeholder="Egz: Peman an pou 5 desanm. Mèsi!"></div>
         <div class="field" id="lnContactsF"><label for="lnContacts">☎️ Kontak sou ekran akèy la (Ben Tech Home) — yon liy pou chak</label><textarea id="lnContacts" rows="5" maxlength="560" placeholder="tel: 39129696&#10;whatsapp: 9295962897&#10;adrès: Rue normande #28 | Jacmel, Haiti"></textarea><span class="note">Kòmanse chak liy ak <b>tel:</b>, <b>whatsapp:</b> oswa <b>adrès:</b>. "|" = nouvo liy. Vid = kontak ki vin ak app la.</span></div>
         <div class="btns" style="justify-content:flex-start"><button class="btn primary" id="lnSaveHome" type="button">Sove ekran akèy la</button><span class="msg" id="lnHomeMsg"></span></div>
         <div style="border-top:1px solid var(--line);margin:14px 0 10px"></div>
@@ -3901,7 +3901,11 @@ $("#lnBrand").addEventListener("click", (e) => { const b = e.target.closest("but
 $("#lnSlides")?.addEventListener("input", (e) => { const f = e.target.dataset.lnf; if (!f) return; lnData.slides[lnBr][+e.target.dataset.i][f] = e.target.value;
   if (f === "imageUrl") { const pv = e.target.closest(".li")?.firstElementChild; if (pv) pv.style.backgroundImage = e.target.value ? `url('${e.target.value.replace(/'/g, "")}')` : ""; } });
 $("#lnSlides")?.addEventListener("click", (e) => { const d = e.target.closest("[data-lndel]"); if (d) { lnData.slides[lnBr].splice(+d.dataset.lndel, 1); lnSlidesPaint(); } });
-$("#lnSaveHome").addEventListener("click", () => saveLauncher({ brand: lnBr, slides: [], message: $("#lnMsgText").value, ...(lnBr === "bentech" ? { contacts: $("#lnContacts").value } : {}) }, t("Sove ✓ Box yo ap pran chanjman an nan 30 segonn."), $("#lnHomeMsg")));
+$("#lnSaveHome").addEventListener("click", async () => {
+  // Mesaj la: panel la tradui l an 4 lang (AI); chak box montre l nan lang li. San kle AI: menm mesaj la toupatou.
+  const msg = $("#lnMsgText").value.trim(); let messageL = {};
+  if (msg) { setMsg($("#lnHomeMsg"), t("🌍 Ap tradui…"), true); try { const r = await api("POST", "/galaxy/ai/translate", { text: msg, max: 200 }); messageL = { ht: r.ht, en: r.en, fr: r.fr, es: r.es }; } catch {} }
+  saveLauncher({ brand: lnBr, slides: [], message: $("#lnMsgText").value, messageL, ...(lnBr === "bentech" ? { contacts: $("#lnContacts").value } : {}) }, t("Sove ✓ Box yo ap pran chanjman an nan 30 segonn."), $("#lnHomeMsg")); });
 $("#lnPush").addEventListener("click", () => saveLauncher({ pushUpdate: true }, t("Voye ✓ Box ki sou ekran akèy la ap mete launcher a ajou nan 30 segonn; lòt yo lè yo tounen sou li."), $("#lnPushMsg")));
 $("#lnBoxes").addEventListener("click", async (e) => { const b = e.target.closest("[data-lnbox]"); if (!b) return;
   try { lnPaint(await api("DELETE", "/galaxy/launcher/boxes/" + encodeURIComponent(b.dataset.lnbox))); } catch (err) { toast(err.message); } });

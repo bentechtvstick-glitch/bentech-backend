@@ -408,7 +408,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   const DEF_APPS = "YouTube, Netflix";
   const launcherCfg = () => {
     const L = (db.data.launcher ||= { pinHash: "", apps: DEF_APPS });
-    L.slides ||= { galaxy: [], bentech: [] }; L.message ||= { galaxy: "", bentech: "" }; L.contacts ||= { galaxy: "", bentech: "" };
+    L.slides ||= { galaxy: [], bentech: [] }; L.message ||= { galaxy: "", bentech: "" }; L.contacts ||= { galaxy: "", bentech: "" }; L.messageL ||= { galaxy: {}, bentech: {} };
     return L;
   };
   const LBRANDS = ["galaxy", "bentech"];
@@ -432,7 +432,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       }
     }
     res.json({ apps: String(L.apps ?? DEF_APPS), hasPin: !!L.pinHash, v: Number(L.v) || 0,
-      slides: (L.slides[brand] || []).filter((s) => s.imageUrl), message: String(L.message[brand] || ""), contacts: String(L.contacts[brand] || ""), updateAt: String(L.updateAt || "") });
+      slides: (L.slides[brand] || []).filter((s) => s.imageUrl), message: String(L.message[brand] || ""), messageL: L.messageL[brand] || {}, contacts: String(L.contacts[brand] || ""), updateAt: String(L.updateAt || "") });
   });
   const unlockHits = new Map(); // ip → [lè]
   app.post("/api/launcher/unlock", (req, res) => {
@@ -487,6 +487,8 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       const br = lBrand(b.brand);
       if (Array.isArray(b.slides)) L.slides[br] = b.slides.slice(0, 8).map(cleanSlide).filter((s) => s.imageUrl);
       if (typeof b.message === "string") L.message[br] = b.message.trim().slice(0, 200);
+      // Mesaj la tradui (ht/en/fr/es): launcher a montre l nan lang box la
+      if (b.messageL && typeof b.messageL === "object") L.messageL[br] = Object.fromEntries(["ht", "en", "fr", "es"].map((l) => [l, String(b.messageL[l] || "").trim().slice(0, 200)]).filter(([, v]) => v));
       if (typeof b.contacts === "string") L.contacts[br] = b.contacts.split("\n").map((s) => s.trim().slice(0, 80)).filter(Boolean).slice(0, 7).join("\n");
     }
     L.v = (Number(L.v) || 0) + 1;

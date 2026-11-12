@@ -120,15 +120,16 @@ export function mountAi(app, db, { authenticate, isOnline }) {
 
   /** Tradui yon ti fraz (egz: tèks gid TV a) an Kreyòl, English, Français, Español. Non mak yo pa tradui. */
   app.post("/api/galaxy/ai/translate", authenticate, async (req, res) => {
-    const text = String(req.body?.text || "").trim().slice(0, 120);
+    const max = Math.min(200, Math.max(20, Number(req.body?.max) || 80));
+    const text = String(req.body?.text || "").trim().slice(0, max);
     if (!text) return res.status(400).json({ ok: false, error: "Empty text." });
     if (!aiKey()) return res.status(400).json({ ok: false, noKey: true, error: "No AI key: automatic translation is off." });
     try {
       const r = await aiComplete(db, { maxTokens: 300,
-        system: "You translate short TV screen slogans. Keep brand names (Galaxy TV, Ben Tech TV, etc.), phone numbers, emojis and punctuation like '—' unchanged. Natural, short, max 80 characters each. Haitian Creole must be real Haitian Creole (Kreyòl ayisyen). Reply with JSON only: {\"ht\":\"…\",\"en\":\"…\",\"fr\":\"…\",\"es\":\"…\"}",
+        system: "You translate short TV screen slogans. Keep brand names (Galaxy TV, Ben Tech TV, etc.), phone numbers, emojis and punctuation like '—' unchanged. Natural and short (keep about the same length). Haitian Creole must be real Haitian Creole (Kreyòl ayisyen). Reply with JSON only: {\"ht\":\"…\",\"en\":\"…\",\"fr\":\"…\",\"es\":\"…\"}",
         user: text });
       const m = r.text.match(/\{[\s\S]*\}/); const j = m ? JSON.parse(m[0]) : {};
-      const out = {}; for (const l of ["ht", "en", "fr", "es"]) out[l] = String(j[l] || text).trim().slice(0, 80);
+      const out = {}; for (const l of ["ht", "en", "fr", "es"]) out[l] = String(j[l] || text).trim().slice(0, max);
       res.json({ ok: true, ...out });
     } catch (err) { res.status(err.status || 500).json({ ok: false, error: err.message }); }
   });

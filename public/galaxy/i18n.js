@@ -240,6 +240,7 @@ window.GALAXY_I18N = {
     "🌍 Ap tradui…": "🌍 Translating…",
     "Tradui epi sove ✓ Chak chanèl ap montre l nan lang kategori li.": "Translated and saved ✓ Each channel will show it in its category's language.",
     "Sove ✓ Men tradiksyon otomatik la pa mache ({0}): menm fraz la ap parèt nan tout lang. Ou ka ekri chak lang alamen anba a.": "Saved ✓ But automatic translation didn't work ({0}): the same sentence will show in every language. You can type each language by hand below.",
+    "📢 Mesaj sou ekran akèy la (kite l vid pou retire l) · 🌍 tradui otomatikman nan lang chak box": "📢 Message on the home screen (leave empty to remove it) · 🌍 translated automatically into each box's language",
     "Pa gen chanèl ki koresponn.": "No matching channels.",
     "Chanjman yo poko sove.": "Changes not saved yet.", "Sove. TV a ap aplike l touswit si l online.": "Saved. The TV applies it right away if it's online.",
     // Mesaj
@@ -504,6 +505,7 @@ window.GALAXY_I18N = {
     "🌍 Ap tradui…": "🌍 Traduction…",
     "Tradui epi sove ✓ Chak chanèl ap montre l nan lang kategori li.": "Traduit et enregistré ✓ Chaque chaîne l'affichera dans la langue de sa catégorie.",
     "Sove ✓ Men tradiksyon otomatik la pa mache ({0}): menm fraz la ap parèt nan tout lang. Ou ka ekri chak lang alamen anba a.": "Enregistré ✓ Mais la traduction automatique n'a pas marché ({0}) : la même phrase s'affichera dans toutes les langues. Vous pouvez écrire chaque langue à la main ci-dessous.",
+    "📢 Mesaj sou ekran akèy la (kite l vid pou retire l) · 🌍 tradui otomatikman nan lang chak box": "📢 Message sur l'écran d'accueil (laisser vide pour le retirer) · 🌍 traduit automatiquement dans la langue de chaque boîtier",
     "Pa gen chanèl ki koresponn.": "Aucune chaîne correspondante.",
     "Chanjman yo poko sove.": "Modifications non enregistrées.", "Sove. TV a ap aplike l touswit si l online.": "Enregistré. La TV l'applique tout de suite si elle est en ligne.",
     "Ticker": "Bandeau défilant", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Tous les messages actifs défilent en bas de chaque TV.",
@@ -764,6 +766,7 @@ window.GALAXY_I18N = {
     "🌍 Ap tradui…": "🌍 Traduciendo…",
     "Tradui epi sove ✓ Chak chanèl ap montre l nan lang kategori li.": "Traducido y guardado ✓ Cada canal lo mostrará en el idioma de su categoría.",
     "Sove ✓ Men tradiksyon otomatik la pa mache ({0}): menm fraz la ap parèt nan tout lang. Ou ka ekri chak lang alamen anba a.": "Guardado ✓ Pero la traducción automática no funcionó ({0}): la misma frase aparecerá en todos los idiomas. Puedes escribir cada idioma a mano abajo.",
+    "📢 Mesaj sou ekran akèy la (kite l vid pou retire l) · 🌍 tradui otomatikman nan lang chak box": "📢 Mensaje en la pantalla de inicio (déjalo vacío para quitarlo) · 🌍 traducido automáticamente al idioma de cada equipo",
     "Pa gen chanèl ki koresponn.": "No hay canales que coincidan.",
     "Chanjman yo poko sove.": "Cambios sin guardar.", "Sove. TV a ap aplike l touswit si l online.": "Guardado. El TV lo aplica al instante si está en línea.",
     "Ticker": "Cintillo", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Todos los mensajes activos se desplazan en la parte inferior de cada TV.",
