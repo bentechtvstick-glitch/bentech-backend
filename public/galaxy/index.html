@@ -559,6 +559,16 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 .mqbox{overflow:hidden;white-space:nowrap;min-width:0;display:block}
 .mqbox .mq{display:inline-block;transition:transform 0s}
 .mqbox.run .mq{transition:transform var(--mqdur,4s) linear;transform:translateX(var(--mqx,0))}
+
+/* Sistèm: chak seksyon fèmen (ratresi); klike sou tit la pou louvri / fèmen l */
+.card.fold > .cardbody{display:none}
+.card .foldhead{cursor:pointer;user-select:none}
+.card.foldcard{position:relative}
+.card.foldcard > .foldhead{padding-right:30px}
+.card .foldhead .chev{position:absolute;right:20px;top:22px;font-size:15px;opacity:.75;transition:transform .15s}
+.card:not(.fold) .foldhead .chev{transform:rotate(90deg)}
+.card.fold{padding-bottom:14px}
+.card.fold > .foldhead{margin-bottom:0}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Anton&family=Audiowide&family=Bangers&family=Bebas+Neue&family=Great+Vibes&family=Lobster&family=Orbitron:wght@700&family=Oswald:wght@700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,800;1,800&family=Righteous&family=Russo+One&family=Teko:wght@600&display=swap">
@@ -2003,6 +2013,27 @@ $("#epgNoInfoSave").addEventListener("click", async () => {
   try { settings = await api("PUT", "/settings", { epgNoInfo: $("#epgNoInfo").value.trim().slice(0, 80), epgNoInfoL: L }); setMsg($("#epgNoInfoMsg"), t("Sove ✓ TV yo mete yo ajou touswit."), true); }
   catch (err) { setMsg($("#epgNoInfoMsg"), err.message); }
 });
+
+// ------------------------------------------------------------ Sistèm: seksyon ki ka fèmen / louvri
+(function foldSystemCards() {
+  let open = []; try { open = JSON.parse(localStorage.getItem("gxOpenCards") || "[]"); } catch {}
+  const save = () => { try { localStorage.setItem("gxOpenCards", JSON.stringify(open)); } catch {} };
+  for (const card of $$('main[data-pane="sys"] .card')) {
+    if (card.parentElement.closest(".card")) continue; // pa fè sa pou ti kat ki anndan yon lòt
+    const head = card.querySelector(":scope > .cardhead") || card.querySelector(":scope > h2");
+    if (!head) continue;
+    const key = (card.id || head.textContent.trim().slice(0, 40));
+    const body = document.createElement("div"); body.className = "cardbody";
+    while (head.nextSibling) body.appendChild(head.nextSibling);
+    card.appendChild(body);
+    card.classList.add("foldcard"); head.classList.add("foldhead"); head.setAttribute("role", "button"); head.tabIndex = 0;
+    const chev = document.createElement("span"); chev.className = "chev"; chev.textContent = "▸"; head.appendChild(chev);
+    if (!open.includes(key)) card.classList.add("fold");
+    const toggle = () => { card.classList.toggle("fold"); open = card.classList.contains("fold") ? open.filter((k) => k !== key) : [...new Set([...open, key])]; save(); };
+    head.addEventListener("click", (e) => { if (e.target.closest("input,button,select,textarea,a,label.sw")) return; toggle(); });
+    head.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === head) { e.preventDefault(); toggle(); } });
+  }
+})();
 let devicesCache = [];
 let linkFrom = null; // aparèy DVC n ap konekte ak yon MAC
 const DEV_MODELS = [
