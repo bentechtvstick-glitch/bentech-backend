@@ -891,6 +891,14 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <div class="pagehead"><div><h1>Grafik TV</h1><p>Abiyaj chèn nan sou ekran kliyan yo: logo, watermark, scoreboard, meteyo, countdown, ident ak bumper.</p></div><span class="msg" id="gxMsg"></span></div>
       <div class="card" style="margin-bottom:14px">
         <div class="cardhead"><div><h2>📺 Gid TV: lè pa gen enfòmasyon</h2><p class="sub">Tèks ki parèt nan gid la ak anba ekran an pou chanèl ki pa gen pwogram. Vid = «Pa gen enfòmasyon pwogram».</p></div></div>
+        <p class="note" style="margin:0 0 8px">App la chwazi lang lan selon kategori chanèl la: «EU | FRANCE» → Français, «US | NEWS» → English, «LATINO» → Español, «HAITI» → Kreyòl. Kaz vid = tèks app la nan lang sa a.</p>
+        <div class="row2">
+          <div class="field"><label for="epgL_ht">🇭🇹 Kreyòl</label><input type="text" id="epgL_ht" data-epgl="ht" maxlength="80" data-emoji placeholder="Pa gen enfòmasyon pwogram"></div>
+          <div class="field"><label for="epgL_en">🇺🇸 English</label><input type="text" id="epgL_en" data-epgl="en" maxlength="80" data-emoji placeholder="Galaxy TV — The Best Channels"></div>
+          <div class="field"><label for="epgL_fr">🇫🇷 Français</label><input type="text" id="epgL_fr" data-epgl="fr" maxlength="80" data-emoji placeholder="Aucune information"></div>
+          <div class="field"><label for="epgL_es">🇪🇸 Español</label><input type="text" id="epgL_es" data-epgl="es" maxlength="80" data-emoji placeholder="Sin información del programa"></div>
+        </div>
+        <div class="field"><label for="epgNoInfo">🌐 Lè lang kategori a pa konnen</label></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" id="epgNoInfo" maxlength="80" data-emoji placeholder="Egz: Galaxy TV · WhatsApp 929-596-2897" style="flex:1;min-width:240px"><button class="btn primary" id="epgNoInfoSave" type="button">Sove</button></div>
         <span class="msg" id="epgNoInfoMsg"></span>
       </div>
@@ -1991,7 +1999,8 @@ $("#pvSave").addEventListener("click", async () => {
   catch (err) { setMsg($("#pvMsg"), err.message); }
 });
 $("#epgNoInfoSave").addEventListener("click", async () => {
-  try { settings = await api("PUT", "/settings", { epgNoInfo: $("#epgNoInfo").value.trim().slice(0, 80) }); setMsg($("#epgNoInfoMsg"), t("Sove ✓ TV yo mete yo ajou touswit."), true); }
+  const L = {}; $$("[data-epgl]").forEach((i) => { if (i.value.trim()) L[i.dataset.epgl] = i.value.trim().slice(0, 80); });
+  try { settings = await api("PUT", "/settings", { epgNoInfo: $("#epgNoInfo").value.trim().slice(0, 80), epgNoInfoL: L }); setMsg($("#epgNoInfoMsg"), t("Sove ✓ TV yo mete yo ajou touswit."), true); }
   catch (err) { setMsg($("#epgNoInfoMsg"), err.message); }
 });
 let devicesCache = [];
@@ -4004,7 +4013,7 @@ async function gxWeather(showMsg) {
 }
 async function loadGfx() {
   settings = await api("GET", "/settings").catch(() => settings); gxFill(settings.gfx || {}); gxScale(); gxPreview();
-  $("#epgNoInfo").value = settings.epgNoInfo || "";
+  $("#epgNoInfo").value = settings.epgNoInfo || ""; $$("[data-epgl]").forEach((i) => (i.value = (settings.epgNoInfoL || {})[i.dataset.epgl] || ""));
   if (!brSpots.length) loadAds().then(gxPreview).catch(() => {});
   const w = gxRead().weather; if (w.on && w.city && w.auto) gxWeather(false);
   clearInterval(gxTickT); gxTickT = setInterval(() => { if (!$("#gxStage").offsetParent) return clearInterval(gxTickT); GalaxyGfx.tick($("#gxLayer")); }, 1000);

@@ -557,6 +557,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       forceHideAdult: !!device.forceHideAdult,
       // Tèks mèt la pou chanèl ki pa gen enfòmasyon nan gid la (pa mak: Galaxy / Ben Tech)
       epgNoInfo: String(s.epgNoInfo || "").trim().slice(0, 80),
+      // Menm tèks la pa lang: app la chwazi selon lang kategori chanèl la (egz: «EU | FRANCE» → fr)
+      epgNoInfoL: Object.fromEntries(["ht", "en", "fr", "es"].map((l) => [l, String(s.epgNoInfoL?.[l] || "").trim().slice(0, 80)]).filter(([, v]) => v)),
       blockedCats: { live: device.blockedCats?.live || [], movies: device.blockedCats?.movies || [], series: device.blockedCats?.series || [] },
       playlists: playlists.map(({ id, name, server, username, password, type, epgUrl }) => ({ id, name, server, username: username || "", password: password || "", type: plType({ type }), epgUrl: epgUrl || "" })),
       ticker,
