@@ -34,12 +34,10 @@ object EpgNoInfo {
         val cfg = PanelState.config
         val cat = ch?.let { c -> ChannelStore.rawCategories.firstOrNull { it.id == c.categoryId }?.name }.orEmpty()
         val lang = langOf(cat)
-        if (lang != null) {
-            cfg.epgNoInfoL[lang]?.let { return it }
-            return localized(ctx, if (lang == "ht") "ht" else lang)
-        }
-        // Lang pa konnen: tèks mèt la (lang app la), sinon tèks app la
-        return cfg.epgNoInfo.ifBlank { ctx.getString(R.string.epg_no_info) }
+        // 1) Tèks mèt la pou lang kategori a  2) tèks jeneral mèt la (kaz 🌐)  3) tèks app la nan lang kategori a / lang app la
+        if (lang != null) cfg.epgNoInfoL[lang]?.let { return it }
+        if (cfg.epgNoInfo.isNotBlank()) return cfg.epgNoInfo
+        return if (lang != null) localized(ctx, lang) else ctx.getString(R.string.epg_no_info)
     }
 
     private val strCache = HashMap<String, String>()
