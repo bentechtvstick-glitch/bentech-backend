@@ -62,16 +62,35 @@ export function mountWatch(app, db, h) {
         actions: [...(hideable.length ? [{ type: "hide_channel", macs: hideable, channelId: Number(cid) }] : []), ...(macs.length === 1 ? [{ type: "reload_tv", mac: macs[0] }] : [])] });
     }
 
-    // 2c) Entènèt yon kliyan fèb: TV a koupe souvan (oswa vitès li ba), pandan lòt TV yo mache byen
-    const nets = devices.filter((x) => x.net && now - (x.net.at || 0) < 6 * H);
+    // 2c) Buffering: se FOUNISÈ a oswa ENTÈNÈT kliyan an? Nou konpare TV ki sou menm founisè a:
+    //  - si pifò TV founisè a ap koupe an menm tan → se founisè a (yon sèl alèt pou founisè a);
+    //  - si se yon sèl TV ki koupe pandan lòt yo sou menm founisè a mache byen → se entènèt kliyan an;
+    //  - si TV a pou kont li sou founisè a: vitès li deside (ba → entènèt; bon → sanble founisè a).
+    const hostOf = (mac) => { const pl = (d.devicePlaylists?.[mac] || [])[0]; try { return pl ? new URL(/^https?:\/\//i.test(pl.server) ? pl.server : "http://" + pl.server).hostname.toLowerCase() : ""; } catch { return ""; } };
+    const provName = (h) => (d.providerNames || {})[h] || (/^[\d.]+$/.test(h) ? h : (h.split(".").slice(-2, -1)[0] || h).replace(/^./, (s) => s.toUpperCase()));
+    const nets = devices.filter((x) => x.net && now - (x.net.at || 0) < 6 * H && (x.net.n || 0) >= 3 && x.net.cuts != null);
+    const bad = (x) => x.net.cuts >= 2.5;
+    const byHost = new Map(); for (const x of nets) { const h = hostOf(x.mac); if (!byHost.has(h)) byHost.set(h, []); byHost.get(h).push(x); }
+    const provBad = new Set();
+    for (const [h, list] of byHost) {
+      if (!h || list.length < 2) continue;
+      const b = list.filter(bad);
+      if (b.length >= 2 && b.length / list.length >= 0.6) {
+        provBad.add(h);
+        out.push({ id: "pbuf:" + h, kind: "provider_buffering", level: "warn", provider: provName(h), tvs: b.length, total: list.length,
+          cuts: Math.round((b.reduce((a, x) => a + x.net.cuts, 0) / b.length) * 10) / 10, actions: [{ type: "goto_system" }] });
+      }
+    }
     for (const x of nets) {
-      const n = x.net, enough = (n.n || 0) >= 3;
-      const others = nets.filter((o) => o !== x && o.net.cuts != null && (o.net.n || 0) >= 3).map((o) => o.net.cuts);
-      const avgOthers = others.length ? others.reduce((a, b) => a + b, 0) / others.length : 0;
-      const cutsBad = enough && n.cuts >= 2.5 && (!others.length || n.cuts >= Math.max(1, avgOthers * 2));
-      const slow = n.bw > 0 && n.bw < 3000;
-      if (!cutsBad && !(slow && enough && n.cuts >= 1)) continue;
-      out.push({ id: "net2:" + x.mac, kind: "weak_net", level: "warn", mac: x.mac, name: devName(x),
+      const n = x.net, h = hostOf(x.mac);
+      if (provBad.has(h)) continue; // deja di se founisè a
+      const mates = (byHost.get(h) || []).filter((o) => o !== x);
+      const slow = n.bw > 0 && n.bw < 3000, fast = n.bw >= 8000;
+      const matesOk = mates.length > 0 && mates.filter(bad).length === 0;
+      if (!(bad(x) || (slow && n.cuts >= 1))) continue;
+      // Kòz la: entènèt kliyan an (lòt TV founisè a mache, oswa vitès li ba) / sanble founisè a (vitès bon, l pou kont li) / pa sèten
+      const cause = slow || matesOk ? "client" : fast && !mates.length ? "provider" : "unsure";
+      out.push({ id: "net2:" + x.mac, kind: "weak_net", level: "warn", mac: x.mac, name: devName(x), cause, provider: h ? provName(h) : "", mates: mates.length,
         cuts: Math.round((n.cuts || 0) * 10) / 10, mbps: n.bw ? Math.round(n.bw / 100) / 10 : null, startSec: n.start ? Math.round(n.start / 100) / 10 : null,
         actions: [{ type: "send_tip", mac: x.mac }, { type: "goto_device", mac: x.mac }] });
     }
