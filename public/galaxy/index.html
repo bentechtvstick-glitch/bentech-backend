@@ -901,15 +901,16 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <div class="pagehead"><div><h1>Grafik TV</h1><p>Abiyaj chèn nan sou ekran kliyan yo: logo, watermark, scoreboard, meteyo, countdown, ident ak bumper.</p></div><span class="msg" id="gxMsg"></span></div>
       <div class="card" style="margin-bottom:14px">
         <div class="cardhead"><div><h2>📺 Gid TV: lè pa gen enfòmasyon</h2><p class="sub">Tèks ki parèt nan gid la ak anba ekran an pou chanèl ki pa gen pwogram. Tèks gri yo se sa TV a montre si kaz la rete vid.</p></div></div>
-        <p class="note" style="margin:0 0 8px">App la chwazi lang lan selon kategori chanèl la: «EU | FRANCE» → Français, «US | NEWS» → English, «LATINO» → Español, «HAITI» → Kreyòl. Kaz vid = tèks app la nan lang sa a.</p>
+        <div class="field"><label for="epgNoInfo">✍️ Ekri fraz ou a yon sèl fwa (nenpòt lang)</label></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" id="epgNoInfo" maxlength="80" data-emoji placeholder="Egz: Ben Tech TV — Pi bon chanèl yo yon sèl kote" style="flex:1;min-width:240px"><button class="btn primary" id="epgNoInfoSave" type="button">🌍 Tradui epi sove</button></div>
+        <p class="note" style="margin:8px 0">Panel la tradui l otomatikman an 4 lang. Sou TV a, chak chanèl montre l nan lang kategori li: «EU | FRANCE» → Français, «US | NEWS» → English, «LATINO» → Español, «HAITI» → Kreyòl. Ou ka korije tradiksyon yo anba a, epi peze Sove ankò.</p>
         <div class="row2">
           <div class="field"><label for="epgL_ht">🇭🇹 Kreyòl</label><input type="text" id="epgL_ht" data-epgl="ht" maxlength="80" data-emoji placeholder="(vid) → Pa gen enfòmasyon pwogram"></div>
           <div class="field"><label for="epgL_en">🇺🇸 English</label><input type="text" id="epgL_en" data-epgl="en" maxlength="80" data-emoji placeholder="(vid) → No program information"></div>
           <div class="field"><label for="epgL_fr">🇫🇷 Français</label><input type="text" id="epgL_fr" data-epgl="fr" maxlength="80" data-emoji placeholder="(vid) → Aucune information"></div>
           <div class="field"><label for="epgL_es">🇪🇸 Español</label><input type="text" id="epgL_es" data-epgl="es" maxlength="80" data-emoji placeholder="(vid) → Sin información del programa"></div>
         </div>
-        <div class="field"><label for="epgNoInfo">🌐 Lè lang kategori a pa konnen</label></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" id="epgNoInfo" maxlength="80" data-emoji placeholder="(vid) → tèks app la, nan lang kliyan an" style="flex:1;min-width:240px"><button class="btn primary" id="epgNoInfoSave" type="button">Sove</button></div>
+        <div class="btns" style="justify-content:flex-start;margin-top:0"><button class="btn" id="epgLSave" type="button">Sove tradiksyon yo</button></div>
         <span class="msg" id="epgNoInfoMsg"></span>
       </div>
       <div class="gx-cols">
@@ -2008,11 +2009,29 @@ $("#pvSave").addEventListener("click", async () => {
   try { await api("PUT", "/galaxy/provider-names", { names }); setMsg($("#pvMsg"), t("Sove ✓"), true); devicesCache = []; }
   catch (err) { setMsg($("#pvMsg"), err.message); }
 });
-$("#epgNoInfoSave").addEventListener("click", async () => {
+async function epgSave(msgOk) {
   const L = {}; $$("[data-epgl]").forEach((i) => { if (i.value.trim()) L[i.dataset.epgl] = i.value.trim().slice(0, 80); });
-  try { settings = await api("PUT", "/settings", { epgNoInfo: $("#epgNoInfo").value.trim().slice(0, 80), epgNoInfoL: L }); setMsg($("#epgNoInfoMsg"), t("Sove ✓ TV yo mete yo ajou touswit."), true); }
-  catch (err) { setMsg($("#epgNoInfoMsg"), err.message); }
+  settings = await api("PUT", "/settings", { epgNoInfo: $("#epgNoInfo").value.trim().slice(0, 80), epgNoInfoL: L });
+  setMsg($("#epgNoInfoMsg"), msgOk, true);
+}
+// Yon sèl fraz → panel la tradui l an 4 lang (AI), mete yo nan kaz yo, epi sove tout
+$("#epgNoInfoSave").addEventListener("click", async () => {
+  const text = $("#epgNoInfo").value.trim();
+  try {
+    if (!text) { $$("[data-epgl]").forEach((i) => (i.value = "")); return await epgSave(t("Sove ✓ TV yo montre tèks app la.")); }
+    setMsg($("#epgNoInfoMsg"), t("🌍 Ap tradui…"), true);
+    try {
+      const r = await api("POST", "/galaxy/ai/translate", { text });
+      for (const l of ["ht", "en", "fr", "es"]) $("#epgL_" + l).value = r[l] || text;
+      await epgSave(t("Tradui epi sove ✓ Chak chanèl ap montre l nan lang kategori li."));
+    } catch (err) {
+      // San kle AI: menm fraz la nan tout lang (mèt la ka ekri tradiksyon yo alamen)
+      for (const l of ["ht", "en", "fr", "es"]) if (!$("#epgL_" + l).value.trim()) $("#epgL_" + l).value = text;
+      await epgSave(t("Sove ✓ Men tradiksyon otomatik la pa mache ({0}): menm fraz la ap parèt nan tout lang. Ou ka ekri chak lang alamen anba a.", err.message));
+    }
+  } catch (err) { setMsg($("#epgNoInfoMsg"), err.message); }
 });
+$("#epgLSave").addEventListener("click", () => epgSave(t("Sove ✓ TV yo mete yo ajou touswit.")).catch((err) => setMsg($("#epgNoInfoMsg"), err.message)));
 
 // ------------------------------------------------------------ Sistèm: seksyon ki ka fèmen / louvri
 (function foldSystemCards() {
