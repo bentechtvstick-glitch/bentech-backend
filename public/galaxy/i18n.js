@@ -230,6 +230,7 @@ window.GALAXY_I18N = {
     "{0} TV sou {1} ap koupe an menm tan (anviwon {2} fwa chak 10 minit). Se founisè a, pa entènèt kliyan yo: kontakte founisè a oswa eseye yon lòt sèvè (DNS backup).": "{0} of {1} TVs are cutting at the same time (about {2} times every 10 min). It's the provider, not the customers' internet: contact the provider or try another server (backup DNS).",
     "App la chwazi lang lan selon kategori chanèl la: «EU | FRANCE» → Français, «US | NEWS» → English, «LATINO» → Español, «HAITI» → Kreyòl. Kaz vid = tèks app la nan lang sa a.": "The app picks the language from the channel's category: “EU | FRANCE” → Français, “US | NEWS” → English, “LATINO” → Español, “HAITI” → Kreyòl. Empty box = the app's text in that language.",
     "🌐 Lè lang kategori a pa konnen": "🌐 When the category's language is unknown",
+    "Tèks ki parèt nan gid la ak anba ekran an pou chanèl ki pa gen pwogram. Tèks gri yo se sa TV a montre si kaz la rete vid.": "Text shown in the guide and at the bottom of the screen for channels without programs. The grey text is what the TV shows if the box stays empty.",
     "Pa gen chanèl ki koresponn.": "No matching channels.",
     "Chanjman yo poko sove.": "Changes not saved yet.", "Sove. TV a ap aplike l touswit si l online.": "Saved. The TV applies it right away if it's online.",
     // Mesaj
@@ -484,6 +485,7 @@ window.GALAXY_I18N = {
     "{0} TV sou {1} ap koupe an menm tan (anviwon {2} fwa chak 10 minit). Se founisè a, pa entènèt kliyan yo: kontakte founisè a oswa eseye yon lòt sèvè (DNS backup).": "{0} TV sur {1} coupent en même temps (environ {2} fois toutes les 10 min). C'est le fournisseur, pas l'internet des clients : contactez-le ou essayez un autre serveur (DNS de secours).",
     "App la chwazi lang lan selon kategori chanèl la: «EU | FRANCE» → Français, «US | NEWS» → English, «LATINO» → Español, «HAITI» → Kreyòl. Kaz vid = tèks app la nan lang sa a.": "L'app choisit la langue d'après la catégorie de la chaîne : « EU | FRANCE » → Français, « US | NEWS » → English, « LATINO » → Español, « HAITI » → Kreyòl. Case vide = texte de l'app dans cette langue.",
     "🌐 Lè lang kategori a pa konnen": "🌐 Quand la langue de la catégorie est inconnue",
+    "Tèks ki parèt nan gid la ak anba ekran an pou chanèl ki pa gen pwogram. Tèks gri yo se sa TV a montre si kaz la rete vid.": "Texte affiché dans le guide et en bas de l'écran pour les chaînes sans programme. Le texte gris est ce que la TV affiche si la case reste vide.",
     "Pa gen chanèl ki koresponn.": "Aucune chaîne correspondante.",
     "Chanjman yo poko sove.": "Modifications non enregistrées.", "Sove. TV a ap aplike l touswit si l online.": "Enregistré. La TV l'applique tout de suite si elle est en ligne.",
     "Ticker": "Bandeau défilant", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Tous les messages actifs défilent en bas de chaque TV.",
@@ -734,6 +736,7 @@ window.GALAXY_I18N = {
     "{0} TV sou {1} ap koupe an menm tan (anviwon {2} fwa chak 10 minit). Se founisè a, pa entènèt kliyan yo: kontakte founisè a oswa eseye yon lòt sèvè (DNS backup).": "{0} de {1} TV se cortan al mismo tiempo (unas {2} veces cada 10 min). Es el proveedor, no el internet de los clientes: contacta al proveedor o prueba otro servidor (DNS de respaldo).",
     "App la chwazi lang lan selon kategori chanèl la: «EU | FRANCE» → Français, «US | NEWS» → English, «LATINO» → Español, «HAITI» → Kreyòl. Kaz vid = tèks app la nan lang sa a.": "La app elige el idioma según la categoría del canal: «EU | FRANCE» → Français, «US | NEWS» → English, «LATINO» → Español, «HAITI» → Kreyòl. Casilla vacía = texto de la app en ese idioma.",
     "🌐 Lè lang kategori a pa konnen": "🌐 Cuando no se conoce el idioma de la categoría",
+    "Tèks ki parèt nan gid la ak anba ekran an pou chanèl ki pa gen pwogram. Tèks gri yo se sa TV a montre si kaz la rete vid.": "Texto que aparece en la guía y abajo en la pantalla para canales sin programación. El texto gris es lo que muestra el TV si la casilla queda vacía.",
     "Pa gen chanèl ki koresponn.": "No hay canales que coincidan.",
     "Chanjman yo poko sove.": "Cambios sin guardar.", "Sove. TV a ap aplike l touswit si l online.": "Guardado. El TV lo aplica al instante si está en línea.",
     "Ticker": "Cintillo", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Todos los mensajes activos se desplazan en la parte inferior de cada TV.",
