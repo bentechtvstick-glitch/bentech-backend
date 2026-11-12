@@ -2876,7 +2876,7 @@ function renderChList() {
     let list = g.items;
     if (open) { const room = Math.max(0, Math.min(chState.full?.has(cid) ? Infinity : CAP_GROUP, CAP_TOTAL * (chState.full?.has(cid) ? 50 : 1) - drawn));
       if (list.length > room) { skipped += list.length - room; list = list.slice(0, room); } drawn += list.length; }
-    if (open) for (const c of list) { const off = hid.has(c.id) || hidC.has(cid); h += `<div class="chrow${off ? " off" : ""}"><label class="sw sm"><input type="checkbox" data-ch="${c.id}" id="${pre}chk_${c.id}"${hid.has(c.id) || hidC.has(cid) ? "" : " checked"}><i></i></label> ${chState.edit === "h:" + c.id ? `${tvN.has(c.id) ? tvN.get(c.id) + ". " : "— "}` + editBox("ch", c.id, chName(c)) : `<label for="${pre}chk_${c.id}" style="flex:1;min-width:0">${tvN.has(c.id) ? tvN.get(c.id) + ". " : "— "}${esc(chName(c))}${chState.dupCount?.get(c.id) > 1 ? ` <span class="pill p-info" title="${esc(t("Menm chanèl la parèt {0} fwa nan lis la", chState.dupCount.get(c.id)))}">×${chState.dupCount.get(c.id)}</span>` : ""}${chState.chN[c.id] ? ` <span class="note">(${esc(c.name)})</span>` : ""}</label>${sigHtml(chState.health[c.id])}${penBtn("ch", c.id)}`}</div>`; }
+    if (open) for (const c of list) { const off = hid.has(c.id) || hidC.has(cid); h += `<div class="chrow${off ? " off" : ""}"><label class="sw sm"><input type="checkbox" data-ch="${c.id}" id="${pre}chk_${c.id}"${hid.has(c.id) || hidC.has(cid) ? "" : " checked"}><i></i></label> ${chState.edit === "h:" + c.id ? `${tvN.has(c.id) ? tvN.get(c.id) + ". " : "— "}` + editBox("ch", c.id, chName(c)) : `<label for="${pre}chk_${c.id}" style="flex:1;min-width:0">${tvN.has(c.id) ? tvN.get(c.id) + ". " : "— "}${esc(chName(c))}${chState.dupCount?.get(c.id) > 1 ? ` <span class="pill p-info" title="${esc(t("Menm chanèl la parèt {0} fwa nan lis la", chState.dupCount.get(c.id)))}">×${chState.dupCount.get(c.id)}</span>` : ""}${chState.chN[c.id] ? ` <span class="note">(${esc(c.name)})</span>` : ""}</label>${autoHtml(chState.health[c.id], c.id)}${sigHtml(chState.health[c.id])}${penBtn("ch", c.id)}`}</div>`; }
     if (open && list.length < g.items.length) h += `<div class="chrow"><button class="btn small" type="button" data-full="${esc(cid)}">${esc(t("Montre tout ({0})", g.items.length))}</button></div>`;
   }
   return [h, skipped]; };
@@ -2894,6 +2894,15 @@ let chSearchT = 0;
 $("#chSearch").addEventListener("input", () => { clearTimeout(chSearchT); chSearchT = setTimeout(renderChList, 180); });
 /** Ti ba siyal 📶: 4 = fò, 3 = bon, 2 = mwayen, 1 = fèb, 0 = pa mache, gri = poko gen done. */
 const SIG_TXT = ["Pa mache", "Fèb", "Mwayen", "Bon", "Fò"];
+/** Make pou chanèl SISTÈM nan kache (pa mache ditou) — pou mèt la ka fè diferans ak sa li menm li kache. */
+function autoHtml(h, id) {
+  if (!h) return "";
+  const tm = (x) => new Date(x).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  if (h.auto) return ` <span class="pill p-bad" title="${esc(t("Sistèm nan kache l {0}: li pa mache ditou ({1} echèk sou {2} TV). L ap remete l poukont li depi l mache ankò.", tm(h.auto.at), h.auto.fails, h.auto.tvs))}">🤖 ${t("Pa mache · kache pa sistèm nan")}</span> <button class="btn small" type="button" data-autokeep="${id}" data-keep="1" title="${esc(t("Sistèm nan p ap janm kache chanèl sa a ankò"))}">📌 ${t("Toujou montre l")}</button>`;
+  if (h.keep) return ` <button class="pill p-info" type="button" data-autokeep="${id}" data-keep="0" style="border:0;cursor:pointer" title="${esc(t("Klike pou kite sistèm nan kache l ankò si l pa mache"))}">📌 ${t("Toujou montre")}</button>`;
+  if (h.back && Date.now() - h.back < 24 * 3600000) return ` <span class="pill p-on" title="${esc(t("Sistèm nan te kache l, men li mache ankò depi {0}: li tounen sou TV yo.", tm(h.back)))}">✅ ${t("Tounen")}</span>`;
+  return "";
+}
 function sigHtml(h) {
   const s = h && h.s != null ? h.s : null;
   let tip = t("Poko gen done: okenn kliyan poko gade chanèl sa a.");
@@ -2958,7 +2967,12 @@ for (const box of [$("#chList"), $("#chTop")]) box.addEventListener("keydown", (
   else if (e.key === "Escape") { chState.edit = null; chRerender(); }
 });
 for (const box of [$("#chList"), $("#chTop")]) box.addEventListener("focusout", (e) => { if (e.target.classList.contains("chedit") && chState?.edit) chCommitEdit(e.target); });
-for (const box of [$("#chList"), $("#chTop")]) box.addEventListener("click", (e) => {
+for (const box of [$("#chList"), $("#chTop")]) box.addEventListener("click", async (e) => {
+  const ak = e.target.closest("[data-autokeep]");
+  if (ak) { e.preventDefault();
+    try { const r = await api("POST", `/galaxy/devices/${encodeURIComponent(dev.mac)}/auto-keep`, { id: +ak.dataset.autokeep, keep: ak.dataset.keep === "1" }); chState.health[ak.dataset.autokeep] = r.health; const keep = $("#chList").scrollTop; renderChList(); $("#chList").scrollTop = keep; }
+    catch (err) { setMsg($("#chMsg"), err.message); }
+    return; }
   const pen = e.target.closest("[data-pen-cat],[data-pen-ch]");
   if (pen && chState) { chState.edit = pen.dataset.penCat !== undefined ? "c:" + pen.dataset.penCat : "h:" + pen.dataset.penCh; chRerender(); const i = $("#chList .chedit"); if (i) { i.focus(); i.select(); } return; }
   const fb = e.target.closest("[data-full]");

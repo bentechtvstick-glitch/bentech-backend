@@ -46,7 +46,8 @@ export function healthScore(h) {
   return 1;
 }
 /** Sa panel la montre pou yon chanèl. */
-export const healthView = (h) => (h ? { s: healthScore(h), start: h.start ?? null, cuts: h.cuts ?? null, fail: Math.round((h.fail || 0) * 100), n: h.n, at: h.at } : null);
+export const healthView = (h) => (h ? { s: healthScore(h), start: h.start ?? null, cuts: h.cuts ?? null, fail: Math.round((h.fail || 0) * 100), n: h.n, at: h.at,
+  auto: h.auto && !h.keep ? h.auto : null, keep: !!h.keep, back: h.back || null } : null);
 
 export function presentDevice(d) {
   if (!d || !d.lastSeenAt) return d;
@@ -543,7 +544,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       account: customer ? { name: customer.name || "", plan: customer.plan || "", expiry: customer.expiry || "" } : null,
       // Avètisman: plan kliyan an prèske fini (TV a montre l dousman, li rete kèk segonn, li disparèt)
       expiryNotice: expiryNotice(s, customer, device, now, zone),
-      hiddenChannels: eff.hiddenChannels,
+      // Kache pa mèt la + chanèl sistèm nan kache paske yo pa mache ditou (yo tounen poukont yo lè yo mache)
+      hiddenChannels: [...new Set([...eff.hiddenChannels, ...autoHiddenFor(device.mac)])],
       hiddenCategories: eff.hiddenCategories,
       // Non admin nan chanje nan panel la (egz: gwoup "CARIBBEAN" → "HAITI")
       categoryNames: eff.categoryNames,
@@ -1357,6 +1359,79 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   /** Mwayèn ki bliye dousman ansyen mezi yo (dènye yo konte plis). */
   const ema = (old, v, k = 0.3) => (old == null ? v : old * (1 - k) + v * k);
 
+  // ---- Chanèl ki PA MACHE DITOU: sistèm nan kache yo poukont li, epi remete yo depi yo mache ankò ----
+  // "Pa mache ditou" = omwen 3 echèk youn dèyè lòt (san okenn siksè), sou 2 TV diferan oswa pandan 20 minit.
+  // Chanèl ki fè buffering sèlman PA kache. Mèt la ka di «toujou montre l» (keep).
+  const AUTO_MIN_FAILS = 3;
+  function autoTrack(host, id, h, device, failed) {
+    const now = Date.now(), mac = device.mac;
+    if (failed) {
+      h.fs = (h.fs || 0) + 1; h.ff ||= now;
+      h.fm = [...new Set([...(h.fm || []), mac])].slice(-5);
+      // Kache sèlman si LÒT chanèl mache sou TV a (sinon se kont li, entènèt li oswa tout founisè a ki tonbe — pa chanèl la)
+      const tvWorks = device.okAt && now - device.okAt < 30 * 60000;
+      if (!h.auto && !h.keep && h.fs >= AUTO_MIN_FAILS && tvWorks && (h.fm.length >= 2 || now - h.ff >= 20 * 60000)) {
+        h.auto = { at: now, tvs: h.fm.length, fails: h.fs };
+        try { auditLog("auto-hide", `channel ${h.name || id} hidden by the system (not working)`, "system"); } catch {}
+        setTimeout(() => syncTvs(), 50);
+      }
+    } else {
+      device.okAt = now;
+      h.fs = 0; h.ff = 0; h.fm = []; h.ok = now;
+      if (h.auto) { h.auto = null; h.back = now; setTimeout(() => syncTvs(), 50); }
+    }
+  }
+  /** Chanèl sistèm nan kache pou sèvè playlist TV sa a (pa sa mèt la di «toujou montre»). */
+  const autoHiddenFor = (mac) => {
+    const byHost = data().channelHealth?.[healthHost(mac)] || {};
+    return Object.entries(byHost).filter(([, h]) => h.auto && !h.keep).map(([id]) => Number(id));
+  };
+  // Tcheke chanèl ki kache yo chak 15 minit: si yo mache ankò, remete yo. Nou itilize kont yon TV ki PA sou liy
+  // (pou pa janm pran koneksyon yon kliyan k ap gade), epi nou li sèlman kèk octet nan kòmansman chanèl la.
+  async function probeAutoHidden() {
+    const all = data().channelHealth || {}; let budget = 12;
+    const offline = (d) => !d.lastSeenAt || Date.now() - Date.parse(d.lastSeenAt) > 15 * 60000;
+    for (const [host, byHost] of Object.entries(all)) {
+      const ids = Object.entries(byHost).filter(([, h]) => h.auto && !h.keep && Date.now() - (h.probeAt || 0) > 20 * 60000);
+      if (!ids.length) continue;
+      let acct = null;
+      for (const d of data().devices || []) {
+        if (!d.mac || !offline(d)) continue;
+        const pl = (data().devicePlaylists?.[d.mac] || []).find((p) => plHost(p.server) === host && (p.type || "xtream") === "xtream" && p.username);
+        if (pl) { acct = pl; break; }
+      }
+      if (!acct) continue;
+      const base = String(acct.server).replace(/\/+$/, "").replace(/^(?!https?:\/\/)/i, "http://");
+      for (const [id, h] of ids) {
+        if (budget-- <= 0) return;
+        h.probeAt = Date.now();
+        try {
+          const r = await fetch(`${base}/live/${encodeURIComponent(acct.username)}/${encodeURIComponent(acct.password || "")}/${id}.ts`,
+            { headers: { "User-Agent": "Galaxy TV", Range: "bytes=0-4095" }, redirect: "follow", signal: AbortSignal.timeout(10000) });
+          const buf = r.ok ? new Uint8Array(await r.arrayBuffer().catch(() => new ArrayBuffer(0))) : new Uint8Array(0);
+          try { r.body?.cancel?.(); } catch {}
+          const head = Buffer.from(buf.slice(0, 16)).toString("latin1");
+          const video = buf.length > 188 && (buf[0] === 0x47 || head.startsWith("#EXTM3U") || /ftyp|moof/.test(head));
+          if (video) { h.auto = null; h.back = Date.now(); h.fs = 0; h.fm = []; h.ff = 0; syncTvs(); }
+        } catch {}
+      }
+    }
+  }
+  setInterval(() => { probeAutoHidden().then(() => touchWrite()).catch(() => {}); }, 15 * 60000).unref?.();
+
+  /** Panel la: «toujou montre chanèl sa a» (sistèm nan p ap janm kache l) oswa kite sistèm nan jere l ankò. */
+  app.post("/api/galaxy/devices/:mac/auto-keep", authenticate, async (req, res) => {
+    ensure();
+    const device = findDevice(normMac(req.params.mac));
+    if (!device) return res.status(404).json({ ok: false });
+    const id = Math.floor(Number(req.body?.id) || 0), host = healthHost(device.mac);
+    const h = id > 0 && host ? data().channelHealth?.[host]?.[id] : null;
+    if (!h) return res.status(404).json({ ok: false, error: "Channel not found." });
+    h.keep = !!req.body?.keep; if (h.keep) h.auto = null;
+    await db.write(); syncTvs();
+    res.json({ ok: true, health: healthView(h) });
+  });
+
   app.post("/api/devices/:mac/health", (req, res) => {
     ensure();
     const device = findDevice(normMac(req.params.mac));
@@ -1383,6 +1458,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (b.kind !== "watch") {
       h.n = (h.n || 0) + 1;
       h.fail = ema(h.fail, fail);
+      autoTrack(host, id, h, device, !!fail);
       if (!fail && startMs >= 0) h.start = Math.round(ema(h.start, Math.min(startMs, 60000)));
     }
     // Koupi pa 10 minit (sèlman si kliyan an gade omwen 1 minit, pou yon sèl koupi pa twò lou)
