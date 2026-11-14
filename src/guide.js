@@ -3,6 +3,7 @@
 // epi li konnen ki non chanèl sa a genyen nan app la (epg_channel_id → non chanèl + kategori).
 import fs from "node:fs";
 import path from "node:path";
+import { aiComplete, aiKey } from "./ai.js";
 
 const REFRESH_MS = 6 * 3600_000;
 const WINDOW_MS = 48 * 3600_000;      // pwogram ki ap pase nan 2 jou ki vini yo
@@ -165,10 +166,27 @@ export function mountGuide(app, db, { authenticate, playlistsAll, xtreamClient, 
   });
 
   app.get("/api/galaxy/guide", authenticate, (req, res) => res.json(status()));
-  app.get("/api/galaxy/guide/search", authenticate, (req, res) => {
+  /** Nenpòt lang (Kreyòl, English, Français…): AI a bay non an jan gid TV yo ekri l (Brezil → Brazil, Brasil, Brésil). */
+  const expandCache = new Map();
+  async function expand(q) {
+    const base = q.split(/[|,;]/).map((x) => x.trim()).filter(Boolean);
+    if (!aiKey() || !base.length) return base;
+    const k = norm(q); if (expandCache.has(k)) return expandCache.get(k);
+    try {
+      const r = await aiComplete(db, { maxTokens: 150,
+        system: "You turn what someone wants to watch into search terms for a TV guide (EPG). They may write in any language (Haitian Creole, English, French, Spanish, Portuguese…) and with spelling mistakes. Return ONLY a JSON array of up to 8 short terms: the corrected original, and the name as TV guides write it in English, French, Spanish and Portuguese (teams, countries, leagues, shows, channels, people). Example: \"match brezil\" → [\"Brazil\",\"Brasil\",\"Brésil\"]. No generic words like match, game, news alone unless that is all they asked for.",
+        user: q });
+      const m = r.text.match(/\[[\s\S]*\]/); const arr = m ? JSON.parse(m[0]) : [];
+      const out = [...new Set([...base, ...arr.map((x) => String(x).trim()).filter((x) => x.length >= 2)])].slice(0, 10);
+      expandCache.set(k, out); if (expandCache.size > 300) expandCache.delete(expandCache.keys().next().value);
+      return out;
+    } catch { return base; }
+  }
+
+  app.get("/api/galaxy/guide/search", authenticate, async (req, res) => {
     const q = String(req.query.q || "").slice(0, 120);
-    const terms = q.split(/[|,;]/).map((x) => x.trim()).filter(Boolean);
-    res.json({ ...status(), results: search(terms, { limit: 60 }) });
+    const terms = await expand(q);
+    res.json({ ...status(), terms, results: search(terms, { limit: 60 }) });
   });
   let lastManual = 0;
   app.post("/api/galaxy/guide/refresh", authenticate, (req, res) => {
