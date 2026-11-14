@@ -156,8 +156,25 @@ export function mountAi(app, db, { authenticate, isOnline }) {
       `Reply in the SAME language the question is written in (any language: Haitian Creole, English, French, Spanish, Portuguese…); if the language is unclear, use ${lang}. Use simple words, short (max ~12 lines), with concrete next steps in the panel. Never invent panel data (TVs, customers, numbers) that is not in the snapshot. Never reveal passwords or keys.`;
     try {
       if (req.body?.lang && LANG_NAMES[req.body.lang]) { (db.data.watch ??= {}).lang = req.body.lang; }
-      const r = await aiComplete(db, { system, user: `Panel snapshot:\n${JSON.stringify(snapshot())}\n\nQuestion: ${question}`, maxTokens: 700 });
-      res.json({ answer: r.text, cost: Math.round(r.cost * 10000) / 10000, monthCost: Math.round(r.monthCost * 10000) / 10000, limit: limit() });
+      const G = globalThis.galaxyGuide;
+      const guideRule = G ? " TV GUIDE: the panel can search the providers' TV guide (EPG) for the next 2 days. If the question asks which channel shows, or when, any programme (a match, team, league, news, show, series, movie, event, person…), reply with ONLY one line: GUIDE_SEARCH: term1 | term2 | … — up to 8 short search terms in the forms a TV guide may use (English, French, Spanish, Portuguese, and the original name; e.g. Brazil | Brasil | Brésil). Nothing else on that reply." : "";
+      const userMsg = `Panel snapshot:\n${JSON.stringify(snapshot())}\n\nQuestion: ${question}`;
+      let r = await aiComplete(db, { system: system + guideRule, user: userMsg, maxTokens: 700 });
+      let cost = r.cost;
+      const gm = G && r.text.trim().match(/^GUIDE_SEARCH:\s*(.+)$/im);
+      if (gm) {
+        const terms = gm[1].split("|").map((x) => x.trim()).filter(Boolean).slice(0, 8);
+        const st = G.status(), zone = G.tz();
+        const fmt = (ms) => new Date(ms).toLocaleString("en-US", { timeZone: zone, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+        const hits = G.search(terms, { limit: 25 }).map((h) => ({ title: h.title, info: h.desc, starts: fmt(h.start), ends: fmt(h.stop), onNow: h.live,
+          channels: h.channels.map((c) => `${c.name}${c.category ? " [" + c.category + "]" : ""}`) }));
+        const guideInfo = { searchedFor: terms, timeZone: zone, guideUpdated: st.at, providersInGuide: st.sources.map((x) => ({ provider: x.provider, programmes: x.programmes, error: x.error || undefined })), results: hits };
+        r = await aiComplete(db, { maxTokens: 700,
+          system: system + " You now have the TV guide search results. Answer from them only: which channel(s) (name and category as shown in the app), day and time (in the given time zone), and whether it is on now. If the results look unrelated or empty, say it is not in the providers' guide for the next 2 days (the provider may not list it, or the name may differ) and suggest searching another name. Never invent channels or times.",
+          user: `${userMsg}\n\nTV guide search:\n${JSON.stringify(guideInfo)}` });
+        cost += r.cost;
+      }
+      res.json({ answer: r.text, cost: Math.round(cost * 10000) / 10000, monthCost: Math.round(r.monthCost * 10000) / 10000, limit: limit() });
     } catch (err) {
       res.status(err.status || 502).json({ error: err.status ? err.message : "AI unavailable: " + (err.message || err) });
     }

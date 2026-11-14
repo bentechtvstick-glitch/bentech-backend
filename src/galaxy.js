@@ -10,6 +10,8 @@ import { tvEvents } from "./tvevents.js";
 // channel profiles, customers, settings) voye bay app la atravè /config.
 // ---------------------------------------------------------------------------
 import { mountWatch } from "./watch.js";
+import { mountGuide } from "./guide.js";
+import path from "node:path";
 import crypto from "node:crypto";
 import { deviceIndex } from "./perf.js";
 import { buildGraphics, fetchWeather, clientIp, ipPlace, TEXT_STYLES, TEXT_FONTS } from "./graphics.js";
@@ -1935,6 +1937,13 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   app.get("/api/galaxy/devices/:mac/pkgcheck", authenticate, (req, res) => {
     const d = findDevice(normMac(req.params.mac)); if (!d) return res.status(404).json({ error: "Not found" });
     res.json(pkgCheck(d) || {});
+  });
+
+  // Gid TV a: chèche ki chanèl k ap bay yon pwogram (match, nouvèl, fim…)
+  mountGuide(app, db, {
+    authenticate, xtreamClient, plType, providerOf, tz,
+    playlistsAll: () => Object.values(data().devicePlaylists || {}).flat().filter(Boolean),
+    dataDir: process.env.DB_FILE ? path.dirname(process.env.DB_FILE) : ".",
   });
 
   // Siveyans panel la (pwoblèm + koreksyon pwopoze; admin nan deside)

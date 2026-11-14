@@ -677,6 +677,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <button class="btn small" type="button" data-aiq="Fè m yon rezime eta panel la jodi a: TV, kliyan k ap ekspire, ak pwoblèm yo.">Rezime jodi a</button>
           <button class="btn small" type="button" data-aiq="Poukisa chanèl oswa videyo yo pa mache? Ki sa pou m fè?">Poukisa chanèl yo pa mache?</button>
           <button class="btn small" type="button" data-aiq="Ki TV ki offline oswa ki gen yon ansyen vèsyon app la?">TV ki gen pwoblèm</button>
+          <button class="btn small" type="button" data-aiq="Ki chanèl ki ap bay nouvèl kounye a?">Ki sa k ap pase sou TV?</button>
         </div>
         <div style="display:flex;gap:8px"><input id="aiQ" type="text" maxlength="1000" placeholder="Ekri kesyon ou la…" style="flex:1"><button class="btn primary" id="aiAsk" type="button">Mande</button><button class="btn" id="aiClear" type="button" hidden>Efase</button></div>
         <div id="aiAnswer" class="note" style="margin-top:12px;font-size:14px;line-height:1.55;color:var(--text)" hidden></div>
@@ -685,6 +686,12 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="aiKeyIn" type="password" autocomplete="off" placeholder="sk-ant-…" style="flex:1;min-width:220px"><button class="btn primary" id="aiKeySave" type="button">Sove kle a</button><button class="btn" id="aiKeyDel" type="button" hidden>Retire kle a</button></div>
           <span class="msg" id="aiKeyMsg"></span>
         </details>
+      </div>
+      <div class="card" id="guideCard" style="margin-bottom:16px">
+        <div class="cardhead"><div><h2>📺 Chèche nan gid TV a</h2><p class="sub">Tape non yon match, yon ekip, yon emisyon, yon fim oswa nouvèl: panel la montre w ki chanèl k ap bay li ak ki lè.</p></div><span class="note" id="guideWhen"></span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="guideQ" type="text" maxlength="120" placeholder="Egz: Brazil, CNN, Champions League…" style="flex:1;min-width:200px"><button class="btn primary" id="guideGo" type="button">Chèche</button><button class="btn" id="guideRefresh" type="button">🔄 Mete gid la ajou</button></div>
+        <p class="note" style="margin:6px 0 0">Pou chèche nan plizyè lang, separe non yo ak "|" (egz: Brazil | Brésil | Brasil). Ou ka mande Asistan AI a tou: li chèche nan gid la pou ou.</p>
+        <div id="guideRes" style="margin-top:10px"></div>
       </div>
       <div class="cols">
         <div class="card"><div class="cardhead"><div><h2>Ap ekspire byento</h2><p class="sub">Kliyan ki ekspire oswa k ap ekspire nan 14 jou.</p></div><button class="btn small" data-goto="cust" type="button">Kliyan yo</button></div><div class="tbl" id="dashExpiring"></div></div>
@@ -1617,7 +1624,7 @@ function openTab(name) {
   $$(".tab").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
   const pane = CRUD[name] ? "crud" : name;
   $$("[data-pane]").forEach((p) => (p.hidden = p.dataset.pane !== pane));
-  if (name === "dash") { loadDashboard(); loadAi(); loadWatch(); }
+  if (name === "dash") { loadDashboard(); loadAi(); loadWatch(); loadGuide(); }
   if (CRUD[name]) openCrud(name);
   if (name === "live" || name === "cust") loadLive();
   if (name === "dev") loadDevices();
@@ -2469,6 +2476,36 @@ function fillFxSelects() {
   $$("select[data-fx-style]").forEach((sel) => { const v = sel.value; sel.innerHTML = G.STYLES.map(([k, label]) => `<option value="${k}">${esc(t(label))}</option>`).join(""); if (v) sel.value = v; });
 }
 fillFxSelects();
+// ------------------------------------------------------------ Gid TV a: ki chanèl k ap bay yon pwogram
+function guideStatus(g) {
+  const n = (g.sources || []).reduce((a, x) => a + (x.programmes || 0), 0);
+  const bad = (g.sources || []).filter((x) => x.error).map((x) => `${x.provider}: ${x.error}`);
+  $("#guideWhen").textContent = g.building ? t("Ap chaje gid la…") : g.at ? t("Mete ajou {0} · {1} pwogram", new Date(g.at).toLocaleString(lang || undefined, { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" }), n) : t("Gid la poko chaje");
+  $("#guideWhen").title = bad.join("\n");
+}
+async function loadGuide() { try { guideStatus(await api("GET", "/galaxy/guide")); } catch {} }
+async function guideSearch() {
+  const q = $("#guideQ").value.trim(); const box = $("#guideRes"); if (!q) return;
+  box.innerHTML = `<div class="note">${esc(t("Ap chèche…"))}</div>`;
+  let r; try { r = await api("GET", "/galaxy/guide/search?q=" + encodeURIComponent(q)); } catch (e) { box.innerHTML = `<div class="note">⚠ ${esc(e.message)}</div>`; return; }
+  guideStatus(r);
+  if (!r.at) { box.innerHTML = `<div class="note">${esc(t("Gid la poko chaje. Peze \"Mete gid la ajou\" epi tann kèk minit."))}</div>`; return; }
+  if (!r.results.length) { box.innerHTML = `<div class="note">${esc(t("Anyen nan gid founisè yo pou 2 jou k ap vini yo. Eseye yon lòt non oswa yon lòt lang."))}</div>`; return; }
+  const when = (ms) => new Date(ms).toLocaleString(lang || undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  const hm = (ms) => new Date(ms).toLocaleTimeString(lang || undefined, { hour: "numeric", minute: "2-digit" });
+  box.innerHTML = r.results.map((h) => `<div style="padding:10px 0;border-top:1px solid var(--line)">
+    <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">${h.live ? `<span class="pill" style="background:var(--live);color:#fff">${esc(t("Ap pase kounye a"))}</span>` : `<span class="note" style="font-weight:700">${esc(when(h.start))}</span>`}
+      <b>${esc(h.title)}</b><span class="note">${esc(hm(h.start))} – ${esc(hm(h.stop))}</span></div>
+    ${h.desc ? `<div class="note" style="margin-top:2px">${esc(h.desc)}</div>` : ""}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${h.channels.map((c) => `<span class="note" style="border:1px solid var(--line);border-radius:8px;padding:2px 8px;color:var(--text)">📺 ${esc(c.name)}${c.category ? ` <span class="note">· ${esc(c.category)}</span>` : ""}</span>`).join("")}</div>
+  </div>`).join("");
+}
+$("#guideGo").addEventListener("click", guideSearch);
+$("#guideQ").addEventListener("keydown", (e) => { if (e.key === "Enter") guideSearch(); });
+$("#guideRefresh").addEventListener("click", async () => {
+  try { await api("POST", "/galaxy/guide/refresh"); $("#guideWhen").textContent = t("Ap chaje gid la…"); setTimeout(loadGuide, 60000); }
+  catch (e) { alert(e.message); }
+});
 // ------------------------------------------------------------ Asistan AI (Dashboard)
 async function loadAi() {
   let y; try { y = await api("GET", "/galaxy/ai"); } catch { return; }
