@@ -167,10 +167,10 @@ export function mountAi(app, db, { authenticate, isOnline }) {
         const st = G.status(), zone = G.tz();
         const fmt = (ms) => new Date(ms).toLocaleString("en-US", { timeZone: zone, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
         const hits = G.search(terms, { limit: 25 }).map((h) => ({ title: h.title, info: h.desc, starts: fmt(h.start), ends: fmt(h.stop), onNow: h.live,
-          channels: h.channels.map((c) => `${c.name}${c.category ? " [" + c.category + "]" : ""}`) }));
+          channels: h.channels.map((c) => `${c.name}${c.category ? " [" + c.category + "]" : ""} (provider: ${c.provider})`) }));
         const guideInfo = { searchedFor: terms, timeZone: zone, guideUpdated: st.at, providersInGuide: st.sources.map((x) => ({ provider: x.provider, programmes: x.programmes, error: x.error || undefined })), results: hits };
         r = await aiComplete(db, { maxTokens: 700,
-          system: system + " You now have the TV guide search results. Answer from them only: which channel(s) (name and category as shown in the app), day and time (in the given time zone), and whether it is on now. If the results look unrelated or empty, say it is not in the providers' guide for the next 2 days (the provider may not list it, or the name may differ) and suggest searching another name. Never invent channels or times.",
+          system: system + " You now have the TV guide search results. Answer from them only: which channel(s) (name and category as shown in the app, and which provider has it when there are several providers), day and time (in the given time zone), and whether it is on now. If the results look unrelated or empty, say it is not in the providers' guide for the next 2 days (the provider may not list it, or the name may differ) and suggest searching another name. Never invent channels or times.",
           user: `${userMsg}\n\nTV guide search:\n${JSON.stringify(guideInfo)}` });
         cost += r.cost;
       }

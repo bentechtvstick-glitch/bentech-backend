@@ -2493,11 +2493,12 @@ async function guideSearch() {
   if (!r.results.length) { box.innerHTML = `<div class="note">${esc(t("Anyen nan gid founisè yo pou 2 jou k ap vini yo. Eseye yon lòt non oswa yon lòt lang."))}</div>`; return; }
   const when = (ms) => new Date(ms).toLocaleString(lang || undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
   const hm = (ms) => new Date(ms).toLocaleTimeString(lang || undefined, { hour: "numeric", minute: "2-digit" });
+  const multi = (r.sources || []).length > 1;
   box.innerHTML = r.results.map((h) => `<div style="padding:10px 0;border-top:1px solid var(--line)">
     <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">${h.live ? `<span class="pill" style="background:var(--live);color:#fff">${esc(t("Ap pase kounye a"))}</span>` : `<span class="note" style="font-weight:700">${esc(when(h.start))}</span>`}
       <b>${esc(h.title)}</b><span class="note">${esc(hm(h.start))} – ${esc(hm(h.stop))}</span></div>
     ${h.desc ? `<div class="note" style="margin-top:2px">${esc(h.desc)}</div>` : ""}
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${h.channels.map((c) => `<span class="note" style="border:1px solid var(--line);border-radius:8px;padding:2px 8px;color:var(--text)">📺 ${esc(c.name)}${c.category ? ` <span class="note">· ${esc(c.category)}</span>` : ""}</span>`).join("")}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${h.channels.map((c) => `<span class="note" style="border:1px solid var(--line);border-radius:8px;padding:2px 8px;color:var(--text)">📺 ${esc(c.name)}${c.category ? ` <span class="note">· ${esc(c.category)}</span>` : ""}${multi ? ` <span class="note">· ${esc(c.provider)}</span>` : ""}</span>`).join("")}</div>
   </div>`).join("");
 }
 $("#guideGo").addEventListener("click", guideSearch);
