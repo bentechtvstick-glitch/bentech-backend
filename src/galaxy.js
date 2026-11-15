@@ -869,7 +869,8 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
 
   // Ranplase aparèy: tout sa ansyen TV a te genyen (playlist, kliyan, chanèl kache, non, vil…) ale sou nouvo a, epi ansyen an efase.
   const COPY_KEYS = ["customer", "deviceName", "channelProfile", "limit", "city", "maxChannels", "hiddenChannels", "hiddenCategories",
-    "extraGroups", "extraChannels", "removedGroups", "removedChannels", "forceHideAdult", "blockedCats", "categoryNames", "channelNames", "activated"];
+    "extraGroups", "extraChannels", "removedGroups", "removedChannels", "forceHideAdult", "blockedCats", "categoryNames", "channelNames", "activated",
+    "owner", "xtreamUser", "providerStatus", "providerExp", "providerExpAt", "providerTrial", "providerMaxConn", "providerCreated"];
   app.post("/api/galaxy/devices/:mac/replace", authenticate, async (req, res) => {
     const from = loadDevice(req, res);
     if (!from) return;
@@ -886,14 +887,18 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     };
     const newHadList = !!data().deviceChannels[to.mac];
     for (const k of COPY_KEYS) if (from[k] !== undefined) to[k] = JSON.parse(JSON.stringify(from[k]));
+    // Chanèl ki te poko aplike sou ansyen TV a (hideByName) vin ansanm ak sa yo
+    if (from.hideByName) { byName.cats = [...new Set([...byName.cats, ...(from.hideByName.cats || [])])]; byName.chans = [...new Set([...byName.chans, ...(from.hideByName.chans || [])])]; }
     if (byName.cats.length || byName.chans.length) {
       to.hideByName = byName;
       // Nouvo TV a gen pwòp lis li deja: aplike l kounye a; sinon l ap aplike lè TV a voye lis li
       if (newHadList) applyHideByName(to, channelsOf(to.mac));
     }
     // Playlist yo: deplase yo (san doub si nouvo a te deja gen menm kont lan)
-    const have = new Set(playlistsOf(to.mac).map((p) => `${p.server}|${p.username}|${p.type || "xtream"}`));
-    for (const p of playlistsOf(from.mac)) if (!have.has(`${p.server}|${p.username}|${p.type || "xtream"}`)) playlistsOf(to.mac).push(p);
+    // Playlist ansyen TV a vin an premye, nan menm lòd la (se li TV a louvri); sa nouvo a te genyen deja rete apre
+    const keyOf = (p) => `${p.server}|${p.username}|${p.type || "xtream"}`;
+    const oldPls = playlistsOf(from.mac), oldKeys = new Set(oldPls.map(keyOf));
+    data().devicePlaylists[to.mac] = [...oldPls, ...playlistsOf(to.mac).filter((p) => !oldKeys.has(keyOf(p)))];
     if (!data().deviceChannels[to.mac] && data().deviceChannels[from.mac]) data().deviceChannels[to.mac] = data().deviceChannels[from.mac];
     data().deletedDevices = data().deletedDevices.filter((m) => m !== to.mac);
     // Ansyen an efase (TV a retounen sou ekran aktivasyon an si l limen)
