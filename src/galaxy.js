@@ -1304,21 +1304,47 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   // pou pa chaje founisè a). Lè dat la chanje, TV kliyan an mete l ajou touswit.
   setInterval(async () => {
     try {
-      const now = Date.now(), seen = new Set(); let n = 0;
+      const now = Date.now(); let n = 0;
+      // MAC ki nan fòm kliyan an men TV a pa t konekte: konekte yo kounye a
+      for (const d of (data().devices || [])) if (linkCustomerByMac(d)) touchWrite();
+      // Chak kliyan ak tout TV li yo; kliyan ki san dat yo pase an premye
+      const groups = new Map();
       for (const d of (data().devices || [])) {
-        if (n >= 40) break;
         if (!d.mac) continue;
-        const c = customerOf(d); if (!c || c.autoPlan === false || seen.has(c.id || c.name)) continue;
-        seen.add(c.id || c.name);
-        if (c.providerSyncAt && now - Date.parse(c.providerSyncAt) < SYNC_EVERY_MS) continue;
+        const c = customerOf(d); if (!c || c.autoPlan === false) continue;
+        const k = c.id || c.name; if (!groups.has(k)) groups.set(k, { c, devs: [] });
+        groups.get(k).devs.push(d);
+      }
+      const order = [...groups.values()].sort((a, b) => (!!a.c.expiry - !!b.c.expiry));
+      for (const { c, devs } of order) {
+        if (n >= 40) break;
+        const every = c.expiry ? SYNC_EVERY_MS : 3 * 60 * 1000; // san dat: re-eseye chak 3 minit
+        if (c.providerSyncAt && now - Date.parse(c.providerSyncAt) < every) continue;
         n++;
         const before = `${c.expiry}|${c.status}|${c.plan}`;
-        const r = await syncCustomerFromProvider(d).catch(() => null);
+        // Eseye chak TV kliyan an (premye a ka pa gen playlist oswa yon playlist Stalker)
+        let r = null;
+        for (const d of devs.filter((x) => playlistsOf(x.mac).length)) {
+          c.providerSyncAt = ""; // pou syncCustomerFromProvider pa sote TV sa a
+          r = await syncCustomerFromProvider(d, { force: true }).catch(() => null);
+          if (r) break;
+        }
+        if (!r) {
+          c.providerSyncAt = new Date().toISOString();
+          // Sèvè panel la pa rive jwenn founisè a: sèvi ak dat TV a li menm te voye (dènye a)
+          const tv = devs.filter((x) => x.providerExpAt && x.providerExp != null).sort((a, b) => Date.parse(b.providerExpAt) - Date.parse(a.providerExpAt))[0];
+          if (tv && applyProviderExp(tv)) r = c;
+          c.providerSyncError = r ? "" : !devs.some((x) => playlistsOf(x.mac).length) ? "noPlaylist" : "provider";
+        } else c.providerSyncError = "";
         if (r && `${r.expiry}|${r.status}|${r.plan}` !== before) {
           auditLog("customer-sync", `Customer ${c.name || c.id}: provider expiry ${before.split("|")[0] || "—"} → ${r.expiry || "—"}`, "system");
           syncTvs();
         }
+        touchWrite();
       }
+      // Kliyan ki pa gen okenn TV: panel la pa ka mande founisè a
+      const linked = new Set([...groups.values()].map((g) => g.c));
+      for (const c of (data().customers || [])) if (c.autoPlan !== false && !linked.has(c) && c.providerSyncError !== "noTv") { c.providerSyncError = "noTv"; touchWrite(); }
       // TV san kliyan: mete dat founisè a ajou chak 10 minit (pou yon renouvèlman debloke TV a poukont li)
       let k = 0;
       for (const d of (data().devices || [])) {

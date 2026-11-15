@@ -2266,6 +2266,15 @@ function cellHtml(f, v, it) {
   if (crud.name === "cust" && f.k === "mac" && it) { const ds = custDevices(it); return ds.length ? ds.map((d) => `<div class="mono">${esc(d.mac)}</div>`).join("") : (v ? `<span class="mono">${esc(v)}</span>` : "—"); }
   if (crud.name === "cust" && f.k === "status" && it) return (v ? `<span class="pill ${pillClass(v)}">${esc(v)}</span>` : "—") + custTvHtml(it);
   if (f.pill && v) return `<span class="pill ${pillClass(v)}">${esc(v)}</span>`;
+  // Kliyan san dat: di poukisa panel la pa ka pran dat founisè a
+  if (crud.name === "cust" && f.k === "expiry" && it && !v) {
+    const why = it.autoPlan === false ? "Plan otomatik etenn: limen l pou panel la pran dat founisè a."
+      : it.providerSyncError === "noTv" ? "Pa gen TV: chwazi kliyan an sou TV li nan paj Aparèy la."
+      : it.providerSyncError === "noPlaylist" ? "TV a pa gen playlist."
+      : it.providerSyncError === "provider" ? "Founisè a pa reponn oswa li refize kont lan. Panel la ap eseye ankò."
+      : "Ap mande founisè a…";
+    return `<span class="note" title="${esc(t(why))}">— ⚠ ${esc(t(why))}</span>`;
+  }
   if (f.type === "datetime") return esc(fmtExp(v)) || "—";
   return esc(v ?? "") || "—";
 }
