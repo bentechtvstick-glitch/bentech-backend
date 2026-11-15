@@ -262,6 +262,7 @@ window.GALAXY_I18N = {
     "TV a pa gen playlist.": "The TV has no playlist.",
     "Founisè a pa reponn oswa li refize kont lan. Panel la ap eseye ankò.": "The provider didn't answer or refused the account. The panel will try again.",
     "Ap mande founisè a…": "Asking the provider…",
+    "Founisè a: {0}": "Provider: {0}",
     "Pa gen chanèl ki koresponn.": "No matching channels.",
     "Chanjman yo poko sove.": "Changes not saved yet.", "Sove. TV a ap aplike l touswit si l online.": "Saved. The TV applies it right away if it's online.",
     // Mesaj
@@ -548,6 +549,7 @@ window.GALAXY_I18N = {
     "TV a pa gen playlist.": "La TV n'a pas de playlist.",
     "Founisè a pa reponn oswa li refize kont lan. Panel la ap eseye ankò.": "Le fournisseur ne répond pas ou refuse le compte. Le panel réessaiera.",
     "Ap mande founisè a…": "Demande au fournisseur…",
+    "Founisè a: {0}": "Fournisseur : {0}",
     "Pa gen chanèl ki koresponn.": "Aucune chaîne correspondante.",
     "Chanjman yo poko sove.": "Modifications non enregistrées.", "Sove. TV a ap aplike l touswit si l online.": "Enregistré. La TV l'applique tout de suite si elle est en ligne.",
     "Ticker": "Bandeau défilant", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Tous les messages actifs défilent en bas de chaque TV.",
@@ -830,6 +832,7 @@ window.GALAXY_I18N = {
     "TV a pa gen playlist.": "La TV no tiene lista.",
     "Founisè a pa reponn oswa li refize kont lan. Panel la ap eseye ankò.": "El proveedor no responde o rechazó la cuenta. El panel lo intentará de nuevo.",
     "Ap mande founisè a…": "Consultando al proveedor…",
+    "Founisè a: {0}": "Proveedor: {0}",
     "Pa gen chanèl ki koresponn.": "No hay canales que coincidan.",
     "Chanjman yo poko sove.": "Cambios sin guardar.", "Sove. TV a ap aplike l touswit si l online.": "Guardado. El TV lo aplica al instante si está en línea.",
     "Ticker": "Cintillo", "Tout mesaj aktif yo defile anba ekran tout TV yo.": "Todos los mensajes activos se desplazan en la parte inferior de cada TV.",

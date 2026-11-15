@@ -1240,6 +1240,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       if (plan) customer.plan = plan;
       customer.providerExp = exp > 0 ? exp : 0;
       customer.expiry = exp > 0 ? localStamp(exp) : ""; // pa gen dat = kont san limit
+      // Zòn lè sèvè founisè a: panel la montre dat la menm jan ak panel founisè a
+      const ptz = String(info.server_info?.timezone || "").trim();
+      try { if (ptz) { new Intl.DateTimeFormat("en-US", { timeZone: ptz }); customer.providerTz = ptz; device.providerTz = ptz; } } catch { /* zòn lè pa valid */ }
       const ps = String(u.status || "").toLowerCase();
       if (String(customer.status || "").toLowerCase() !== "suspended") {
         if (ps === "expired" || (exp > 0 && exp * 1000 < Date.now())) customer.status = "Expired";

@@ -2168,6 +2168,8 @@ $("#addMacBtn").addEventListener("click", () => { $("#findCard").hidden = false;
 // ------------------------------------------------------------ Dashboard
 const today = () => new Date().toISOString().slice(0, 10);
 const expDate = (d) => new Date(/^\d{4}-\d{2}-\d{2}$/.test(d) ? d + "T23:59:59" : String(d).replace(" ", "T"));
+/** Dat ekspirasyon founisè a, nan zòn lè sèvè founisè a (menm jan ak panel founisè a). */
+const provExp = (c) => { const o = { ...US_D, ...US_T }; try { if (c.providerTz) o.timeZone = c.providerTz; return new Date(Number(c.providerExp) * 1000).toLocaleString("en-US", o); } catch { return new Date(Number(c.providerExp) * 1000).toLocaleString("en-US", { ...US_D, ...US_T }); } };
 const daysLeft = (d) => { if (!d) return null; const x = (expDate(d) - new Date()) / 86400000; return Number.isNaN(x) ? null : x < 0 ? -1 : Math.ceil(x); };
 // Dat ak lè nan tout panel la: M/D/YYYY ak 12 è (AM/PM)
 const US_D = { month: "numeric", day: "numeric", year: "numeric" }, US_T = { hour: "numeric", minute: "2-digit", hour12: true };
@@ -2180,7 +2182,7 @@ const fmtExp = (d) => { const m = String(d || "").match(/^(\d{4})-(\d{2})-(\d{2}
 function devExpHtml(d) {
   const c = d.customer ? (customers || []).find((x) => String(x.name).toUpperCase() === String(d.customer).toUpperCase() || x.id === d.customer) : null;
   let txt = "", left = null;
-  if (c && c.expiry) { txt = fmtExp(c.expiry); left = daysLeft(c.expiry); }
+  if (c && c.expiry) { txt = c.autoPlan !== false && Number(c.providerExp) > 0 ? provExp(c) : fmtExp(c.expiry); left = daysLeft(c.expiry); }
   else if (d.providerExp > 0) { const dt = new Date(d.providerExp * 1000); txt = usDT(dt); const x = (dt - new Date()) / 86400000; left = x < 0 ? -1 : Math.ceil(x); }
   else if (d.providerExp === 0) return `<span class="note">${esc(t("Pa gen dat (illimite)"))}</span>`;
   if (!txt) return "—";
@@ -2267,6 +2269,12 @@ function cellHtml(f, v, it) {
   if (crud.name === "cust" && f.k === "status" && it) return (v ? `<span class="pill ${pillClass(v)}">${esc(v)}</span>` : "—") + custTvHtml(it);
   if (f.pill && v) return `<span class="pill ${pillClass(v)}">${esc(v)}</span>`;
   // Kliyan san dat: di poukisa panel la pa ka pran dat founisè a
+  if (crud.name === "cust" && f.k === "expiry" && it && v && Number(it.providerExp) > 0) {
+    const pv = provExp(it);
+    if (it.autoPlan !== false) return esc(pv);
+    // Dat la te chanje alamen: montre dat founisè a si l diferan
+    if (Math.abs(expDate(v) - Number(it.providerExp) * 1000) > 12 * 3600000) return `${esc(fmtExp(v))}<div class="note" style="color:var(--warn,#f5a524)">⚠ ${esc(t("Founisè a: {0}", pv))}</div>`;
+  }
   if (crud.name === "cust" && f.k === "expiry" && it && !v) {
     const why = it.autoPlan === false ? "Plan otomatik etenn: limen l pou panel la pran dat founisè a."
       : it.providerSyncError === "noTv" ? "Pa gen TV: chwazi kliyan an sou TV li nan paj Aparèy la."
