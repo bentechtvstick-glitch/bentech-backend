@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Chanèl ak fim</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1324;--card:#18213a;--card2:#1f2a47;--line:#2a3650;--text:#eef1fb;--dim:#9ba6c9;--faint:#6c78a0;--accent:#7c4dff;--accent2:#00e5ff;--warn:#ffb020;--ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--ui);font-size:16px;line-height:1.5}
+.wrap{max-width:820px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+header img{height:44px;width:auto}
+header h1{font-size:22px;margin:0;flex:1;min-width:180px}
+.langs{display:flex;gap:4px}
+.langs button{background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:5px 9px;font-size:13px;cursor:pointer}
+.langs button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.note{background:linear-gradient(135deg,rgba(255,176,32,.14),rgba(124,77,255,.10));border:1px solid rgba(255,176,32,.45);border-radius:14px;padding:14px 16px;margin:0 0 16px}
+.note b{color:var(--warn)}
+.note p{margin:6px 0 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .n{font-size:26px;font-weight:800}
+.kpi .l{font-size:13px;color:var(--dim)}
+.tabs{display:flex;gap:6px;margin:8px 0 12px;flex-wrap:wrap}
+.tabs button{background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:7px 14px;cursor:pointer;font-size:14px}
+.tabs button[aria-selected=true]{background:var(--accent2);border-color:var(--accent2);color:#06101f;font-weight:700}
+input[type=search]{width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--text);font-size:16px;margin-bottom:12px}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+summary{cursor:pointer;padding:11px 14px;display:flex;gap:8px;align-items:center;list-style:none;font-weight:600}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"";width:0;height:0;border-left:6px solid var(--faint);border-top:5px solid transparent;border-bottom:5px solid transparent;transition:transform .15s}
+details[open] summary::before{transform:rotate(90deg)}
+summary .c{margin-left:auto;color:var(--faint);font-weight:500;font-size:13px}
+ul{margin:0;padding:4px 14px 12px 34px;columns:2 220px;column-gap:24px}
+li{break-inside:avoid;padding:2px 0;font-size:14px;color:var(--dim)}
+.cats{display:flex;flex-wrap:wrap;gap:8px}
+.cats span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:14px}
+.muted{color:var(--faint);font-size:13px}
+.contact{margin-top:20px;text-align:center;color:var(--dim)}
+.empty{color:var(--faint);padding:18px;text-align:center;background:var(--card);border-radius:12px}
+mark{background:rgba(0,229,255,.25);color:inherit;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img id="logo" src="logo.png" alt="" hidden><h1 id="title">…</h1><div class="langs" id="langs"></div></header>
+  <div id="app"><div class="empty" id="loading">…</div></div>
+</div>
+<script>
+"use strict";
+const T = {
+  ht: { title: "Chanèl ak fim ou yo", loading: "Ap chaje…", notFound: "Lyen sa a pa valid ankò. Mande yon nouvo lyen.", channels: "Chanèl", groups: "Gwoup chanèl", movies: "Kategori fim", series: "Kategori seri", until: "Abònman: jiska {0}", search: "Chèche yon chanèl…", tLive: "📺 Chanèl", tMovies: "🎬 Fim", tSeries: "🎞️ Seri", noList: "Lis chanèl la ap parèt lè TV a fin louvri app la omwen yon fwa.", noVod: "Lis fim yo poko disponib.", none: "Anyen pa jwenn.", contact: "Kontak: {0}", updated: "Mete ajou: {0}", impTitle: "Enpòtan" },
+  en: { title: "Your channels and movies", loading: "Loading…", notFound: "This link is no longer valid. Ask for a new link.", channels: "Channels", groups: "Channel groups", movies: "Movie categories", series: "Series categories", until: "Subscription: until {0}", search: "Search a channel…", tLive: "📺 Channels", tMovies: "🎬 Movies", tSeries: "🎞️ Series", noList: "The channel list will appear once the TV has opened the app at least once.", noVod: "The movie list is not available yet.", none: "Nothing found.", contact: "Contact: {0}", updated: "Updated: {0}", impTitle: "Important" },
+  fr: { title: "Vos chaînes et films", loading: "Chargement…", notFound: "Ce lien n'est plus valide. Demandez un nouveau lien.", channels: "Chaînes", groups: "Groupes de chaînes", movies: "Catégories de films", series: "Catégories de séries", until: "Abonnement : jusqu'au {0}", search: "Chercher une chaîne…", tLive: "📺 Chaînes", tMovies: "🎬 Films", tSeries: "🎞️ Séries", noList: "La liste des chaînes apparaîtra quand la TV aura ouvert l'application au moins une fois.", noVod: "La liste des films n'est pas encore disponible.", none: "Rien trouvé.", contact: "Contact : {0}", updated: "Mis à jour : {0}", impTitle: "Important" },
+  es: { title: "Tus canales y películas", loading: "Cargando…", notFound: "Este enlace ya no es válido. Pide un enlace nuevo.", channels: "Canales", groups: "Grupos de canales", movies: "Categorías de películas", series: "Categorías de series", until: "Suscripción: hasta el {0}", search: "Buscar un canal…", tLive: "📺 Canales", tMovies: "🎬 Películas", tSeries: "🎞️ Series", noList: "La lista de canales aparecerá cuando la TV haya abierto la app al menos una vez.", noVod: "La lista de películas aún no está disponible.", none: "No se encontró nada.", contact: "Contacto: {0}", updated: "Actualizado: {0}", impTitle: "Importante" },
+};
+const LOC = { ht: "fr-HT", en: "en-US", fr: "fr-FR", es: "es-ES" };
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+let lang = (() => { const q = new URLSearchParams(location.search).get("lang"); if (T[q]) return q;
+  const n = String(navigator.language || "").slice(0, 2).toLowerCase(); return n === "fr" || n === "es" || n === "en" ? n : "ht"; })();
+const t = (k, ...a) => (T[lang][k] || T.ht[k] || k).replace(/\{(\d+)\}/g, (_, i) => a[+i] ?? "");
+let D = null, tab = "live", q = "";
+const token = (location.hash.slice(1) || new URLSearchParams(location.search).get("t") || "").replace(/[^0-9a-f]/g, "");
+
+function langs() {
+  document.getElementById("langs").innerHTML = ["ht", "en", "fr", "es"].map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === lang}">${l.toUpperCase()}</button>`).join("");
+  document.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => { lang = b.dataset.l; document.documentElement.lang = lang; render(); });
+}
+function hl(name) {
+  if (!q) return esc(name);
+  const i = norm(name).indexOf(q); if (i < 0) return esc(name);
+  return esc(name.slice(0, i)) + "<mark>" + esc(name.slice(i, i + q.length)) + "</mark>" + esc(name.slice(i + q.length));
+}
+function body() {
+  if (tab === "live") {
+    if (!D.listKnown) return `<div class="empty">${esc(t("noList"))}</div>`;
+    const gs = D.channels.map((g) => ({ name: g.name, list: q ? g.channels.filter((c) => norm(c).includes(q)) : g.channels, gmatch: q && norm(g.name).includes(q) }))
+      .map((g) => g.gmatch && !g.list.length ? { ...g, list: D.channels.find((x) => x.name === g.name).channels } : g).filter((g) => g.list.length);
+    if (!gs.length) return `<div class="empty">${esc(t("none"))}</div>`;
+    return gs.map((g) => `<details${q ? " open" : ""}><summary>${hl(g.name)}<span class="c">${g.list.length}</span></summary><ul>${g.list.map((c) => `<li>${hl(c)}</li>`).join("")}</ul></details>`).join("");
+  }
+  const arr = tab === "movies" ? D.movies : D.series;
+  if (!D.vodKnown && !arr.length) return `<div class="empty">${esc(t("noVod"))}</div>`;
+  const list = q ? arr.filter((n) => norm(n).includes(q)) : arr;
+  return list.length ? `<div class="cats">${list.map((n) => `<span>${hl(n)}</span>`).join("")}</div>` : `<div class="empty">${esc(t("none"))}</div>`;
+}
+function render() {
+  langs();
+  document.title = `${D?.brand || ""} — ${t("title")}`;
+  document.getElementById("title").textContent = t("title");
+  if (!D) return;
+  const nCh = D.channels.reduce((n, g) => n + g.channels.length, 0);
+  const exp = D.expiry > 0 ? (() => { try { return new Date(D.expiry * 1000).toLocaleDateString(LOC[lang], { timeZone: D.expiryTz, day: "numeric", month: "long", year: "numeric" }); } catch { return new Date(D.expiry * 1000).toLocaleDateString(LOC[lang]); } })() : "";
+  document.getElementById("app").innerHTML = `
+    <div class="note"><b>⚠️ ${esc(t("impTitle"))}</b><p>${esc(D.note[lang] || D.note.ht)}</p>${D.extraNote ? `<p>${esc(D.extraNote)}</p>` : ""}</div>
+    ${exp ? `<p class="muted" style="margin:0 0 12px">${esc(t("until", exp))}</p>` : ""}
+    <div class="kpis">
+      <div class="kpi"><div class="n">${nCh.toLocaleString(LOC[lang])}</div><div class="l">${esc(t("channels"))}</div></div>
+      <div class="kpi"><div class="n">${D.channels.length.toLocaleString(LOC[lang])}</div><div class="l">${esc(t("groups"))}</div></div>
+      <div class="kpi"><div class="n">${D.movies.length.toLocaleString(LOC[lang])}</div><div class="l">${esc(t("movies"))}</div></div>
+      <div class="kpi"><div class="n">${D.series.length.toLocaleString(LOC[lang])}</div><div class="l">${esc(t("series"))}</div></div>
+    </div>
+    <div class="tabs" role="tablist">${[["live", "tLive"], ["movies", "tMovies"], ["series", "tSeries"]].map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}">${esc(t(l))}</button>`).join("")}</div>
+    <input type="search" id="q" placeholder="${esc(t("search"))}" value="${esc(q)}">
+    <div id="list">${body()}</div>
+    ${D.contact ? `<p class="contact">${esc(t("contact", D.contact))}</p>` : ""}
+    <p class="muted" style="text-align:center">${esc(D.brand)} · ${esc(t("updated", new Date(D.updatedAt).toLocaleString(LOC[lang])))}</p>`;
+  document.querySelectorAll("[data-tab]").forEach((b) => b.onclick = () => { tab = b.dataset.tab; render(); });
+  const inp = document.getElementById("q");
+  inp.oninput = () => { q = norm(inp.value.trim()); document.getElementById("list").innerHTML = body(); };
+}
+(async () => {
+  langs();
+  document.getElementById("title").textContent = t("title");
+  document.getElementById("loading").textContent = t("loading");
+  if (!token) { document.getElementById("app").innerHTML = `<div class="empty">${esc(t("notFound"))}</div>`; return; }
+  try {
+    const r = await fetch("/api/lineup/" + token, { cache: "no-store" });
+    if (!r.ok) throw new Error("x");
+    D = await r.json();
+    if (D.brand === "Galaxy TV") document.getElementById("logo").hidden = false;
+    render();
+  } catch { document.getElementById("app").innerHTML = `<div class="empty">${esc(t("notFound"))}</div>`; }
+})();
+</script>
+</body>
+</html>

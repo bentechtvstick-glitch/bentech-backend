@@ -805,7 +805,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="row2"><div class="field"><label for="dvCustomer">Kliyan</label><select id="dvCustomer"></select></div>
               <div class="field"><label>Limit (founisè a)</label><div class="limitbox"><b id="dvLimit">—</b><span class="note" id="dvLimitNote"></span></div></div></div>
             <div class="kv"><span>Bloke aparèy la</span><label class="sw"><input type="checkbox" id="dvBlocked" aria-label="Bloke aparèy la"><i></i></label></div>
-            <div class="btns"><button class="btn small" id="dvResetKey" type="button">Reyinisyalize Device Key</button><button class="btn small" id="dvReplace" type="button">🔁 Ranplase aparèy la</button><button class="btn small red" id="dvDelete" type="button">Efase aparèy la</button><button class="btn small primary" id="dvSave" type="button">Sove</button></div>
+            <div class="btns"><button class="btn small" id="dvResetKey" type="button">Reyinisyalize Device Key</button><button class="btn small" id="dvLineup" type="button">📋 Lis pou kliyan an</button><button class="btn small" id="dvReplace" type="button">🔁 Ranplase aparèy la</button><button class="btn small red" id="dvDelete" type="button">Efase aparèy la</button><button class="btn small primary" id="dvSave" type="button">Sove</button></div>
             <div class="msg e" id="dvKeyWarn" hidden style="margin:8px 0"></div><div id="dvConfirm"></div>
             <div class="msg" id="dvMsg"></div>
           </div>
@@ -1870,6 +1870,39 @@ $("#dvResetKey").addEventListener("click", () => confirmIn("#dvConfirm", t("TV a
 $("#dvDelete").addEventListener("click", () => confirmIn("#dvConfirm", t("Aparèy la ak tout playlist li yo ap efase. TV a ap retounen sou ekran aktivasyon an."), t("Efase l"), async (delC) => {
   try { const r = await api("DELETE", delPath(dev.mac, delC)); dev = null; $("#deviceView").hidden = true; $("#mac").value = ""; loadDevices(); delToast(r); } catch (err) { setMsg($("#dvMsg"), err.message); }
 }, delCustHtml(dev?.customer)));
+// Lis chanèl ak fim pou kliyan an: yon lyen pou voye ba li (WhatsApp), ak yon nòt sou chanèl ki pa toujou travay
+$("#dvLineup").addEventListener("click", async () => {
+  if (!dev) return;
+  const box = $("#dvConfirm"); box.innerHTML = `<div class="confirm"><span>${esc(t("Ap prepare lis la…"))}</span></div>`;
+  const show = async (newLink) => {
+    let r; try { r = await api("GET", `/galaxy/devices/${encodeURIComponent(dev.mac)}/lineup${newLink ? "?newLink=1" : ""}`); } catch (e) { box.innerHTML = ""; setMsg($("#dvMsg"), e.message); return; }
+    const url = `${location.origin}/l/${r.token}`;
+    const phone = String(r.phone || "").replace(/[^\d]/g, "");
+    const msg = t("Men lis chanèl ak fim ou yo: {0}", url);
+    box.innerHTML = `<div class="confirm" style="flex-direction:column;align-items:stretch;gap:10px">
+      <div><b>📋 ${esc(t("Lis pou kliyan an"))}</b><div class="note" style="margin-top:4px">${r.listKnown ? esc(t("{0} chanèl nan {1} gwoup · {2} kategori fim · {3} kategori seri", r.channels, r.groups, r.movies, r.series)) : esc(t("TV a poko voye lis chanèl li. Louvri app la sou TV a yon fwa."))}</div>
+        <div class="note">${esc(t("Paj la montre sèlman sa kliyan an ka wè sou TV li (chanèl ak kategori ou kache yo pa parèt), ak yon nòt ki eksplike poukisa se pa tout chanèl ki travay an menm tan. Li pa montre MAC, modpas, ni founisè a."))}</div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><input type="text" readonly value="${esc(url)}" style="flex:1;min-width:220px" data-url>
+        <button class="btn small" type="button" data-copy>${esc(t("Kopye lyen an"))}</button>
+        <a class="btn small" target="_blank" rel="noopener" href="${esc(url)}">${esc(t("Louvri"))}</a>
+        <a class="btn small primary" target="_blank" rel="noopener" href="https://wa.me/${esc(phone)}?text=${encodeURIComponent(msg)}">WhatsApp</a></div>
+      <details><summary class="note" style="cursor:pointer">${esc(t("Nòt ak kontak (pou tout kliyan yo)"))}</summary>
+        <div class="field" style="margin-top:8px"><label>${esc(t("Nòt anplis (opsyonèl)"))}</label><textarea data-note rows="3" maxlength="1000" placeholder="${esc(t("Egz: Chanèl espò yo travay sitou lè gen match."))}">${esc(r.extraNote || "")}</textarea></div>
+        <div class="field"><label>${esc(t("Kontak (WhatsApp oswa telefòn)"))}</label><input type="text" data-contact maxlength="120" value="${esc(r.contact || "")}" placeholder="+509 …"></div>
+        <div class="btns" style="justify-content:flex-start"><button class="btn small primary" type="button" data-save>${esc(t("Sove"))}</button><span class="msg" data-m></span></div>
+        <p class="note">${esc(t("Nòt prensipal la deja ekri an Kreyòl, English, Français ak Español: chak kliyan wè l nan lang telefòn li."))}</p>
+      </details>
+      <div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn small" type="button" data-new>${esc(t("Nouvo lyen (ansyen an p ap mache ankò)"))}</button><button class="btn small" type="button" data-no>${esc(t("Fèmen"))}</button></div></div>`;
+    $("[data-no]", box).onclick = () => (box.innerHTML = "");
+    $("[data-copy]", box).onclick = async () => { try { await navigator.clipboard.writeText(url); toast(t("Lyen an kopye.")); } catch { $("[data-url]", box).select(); } };
+    $("[data-new]", box).onclick = () => { if (confirm(t("Fè yon nouvo lyen? Ansyen lyen an p ap mache ankò."))) show(true); };
+    $("[data-save]", box).onclick = async () => {
+      try { await api("PUT", "/settings", { lineupNote: $("[data-note]", box).value.trim(), lineupContact: $("[data-contact]", box).value.trim() }); setMsg($("[data-m]", box), t("Sove ✓"), true); }
+      catch (e) { setMsg($("[data-m]", box), e.message); }
+    };
+  };
+  show(false);
+});
 // Ranplase aparèy: chwazi nouvo TV a (sitou sa ki «ap tann aktivasyon»), panel la deplase tout bagay sou li
 $("#dvReplace").addEventListener("click", () => {
   if (!dev) return;

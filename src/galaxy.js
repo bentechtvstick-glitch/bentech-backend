@@ -915,6 +915,68 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     res.json({ ok: true, device: adminDevice(to) });
   });
 
+  // ---- Lis chanèl ak fim kliyan an resevwa: yon paj pou voye bay kliyan an (lyen prive, san modpas ni MAC) ----
+  const LINEUP_NOTE = {
+    ht: "Enpòtan: chanèl yo soti dirèkteman kay founisè a, se pa tout chanèl ki ap travay an menm tan. Gen chanèl ki pase sèlman lè gen yon evènman (match, PPV, espò), gen ki ka an antretyen pou kèk minit oswa kèk èdtan, e gen ki chanje non oswa plas. Si yon chanèl pa travay, eseye menm chanèl la nan yon lòt kalite (HD, FHD, SD) oswa nan yon lòt gwoup, oswa tounen pita. Si anpil chanèl pa travay ansanm, tcheke entènèt ou (redemare routè a), epi kontakte nou si sa kontinye.",
+    en: "Important: channels come straight from the provider, and not every channel works at the same time. Some channels only air during an event (a match, PPV, sports), some can be under maintenance for a few minutes or hours, and some change name or position. If a channel doesn't work, try the same channel in another quality (HD, FHD, SD) or another group, or come back later. If many channels stop at once, check your internet (restart the router) and contact us if it continues.",
+    fr: "Important : les chaînes viennent directement du fournisseur et elles ne fonctionnent pas toutes en même temps. Certaines chaînes ne diffusent que pendant un événement (match, PPV, sport), certaines peuvent être en maintenance quelques minutes ou quelques heures, et certaines changent de nom ou de place. Si une chaîne ne marche pas, essayez la même chaîne dans une autre qualité (HD, FHD, SD) ou un autre groupe, ou revenez plus tard. Si beaucoup de chaînes s'arrêtent en même temps, vérifiez votre internet (redémarrez le routeur) et contactez-nous si cela continue.",
+    es: "Importante: los canales vienen directamente del proveedor y no todos funcionan al mismo tiempo. Algunos canales solo transmiten durante un evento (partido, PPV, deportes), otros pueden estar en mantenimiento unos minutos u horas, y otros cambian de nombre o de lugar. Si un canal no funciona, prueba el mismo canal en otra calidad (HD, FHD, SD) o en otro grupo, o vuelve más tarde. Si muchos canales fallan a la vez, revisa tu internet (reinicia el router) y contáctanos si continúa.",
+  };
+  function lineupOf(device) {
+    const eff = effectiveChannels(device);
+    const hidCh = new Set([...(eff.hiddenChannels || []), ...autoHiddenFor(device.mac)].map(Number));
+    const hidCat = new Set((eff.hiddenCategories || []).map(String));
+    const bl = device.blockedCats || {}, hid = (k) => new Set((bl[k] || []).map(nkey));
+    const blLive = hid("live");
+    const adultOk = (n) => !(device.forceHideAdult && ADULT_RX.test(n));
+    const groups = new Map();
+    for (const c of channelsOf(device.mac)) {
+      const cid = String(c.categoryId || ""), gname = String(eff.categoryNames?.[cid] || c.categoryName || "").trim() || "—";
+      if (hidCat.has(cid) || hidCh.has(Number(c.id)) || blLive.has(nkey(c.categoryName)) || !adultOk(gname) || !adultOk(String(c.name || ""))) continue;
+      const name = String(eff.channelNames?.[String(c.id)] || c.name || "").trim(); if (!name) continue;
+      if (!groups.has(gname)) groups.set(gname, []);
+      groups.get(gname).push(name);
+    }
+    const vod = (k) => [...new Set(device.vodCats?.[k] || [])].filter((n) => !hid(k).has(nkey(n)) && adultOk(n));
+    const c = customerOf(device);
+    return {
+      brand: device.brand === "bentech" ? "Ben Tech TV" : "Galaxy TV",
+      expiry: c?.providerExp > 0 ? Number(c.providerExp) : Number(device.providerExp) > 0 ? Number(device.providerExp) : 0,
+      expiryTz: c?.providerTz || device.providerTz || tz(),
+      channels: [...groups].map(([name, list]) => ({ name, channels: list })),
+      movies: vod("movies"), series: vod("series"),
+      listKnown: channelsOf(device.mac).length > 0, vodKnown: !!device.vodCatsAt,
+      note: LINEUP_NOTE, extraNote: String(settings().lineupNote || "").trim().slice(0, 1000),
+      contact: String(settings().lineupContact || "").trim().slice(0, 120),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+  // Admin nan: rezime + lyen pou kliyan an
+  app.get("/api/galaxy/devices/:mac/lineup", authenticate, async (req, res) => {
+    const d = findDevice(normMac(req.params.mac)); if (!d) return res.status(404).json({ error: "Not found" });
+    if (!d.lineupToken || req.query.newLink === "1") { d.lineupToken = crypto.randomBytes(12).toString("hex"); await db.write(); }
+    await fetchProviderCats(d).catch(() => false);
+    const L = lineupOf(d);
+    res.json({ token: d.lineupToken, groups: L.channels.length, channels: L.channels.reduce((n, g) => n + g.channels.length, 0),
+      movies: L.movies.length, series: L.series.length, listKnown: L.listKnown, vodKnown: L.vodKnown,
+      phone: customerOf(d)?.phone || "", extraNote: L.extraNote, contact: L.contact });
+  });
+  // Kliyan an: paj piblik la li done sa yo ak tokèn nan (pa gen MAC, modpas, ni adrès founisè)
+  app.get("/api/lineup/:token", (req, res) => {
+    const t = String(req.params.token || "");
+    const d = /^[0-9a-f]{24}$/.test(t) ? (data().devices || []).find((x) => x.lineupToken === t) : null;
+    if (!d) return res.status(404).json({ ok: false });
+    res.set("Cache-Control", "no-store");
+    res.json({ ok: true, ...lineupOf(d) });
+  });
+
+  // Lyen kout pou WhatsApp: /l/<tokèn> → paj la (tokèn nan rete apre "#", li pa ale nan jounal sèvè yo)
+  app.get("/l/:token", (req, res) => {
+    const t = String(req.params.token || "");
+    if (!/^[0-9a-f]{24}$/.test(t)) return res.status(404).send("Not found");
+    res.redirect(302, `/galaxy/lineup.html#${t}`);
+  });
+
   // ---- Revandè: pwòp ticker ak pwòp logo pou TV pa l yo ----
   const rbOf = (email) => ((data().resellerBrand ||= {})[String(email).toLowerCase()] ||= { tickerOn: true, tickers: [], bug: { on: false } });
   app.get("/api/reseller/brand", authenticate, (req, res) => {
