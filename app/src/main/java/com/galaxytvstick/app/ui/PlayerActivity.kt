@@ -1415,7 +1415,7 @@ class PlayerActivity : AppCompatActivity() {
             // Tankou sou yon chèn TV: pa ka chanje chanèl pandan piblisite a. OK = sote si panel la pèmèt li.
             if ((keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) &&
                 breakSkipAfter > 0 && breakElapsed >= breakSkipAfter) endAdBreak()
-            else if (keyCode == KeyEvent.KEYCODE_BACK) confirmExit()
+            else if (keyCode == KeyEvent.KEYCODE_BACK) goHome() // tankou TiviMate: Back retounen nan gid la, pa soti nan app la
             return true
         }
         if (adPlaying) {
