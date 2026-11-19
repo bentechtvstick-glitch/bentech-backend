@@ -323,12 +323,22 @@ export function buildGraphics(g, ctx) {
       everyMin: num(i.everyMin, 30, 0, 240), durationSec: num(i.durationSec, 5, 2, 15), onChannelChange: !!i.onChannelChange };
   }
 
-  // Snipe: yon imaj/GIF anime ki glise antre anba ekran an, rete kèk segonn, epi li soti (chak X minit)
+  // Snipe: imaj/GIF anime, tèks, oswa imaj + tèks ki glise antre anba ekran an, rete kèk segonn, epi li soti (chak X minit)
   const sn = g.snipe || {};
-  if (sn.on && isUrl(sn.imageUrl)) {
-    out.snipe = { imageUrl: str(sn.imageUrl, 500), position: ["bottom-left", "bottom-center", "bottom-right"].includes(sn.position) ? sn.position : "bottom-right",
-      size: num(sn.size, 120, 40, 300), everyMin: num(sn.everyMin, 10, 0, 240), durationSec: num(sn.durationSec, 8, 3, 30),
-      anim: ["slide", "rise", "fade", "pop", "bounce", "flip", "wipe", "zoom", "shake", "shine"].includes(sn.anim) ? sn.anim : "slide", onChannelChange: !!sn.onChannelChange };
+  const snImgs = [sn.imageUrl, ...String(sn.images || "").split(/[\n\s,]+/)].map((u) => String(u || "").trim()).filter(isUrl).slice(0, 10);
+  const snText = str(sn.text, 80);
+  // Lè snipe la aktif (opsyonèl): ant "from" ak "to"
+  const snFrom = sn.from ? ctx.toEpoch(sn.from) : 0, snTo = sn.to ? ctx.toEpoch(sn.to) : 0;
+  if (sn.on && (snImgs.length || snText)) {
+    if (snFrom && now < snFrom) edge = Math.min(edge, snFrom - now + 1);
+    else if (!(snTo && now >= snTo)) {
+      if (snTo) edge = Math.min(edge, snTo - now + 1);
+      out.snipe = { imageUrl: snImgs[0] || null, images: snImgs, text: snText, textColor: hex(sn.textColor, "#FFFFFF"), bgColor: hex(sn.bgColor, "#0B1630"),
+        position: ["bottom-left", "bottom-center", "bottom-right"].includes(sn.position) ? sn.position : "bottom-right",
+        size: num(sn.size, 120, 40, 300), everyMin: num(sn.everyMin, 10, 0, 240), durationSec: num(sn.durationSec, 8, 3, 30),
+        anim: ["slide", "rise", "fade", "pop", "bounce", "flip", "wipe", "zoom", "shake", "shine", "roll", "swing", "elastic", "pulse", "float", "glitch", "blink"].includes(sn.anim) ? sn.anim : "slide",
+        onChannelChange: !!sn.onChannelChange };
+    }
   }
 
   // Bumper: ekran anvan ak apre koupi piblisite a ("N ap tounen touswit" / "Nou tounen")

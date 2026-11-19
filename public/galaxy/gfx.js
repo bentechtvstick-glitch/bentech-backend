@@ -37,20 +37,39 @@
 .gx-bump b{font-size:48px;font-weight:800;line-height:1.15;animation:gxUp .7s ease both}
 .gx-snipe{position:absolute;z-index:6;pointer-events:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
 .gx-snipe img{display:block;width:auto;max-width:640px;object-fit:contain}
+.gx-sn-in{display:flex;align-items:center;gap:12px}
+.gx-sn-txt{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-weight:800;padding:10px 18px;border-radius:10px;max-width:760px;line-height:1.15;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.gx-sn-roll.gx-sn-bottom-left{animation:gxSnRollL var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
+.gx-sn-roll.gx-sn-bottom-right,.gx-sn-roll.gx-sn-bottom-center{animation:gxSnRollR var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
+.gx-sn-swing{animation:gxIdent var(--gx-dur,8s) ease both}.gx-sn-swing .gx-sn-in{transform-origin:50% 0;animation:gxSnSwing 1.6s ease both,gxSnSway 2.4s 1.6s ease-in-out infinite}
+.gx-sn-elastic .gx-sn-in{animation:gxSnElastic var(--gx-dur,8s) both}
+.gx-sn-pulse{animation:gxIdent var(--gx-dur,8s) ease both}.gx-sn-pulse .gx-sn-in{animation:gxSnPulse 1.2s .5s ease-in-out infinite}
+.gx-sn-float{animation:gxSnUp var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}.gx-sn-float .gx-sn-in{animation:gxSnFloat 2.2s .7s ease-in-out infinite}
+.gx-sn-glitch{animation:gxIdent var(--gx-dur,8s) steps(1) both}.gx-sn-glitch .gx-sn-in{animation:gxSnGlitch .7s steps(1) both}
+.gx-sn-blink .gx-sn-in{animation:gxSnBlink var(--gx-dur,8s) steps(1) both}
+@keyframes gxSnRollR{0%{opacity:0;translate:120% 0;rotate:360deg}11%{opacity:1;translate:0 0;rotate:0deg}90%{opacity:1;translate:0 0;rotate:0deg}100%{opacity:0;translate:120% 0;rotate:360deg}}
+@keyframes gxSnRollL{0%{opacity:0;translate:-120% 0;rotate:-360deg}11%{opacity:1;translate:0 0;rotate:0deg}90%{opacity:1;translate:0 0;rotate:0deg}100%{opacity:0;translate:-120% 0;rotate:-360deg}}
+@keyframes gxSnSwing{0%{rotate:25deg}20%{rotate:-18deg}40%{rotate:12deg}60%{rotate:-7deg}80%{rotate:4deg}100%{rotate:0deg}}
+@keyframes gxSnSway{0%,100%{rotate:0deg}25%{rotate:2.5deg}75%{rotate:-2.5deg}}
+@keyframes gxSnElastic{0%{opacity:0;transform:scale(0,0)}3%{opacity:1;transform:scale(1.25,.8)}6%{transform:scale(.85,1.15)}9%{transform:scale(1.08,.94)}12%{transform:scale(1,1)}93%{opacity:1;transform:scale(1,1)}100%{opacity:0;transform:scale(0,0)}}
+@keyframes gxSnPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes gxSnFloat{0%,100%{translate:0 0}50%{translate:0 -9px}}
+@keyframes gxSnGlitch{0%{translate:-10px 0;filter:drop-shadow(4px 0 #ff2040) drop-shadow(-4px 0 #00e5ff);opacity:.4}20%{translate:8px 0;opacity:1}40%{translate:-4px 0;opacity:.35}60%{translate:6px 0;opacity:1}80%{translate:-2px 0}100%{translate:0 0;filter:none;opacity:1}}
+@keyframes gxSnBlink{0%{opacity:0}3%{opacity:1}6%{opacity:0}9%{opacity:1}12%{opacity:0}15%{opacity:1}94%{opacity:1}96%{opacity:0}98%{opacity:1}100%{opacity:0}}
 .gx-sn-slide.gx-sn-bottom-right,.gx-sn-slide.gx-sn-bottom-center{animation:gxSnR var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
 .gx-sn-slide.gx-sn-bottom-left{animation:gxSnL var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
 .gx-sn-rise{animation:gxSnUp var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
 .gx-sn-fade{animation:gxIdent var(--gx-dur,8s) ease both}
-.gx-sn-pop img{animation:gxSnPop var(--gx-dur,8s) cubic-bezier(.2,.9,.3,1.2) both}
+.gx-sn-pop .gx-sn-in{animation:gxSnPop var(--gx-dur,8s) cubic-bezier(.2,.9,.3,1.2) both}
 .gx-sn-bounce{animation:gxSnBounce var(--gx-dur,8s) linear both}
-.gx-sn-flip img{animation:gxSnFlip var(--gx-dur,8s) ease both}
-.gx-sn-wipe img{animation:gxSnWipe var(--gx-dur,8s) ease both}
-.gx-sn-zoom img{animation:gxSnZoom var(--gx-dur,8s) ease-out both}
+.gx-sn-flip .gx-sn-in{animation:gxSnFlip var(--gx-dur,8s) ease both}
+.gx-sn-wipe .gx-sn-in{animation:gxSnWipe var(--gx-dur,8s) ease both}
+.gx-sn-zoom .gx-sn-in{animation:gxSnZoom var(--gx-dur,8s) ease-out both}
 .gx-sn-shake.gx-sn-bottom-left{animation:gxSnL var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
 .gx-sn-shake.gx-sn-bottom-right,.gx-sn-shake.gx-sn-bottom-center{animation:gxSnR var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
-.gx-sn-shake img{animation:gxSnShake .7s calc(var(--gx-dur,8s) * .09) ease both}
+.gx-sn-shake .gx-sn-in{animation:gxSnShake .7s calc(var(--gx-dur,8s) * .09) ease both}
 .gx-sn-shine{animation:gxIdent var(--gx-dur,8s) ease both}
-.gx-sn-shine img{animation:gxSnShine 1.6s .5s ease-in-out 3}
+.gx-sn-shine .gx-sn-in{animation:gxSnShine 1.6s .5s ease-in-out 3}
 @keyframes gxSnBounce{0%{opacity:0;translate:0 -240px}3%{opacity:1}6%{translate:0 0}8%{translate:0 -60px}10%{translate:0 0}11.5%{translate:0 -18px}13%{translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:0 140%}}
 @keyframes gxSnFlip{0%{opacity:0;transform:perspective(700px) rotateY(90deg)}8%{opacity:1;transform:perspective(700px) rotateY(0)}90%{opacity:1;transform:perspective(700px) rotateY(0)}100%{opacity:0;transform:perspective(700px) rotateY(-90deg)}}
 @keyframes gxSnWipe{0%{clip-path:inset(0 100% 0 0)}10%{clip-path:inset(0 0 0 0)}90%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 0 0 100%)}}
@@ -164,9 +183,13 @@
   }
 
   /** Snipe: imaj anime anba ekran an (glise antre, rete, soti). [bottom] = espas anba (ticker). */
-  function snipeHtml(n, bottom) {
+  function snipeHtml(n, bottom, idx) {
     const side = n.position === "bottom-left" ? "left:48px" : n.position === "bottom-center" ? "left:50%;margin-left:0;transform:translateX(-50%)" : "right:48px";
-    return `<div class="gx-snipe gx-sn-${esc(n.anim || "slide")} gx-sn-${esc(n.position || "bottom-right")}" style="bottom:${(bottom || 60) + 16}px;${side};--gx-dur:${n.durationSec || 8}s"><img src="${esc(n.imageUrl)}" alt="" style="height:${n.size || 120}px"></div>`;
+    const imgs = n.images && n.images.length ? n.images : n.imageUrl ? [n.imageUrl] : [];
+    const img = imgs.length ? imgs[(idx || 0) % imgs.length] : "";
+    const fs = Math.max(16, Math.min(46, Math.round((n.size || 120) / 4.2)));
+    const txt = n.text ? `<span class="gx-sn-txt" style="font-size:${fs}px;color:${esc(n.textColor || "#fff")};background:${esc(n.bgColor || "#0B1630")}">${esc(n.text)}</span>` : "";
+    return `<div class="gx-snipe gx-sn-${esc(n.anim || "slide")} gx-sn-${esc(n.position || "bottom-right")}" style="bottom:${(bottom || 60) + 16}px;${side};--gx-dur:${n.durationSec || 8}s"><div class="gx-sn-in">${img ? `<img src="${esc(img)}" alt="" style="height:${n.size || 120}px">` : ""}${txt}</div></div>`;
   }
 
   window.GalaxyGfx = { html, tick, identHtml, bumperHtml, snipeHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
