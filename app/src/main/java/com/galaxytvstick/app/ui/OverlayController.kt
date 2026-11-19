@@ -93,15 +93,21 @@ class OverlayController(
         // Sèvè a pa rekonèt TV a (li fèk reenstale, done li yo poko la, oswa yon pàn): PA dekonekte kliyan an.
         // Kliyan an kontinye gade ak playlist li te genyen an jiskaske panel la konnen l ankò.
         if (!cfg.known && !cfg.deleted) return false
-        val pl = cfg.playlists.firstOrNull { it.id == id }
+        // Playlist la pa la ankò: si gen yon lòt (egz: admin nan ranplase kont lan pou yon renouvèlman),
+        // pase sou li an silans. Ekran aktivasyon an parèt sèlman si panel la retire TV a nèt.
+        val pl = cfg.playlists.firstOrNull { it.id == id } ?: cfg.playlists.firstOrNull()
+        if (pl == null && !cfg.deleted) return false
         val target: Class<*> = if (pl == null) {
-            android.widget.Toast.makeText(activity, R.string.playlist_removed, android.widget.Toast.LENGTH_LONG).show()
             prefs.account = null
             LoginActivity::class.java
         } else {
             val want = pl.toAccount(com.galaxytvstick.app.BuildConfig.DEFAULT_SERVER) ?: return false
             if (want.server == acc.server && want.username == acc.username && want.password == acc.password &&
-                want.type == acc.type && want.epgUrl == acc.epgUrl) return false
+                want.type == acc.type && want.epgUrl == acc.epgUrl) {
+                // Menm kont lan, sèlman id playlist la chanje: sonje nouvo id a, pa rechaje anyen
+                if (want.playlistId != acc.playlistId) prefs.account = acc.copy(playlistId = want.playlistId)
+                return false
+            }
             prefs.account = want
             prefs.lastChannelId = -1
             MainActivity::class.java
