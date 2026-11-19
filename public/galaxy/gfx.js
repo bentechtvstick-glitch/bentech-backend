@@ -42,6 +42,21 @@
 .gx-sn-rise{animation:gxSnUp var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
 .gx-sn-fade{animation:gxIdent var(--gx-dur,8s) ease both}
 .gx-sn-pop img{animation:gxSnPop var(--gx-dur,8s) cubic-bezier(.2,.9,.3,1.2) both}
+.gx-sn-bounce{animation:gxSnBounce var(--gx-dur,8s) linear both}
+.gx-sn-flip img{animation:gxSnFlip var(--gx-dur,8s) ease both}
+.gx-sn-wipe img{animation:gxSnWipe var(--gx-dur,8s) ease both}
+.gx-sn-zoom img{animation:gxSnZoom var(--gx-dur,8s) ease-out both}
+.gx-sn-shake.gx-sn-bottom-left{animation:gxSnL var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
+.gx-sn-shake.gx-sn-bottom-right,.gx-sn-shake.gx-sn-bottom-center{animation:gxSnR var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
+.gx-sn-shake img{animation:gxSnShake .7s calc(var(--gx-dur,8s) * .09) ease both}
+.gx-sn-shine{animation:gxIdent var(--gx-dur,8s) ease both}
+.gx-sn-shine img{animation:gxSnShine 1.6s .5s ease-in-out 3}
+@keyframes gxSnBounce{0%{opacity:0;translate:0 -240px}3%{opacity:1}6%{translate:0 0}8%{translate:0 -60px}10%{translate:0 0}11.5%{translate:0 -18px}13%{translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:0 140%}}
+@keyframes gxSnFlip{0%{opacity:0;transform:perspective(700px) rotateY(90deg)}8%{opacity:1;transform:perspective(700px) rotateY(0)}90%{opacity:1;transform:perspective(700px) rotateY(0)}100%{opacity:0;transform:perspective(700px) rotateY(-90deg)}}
+@keyframes gxSnWipe{0%{clip-path:inset(0 100% 0 0)}10%{clip-path:inset(0 0 0 0)}90%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 0 0 100%)}}
+@keyframes gxSnZoom{0%{opacity:0;transform:scale(2.2);filter:blur(14px)}9%{opacity:1;transform:scale(1);filter:blur(0)}90%{opacity:1;transform:scale(1);filter:blur(0)}100%{opacity:0;transform:scale(1.6);filter:blur(10px)}}
+@keyframes gxSnShake{0%,100%{translate:0 0}15%{translate:-14px 0}30%{translate:12px 0}45%{translate:-8px 0}60%{translate:6px 0}75%{translate:-3px 0}}
+@keyframes gxSnShine{0%,100%{filter:brightness(1)}50%{filter:brightness(1.7) drop-shadow(0 0 14px rgba(255,255,255,.7))}}
 @keyframes gxSnR{0%{opacity:0;translate:120% 0}8%{opacity:1;translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:120% 0}}
 @keyframes gxSnL{0%{opacity:0;translate:-120% 0}8%{opacity:1;translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:-120% 0}}
 @keyframes gxSnUp{0%{opacity:0;translate:0 140%}8%{opacity:1;translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:0 140%}}

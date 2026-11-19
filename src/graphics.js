@@ -328,7 +328,7 @@ export function buildGraphics(g, ctx) {
   if (sn.on && isUrl(sn.imageUrl)) {
     out.snipe = { imageUrl: str(sn.imageUrl, 500), position: ["bottom-left", "bottom-center", "bottom-right"].includes(sn.position) ? sn.position : "bottom-right",
       size: num(sn.size, 120, 40, 300), everyMin: num(sn.everyMin, 10, 0, 240), durationSec: num(sn.durationSec, 8, 3, 30),
-      anim: ["slide", "rise", "fade", "pop"].includes(sn.anim) ? sn.anim : "slide", onChannelChange: !!sn.onChannelChange };
+      anim: ["slide", "rise", "fade", "pop", "bounce", "flip", "wipe", "zoom", "shake", "shine"].includes(sn.anim) ? sn.anim : "slide", onChannelChange: !!sn.onChannelChange };
   }
 
   // Bumper: ekran anvan ak apre koupi piblisite a ("N ap tounen touswit" / "Nou tounen")
