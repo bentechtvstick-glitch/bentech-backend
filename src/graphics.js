@@ -323,6 +323,14 @@ export function buildGraphics(g, ctx) {
       everyMin: num(i.everyMin, 30, 0, 240), durationSec: num(i.durationSec, 5, 2, 15), onChannelChange: !!i.onChannelChange };
   }
 
+  // Snipe: yon imaj/GIF anime ki glise antre anba ekran an, rete kèk segonn, epi li soti (chak X minit)
+  const sn = g.snipe || {};
+  if (sn.on && isUrl(sn.imageUrl)) {
+    out.snipe = { imageUrl: str(sn.imageUrl, 500), position: ["bottom-left", "bottom-center", "bottom-right"].includes(sn.position) ? sn.position : "bottom-right",
+      size: num(sn.size, 120, 40, 300), everyMin: num(sn.everyMin, 10, 0, 240), durationSec: num(sn.durationSec, 8, 3, 30),
+      anim: ["slide", "rise", "fade", "pop"].includes(sn.anim) ? sn.anim : "slide", onChannelChange: !!sn.onChannelChange };
+  }
+
   // Bumper: ekran anvan ak apre koupi piblisite a ("N ap tounen touswit" / "Nou tounen")
   const u = g.bumper || {};
   if (u.on && (isUrl(u.inUrl) || str(u.inText) || isUrl(u.outUrl) || str(u.outText))) {

@@ -905,7 +905,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
 
     <!-- Grafik TV: logo bug, watermark, scoreboard, meteyo, countdown, ident, bumper -->
     <main data-pane="gfx" hidden>
-      <div class="pagehead"><div><h1>Grafik TV</h1><p>Abiyaj chèn nan sou ekran kliyan yo: logo, watermark, scoreboard, meteyo, countdown, ident ak bumper.</p></div><span class="msg" id="gxMsg"></span></div>
+      <div class="pagehead"><div><h1>Grafik TV</h1><p>Abiyaj chèn nan sou ekran kliyan yo: logo, watermark, scoreboard, meteyo, countdown, ident, snipe ak bumper.</p></div><span class="msg" id="gxMsg"></span></div>
       <div class="card" style="margin-bottom:14px">
         <div class="cardhead"><div><h2>📺 Gid TV: lè pa gen enfòmasyon</h2><p class="sub">Tèks ki parèt nan gid la ak anba ekran an pou chanèl ki pa gen pwogram. Tèks gri yo se sa TV a montre si kaz la rete vid.</p></div></div>
         <div class="field"><label for="epgNoInfo">✍️ Ekri fraz ou a yon sèl fwa (nenpòt lang)</label></div>
@@ -979,6 +979,12 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="row2"><div class="field"><label for="g_ident_text">Non chèn nan</label><input type="text" id="g_ident_text" data-g="ident.text" maxlength="40" placeholder="GALAXY TV"></div><div class="field"><label for="g_ident_tagline">Eslogan</label><input type="text" id="g_ident_tagline" data-g="ident.tagline" maxlength="60" placeholder="Egz: Tout chèn ou yo, yon sèl kote"></div></div>
             <div class="row2"><div class="field"><label for="g_ident_everyMin">Chak (minit, 0 = janm otomatik)</label><input type="number" id="g_ident_everyMin" data-g="ident.everyMin" min="0" max="240" value="30"></div><div class="field"><label for="g_ident_durationSec">Dire (segonn)</label><input type="number" id="g_ident_durationSec" data-g="ident.durationSec" min="2" max="15" value="5"></div></div>
             <div class="inline"><label class="sw"><input type="checkbox" data-g="ident.onChannelChange" id="g_ident_onChannelChange"><i></i></label><label for="g_ident_onChannelChange">Montre l tou lè kliyan an chanje chanèl</label></div>
+          </div>
+          <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="snipe.on" id="g_snipe_on"><i></i></label><div class="grow"><label for="g_snipe_on"><b>Snipe</b></label><p class="note" style="margin:2px 0 0">Yon imaj oswa yon GIF anime ki glise antre anba ekran an, rete kèk segonn, epi li soti. Bon pou pwomosyon (match, nouvo chanèl, òf).</p></div><button class="btn small purple" type="button" data-gxplay="snipe">▶ Gade</button></div>
+            <div class="field"><label for="g_snipe_imageUrl">Imaj oswa GIF anime (PNG/GIF/WEBP ak fon transparan pi bon)</label><input type="url" id="g_snipe_imageUrl" data-g="snipe.imageUrl" maxlength="500" placeholder="https://…/snipe.gif"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="g_snipe_imageUrl">📤 Chwazi yon imaj</button><span class="note" data-upmsg="g_snipe_imageUrl"></span></div></div>
+            <div class="row2"><div class="field"><label for="g_snipe_position">Pozisyon</label><select id="g_snipe_position" data-g="snipe.position"><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div><div class="field"><label for="g_snipe_anim">Animasyon</label><select id="g_snipe_anim" data-g="snipe.anim"><option value="slide">Glise sou kote</option><option value="rise">Monte soti anba</option><option value="pop">Gonfle</option><option value="fade">Parèt dousman</option></select></div></div>
+            <div class="row3"><div class="field"><label for="g_snipe_size">Wotè (px)</label><input type="number" id="g_snipe_size" data-g="snipe.size" min="40" max="300" value="120"></div><div class="field"><label for="g_snipe_everyMin">Chak (minit, 0 = janm otomatik)</label><input type="number" id="g_snipe_everyMin" data-g="snipe.everyMin" min="0" max="240" value="10"></div><div class="field"><label for="g_snipe_durationSec">Dire (segonn)</label><input type="number" id="g_snipe_durationSec" data-g="snipe.durationSec" min="3" max="30" value="8"></div></div>
+            <div class="inline"><label class="sw"><input type="checkbox" data-g="snipe.onChannelChange" id="g_snipe_onChannelChange"><i></i></label><label for="g_snipe_onChannelChange">Montre l tou lè kliyan an chanje chanèl</label></div>
           </div>
           <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="bumper.on" id="g_bumper_on"><i></i></label><div class="grow"><label for="g_bumper_on"><b>Bumper</b></label><p class="note" style="margin:2px 0 0">Ekran ki pase anvan ak apre koupi piblisite a.</p></div><button class="btn small purple" type="button" data-gxplay="in">▶ Anvan</button><button class="btn small purple" type="button" data-gxplay="out">▶ Apre</button></div>
             <div class="row2"><div class="field"><label for="g_bumper_inText">Tèks anvan piblisite</label><input type="text" id="g_bumper_inText" data-g="bumper.inText" maxlength="60" placeholder="N ap tounen touswit"></div><div class="field"><label for="g_bumper_outText">Tèks apre piblisite</label><input type="text" id="g_bumper_outText" data-g="bumper.outText" maxlength="60" placeholder="Nou tounen!"></div></div>
@@ -1547,7 +1553,7 @@ const BRAND_KEY = (k) => k === "gfx" || /^(ticker|banner|popup|adBreak|chyron|ep
 let brand = "galaxy"; try { brand = localStorage.getItem("gxBrand") === "bentech" ? "bentech" : "galaxy"; } catch {}
 const brandOf = (it) => String((it && it.brand) || "galaxy");
 const brandNow = () => { try { return BRAND_TABS.includes(tab) ? brand : "galaxy"; } catch { return "galaxy"; } };
-const brandOver = (s, b) => { if (!s || typeof s !== "object") return s; const o = (s.brandSettings || {})[b] || {}; return { ...s, ...o, ...(o.gfx ? {} : { gfx: { ...(s.gfx || {}), bug: {}, watermark: {}, ident: {}, bumper: {} } }) }; };
+const brandOver = (s, b) => { if (!s || typeof s !== "object") return s; const o = (s.brandSettings || {})[b] || {}; return { ...s, ...o, ...(o.gfx ? {} : { gfx: { ...(s.gfx || {}), bug: {}, watermark: {}, ident: {}, bumper: {}, snipe: {} } }) }; };
 async function api(method, path, body) {
   const brand = brandNow();
   if (path.startsWith("/settings") && brand !== "galaxy") {
@@ -4030,7 +4036,8 @@ const GX_DEF = { bug: { on: false, imageUrl: "", text: "", position: "top-right"
   weather: { on: false, showCity: true, city: "", scope: "all", cities: "", every: "8", rotate: true, mode: "rotate", flash: "3", unit: "C", auto: true, temp: 30, icon: "🌤️", position: "top-right" },
   countdown: { on: false, title: "", target: "", doneText: "", keepMin: 10, position: "top-center", style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false, box: true },
   ident: { on: false, imageUrl: "", text: "", tagline: "", everyMin: 30, durationSec: 5, onChannelChange: false },
-  bumper: { on: false, inText: "", outText: "", inUrl: "", outUrl: "", durationSec: 4, bgColor: "#0b1630", textColor: "#ffffff" } };
+  bumper: { on: false, inText: "", outText: "", inUrl: "", outUrl: "", durationSec: 4, bgColor: "#0b1630", textColor: "#ffffff" },
+  snipe: { on: false, imageUrl: "", position: "bottom-right", anim: "slide", size: 120, everyMin: 10, durationSec: 8, onChannelChange: false } };
 let gxWx = null, gxSaveT = null, gxTickT = null, gxFullT = null, gxWxT = null;
 const gxEls = () => $$('main[data-pane="gfx"] [data-g]');
 // ---- Preview yo: bouton "Agrandi" pou wè yo gwo ----
@@ -4125,6 +4132,7 @@ function gxNormalize(g) {
   if (out.weather && g.weather.showCity === false) out.weather = { ...out.weather, city: "" };
   const c = g.countdown; if (c.on && c.target) { const at = Math.floor(new Date(c.target).getTime() / 1000), now = Date.now() / 1000; if (at && now < at + (c.doneText ? n(c.keepMin, 10, 0, 1440) * 60 : 0)) out.countdown = { title: c.title, targetAt: at, doneText: c.doneText, position: c.position, style: c.style, font: c.font, color: c.color, color2: c.color2, italic: !!c.italic, box: c.box !== false }; }
   const i = g.ident; if (i.on && (url(i.imageUrl) || i.text)) out.ident = { imageUrl: url(i.imageUrl), text: i.text, tagline: i.tagline, everyMin: n(i.everyMin, 30, 0, 240), durationSec: n(i.durationSec, 5, 2, 15) };
+  const sn = g.snipe; if (sn && sn.on && url(sn.imageUrl)) out.snipe = { imageUrl: url(sn.imageUrl), position: sn.position, anim: sn.anim, size: n(sn.size, 120, 40, 300), everyMin: n(sn.everyMin, 10, 0, 240), durationSec: n(sn.durationSec, 8, 3, 30) };
   const u = g.bumper; if (u.on && (url(u.inUrl) || u.inText || url(u.outUrl) || u.outText)) out.bumper = { inUrl: url(u.inUrl), inText: u.inText, outUrl: url(u.outUrl), outText: u.outText, durationSec: n(u.durationSec, 4, 2, 15), bgColor: u.bgColor, textColor: u.textColor };
   return out;
 }
@@ -4140,6 +4148,13 @@ function gxPreview() {
   $("#gxNote").textContent = notes.join(" ");
 }
 function gxPlay(which) {
+  if (which === "snipe") {
+    const o = gxNormalize({ ...gxRead(), snipe: { ...gxRead().snipe, on: true } });
+    if (!o.snipe) return toast(t("Mete yon imaj oswa yon GIF pou snipe la an premye."));
+    clearTimeout(gxFullT); $("#gxFull").innerHTML = GalaxyGfx.snipeHtml(o.snipe, 60); $("#gxStage").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    gxFullT = setTimeout(() => ($("#gxFull").innerHTML = ""), o.snipe.durationSec * 1000);
+    return;
+  }
   const o = gxNormalize({ ...gxRead(), ...(which === "ident" ? { ident: { ...gxRead().ident, on: true } } : { bumper: { ...gxRead().bumper, on: true } }) });
   const h = which === "ident" ? (o.ident ? GalaxyGfx.identHtml(o.ident) : "") : o.bumper ? GalaxyGfx.bumperHtml(o.bumper, which) : "";
   if (!h) return toast(which === "ident" ? "Mete yon logo oswa yon non pou ident la an premye." : "Mete yon tèks oswa yon imaj pou bumper sa a an premye.");

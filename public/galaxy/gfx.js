@@ -35,11 +35,22 @@
 .gx-bump{animation:gxFade .45s ease both}
 .gx-bump img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .gx-bump b{font-size:48px;font-weight:800;line-height:1.15;animation:gxUp .7s ease both}
+.gx-snipe{position:absolute;z-index:6;pointer-events:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.gx-snipe img{display:block;width:auto;max-width:640px;object-fit:contain}
+.gx-sn-slide.gx-sn-bottom-right,.gx-sn-slide.gx-sn-bottom-center{animation:gxSnR var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
+.gx-sn-slide.gx-sn-bottom-left{animation:gxSnL var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
+.gx-sn-rise{animation:gxSnUp var(--gx-dur,8s) cubic-bezier(.2,.8,.2,1) both}
+.gx-sn-fade{animation:gxIdent var(--gx-dur,8s) ease both}
+.gx-sn-pop img{animation:gxSnPop var(--gx-dur,8s) cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes gxSnR{0%{opacity:0;translate:120% 0}8%{opacity:1;translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:120% 0}}
+@keyframes gxSnL{0%{opacity:0;translate:-120% 0}8%{opacity:1;translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:-120% 0}}
+@keyframes gxSnUp{0%{opacity:0;translate:0 140%}8%{opacity:1;translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:0 140%}}
+@keyframes gxSnPop{0%{opacity:0;transform:scale(.5)}8%{opacity:1;transform:scale(1)}90%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.5)}}
 @keyframes gxIdent{0%{opacity:0}12%{opacity:1}85%{opacity:1}100%{opacity:0}}
 @keyframes gxPop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
 @keyframes gxUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @keyframes gxFade{from{opacity:0}to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.gx-ident,.gx-ident *,.gx-bump,.gx-bump *{animation-duration:.01s!important}}
+@media (prefers-reduced-motion:reduce){.gx-snipe,.gx-snipe *,.gx-ident,.gx-ident *,.gx-bump,.gx-bump *{animation-duration:.01s!important}}
 `;
   if (typeof document !== "undefined" && !document.getElementById("gx-css")) {
     const st = document.createElement("style"); st.id = "gx-css"; st.textContent = CSS; document.head.appendChild(st);
@@ -137,5 +148,11 @@
     return `<div class="gx-full gx-bump" style="background:${esc(b.bgColor || "#0B1630")};color:${esc(b.textColor || "#fff")}">${url ? `<img src="${esc(url)}" alt="">` : `<b>${esc(text)}</b>`}</div>`;
   }
 
-  window.GalaxyGfx = { html, tick, identHtml, bumperHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
+  /** Snipe: imaj anime anba ekran an (glise antre, rete, soti). [bottom] = espas anba (ticker). */
+  function snipeHtml(n, bottom) {
+    const side = n.position === "bottom-left" ? "left:48px" : n.position === "bottom-center" ? "left:50%;margin-left:0;transform:translateX(-50%)" : "right:48px";
+    return `<div class="gx-snipe gx-sn-${esc(n.anim || "slide")} gx-sn-${esc(n.position || "bottom-right")}" style="bottom:${(bottom || 60) + 16}px;${side};--gx-dur:${n.durationSec || 8}s"><img src="${esc(n.imageUrl)}" alt="" style="height:${n.size || 120}px"></div>`;
+  }
+
+  window.GalaxyGfx = { html, tick, identHtml, bumperHtml, snipeHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
 })();

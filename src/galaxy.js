@@ -289,7 +289,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const s0 = settings();
     const bs = brand === "galaxy" ? null : ((s0.brandSettings || {})[brand] || {});
     // Yon lòt mak ki poko gen grafik pa l: li pa janm montre logo/watermark/ident Galaxy a
-    const s = !bs ? s0 : { ...s0, ...bs, ...(bs.gfx ? {} : { gfx: { ...(s0.gfx || {}), bug: {}, watermark: {}, ident: {}, bumper: {} } }) };
+    const s = !bs ? s0 : { ...s0, ...bs, ...(bs.gfx ? {} : { gfx: { ...(s0.gfx || {}), bug: {}, watermark: {}, ident: {}, bumper: {}, snipe: {} } }) };
     const forBrand = (it) => { const b = String(it?.brand || "galaxy"); return b === "all" || b === brand; };
     // TV yo resevwa chanjman panel la touswit pa siyal "sync" la (long-poll); demann konfig sa a se sèlman yon sekou.
     // 120 s olye 30 s: 4 fwa mwens trafik sou Render (bandwidth la peye), san okenn reta pou kliyan an.
