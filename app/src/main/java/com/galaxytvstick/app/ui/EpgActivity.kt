@@ -404,14 +404,7 @@ class EpgActivity : AppCompatActivity() {
         b.rows.post { focusCellInRow(0, first = false); ensureArchive(0) }
     }
 
-    private fun confirmExit() {
-        androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
-            .setTitle(R.string.exit_title)
-            .setMessage(R.string.exit_confirm)
-            .setNegativeButton(R.string.no, null)
-            .setPositiveButton(R.string.yes) { _, _ -> finishAffinity() }
-            .show()
-    }
+    private fun confirmExit() = BackToExit.press(this)
 
     private fun applyCategory(id: String) {
         selectedCat = id

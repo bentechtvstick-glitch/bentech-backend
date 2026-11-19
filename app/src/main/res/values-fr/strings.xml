@@ -226,4 +226,5 @@
     <string name="search_kbd_key">⌨️ Clavier</string>
     <string name="vod_new_releases">🆕 Nouveautés</string>
     <string name="set_afr">Mouvement fluide (AFR, fréquence auto) : %1$s</string>
+    <string name="press_back_exit">Appuyez encore sur Retour pour quitter</string>
 </resources>

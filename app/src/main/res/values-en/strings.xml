@@ -226,4 +226,5 @@
     <string name="search_kbd_key">⌨️ Keyboard</string>
     <string name="vod_new_releases">🆕 New releases</string>
     <string name="set_afr">Smooth motion (AFR, auto frame rate): %1$s</string>
+    <string name="press_back_exit">Press Back again to exit</string>
 </resources>

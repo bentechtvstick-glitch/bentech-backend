@@ -1345,14 +1345,7 @@ class PlayerActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun confirmExit() {
-        AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
-            .setTitle(R.string.exit_title)
-            .setMessage(R.string.exit_confirm)
-            .setPositiveButton(R.string.yes) { _, _ -> finishAffinity() }
-            .setNegativeButton(R.string.no, null)
-            .show()
-    }
+    private fun confirmExit() = BackToExit.press(this)
 
     // ------------------------------------------------------------ Remòt
 

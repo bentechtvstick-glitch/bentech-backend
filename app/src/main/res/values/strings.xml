@@ -249,4 +249,5 @@
     <string name="search_kbd_key">⌨️ Klavye</string>
     <string name="vod_new_releases">🆕 Dènye ane yo</string>
     <string name="set_afr">Mouvman lis (AFR, vitès ekran otomatik): %1$s</string>
+    <string name="press_back_exit">Peze Back ankò pou soti</string>
 </resources>

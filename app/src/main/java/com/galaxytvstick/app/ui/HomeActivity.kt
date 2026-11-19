@@ -288,14 +288,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        AlertDialog.Builder(this, R.style.Theme_Galaxy_Dialog)
-            .setTitle(R.string.exit_title)
-            .setMessage(R.string.exit_confirm)
-            .setPositiveButton(R.string.yes) { _, _ -> finishAffinity() }
-            .setNegativeButton(R.string.no, null)
-            .show()
-    }
+    override fun onBackPressed() = BackToExit.press(this)
 
     // ------------------------------------------------------------ Lis yo
 
