@@ -59,7 +59,11 @@ class GraphicsView @JvmOverloads constructor(
     private var bumperShowing = false
     private var ticking = false
     /** Snipe: imaj anime anba ekran an (kouch pa l, anlè ticker a). */
-    private var snipeView: ImageView? = null
+    private var snipeView: View? = null
+    private var snipeImg: ImageView? = null
+    private var snipeIndex = 0
+    /** Animasyon k ap woule pandan snipe la sou ekran an (pilse, flote, balanse). */
+    private var snipeLoop: android.animation.Animator? = null
     private var snipeShowing = false
     private var lastSnipeAt = SystemClock.elapsedRealtime()
     private var snipeSig = ""
@@ -397,44 +401,69 @@ class GraphicsView @JvmOverloads constructor(
     private fun showSnipe() {
         val sn: GfxSnipe = gfx?.snipe ?: return
         lastSnipeAt = SystemClock.elapsedRealtime()
+        hideSnipe()
         snipeShowing = true
-        snipeView?.let { removeView(it) }
         val h = dp(sn.size.toFloat())
         val grav = Gravity.BOTTOM or when (sn.position) { "bottom-left" -> Gravity.START; "bottom-center" -> Gravity.CENTER_HORIZONTAL; else -> Gravity.END }
-        val v = ImageView(context).apply {
-            adjustViewBounds = true
-            maxHeight = h; maxWidth = dp(640f)
-            scaleType = ImageView.ScaleType.FIT_CENTER
-            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        // Plizyè imaj: chak fwa se pwochen an
+        val url = sn.images.takeIf { it.isNotEmpty() }?.let { it[snipeIndex++ % it.size] }
+        val box = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
             alpha = 0f
             elevation = dp(6f).toFloat()
+            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
         }
-        addView(v, LayoutParams(LayoutParams.WRAP_CONTENT, h, grav).apply {
+        var img: ImageView? = null
+        if (url != null) {
+            img = ImageView(context).apply {
+                adjustViewBounds = true
+                maxHeight = h; maxWidth = dp(640f)
+                scaleType = ImageView.ScaleType.FIT_CENTER
+            }
+            box.addView(img, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, h))
+        }
+        if (sn.text.isNotBlank()) {
+            val tv = label(sn.text, (sn.size / 4.2f).coerceIn(16f, 46f), parse(sn.textColor, Color.WHITE), bold = true).apply {
+                maxLines = 2; maxWidth = dp(760f)
+                setPadding(dp(18f), dp(10f), dp(18f), dp(10f))
+                background = GradientDrawable().apply { cornerRadius = dp(10f).toFloat(); setColor(parse(sn.bgColor, 0xCC0B1630.toInt())) }
+                setShadowLayer(dp(3f).toFloat(), 0f, dp(1f).toFloat(), 0x88000000.toInt())
+            }
+            box.addView(tv, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { if (img != null) marginStart = dp(12f) })
+        }
+        addView(box, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, grav).apply {
             bottomMargin = bottomInset + dp(16f); marginStart = dp(48f); marginEnd = dp(48f)
         })
-        snipeView = v
-        // Antre a kòmanse lè imaj la (oswa GIF la) fin chaje
-        v.load(sn.imageUrl) {
-            listener(onSuccess = { _, _ -> if (snipeShowing && snipeView === v) animateSnipeIn(v, sn) }, onError = { _, _ -> hideSnipe() })
-        }
+        snipeView = box; snipeImg = img
+        if (img != null && url != null) {
+            // Antre a kòmanse lè imaj la (oswa GIF la) fin chaje
+            img.load(url) {
+                listener(onSuccess = { _, _ -> if (snipeShowing && snipeView === box) animateSnipeIn(box, sn) },
+                    onError = { _, _ -> if (sn.text.isNotBlank() && snipeView === box) { box.removeView(img); snipeImg = null; animateSnipeIn(box, sn) } else hideSnipe() })
+            }
+        } else animateSnipeIn(box, sn)
     }
 
     private fun snipeOffset(v: View, sn: GfxSnipe): Pair<Float, Float> {
         val w = (v.width.takeIf { it > 0 } ?: dp(300f)).toFloat() + dp(80f)
-        val down = (dp(sn.size.toFloat()) + bottomInset + dp(40f)).toFloat()
+        val down = (v.height.coerceAtLeast(dp(sn.size.toFloat())) + bottomInset + dp(40f)).toFloat()
         return when (sn.anim) {
-            "rise", "bounce" -> 0f to down
-            "slide", "shake" -> (if (sn.position == "bottom-left") -w else w) to 0f
+            "rise", "bounce", "float" -> 0f to down
+            "slide", "shake", "roll" -> (if (sn.position == "bottom-left") -w else w) to 0f
             else -> 0f to 0f
         }
     }
 
-    private fun animateSnipeIn(v: ImageView, sn: GfxSnipe) {
+    private fun loop(a: android.animation.Animator) { snipeLoop?.cancel(); snipeLoop = a; a.start() }
+
+    private fun animateSnipeIn(v: View, sn: GfxSnipe) {
         v.post {
             if (!snipeShowing || snipeView !== v) return@post
             v.animate().cancel()
             v.cameraDistance = 8000 * resources.displayMetrics.density
             val (dx, dy) = snipeOffset(v, sn)
+            val d = dp(1f).toFloat()
             when (sn.anim) {
                 "bounce" -> {
                     v.translationY = -dp(240f).toFloat(); v.alpha = 1f
@@ -455,28 +484,73 @@ class GraphicsView @JvmOverloads constructor(
                 "zoom" -> {
                     v.scaleX = 2.2f; v.scaleY = 2.2f
                     blur(v, 25f)
-                    android.animation.ValueAnimator.ofFloat(1f, 0f).apply {
-                        duration = 700
-                        addUpdateListener { a -> val f = a.animatedValue as Float; blur(v, 25f * f) }
-                    }.start()
+                    android.animation.ValueAnimator.ofFloat(1f, 0f).apply { duration = 700; addUpdateListener { a -> blur(v, 25f * (a.animatedValue as Float)) } }.start()
                     v.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(700).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
                 }
                 "shake" -> {
                     v.translationX = dx
                     v.animate().alpha(1f).translationX(0f).setDuration(550).setInterpolator(android.view.animation.DecelerateInterpolator())
-                        .withEndAction {
-                            val d = dp(1f).toFloat()
-                            android.animation.ObjectAnimator.ofFloat(v, "translationX", 0f, -14 * d, 12 * d, -8 * d, 6 * d, -3 * d, 0f).setDuration(700).start()
-                        }.start()
+                        .withEndAction { android.animation.ObjectAnimator.ofFloat(v, "translationX", 0f, -14 * d, 12 * d, -8 * d, 6 * d, -3 * d, 0f).setDuration(700).start() }.start()
                 }
                 "shine" -> {
                     v.animate().alpha(1f).setDuration(600).start()
-                    // Yon limyè pase sou li 3 fwa (klète a monte epi l desann)
-                    android.animation.ValueAnimator.ofFloat(0f, 1f, 0f).apply {
+                    val im = snipeImg
+                    if (im != null) loop(android.animation.ValueAnimator.ofFloat(0f, 1f, 0f).apply {
                         duration = 1600; startDelay = 500; repeatCount = 2
-                        addUpdateListener { a -> bright(v, a.animatedValue as Float) }
-                        addListener(object : android.animation.AnimatorListenerAdapter() { override fun onAnimationEnd(animation: android.animation.Animator) { v.colorFilter = null } })
+                        addUpdateListener { a -> bright(im, a.animatedValue as Float) }
+                        addListener(object : android.animation.AnimatorListenerAdapter() { override fun onAnimationEnd(animation: android.animation.Animator) { im.colorFilter = null } })
+                    }) else loop(android.animation.ObjectAnimator.ofFloat(v, "alpha", 1f, 0.6f, 1f).apply { duration = 1600; startDelay = 600; repeatCount = 2 })
+                }
+                "roll" -> {
+                    v.translationX = dx; v.rotation = if (dx < 0) -360f else 360f
+                    v.animate().alpha(1f).translationX(0f).rotation(0f).setDuration(900).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+                }
+                "swing" -> {
+                    v.pivotX = v.width / 2f; v.pivotY = 0f
+                    v.alpha = 1f; v.rotation = 25f
+                    android.animation.ObjectAnimator.ofFloat(v, "rotation", 25f, -18f, 12f, -7f, 4f, -2f, 0f).setDuration(1600).start()
+                    loop(android.animation.ObjectAnimator.ofFloat(v, "rotation", 0f, 2.5f, 0f, -2.5f, 0f).apply { duration = 2400; startDelay = 1600; repeatCount = android.animation.ValueAnimator.INFINITE })
+                }
+                "elastic" -> {
+                    v.alpha = 1f; v.scaleX = 0f; v.scaleY = 0f
+                    android.animation.AnimatorSet().apply {
+                        playTogether(android.animation.ObjectAnimator.ofFloat(v, "scaleX", 0f, 1.25f, 0.85f, 1.08f, 0.96f, 1f),
+                            android.animation.ObjectAnimator.ofFloat(v, "scaleY", 0f, 0.8f, 1.15f, 0.94f, 1.03f, 1f))
+                        duration = 1000
                     }.start()
+                }
+                "pulse" -> {
+                    v.scaleX = 0.8f; v.scaleY = 0.8f
+                    v.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(500).start()
+                    loop(android.animation.AnimatorSet().apply {
+                        val sx = android.animation.ObjectAnimator.ofFloat(v, "scaleX", 1f, 1.08f, 1f).apply { repeatCount = android.animation.ValueAnimator.INFINITE }
+                        val sy = android.animation.ObjectAnimator.ofFloat(v, "scaleY", 1f, 1.08f, 1f).apply { repeatCount = android.animation.ValueAnimator.INFINITE }
+                        playTogether(sx, sy); duration = 1200; startDelay = 500
+                    })
+                }
+                "float" -> {
+                    v.translationY = dy
+                    v.animate().alpha(1f).translationY(0f).setDuration(700).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+                    loop(android.animation.ObjectAnimator.ofFloat(v, "translationY", 0f, -9 * d, 0f).apply {
+                        duration = 2200; startDelay = 700; repeatCount = android.animation.ValueAnimator.INFINITE
+                        interpolator = android.view.animation.AccelerateDecelerateInterpolator()
+                    })
+                }
+                "glitch" -> {
+                    v.alpha = 1f
+                    val im = snipeImg
+                    android.animation.ValueAnimator.ofInt(0, 10).apply {
+                        duration = 700
+                        addUpdateListener { a ->
+                            val k = a.animatedValue as Int
+                            v.translationX = if (k < 10) ((k * 37) % 13 - 6) * d * 2 else 0f
+                            v.alpha = if (k < 10 && k % 3 == 1) 0.35f else 1f
+                            im?.colorFilter = if (k < 10) android.graphics.PorterDuffColorFilter(if (k % 2 == 0) 0x55FF2040 else 0x5500E5FF, android.graphics.PorterDuff.Mode.SRC_ATOP) else null
+                        }
+                    }.start()
+                }
+                "blink" -> {
+                    android.animation.ObjectAnimator.ofFloat(v, "alpha", 0f, 1f, 0f, 1f, 0f, 1f).setDuration(1200).start()
                 }
                 else -> {
                     v.translationX = dx; v.translationY = dy
@@ -506,6 +580,7 @@ class GraphicsView @JvmOverloads constructor(
     private val endSnipe = Runnable {
         val v = snipeView; val sn = gfx?.snipe
         if (!snipeShowing || v == null) return@Runnable
+        snipeLoop?.cancel(); snipeLoop = null
         val (dx, dy) = if (sn != null) snipeOffset(v, sn) else 0f to 0f
         when (sn?.anim) {
             "flip" -> v.animate().alpha(0f).rotationY(-90f).setDuration(600).withEndAction { hideSnipe() }.start()
@@ -518,6 +593,12 @@ class GraphicsView @JvmOverloads constructor(
                 android.animation.ValueAnimator.ofFloat(0f, 1f).apply { duration = 500; addUpdateListener { a -> blur(v, 20f * (a.animatedValue as Float)) } }.start()
                 v.animate().alpha(0f).scaleX(1.6f).scaleY(1.6f).setDuration(500).withEndAction { hideSnipe() }.start()
             }
+            "roll" -> v.animate().alpha(0f).translationX(dx).rotation(if (dx < 0) -360f else 360f).setDuration(700).setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction { hideSnipe() }.start()
+            "elastic", "pulse" -> v.animate().alpha(0f).scaleX(0f).scaleY(0f).setDuration(450).setInterpolator(android.view.animation.AnticipateInterpolator()).withEndAction { hideSnipe() }.start()
+            "glitch", "blink" -> android.animation.ObjectAnimator.ofFloat(v, "alpha", 1f, 0f, 1f, 0f, 0.6f, 0f).setDuration(600).apply {
+                addListener(object : android.animation.AnimatorListenerAdapter() { override fun onAnimationEnd(animation: android.animation.Animator) { hideSnipe() } })
+            }.start()
+            "swing" -> v.animate().alpha(0f).rotation(30f).setDuration(500).withEndAction { hideSnipe() }.start()
             else -> v.animate().alpha(0f).translationX(dx).translationY(dy).scaleX(if (sn?.anim == "pop") 0.5f else 1f).scaleY(if (sn?.anim == "pop") 0.5f else 1f)
                 .setDuration(500).setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction { hideSnipe() }.start()
         }
@@ -525,8 +606,9 @@ class GraphicsView @JvmOverloads constructor(
 
     private fun hideSnipe() {
         ui.removeCallbacks(endSnipe)
+        snipeLoop?.cancel(); snipeLoop = null
         snipeView?.let { it.animate().cancel(); removeView(it) }
-        snipeView = null
+        snipeView = null; snipeImg = null
         snipeShowing = false
     }
 

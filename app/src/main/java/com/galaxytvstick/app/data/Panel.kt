@@ -250,7 +250,9 @@ data class GfxBumper(
     fun has(out: Boolean) = if (out) outUrl != null || outText.isNotBlank() else inUrl != null || inText.isNotBlank()
 }
 /** Snipe: imaj/GIF anime anba ekran an, [durationSec] segonn, chak [everyMin] minit (0 = pa otomatik). */
-data class GfxSnipe(val imageUrl: String, val position: String, val size: Int, val everyMin: Int, val durationSec: Int, val anim: String, val onChannelChange: Boolean)
+data class GfxSnipe(val images: List<String>, val position: String, val size: Int, val everyMin: Int, val durationSec: Int, val anim: String, val onChannelChange: Boolean,
+    /** Tèks (opsyonèl) bò kote imaj la, oswa poukont li. */
+    val text: String = "", val textColor: String = "#FFFFFF", val bgColor: String = "#CC0B1630")
 data class Graphics(
     val bug: GfxBug? = null, val watermark: GfxWatermark? = null, val scoreboard: GfxScoreboard? = null,
     val weather: GfxWeather? = null, val countdown: GfxCountdown? = null, val ident: GfxIdent? = null, val bumper: GfxBumper? = null,
@@ -467,10 +469,14 @@ data class PanelConfig(
                             it.optInt("everyMin", 30).coerceIn(0, 240), it.optInt("durationSec", 5).coerceIn(2, 15), it.optBoolean("onChannelChange", false))
                     }?.takeIf { it.imageUrl != null || it.text.isNotBlank() },
                     snipe = g.optJSONObject("snipe")?.let {
-                        val u = it.optStringOrNull("imageUrl") ?: return@let null
-                        GfxSnipe(u, it.optString("position", "bottom-right"), it.optInt("size", 120).coerceIn(40, 300),
+                        val imgs = (it.optJSONArray("images")?.let { a -> (0 until a.length()).mapNotNull { i -> a.optString(i).takeIf { u -> u.startsWith("http") } } }
+                            ?: listOfNotNull(it.optStringOrNull("imageUrl"))).take(10)
+                        val text = it.optString("text").trim()
+                        if (imgs.isEmpty() && text.isBlank()) return@let null
+                        GfxSnipe(imgs, it.optString("position", "bottom-right"), it.optInt("size", 120).coerceIn(40, 300),
                             it.optInt("everyMin", 10).coerceIn(0, 240), it.optInt("durationSec", 8).coerceIn(3, 30),
-                            it.optString("anim", "slide"), it.optBoolean("onChannelChange", false))
+                            it.optString("anim", "slide"), it.optBoolean("onChannelChange", false),
+                            text, it.optString("textColor", "#FFFFFF"), it.optString("bgColor", "#CC0B1630"))
                     },
                     bumper = g.optJSONObject("bumper")?.let {
                         GfxBumper(it.optStringOrNull("inUrl"), it.optString("inText"), it.optStringOrNull("outUrl"), it.optString("outText"),
