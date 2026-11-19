@@ -23,6 +23,7 @@ import com.galaxytvstick.app.data.GfxBug
 import com.galaxytvstick.app.data.GfxBumper
 import com.galaxytvstick.app.data.GfxCountdown
 import com.galaxytvstick.app.data.GfxIdent
+import com.galaxytvstick.app.data.GfxSnipe
 import com.galaxytvstick.app.data.GfxScoreboard
 import com.galaxytvstick.app.data.GfxWatermark
 import com.galaxytvstick.app.data.GfxWeather
@@ -57,6 +58,13 @@ class GraphicsView @JvmOverloads constructor(
     private var identShowing = false
     private var bumperShowing = false
     private var ticking = false
+    /** Snipe: imaj anime anba ekran an (kouch pa l, anlè ticker a). */
+    private var snipeView: ImageView? = null
+    private var snipeShowing = false
+    private var lastSnipeAt = SystemClock.elapsedRealtime()
+    private var snipeSig = ""
+    /** Lè pou montre snipe la yon fwa apre panel la fin chanje l (0 = non). */
+    private var snipePreviewAt = 0L
 
     /** Espas anba a (pou grafik anba yo rete anlè ticker a). */
     var bottomInset: Int = dp(60f)
@@ -73,6 +81,7 @@ class GraphicsView @JvmOverloads constructor(
             if (field == value) return
             field = value
             if (value && identShowing) { ui.removeCallbacks(endIdent); hideFull() } // piblisite kòmanse: retire ident la
+            if (value && snipeShowing) hideSnipe()
             applyVisibility()
         }
 
@@ -93,11 +102,18 @@ class GraphicsView @JvmOverloads constructor(
         val hadIdent = gfx?.ident != null
         gfx = g
         if (g?.ident != null && !hadIdent) lastIdentAt = SystemClock.elapsedRealtime()
+        // Nouvo snipe (oswa li chanje): montre l nan 20 s pou admin nan wè l, apre sa chak X minit
+        val ss = g?.snipe?.toString() ?: ""
+        if (ss != snipeSig) {
+            snipeSig = ss
+            if (g?.snipe == null) { hideSnipe(); snipePreviewAt = 0L }
+            else { lastSnipeAt = SystemClock.elapsedRealtime(); snipePreviewAt = SystemClock.elapsedRealtime() + 20_000L }
+        }
         val tc = topClock
         val sig = (if (g == null) "" else listOf(g.bug, g.watermark, g.scoreboard, g.weather, g.countdown).toString()) +
             (tc?.let { listOf(it.clockPos, it.clockFormat, it.font, it.textStyle, it.fxColor, it.italic, it.textColor, it.textSize).toString() } ?: "")
         if (sig != signature) { signature = sig; rebuild(g) }
-        val needTick = (g != null && (g.countdown != null || g.watermark?.move == true || (g.ident?.everyMin ?: 0) > 0)) || tc != null
+        val needTick = (g != null && (g.countdown != null || g.watermark?.move == true || (g.ident?.everyMin ?: 0) > 0 || g.snipe != null)) || tc != null
         if (needTick && !ticking) { ticking = true; ui.post(tick) }
         if (!needTick && ticking) { ticking = false; ui.removeCallbacks(tick) }
         visibility = if (g == null && tc == null && !bumperShowing) GONE else VISIBLE
@@ -106,6 +122,7 @@ class GraphicsView @JvmOverloads constructor(
     fun stop() {
         ticking = false
         ui.removeCallbacksAndMessages(null)
+        hideSnipe(); snipeSig = ""
         wxRotate = null; signature = "" // pwochen setGraphics rekonstwi l (epi relanse vil k ap vire yo)
         hideFull()
     }
@@ -367,6 +384,76 @@ class GraphicsView @JvmOverloads constructor(
         val i = g.ident
         if (i != null && i.everyMin > 0 && !suppressed && !identShowing && !bumperShowing &&
             SystemClock.elapsedRealtime() - lastIdentAt >= i.everyMin * 60_000L) showIdent()
+        val sn = g.snipe
+        if (sn != null && !suppressed && !identShowing && !bumperShowing && !snipeShowing) {
+            val now = SystemClock.elapsedRealtime()
+            val preview = snipePreviewAt in 1..now
+            val auto = sn.everyMin > 0 && now - lastSnipeAt >= sn.everyMin * 60_000L
+            if (preview || auto) { snipePreviewAt = 0L; showSnipe() }
+        }
+    }
+
+    // ------------------------------------------------------------ Snipe
+    private fun showSnipe() {
+        val sn: GfxSnipe = gfx?.snipe ?: return
+        lastSnipeAt = SystemClock.elapsedRealtime()
+        snipeShowing = true
+        snipeView?.let { removeView(it) }
+        val h = dp(sn.size.toFloat())
+        val grav = Gravity.BOTTOM or when (sn.position) { "bottom-left" -> Gravity.START; "bottom-center" -> Gravity.CENTER_HORIZONTAL; else -> Gravity.END }
+        val v = ImageView(context).apply {
+            adjustViewBounds = true
+            maxHeight = h; maxWidth = dp(640f)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+            alpha = 0f
+            elevation = dp(6f).toFloat()
+        }
+        addView(v, LayoutParams(LayoutParams.WRAP_CONTENT, h, grav).apply {
+            bottomMargin = bottomInset + dp(16f); marginStart = dp(48f); marginEnd = dp(48f)
+        })
+        snipeView = v
+        // Antre a kòmanse lè imaj la (oswa GIF la) fin chaje
+        v.load(sn.imageUrl) {
+            listener(onSuccess = { _, _ -> if (snipeShowing && snipeView === v) animateSnipeIn(v, sn) }, onError = { _, _ -> hideSnipe() })
+        }
+    }
+
+    private fun snipeOffset(v: View, sn: GfxSnipe): Pair<Float, Float> {
+        val w = (v.width.takeIf { it > 0 } ?: dp(300f)).toFloat() + dp(80f)
+        return when (sn.anim) {
+            "rise" -> 0f to (dp(sn.size.toFloat()) + bottomInset + dp(40f)).toFloat()
+            "slide" -> (if (sn.position == "bottom-left") -w else w) to 0f
+            else -> 0f to 0f
+        }
+    }
+
+    private fun animateSnipeIn(v: ImageView, sn: GfxSnipe) {
+        v.post {
+            val (dx, dy) = snipeOffset(v, sn)
+            v.translationX = dx; v.translationY = dy
+            if (sn.anim == "pop") { v.scaleX = 0.5f; v.scaleY = 0.5f }
+            v.animate().alpha(1f).translationX(0f).translationY(0f).scaleX(1f).scaleY(1f)
+                .setDuration(if (sn.anim == "fade") 700 else 550)
+                .setInterpolator(android.view.animation.OvershootInterpolator(if (sn.anim == "pop") 1.6f else 0.6f)).start()
+            ui.removeCallbacks(endSnipe)
+            ui.postDelayed(endSnipe, sn.durationSec * 1000L)
+        }
+    }
+
+    private val endSnipe = Runnable {
+        val v = snipeView; val sn = gfx?.snipe
+        if (!snipeShowing || v == null) return@Runnable
+        val (dx, dy) = if (sn != null) snipeOffset(v, sn) else 0f to 0f
+        v.animate().alpha(0f).translationX(dx).translationY(dy).scaleX(if (sn?.anim == "pop") 0.5f else 1f).scaleY(if (sn?.anim == "pop") 0.5f else 1f)
+            .setDuration(500).setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction { hideSnipe() }.start()
+    }
+
+    private fun hideSnipe() {
+        ui.removeCallbacks(endSnipe)
+        snipeView?.let { it.animate().cancel(); removeView(it) }
+        snipeView = null
+        snipeShowing = false
     }
 
     private fun countdownText(c: GfxCountdown): String {
@@ -383,6 +470,8 @@ class GraphicsView @JvmOverloads constructor(
     // ------------------------------------------------------------ Channel ident
     /** Kliyan an chanje chanèl: montre ident la si panel la mande sa. */
     fun onChannelChanged() {
+        val sn = gfx?.snipe
+        if (sn != null && sn.onChannelChange && !suppressed && !identShowing && !bumperShowing && !snipeShowing) ui.postDelayed({ if (!snipeShowing) showSnipe() }, 1500)
         val i = gfx?.ident ?: return
         if (i.onChannelChange && !suppressed && !identShowing && !bumperShowing) showIdent()
     }
