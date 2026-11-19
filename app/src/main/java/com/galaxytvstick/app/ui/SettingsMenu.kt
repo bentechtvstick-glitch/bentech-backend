@@ -130,8 +130,8 @@ class SettingsMenu(
             a.getString(R.string.set_afr, onOff(prefs.afr)) to { prefs.afr = !prefs.afr; show() },
             a.getString(R.string.set_last_channel, onOff(prefs.startLastChannel)) to { prefs.startLastChannel = !prefs.startLastChannel; show() },
             a.getString(R.string.set_update, version) to { Updater.checkNow(a, cfg.update) },
-            a.getString(R.string.set_about, version) to { info(R.string.set_about_title, a.getString(R.string.set_about_fmt, version, android.os.Build.MODEL, android.os.Build.VERSION.RELEASE) + "\n\n" + a.getString(R.string.disclaimer)) },
-            a.getString(R.string.exit_title) to { a.finishAffinity() }
+            a.getString(R.string.set_about, version) to { info(R.string.set_about_title, a.getString(R.string.set_about_fmt, version, android.os.Build.MODEL, android.os.Build.VERSION.RELEASE) + "\n\n" + a.getString(R.string.disclaimer)) }
+            // Pa gen bouton "Soti" ankò: pou soti, Back (tankou TiviMate) oswa Home sou remòt la
         ))
     }
 
