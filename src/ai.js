@@ -47,7 +47,16 @@ export async function aiComplete(db, { system, user, maxTokens = 600 }) {
     signal: AbortSignal.timeout(60000),
   });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw Object.assign(new Error(j?.error?.message || `AI error HTTP ${r.status}`), { status: 502 });
+  if (!r.ok) {
+    // Mesaj klè pou admin nan olye de mesaj teknik Anthropic la
+    const msg = r.status === 401 ? "The AI key no longer works (Anthropic refused it): it was deleted, disabled or mistyped. Create a new key at console.anthropic.com → API Keys and paste it in Dashboard → 🔑 AI key."
+      : r.status === 403 ? "Anthropic refused access with this AI key. Check the account at console.anthropic.com."
+      : /credit|balance|billing/i.test(j?.error?.message || "") ? "The Anthropic account has no credit left. Add credit at console.anthropic.com → Billing."
+      : r.status === 429 ? "AI is busy right now (too many requests). Try again in a minute."
+      : r.status >= 500 ? "Anthropic's AI is down right now. Try again in a few minutes."
+      : j?.error?.message || `AI error HTTP ${r.status}`;
+    throw Object.assign(new Error(msg), { status: 502 });
+  }
   const inTok = j.usage?.input_tokens || 0, outTok = j.usage?.output_tokens || 0;
   const cost = (inTok * PRICE_IN + outTok * PRICE_OUT) / 1e6;
   u.inTok += inTok; u.outTok += outTok; u.cost += cost; u.asks = (u.asks || 0) + 1;
