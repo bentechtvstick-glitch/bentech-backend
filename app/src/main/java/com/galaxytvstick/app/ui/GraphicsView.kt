@@ -118,7 +118,7 @@ class GraphicsView @JvmOverloads constructor(
         gfx = g
         if (g?.ident != null && !hadIdent) lastIdentAt = SystemClock.elapsedRealtime()
         // Bann meteyo: chanjman nan reglaj yo → montre l nan 3 s; done (tanperati) ki chanje sèlman → mete l ajou san rekòmanse
-        val wbs = g?.weatherBar?.let { "${it.title}|${it.subtitle}|${it.offset}|${it.condensed}|${it.subColor}|${it.perPage}|${it.position}|${it.bgColor}|${it.accentColor}|${it.textColor}|${it.everyMin}|${it.durationSec}|${it.unit}" } ?: ""
+        val wbs = g?.weatherBar?.let { "${it.title}|${it.subtitle}|${it.offset}|${it.condensed}|${it.subColor}|${it.titleFont}|${it.titleSize}|${it.subSize}|${it.titleItalic}|${it.titleY}|${it.subY}|${it.perPage}|${it.position}|${it.bgColor}|${it.accentColor}|${it.textColor}|${it.everyMin}|${it.durationSec}|${it.unit}" } ?: ""
         if (wbs != wbSig) {
             wbSig = wbs
             hideWeatherBar(false)
@@ -447,23 +447,29 @@ class GraphicsView @JvmOverloads constructor(
         }
         // Etikèt agoch tankou BFM: gwo tit italik ("METEYO") + yon ti bwat koulè anba l ("JODI A")
         val tag = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.START or Gravity.CENTER_VERTICAL }
-        // Lèt kondanse epè tankou BFM (Roboto Condensed ki deja sou Android), oswa nòmal
-        val face = if (wb.condensed) Typeface.create("sans-serif-condensed", Typeface.BOLD) else Typeface.DEFAULT_BOLD
-        tag.addView(label(wb.title.uppercase(), if (wb.condensed) 30f else 24f, Color.WHITE, bold = true).apply {
-            typeface = Typeface.create(face, Typeface.BOLD_ITALIC)
+        // Etikèt la: polis, gwosè, italik ak pozisyon chak liy (panel la chwazi yo)
+        val face = TextFx.typeface(context, wb.titleFont, italic = false)
+        val tag = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.START or Gravity.CENTER_VERTICAL; clipChildren = false; clipToPadding = false }
+        tag.addView(label(wb.title.uppercase(), wb.titleSize.toFloat(), Color.WHITE, bold = true).apply {
+            typeface = TextFx.typeface(context, wb.titleFont, italic = wb.titleItalic)
             setShadowLayer(0f, 0f, dp(2f).toFloat(), 0x40000000)
+            translationY = dp(wb.titleY.toFloat()).toFloat()
         })
-        if (wb.subtitle.isNotBlank()) tag.addView(label(wb.subtitle.uppercase(), 14f, parse(wb.subColor, 0xFF0B1630.toInt()), bold = true).apply {
+        if (wb.subtitle.isNotBlank()) tag.addView(label(wb.subtitle.uppercase(), wb.subSize.toFloat(), parse(wb.subColor, 0xFF0B1630.toInt()), bold = true).apply {
             typeface = face
+            translationY = dp(wb.subY.toFloat()).toFloat()
             setPadding(dp(8f), dp(2f), dp(8f), dp(2f))
             background = GradientDrawable().apply { cornerRadius = dp(4f).toFloat(); setColor(parse(wb.accentColor, 0xFFF59E0B.toInt())) }
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(2f) })
-        bar.addView(tag, LinearLayout.LayoutParams(dp(150f), ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(16f); marginEnd = dp(8f) })
+        tag.minimumWidth = dp(150f)
+        bar.addView(tag, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(16f); marginEnd = dp(8f) })
+        bar.clipChildren = false; bar.minimumHeight = dp(78f)
         val cells = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        bar.addView(cells, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+        cells.minimumHeight = dp(78f)
+        bar.addView(cells, LinearLayout.LayoutParams(0, dp(78f), 1f))
         fillWbCells(cells, wb, txt)
         val top = wb.position == "top"
-        addView(bar, LayoutParams(LayoutParams.MATCH_PARENT, dp(78f), if (top) Gravity.TOP else Gravity.BOTTOM).apply {
+        addView(bar, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, if (top) Gravity.TOP else Gravity.BOTTOM).apply {
             // Admin nan ka monte/desann bann nan (offset an px)
             if (top) topMargin = dp(wb.offset.toFloat()).coerceAtLeast(0) else bottomMargin = (bottomInset + dp(wb.offset.toFloat())).coerceAtLeast(0)
         })

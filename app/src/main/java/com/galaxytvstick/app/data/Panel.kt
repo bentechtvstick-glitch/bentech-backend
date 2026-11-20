@@ -257,7 +257,8 @@ data class GfxSnipe(val images: List<String>, val position: String, val size: In
 data class WxItem(val city: String, val icon: String, val now: Int?, val min: Int?, val max: Int?)
 data class GfxWeatherBar(val title: String, val items: List<WxItem>, val unit: String, val perPage: Int, val pageSec: Int,
     val everyMin: Int, val durationSec: Int, val position: String, val bgColor: String, val accentColor: String, val textColor: String, val showNow: Boolean,
-    val subtitle: String = "JODI A", val offset: Int = 0, val condensed: Boolean = true, val subColor: String = "#0B1630")
+    val subtitle: String = "JODI A", val offset: Int = 0, val condensed: Boolean = true, val subColor: String = "#0B1630",
+    val titleFont: String = "condensed", val titleSize: Int = 30, val subSize: Int = 14, val titleItalic: Boolean = true, val titleY: Int = 0, val subY: Int = 0)
 data class Graphics(
     val bug: GfxBug? = null, val watermark: GfxWatermark? = null, val scoreboard: GfxScoreboard? = null,
     val weather: GfxWeather? = null, val countdown: GfxCountdown? = null, val ident: GfxIdent? = null, val bumper: GfxBumper? = null,
@@ -484,7 +485,9 @@ data class PanelConfig(
                             w.optInt("durationSec", 20).coerceIn(5, 120), w.optString("position", "bottom"), w.optString("bgColor", "#1D4ED8"),
                             w.optString("accentColor", "#F59E0B"), w.optString("textColor", "#FFFFFF"), w.optBoolean("showNow", true),
                             w.optString("subtitle", "JODI A"), w.optInt("offset", 0).coerceIn(-200, 600),
-                            w.optString("font", "condensed") != "normal", w.optString("subColor", "#0B1630"))
+                            w.optString("font", "condensed") != "normal", w.optString("subColor", "#0B1630"),
+                            w.optString("titleFont", "condensed"), w.optInt("titleSize", 30).coerceIn(14, 64), w.optInt("subSize", 14).coerceIn(9, 36),
+                            w.optBoolean("titleItalic", true), w.optInt("titleY", 0).coerceIn(-60, 60), w.optInt("subY", 0).coerceIn(-60, 60))
                     },
                     snipe = g.optJSONObject("snipe")?.let {
                         val imgs = (it.optJSONArray("images")?.let { a -> (0 until a.length()).mapNotNull { i -> a.optString(i).takeIf { u -> u.startsWith("http") } } }
