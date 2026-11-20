@@ -24,6 +24,7 @@ import com.galaxytvstick.app.data.GfxBumper
 import com.galaxytvstick.app.data.GfxCountdown
 import com.galaxytvstick.app.data.GfxIdent
 import com.galaxytvstick.app.data.GfxSnipe
+import com.galaxytvstick.app.data.GfxWeatherBar
 import com.galaxytvstick.app.data.GfxScoreboard
 import com.galaxytvstick.app.data.GfxWatermark
 import com.galaxytvstick.app.data.GfxWeather
@@ -69,6 +70,16 @@ class GraphicsView @JvmOverloads constructor(
     private var snipeSig = ""
     /** Lè pou montre snipe la yon fwa apre panel la fin chanje l (0 = non). */
     private var snipePreviewAt = 0L
+    /** Bann meteyo a (anba oswa anlè ekran an). */
+    private var wbView: LinearLayout? = null
+    private var wbCells: LinearLayout? = null
+    private var wbShowing = false
+    private var wbPage = 0
+    private var wbShownAt = 0L
+    private var wbPageAt = 0L
+    private var lastWbAt = SystemClock.elapsedRealtime()
+    private var wbSig = ""
+    private var wbPreviewAt = 0L
 
     /** Espas anba a (pou grafik anba yo rete anlè ticker a). */
     var bottomInset: Int = dp(60f)
@@ -106,6 +117,13 @@ class GraphicsView @JvmOverloads constructor(
         val hadIdent = gfx?.ident != null
         gfx = g
         if (g?.ident != null && !hadIdent) lastIdentAt = SystemClock.elapsedRealtime()
+        // Bann meteyo: chanjman nan reglaj yo → montre l nan 3 s; done (tanperati) ki chanje sèlman → mete l ajou san rekòmanse
+        val wbs = g?.weatherBar?.let { "${it.title}|${it.perPage}|${it.position}|${it.bgColor}|${it.accentColor}|${it.textColor}|${it.everyMin}|${it.durationSec}|${it.unit}" } ?: ""
+        if (wbs != wbSig) {
+            wbSig = wbs
+            hideWeatherBar(false)
+            if (g?.weatherBar != null) { lastWbAt = SystemClock.elapsedRealtime(); wbPreviewAt = SystemClock.elapsedRealtime() + 3_000L }
+        }
         // Nouvo snipe (oswa li chanje): montre l nan 20 s pou admin nan wè l, apre sa chak X minit
         val ss = g?.snipe?.toString() ?: ""
         if (ss != snipeSig) {
@@ -117,7 +135,7 @@ class GraphicsView @JvmOverloads constructor(
         val sig = (if (g == null) "" else listOf(g.bug, g.watermark, g.scoreboard, g.weather, g.countdown).toString()) +
             (tc?.let { listOf(it.clockPos, it.clockFormat, it.font, it.textStyle, it.fxColor, it.italic, it.textColor, it.textSize).toString() } ?: "")
         if (sig != signature) { signature = sig; rebuild(g) }
-        val needTick = (g != null && (g.countdown != null || g.watermark?.move == true || (g.ident?.everyMin ?: 0) > 0 || g.snipe != null)) || tc != null
+        val needTick = (g != null && (g.countdown != null || g.watermark?.move == true || (g.ident?.everyMin ?: 0) > 0 || g.snipe != null || g.weatherBar != null)) || tc != null
         if (needTick && !ticking) { ticking = true; ui.post(tick) }
         if (!needTick && ticking) { ticking = false; ui.removeCallbacks(tick) }
         visibility = if (g == null && tc == null && !bumperShowing) GONE else VISIBLE
@@ -127,6 +145,7 @@ class GraphicsView @JvmOverloads constructor(
         ticking = false
         ui.removeCallbacksAndMessages(null)
         hideSnipe(); snipeSig = ""
+        hideWeatherBar(false); wbSig = ""
         wxRotate = null; signature = "" // pwochen setGraphics rekonstwi l (epi relanse vil k ap vire yo)
         hideFull()
     }
@@ -395,6 +414,95 @@ class GraphicsView @JvmOverloads constructor(
             val auto = sn.everyMin > 0 && now - lastSnipeAt >= sn.everyMin * 60_000L
             if (preview || auto) { snipePreviewAt = 0L; showSnipe() }
         }
+        val wb = g.weatherBar
+        if (wb != null) {
+            val now = SystemClock.elapsedRealtime()
+            if (suppressed || bumperShowing) { if (wbShowing) hideWeatherBar(false) }
+            else if (!wbShowing) {
+                val preview = wbPreviewAt in 1..now
+                if (wb.everyMin == 0 || preview || now - lastWbAt >= wb.everyMin * 60_000L) { wbPreviewAt = 0L; showWeatherBar(wb) }
+            } else if (wb.everyMin > 0 && now - wbShownAt >= wb.durationSec * 1000L) hideWeatherBar(true)
+            else if (now - wbPageAt >= wb.pageSec * 1000L && wb.items.size > wb.perPage) nextWbPage(wb)
+        }
+    }
+
+    // ------------------------------------------------------------ Bann meteyo (tankou BFM)
+    private fun showWeatherBar(wb: GfxWeatherBar) {
+        hideWeatherBar(false)
+        wbShowing = true; wbPage = 0
+        val now = SystemClock.elapsedRealtime()
+        wbShownAt = now; wbPageAt = now; lastWbAt = now
+        val txt = parse(wb.textColor, Color.WHITE)
+        val bar = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setBackgroundColor(parse(wb.bgColor, 0xFF1D4ED8.toInt()))
+            elevation = dp(5f).toFloat()
+            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+        // Etikèt agoch (tankou "MÉTÉO AUJOURD'HUI")
+        val tag = label(wb.title.uppercase(), 15f, Color.WHITE, bold = true).apply {
+            maxLines = 2; gravity = Gravity.CENTER
+            setPadding(dp(14f), dp(6f), dp(14f), dp(6f))
+            background = GradientDrawable().apply { cornerRadius = dp(6f).toFloat(); setColor(parse(wb.accentColor, 0xFFF59E0B.toInt())) }
+        }
+        bar.addView(tag, LinearLayout.LayoutParams(dp(150f), ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(16f); marginEnd = dp(8f) })
+        val cells = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        bar.addView(cells, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+        fillWbCells(cells, wb, txt)
+        val top = wb.position == "top"
+        addView(bar, LayoutParams(LayoutParams.MATCH_PARENT, dp(78f), if (top) Gravity.TOP else Gravity.BOTTOM).apply {
+            if (top) topMargin = dp(0f) else bottomMargin = bottomInset
+        })
+        wbView = bar; wbCells = cells
+        bar.translationY = if (top) -dp(90f).toFloat() else (dp(90f) + bottomInset).toFloat()
+        bar.animate().translationY(0f).setDuration(500).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+    }
+
+    private fun fillWbCells(cells: LinearLayout, wb: GfxWeatherBar, txt: Int) {
+        cells.removeAllViews()
+        val pages = (wb.items.size + wb.perPage - 1) / wb.perPage
+        val start = (wbPage % pages.coerceAtLeast(1)) * wb.perPage
+        val list = wb.items.drop(start).take(wb.perPage)
+        list.forEachIndexed { i, it ->
+            if (i > 0) cells.addView(View(context).apply { setBackgroundColor(parse(wb.accentColor, 0xFFF59E0B.toInt())) },
+                LinearLayout.LayoutParams(dp(2f), dp(44f)))
+            val cell = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(14f), 0, dp(10f), 0) }
+            cell.addView(label(it.icon, 30f, txt, bold = false), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginEnd = dp(10f) })
+            val col = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+            col.addView(label(it.city, 18f, txt, bold = true).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END })
+            val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            fun chip(v: Int?, c: Int) = label(if (v == null) "–" else "$v°", 17f, Color.WHITE, bold = true).apply {
+                setPadding(dp(8f), dp(1f), dp(8f), dp(1f))
+                background = GradientDrawable().apply { cornerRadius = dp(4f).toFloat(); setColor(c) }
+            }
+            row.addView(chip(it.min, 0xFF2563EB.toInt()))
+            row.addView(chip(it.max, 0xFFF97316.toInt()), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(6f) })
+            if (wb.showNow && it.now != null) row.addView(label("  ${it.now}°${wb.unit}", 14f, txt, bold = false).apply { alpha = 0.85f })
+            col.addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(3f) })
+            cell.addView(col)
+            cells.addView(cell, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+        }
+    }
+
+    private fun nextWbPage(wb: GfxWeatherBar) {
+        val cells = wbCells ?: return
+        wbPageAt = SystemClock.elapsedRealtime()
+        cells.animate().alpha(0f).translationY(-dp(12f).toFloat()).setDuration(250).withEndAction {
+            wbPage++
+            fillWbCells(cells, wb, parse(wb.textColor, Color.WHITE))
+            cells.translationY = dp(12f).toFloat()
+            cells.animate().alpha(1f).translationY(0f).setDuration(300).start()
+        }.start()
+    }
+
+    private fun hideWeatherBar(animated: Boolean) {
+        val v = wbView ?: run { wbShowing = false; return }
+        wbView = null; wbCells = null; wbShowing = false
+        if (!animated) { v.animate().cancel(); removeView(v); return }
+        val top = gfx?.weatherBar?.position == "top"
+        v.animate().translationY(if (top) -v.height.toFloat() else (v.height + bottomInset).toFloat()).setDuration(450)
+            .setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction { removeView(v) }.start()
     }
 
     // ------------------------------------------------------------ Snipe

@@ -253,10 +253,15 @@ data class GfxBumper(
 data class GfxSnipe(val images: List<String>, val position: String, val size: Int, val everyMin: Int, val durationSec: Int, val anim: String, val onChannelChange: Boolean,
     /** Tèks (opsyonèl) bò kote imaj la, oswa poukont li. */
     val text: String = "", val textColor: String = "#FFFFFF", val bgColor: String = "#CC0B1630")
+/** Bann meteyo (tankou BFM «Météo aujourd'hui»): plizyè vil ansanm, ti ak gwo tanperati jodi a. */
+data class WxItem(val city: String, val icon: String, val now: Int?, val min: Int?, val max: Int?)
+data class GfxWeatherBar(val title: String, val items: List<WxItem>, val unit: String, val perPage: Int, val pageSec: Int,
+    val everyMin: Int, val durationSec: Int, val position: String, val bgColor: String, val accentColor: String, val textColor: String, val showNow: Boolean)
 data class Graphics(
     val bug: GfxBug? = null, val watermark: GfxWatermark? = null, val scoreboard: GfxScoreboard? = null,
     val weather: GfxWeather? = null, val countdown: GfxCountdown? = null, val ident: GfxIdent? = null, val bumper: GfxBumper? = null,
-    val snipe: GfxSnipe? = null
+    val snipe: GfxSnipe? = null,
+    val weatherBar: GfxWeatherBar? = null
 )
 
 /** Avètisman ekspirasyon: tèks la, konbyen jou ki rete, chak konbyen minit pou repete l, konbyen segonn li rete. */
@@ -468,6 +473,16 @@ data class PanelConfig(
                         GfxIdent(it.optStringOrNull("imageUrl"), it.optString("text"), it.optString("tagline"),
                             it.optInt("everyMin", 30).coerceIn(0, 240), it.optInt("durationSec", 5).coerceIn(2, 15), it.optBoolean("onChannelChange", false))
                     }?.takeIf { it.imageUrl != null || it.text.isNotBlank() },
+                    weatherBar = g.optJSONObject("weatherBar")?.let { w ->
+                        fun JSONObject.intOrNull(k: String) = if (has(k) && !isNull(k)) optInt(k) else null
+                        val items = w.optJSONArray("items").objects().map { x ->
+                            WxItem(x.optString("city"), x.optString("icon"), x.intOrNull("now"), x.intOrNull("min"), x.intOrNull("max"))
+                        }.filter { it.city.isNotBlank() }
+                        if (items.isEmpty()) null else GfxWeatherBar(w.optString("title", "METEYO JODI A"), items, w.optString("unit", "F"),
+                            w.optInt("perPage", 3).coerceIn(2, 5), w.optInt("pageSec", 6).coerceIn(3, 30), w.optInt("everyMin", 10).coerceIn(0, 240),
+                            w.optInt("durationSec", 20).coerceIn(5, 120), w.optString("position", "bottom"), w.optString("bgColor", "#1D4ED8"),
+                            w.optString("accentColor", "#F59E0B"), w.optString("textColor", "#FFFFFF"), w.optBoolean("showNow", true))
+                    },
                     snipe = g.optJSONObject("snipe")?.let {
                         val imgs = (it.optJSONArray("images")?.let { a -> (0 until a.length()).mapNotNull { i -> a.optString(i).takeIf { u -> u.startsWith("http") } } }
                             ?: listOfNotNull(it.optStringOrNull("imageUrl"))).take(10)
