@@ -329,7 +329,7 @@ export function buildGraphics(g, ctx) {
     }
     if (items.length) out.weatherBar = { title: str(wb.title, 20) || "METEYO", subtitle: wb.subtitle == null ? "JODI A" : str(wb.subtitle, 20), offset: num(wb.offset, 0, -200, 600), items, unit, perPage: num(wb.perPage, 3, 2, 5),
       pageSec: num(wb.pageSec, 6, 3, 30), everyMin: num(wb.everyMin, 10, 0, 240), durationSec: num(wb.durationSec, 20, 5, 120),
-      position: wb.position === "top" ? "top" : "bottom", bgColor: hex(wb.bgColor, "#1D4ED8"), accentColor: hex(wb.accentColor, "#F59E0B"),
+      position: wb.position === "top" ? "top" : "bottom", bgColor: wb.bgClear ? "#00000000" : hex(wb.bgColor, "#1D4ED8"), accentColor: hex(wb.accentColor, "#F59E0B"),
       textColor: hex(wb.textColor, "#FFFFFF"), showNow: wb.showNow !== false };
   }
 
