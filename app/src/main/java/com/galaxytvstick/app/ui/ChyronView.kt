@@ -138,7 +138,8 @@ class ChyronView @JvmOverloads constructor(
         val text = parse(c.textColor, Color.WHITE)
         val accent = parse(c.accentColor, 0xFFE50914.toInt())
         val bg = parse(c.bgColor, 0xFF0B1630.toInt())
-        val bgA = Color.argb((c.opacity.coerceIn(10, 100) * 2.55f).toInt(), Color.red(bg), Color.green(bg), Color.blue(bg))
+        // "#00000000" = fon transparan (bouton "Transparan" nan panel la)
+        val bgA = if (Color.alpha(bg) == 0) Color.TRANSPARENT else Color.argb((c.opacity.coerceIn(10, 100) * 2.55f).toInt(), Color.red(bg), Color.green(bg), Color.blue(bg))
 
         val root = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL

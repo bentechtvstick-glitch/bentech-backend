@@ -686,7 +686,8 @@ class GraphicsView @JvmOverloads constructor(
         full.animate().cancel()
         full.removeAllViews()
         full.scaleX = 1f; full.scaleY = 1f
-        full.setBackgroundColor(parse(b.bgColor, 0xFF0B1630.toInt()) or 0xFF000000.toInt())
+        val bc = parse(b.bgColor, 0xFF0B1630.toInt())
+        full.setBackgroundColor(if (Color.alpha(bc) == 0) Color.TRANSPARENT else bc or 0xFF000000.toInt()) // transparan: videyo a parèt dèyè
         val url = if (out) b.outUrl else b.inUrl
         if (url != null) {
             full.addView(ImageView(context).apply {
