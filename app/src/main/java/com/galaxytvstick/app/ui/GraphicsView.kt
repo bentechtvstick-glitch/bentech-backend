@@ -118,7 +118,7 @@ class GraphicsView @JvmOverloads constructor(
         gfx = g
         if (g?.ident != null && !hadIdent) lastIdentAt = SystemClock.elapsedRealtime()
         // Bann meteyo: chanjman nan reglaj yo → montre l nan 3 s; done (tanperati) ki chanje sèlman → mete l ajou san rekòmanse
-        val wbs = g?.weatherBar?.let { "${it.title}|${it.subtitle}|${it.offset}|${it.perPage}|${it.position}|${it.bgColor}|${it.accentColor}|${it.textColor}|${it.everyMin}|${it.durationSec}|${it.unit}" } ?: ""
+        val wbs = g?.weatherBar?.let { "${it.title}|${it.subtitle}|${it.offset}|${it.condensed}|${it.subColor}|${it.perPage}|${it.position}|${it.bgColor}|${it.accentColor}|${it.textColor}|${it.everyMin}|${it.durationSec}|${it.unit}" } ?: ""
         if (wbs != wbSig) {
             wbSig = wbs
             hideWeatherBar(false)
@@ -447,11 +447,14 @@ class GraphicsView @JvmOverloads constructor(
         }
         // Etikèt agoch tankou BFM: gwo tit italik ("METEYO") + yon ti bwat koulè anba l ("JODI A")
         val tag = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.START or Gravity.CENTER_VERTICAL }
-        tag.addView(label(wb.title.uppercase(), 24f, Color.WHITE, bold = true).apply {
-            setTypeface(Typeface.DEFAULT_BOLD, Typeface.BOLD_ITALIC)
+        // Lèt kondanse epè tankou BFM (Roboto Condensed ki deja sou Android), oswa nòmal
+        val face = if (wb.condensed) Typeface.create("sans-serif-condensed", Typeface.BOLD) else Typeface.DEFAULT_BOLD
+        tag.addView(label(wb.title.uppercase(), if (wb.condensed) 30f else 24f, Color.WHITE, bold = true).apply {
+            typeface = Typeface.create(face, Typeface.BOLD_ITALIC)
             setShadowLayer(0f, 0f, dp(2f).toFloat(), 0x40000000)
         })
-        if (wb.subtitle.isNotBlank()) tag.addView(label(wb.subtitle.uppercase(), 13f, Color.WHITE, bold = true).apply {
+        if (wb.subtitle.isNotBlank()) tag.addView(label(wb.subtitle.uppercase(), 14f, parse(wb.subColor, 0xFF0B1630.toInt()), bold = true).apply {
+            typeface = face
             setPadding(dp(8f), dp(2f), dp(8f), dp(2f))
             background = GradientDrawable().apply { cornerRadius = dp(4f).toFloat(); setColor(parse(wb.accentColor, 0xFFF59E0B.toInt())) }
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(2f) })
@@ -483,9 +486,11 @@ class GraphicsView @JvmOverloads constructor(
             val cell = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(14f), 0, dp(10f), 0) }
             cell.addView(label(it.icon, 30f, txt, bold = false), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginEnd = dp(10f) })
             val col = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-            col.addView(label(it.city, 18f, txt, bold = true).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }.sh())
+            val cf = if (wb.condensed) Typeface.create("sans-serif-condensed", Typeface.BOLD) else Typeface.DEFAULT_BOLD
+            col.addView(label(it.city, if (wb.condensed) 20f else 18f, txt, bold = true).apply { typeface = cf; maxLines = 1; ellipsize = TextUtils.TruncateAt.END }.sh())
             val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-            fun chip(v: Int?, c: Int) = label(if (v == null) "–" else "$v°", 17f, Color.WHITE, bold = true).apply {
+            fun chip(v: Int?, c: Int) = label(if (v == null) "–" else "$v°", if (wb.condensed) 19f else 17f, Color.WHITE, bold = true).apply {
+                typeface = cf
                 setPadding(dp(8f), dp(1f), dp(8f), dp(1f))
                 background = GradientDrawable().apply { cornerRadius = dp(4f).toFloat(); setColor(c) }
             }
