@@ -111,7 +111,7 @@ class GraphicsView @JvmOverloads constructor(
         if (ss != snipeSig) {
             snipeSig = ss
             if (g?.snipe == null) { hideSnipe(); snipePreviewAt = 0L }
-            else { lastSnipeAt = SystemClock.elapsedRealtime(); snipePreviewAt = SystemClock.elapsedRealtime() + 20_000L }
+            else { lastSnipeAt = SystemClock.elapsedRealtime(); snipePreviewAt = SystemClock.elapsedRealtime() + 3_000L }
         }
         val tc = topClock
         val sig = (if (g == null) "" else listOf(g.bug, g.watermark, g.scoreboard, g.weather, g.countdown).toString()) +
@@ -398,6 +398,12 @@ class GraphicsView @JvmOverloads constructor(
     }
 
     // ------------------------------------------------------------ Snipe
+    /** Panel la mande pou snipe la parèt touswit (si pa gen piblisite oswa ident sou ekran an). */
+    fun showSnipeNow() {
+        if (gfx?.snipe == null || suppressed || identShowing || bumperShowing) return
+        showSnipe()
+    }
+
     private fun showSnipe() {
         val sn: GfxSnipe = gfx?.snipe ?: return
         lastSnipeAt = SystemClock.elapsedRealtime()

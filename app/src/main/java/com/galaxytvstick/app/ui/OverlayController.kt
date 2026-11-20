@@ -153,6 +153,7 @@ class OverlayController(
             "message" -> showDialog(activity.getString(R.string.remote_message_title), cmd.text, null) {}
             "refresh" -> startPolling() // chèche config la kounye a
             "reload" -> reloadSilently() // rechaje chanèl yo an aryè plan: videyo a pa kanpe
+            "snipe" -> v.gfx.showSnipeNow() // "Montre snipe la kounye a" nan panel la
             else -> onCommand(cmd)
         }
     }
