@@ -972,7 +972,9 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           </div>
           <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="weatherBar.on" id="g_weatherBar_on"><i></i></label><div class="grow"><label for="g_weatherBar_on"><b>Bann meteyo (bandeau météo)</b></label><p class="note" style="margin:2px 0 0">Tankou BFM «Météo aujourd'hui»: yon bann anba ekran an ak plizyè vil ansanm, ti tanperati (ble) ak gwo tanperati (oranj) jodi a. Paj vil yo chanje poukont yo.</p></div><button class="btn small purple" type="button" data-gxplay="weatherBar">▶ Gade</button></div>
             <div class="row2"><div class="field"><label for="g_weatherBar_title">Tit (gwo lèt)</label><input type="text" id="g_weatherBar_title" data-g="weatherBar.title" maxlength="20" placeholder="METEYO"></div><div class="field"><label for="g_weatherBar_subtitle">Anba tit la (nan bwat koulè a)</label><input type="text" id="g_weatherBar_subtitle" data-g="weatherBar.subtitle" maxlength="20" placeholder="JODI A"></div></div>
-            <div class="row2"><div class="field"><label for="g_weatherBar_font">Stil lèt yo</label><select id="g_weatherBar_font" data-g="weatherBar.font"><option value="condensed">Kondanse, epè (tankou BFM)</option><option value="normal">Nòmal</option></select></div><label class="swatch"><input type="color" data-g="weatherBar.subColor" value="#0b1630"><span><b>Koulè tèks nan ti bwat la</b></span></label></div>
+            <div class="row3"><div class="field"><label for="g_weatherBar_titleFont">Polis etikèt la (METEYO / JODI A)</label><select id="g_weatherBar_titleFont" data-g="weatherBar.titleFont" data-fx-font></select></div><div class="field"><label for="g_weatherBar_titleSize">Gwosè tit la: <b id="gxWbTsV"></b></label><input type="range" id="g_weatherBar_titleSize" data-g="weatherBar.titleSize" min="14" max="64" value="30" style="width:100%"></div><div class="field"><label for="g_weatherBar_subSize">Gwosè «Jodi a»: <b id="gxWbSsV"></b></label><input type="range" id="g_weatherBar_subSize" data-g="weatherBar.subSize" min="9" max="36" value="14" style="width:100%"></div></div>
+            <div class="row3"><div class="field"><label for="g_weatherBar_titleY">Monte/desann tit la: <b id="gxWbTyV"></b></label><input type="range" id="g_weatherBar_titleY" data-g="weatherBar.titleY" min="-60" max="60" value="0" style="width:100%"></div><div class="field"><label for="g_weatherBar_subY">Monte/desann «Jodi a»: <b id="gxWbSyV"></b></label><input type="range" id="g_weatherBar_subY" data-g="weatherBar.subY" min="-60" max="60" value="0" style="width:100%"></div><div class="inline" style="align-self:end;margin-bottom:10px"><label class="sw"><input type="checkbox" data-g="weatherBar.titleItalic" id="g_weatherBar_titleItalic" checked><i></i></label><label for="g_weatherBar_titleItalic">Italik</label></div></div>
+            <div class="row2"><div class="field"><label for="g_weatherBar_font">Lèt vil yo ak tanperati yo</label><select id="g_weatherBar_font" data-g="weatherBar.font"><option value="condensed">Kondanse, epè (tankou BFM)</option><option value="normal">Nòmal</option></select></div><label class="swatch"><input type="color" data-g="weatherBar.subColor" value="#0b1630"><span><b>Koulè tèks nan ti bwat la</b></span></label></div>
             <div class="row2"><div class="field"><label for="g_weatherBar_unit">Inite</label><select id="g_weatherBar_unit" data-g="weatherBar.unit"><option value="F">°F</option><option value="C">°C</option></select></div></div>
             <div class="field"><label for="g_weatherBar_scope">Ki vil</label><select id="g_weatherBar_scope" data-g="weatherBar.scope"><option value="haiti">🇭🇹 Depatman Ayiti yo</option><option value="haiti_arr">🇭🇹 42 awondisman Ayiti yo</option><option value="world">🌍 Gran vil nan mond lan</option><option value="list">📝 Pwòp lis vil mwen</option></select></div>
             <div class="field" id="gxWbListBox" hidden><label for="g_weatherBar_cities">Vil yo (youn pa liy, jiska 24)</label><textarea id="g_weatherBar_cities" data-g="weatherBar.cities" rows="4" placeholder="Port-au-Prince&#10;Jacmel&#10;Miami&#10;Montréal"></textarea></div>
@@ -4068,7 +4070,7 @@ async function loadAds() {
 const GX_DEF = { bug: { on: false, imageUrl: "", text: "", position: "top-right", size: 44, opacity: 85, style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false, caps: true },
   watermark: { on: false, text: "{mac}", position: "bottom-right", size: 16, opacity: 25, move: false, style: "plain", font: "sans", color: "#ffffff", color2: "#000000", italic: false },
   scoreboard: { on: false, league: "", clock: "", home: "", homeScore: "0", homeColor: "#1d4ed8", away: "", awayScore: "0", awayColor: "#dc2626", position: "top-left" },
-  weatherBar: { on: false, title: "METEYO", subtitle: "JODI A", font: "condensed", subColor: "#0b1630", offset: 0, bgClear: false, unit: "F", scope: "haiti", cities: "", perPage: "3", pageSec: 6, position: "bottom", everyMin: 10, durationSec: 20, bgColor: "#1d4ed8", accentColor: "#f59e0b", textColor: "#ffffff", showNow: true },
+  weatherBar: { on: false, title: "METEYO", subtitle: "JODI A", font: "condensed", subColor: "#0b1630", titleFont: "condensed", titleSize: 30, subSize: 14, titleY: 0, subY: 0, titleItalic: true, offset: 0, bgClear: false, unit: "F", scope: "haiti", cities: "", perPage: "3", pageSec: 6, position: "bottom", everyMin: 10, durationSec: 20, bgColor: "#1d4ed8", accentColor: "#f59e0b", textColor: "#ffffff", showNow: true },
   weather: { on: false, showCity: true, city: "", scope: "all", cities: "", every: "8", rotate: true, mode: "rotate", flash: "3", unit: "C", auto: true, temp: 30, icon: "🌤️", position: "top-right" },
   countdown: { on: false, title: "", target: "", doneText: "", keepMin: 10, position: "top-center", style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false, box: true },
   ident: { on: false, imageUrl: "", text: "", tagline: "", everyMin: 30, durationSec: 5, onChannelChange: false },
@@ -4199,13 +4201,22 @@ async function gxWeatherBarPreview() {
   const items = (await Promise.all(names.map((c) => api("GET", "/galaxy/weather?city=" + encodeURIComponent(c)).catch(() => null))))
     .map((r, i) => r && { city: r.city || names[i], icon: r.dayIcon || r.icon, now: f(r.tempC), min: r.minC == null ? null : f(r.minC), max: r.maxC == null ? null : f(r.maxC) }).filter(Boolean);
   if (!items.length) return toast(t("Sèvis meteyo a pa reponn. Eseye ankò."));
+  gxWbItems = items;
   clearTimeout(gxFullT);
   $("#gxFull").innerHTML = GalaxyGfx.weatherBarHtml({ ...wb, items, perPage: +wb.perPage || 3 }, 60);
   $("#gxStage").scrollIntoView({ block: "nearest", behavior: "smooth" });
   gxFullT = setTimeout(() => ($("#gxFull").innerHTML = ""), 15000);
 }
-const gxWbList = () => { $("#gxWbListBox").hidden = $("#g_weatherBar_scope").value !== "list"; $("#gxWbOffV").textContent = $("#g_weatherBar_offset").value; };
-$("#g_weatherBar_offset").addEventListener("input", () => { gxWbList(); if ($("#gxFull .gx-wb")) gxWeatherBarPreview(); });
+const gxWbList = () => {
+  $("#gxWbListBox").hidden = $("#g_weatherBar_scope").value !== "list"; $("#gxWbOffV").textContent = $("#g_weatherBar_offset").value;
+  for (const [i, o, u] of [["titleSize", "gxWbTsV", "px"], ["subSize", "gxWbSsV", "px"], ["titleY", "gxWbTyV", "px"], ["subY", "gxWbSyV", "px"]]) $("#" + o).textContent = $("#g_weatherBar_" + i).value + " " + u;
+};
+// Chanjman etikèt la / pozisyon an: preview a mete l ajou touswit (san rechèche meteyo a)
+let gxWbItems = null;
+["offset", "titleSize", "subSize", "titleY", "subY", "titleFont", "titleItalic", "title", "subtitle", "subColor", "accentColor", "bgColor", "bgClear", "font", "textColor"].forEach((k) => {
+  const el = document.querySelector(`[data-g="weatherBar.${k}"]`); if (!el) return;
+  el.addEventListener("input", () => { gxWbList(); if ($("#gxFull .gx-wb") && gxWbItems) { const wb = gxRead().weatherBar; $("#gxFull").innerHTML = GalaxyGfx.weatherBarHtml({ ...wb, items: gxWbItems, perPage: +wb.perPage || 3 }, 60).replace("gxWbIn .5s", "none"); clearTimeout(gxFullT); gxFullT = setTimeout(() => ($("#gxFull").innerHTML = ""), 15000); } });
+});
 $("#g_weatherBar_scope").addEventListener("change", gxWbList);
 function gxPlay(which) {
   if (which === "weatherBar") return gxWeatherBarPreview();
