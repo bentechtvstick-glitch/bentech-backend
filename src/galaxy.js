@@ -14,7 +14,7 @@ import { mountGuide } from "./guide.js";
 import path from "node:path";
 import crypto from "node:crypto";
 import { deviceIndex } from "./perf.js";
-import { buildGraphics, fetchWeather, clientIp, ipPlace, TEXT_STYLES, TEXT_FONTS } from "./graphics.js";
+import { buildGraphics, fetchWeather, clientIp, ipPlace, onWeatherReady, TEXT_STYLES, TEXT_FONTS } from "./graphics.js";
 
 const MAC_RE = /^([0-9A-F]{2}:){5}[0-9A-F]{2}$/;
 const ONLINE_MS = 3 * 60 * 1000; // aparèy la "Online" si li pale ak sèvè a nan 3 dènye minit yo
@@ -131,6 +131,7 @@ export function toEpochSec(value, timeZone, endOfDay = false) {
 }
 
 export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {} }) {
+  onWeatherReady(() => syncTvs()); // meteyo yon vil fèk rive → TV yo montre l touswit
   const hexc = (v, d) => (/^#[0-9a-f]{6}$/i.test(String(v || "")) ? String(v) : d);
   const textSpec = (o, defStyle, c1, c2) => {
     if (!o || typeof o !== "object") return null;

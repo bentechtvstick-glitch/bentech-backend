@@ -169,6 +169,12 @@ async function nwsObservation(at) {
   return null;
 }
 
+// Lè meteyo yon vil rive pou premye fwa (li pa t konnen l anvan), di TV yo chèche konfig la touswit,
+// olye yo tann pwochen 2 minit lan (bann meteyo a ak widget la parèt pi vit).
+let weatherReadyHook = null, readyTimer = null;
+export function onWeatherReady(fn) { weatherReadyHook = fn; }
+const weatherReady = () => { clearTimeout(readyTimer); readyTimer = setTimeout(() => { try { weatherReadyHook?.(); } catch { /* */ } }, 4000); };
+
 /** Dènye meteyo nou konnen pou kote a (san tann); li rafrechi dèyè si l fin vye. */
 function weatherNow(place) {
   if (!place || (typeof place === "string" && !str(place))) return null;
@@ -177,7 +183,8 @@ function weatherNow(place) {
   if ((!hit || Date.now() - hit.at > WEATHER_TTL) && !hit?.loading) {
     const slot = hit || { at: 0, data: null };
     slot.loading = true; weatherCache.set(key, slot);
-    fetchWeather(place).catch((err) => { const s = weatherCache.get(key) || slot; s.error = err.message; s.at = Date.now() - WEATHER_TTL + 120_000; weatherCache.set(key, s); })
+    const first = !hit?.data;
+    fetchWeather(place).then(() => { if (first) weatherReady(); }).catch((err) => { const s = weatherCache.get(key) || slot; s.error = err.message; s.at = Date.now() - WEATHER_TTL + 120_000; weatherCache.set(key, s); })
       .finally(() => { const s = weatherCache.get(key); if (s) s.loading = false; });
   }
   if (weatherCache.size > 5000) weatherCache.delete(weatherCache.keys().next().value); // pa kite l gwosi san limit
