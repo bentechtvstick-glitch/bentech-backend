@@ -985,7 +985,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="row2"><div class="field"><label for="g_snipe_position">Pozisyon</label><select id="g_snipe_position" data-g="snipe.position"><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div><div class="field"><label for="g_snipe_anim">Animasyon</label><select id="g_snipe_anim" data-g="snipe.anim"><option value="slide">Glise sou kote</option><option value="rise">Monte soti anba</option><option value="pop">Gonfle</option><option value="fade">Parèt dousman</option><option value="bounce">Rebondi</option><option value="flip">Vire (flip)</option><option value="wipe">Revele (rido)</option><option value="zoom">Zoom flou</option><option value="shake">Antre epi souke</option><option value="shine">Klere</option><option value="roll">Woule</option><option value="swing">Balanse</option><option value="elastic">Elastik</option><option value="pulse">Pilse</option><option value="float">Flote</option><option value="glitch">Glitch</option><option value="blink">Bat je</option></select></div></div>
             <div class="field"><label for="g_snipe_images">Plis imaj (opsyonèl): yon lyen pa liy. Chak fwa se pwochen imaj la ki parèt.</label><textarea id="g_snipe_images" data-g="snipe.images" rows="2" maxlength="5000" placeholder="https://…/match1.gif&#10;https://…/match2.png"></textarea></div>
             <div class="field"><label for="g_snipe_text">Tèks (opsyonèl): poukont li, oswa bò kote imaj la</label><input type="text" id="g_snipe_text" data-g="snipe.text" maxlength="80" placeholder="Egz: ⚽ Brezil vs Ajantin jodi a 3è"></div>
-            <div class="row2"><label class="swatch"><input type="color" data-g="snipe.textColor" value="#ffffff"><span><b>Koulè tèks</b></span></label><label class="swatch"><input type="color" data-g="snipe.bgColor" value="#0b1630"><span><b>Fon tèks</b></span></label></div>
+            <div class="row2"><label class="swatch"><input type="color" data-g="snipe.textColor" value="#ffffff"><span><b>Koulè tèks</b></span></label><div><label class="swatch"><input type="color" data-g="snipe.bgColor" value="#0b1630"><span><b>Fon tèks</b></span></label><label class="inline" style="gap:6px;margin-top:4px"><input type="checkbox" data-g="snipe.bgClear" id="g_snipe_bgClear"> <span>Transparan</span></label></div></div>
             <div class="row3"><div class="field"><label for="g_snipe_size">Wotè (px)</label><input type="number" id="g_snipe_size" data-g="snipe.size" min="40" max="300" value="120"></div><div class="field"><label for="g_snipe_everyMin">Chak (minit, 0 = janm otomatik)</label><input type="number" id="g_snipe_everyMin" data-g="snipe.everyMin" min="0" max="240" value="10"></div><div class="field"><label for="g_snipe_durationSec">Dire (segonn)</label><input type="number" id="g_snipe_durationSec" data-g="snipe.durationSec" min="3" max="30" value="8"></div></div>
             <div class="inline"><label class="sw"><input type="checkbox" data-g="snipe.onChannelChange" id="g_snipe_onChannelChange"><i></i></label><label for="g_snipe_onChannelChange">Montre l tou lè kliyan an chanje chanèl</label></div>
             <div class="row2"><div class="field"><label for="g_snipe_from">Kòmanse (opsyonèl)</label><input type="datetime-local" id="g_snipe_from" data-g="snipe.from"></div><div class="field"><label for="g_snipe_to">Fini (opsyonèl)</label><input type="datetime-local" id="g_snipe_to" data-g="snipe.to"></div></div>
@@ -994,7 +994,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="bumper.on" id="g_bumper_on"><i></i></label><div class="grow"><label for="g_bumper_on"><b>Bumper</b></label><p class="note" style="margin:2px 0 0">Ekran ki pase anvan ak apre koupi piblisite a.</p></div><button class="btn small purple" type="button" data-gxplay="in">▶ Anvan</button><button class="btn small purple" type="button" data-gxplay="out">▶ Apre</button></div>
             <div class="row2"><div class="field"><label for="g_bumper_inText">Tèks anvan piblisite</label><input type="text" id="g_bumper_inText" data-g="bumper.inText" maxlength="60" placeholder="N ap tounen touswit"></div><div class="field"><label for="g_bumper_outText">Tèks apre piblisite</label><input type="text" id="g_bumper_outText" data-g="bumper.outText" maxlength="60" placeholder="Nou tounen!"></div></div>
             <div class="row2"><div class="field"><label for="g_bumper_inUrl">Oswa imaj anvan (URL)</label><input type="url" id="g_bumper_inUrl" data-g="bumper.inUrl" maxlength="500" placeholder="https://…/bumper-in.png"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="g_bumper_inUrl">📤 Chwazi yon imaj</button><span class="note" data-upmsg="g_bumper_inUrl"></span></div></div><div class="field"><label for="g_bumper_outUrl">Oswa imaj apre (URL)</label><input type="url" id="g_bumper_outUrl" data-g="bumper.outUrl" maxlength="500" placeholder="https://…/bumper-out.png"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="g_bumper_outUrl">📤 Chwazi yon imaj</button><span class="note" data-upmsg="g_bumper_outUrl"></span></div></div></div>
-            <div class="row3"><div class="field"><label for="g_bumper_durationSec">Dire (segonn)</label><input type="number" id="g_bumper_durationSec" data-g="bumper.durationSec" min="2" max="15" value="4"></div><label class="swatch"><input type="color" data-g="bumper.bgColor" value="#0b1630"><span><b>Fon</b></span></label><label class="swatch"><input type="color" data-g="bumper.textColor" value="#ffffff"><span><b>Tèks</b></span></label></div>
+            <div class="row3"><div class="field"><label for="g_bumper_durationSec">Dire (segonn)</label><input type="number" id="g_bumper_durationSec" data-g="bumper.durationSec" min="2" max="15" value="4"></div><div><label class="swatch"><input type="color" data-g="bumper.bgColor" value="#0b1630"><span><b>Fon</b></span></label><label class="inline" style="gap:6px;margin-top:4px"><input type="checkbox" data-g="bumper.bgClear" id="g_bumper_bgClear"> <span>Transparan</span></label></div><label class="swatch"><input type="color" data-g="bumper.textColor" value="#ffffff"><span><b>Tèks</b></span></label></div>
           </div>
         </div>
         <div class="card gx-prevcard">
@@ -1225,7 +1225,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="cysec">
             <div class="cysec-h"><span class="cysec-n">3</span><h2>Aparans</h2><div class="chips" id="cyThemes" aria-label="Tèm rapid"></div></div>
             <div class="swrow">
-              <label class="swatch"><input type="color" id="cyBg" value="#0b1630"><span><b>Fon</b><code id="cyBgV"></code></span></label>
+              <div><label class="swatch"><input type="color" id="cyBg" value="#0b1630"><span><b>Fon</b><code id="cyBgV"></code></span></label><label class="inline" style="gap:6px;margin-top:4px"><input type="checkbox" id="cyBgTr"> <span>Transparan</span></label></div>
               <label class="swatch"><input type="color" id="cyText" value="#ffffff"><span><b>Tèks</b><code id="cyTextV"></code></span></label>
               <label class="swatch"><input type="color" id="cyAccent" value="#e50914"><span><b>Aksan</b><code id="cyAccentV"></code></span></label>
             </div>
@@ -3466,7 +3466,7 @@ function cyRead() {
     headline: $("#cyHeadline").value.trim(), name: $("#cyName").value.trim(), title: $("#cyTitle").value.trim(), logoUrl: $("#cyLogo").value.trim(),
     status: segVal("cyStatus") || "Active", position: segVal("cyPos") || "bottom-left", animation: segVal("cyAnim") || "slide",
     duration: clampN($("#cyDur").value, 10, 0, 3600), opacity: clampN($("#cyOp").value, 92, 10, 100),
-    bgColor: $("#cyBg").value.toUpperCase(), textColor: $("#cyText").value.toUpperCase(), accentColor: $("#cyAccent").value.toUpperCase(),
+    bgColor: $("#cyBgTr").checked ? "#00000000" : $("#cyBg").value.toUpperCase(), textColor: $("#cyText").value.toUpperCase(), accentColor: $("#cyAccent").value.toUpperCase(),
     headlineSize: clampN($("#cyHS").value, 14, 8, 40), nameSize: clampN($("#cyNS").value, 26, 10, 60), titleSize: clampN($("#cyTS").value, 16, 8, 40),
     sticker: $("#cySticker").value.trim(), animateEmoji: $("#cyAnimE").checked,
     runner: $("#cyRunOn").checked ? $("#cyRun").value.trim() : "", runnerSpeed: clampN($("#cyRunSpeed").value, 6, 1, 10),
@@ -3479,7 +3479,7 @@ function cyFill(c) {
   $("#cyHeadline").value = c.headline; $("#cyName").value = c.name; $("#cyTitle").value = c.title; $("#cyLogo").value = c.logoUrl || "";
   setSeg("cyStatus", isOn(c.status) ? "Active" : "Inactive"); setSeg("cyPos", CY_POS[c.position] ? c.position : "bottom-left"); setSeg("cyAnim", CY_ANIM[c.animation] ? c.animation : "slide");
   $("#cyDur").value = c.duration; $("#cyOp").value = c.opacity;
-  $("#cyBg").value = hex6(c.bgColor); $("#cyText").value = hex6(c.textColor); $("#cyAccent").value = hex6(c.accentColor);
+  $("#cyBgTr").checked = /^#0{8}$/.test(c.bgColor || ""); $("#cyBg").disabled = $("#cyBgTr").checked; if (!$("#cyBgTr").checked) $("#cyBg").value = hex6(c.bgColor); $("#cyText").value = hex6(c.textColor); $("#cyAccent").value = hex6(c.accentColor);
   $("#cyHS").value = c.headlineSize; $("#cyNS").value = c.nameSize; $("#cyTS").value = c.titleSize;
   $("#cySticker").value = c.sticker || ""; $("#cyAnimE").checked = c.animateEmoji !== false;
   $("#cyFont").value = c.font || "sans"; $("#cyStyle").value = c.textStyle || "plain"; $("#cyFx").value = hex6(c.fxColor || "#1D4ED8"); $("#cyItalic").checked = !!c.italic;
@@ -3505,7 +3505,7 @@ function cyHtml(c, anim) {
   return `<div class="chy pos-${esc(c.position)}${a}" style="--acc:${esc(c.accentColor)};color:${esc(c.textColor)};${fnt}">`
     + (c.headline ? `<div class="chy-head" style="font-size:${c.headlineSize}px">${h(c.headline)}</div>` : "")
     + (c.runner ? `<div class="chy-run" style="height:${Math.round(c.nameSize * 1.3)}px;font-size:${Math.round(c.nameSize * 1.05)}px"></div>` : "")
-    + (body ? `<div class="chy-body" style="background:${rgba(hex6(c.bgColor), c.opacity)}">${stk}${c.logoUrl ? `<img class="chy-logo" src="${esc(c.logoUrl)}" alt="">` : ""}<div class="chy-txt">`
+    + (body ? `<div class="chy-body" style="background:${/^#0{8}$/.test(c.bgColor || "") ? "transparent" : rgba(hex6(c.bgColor), c.opacity)}">${stk}${c.logoUrl ? `<img class="chy-logo" src="${esc(c.logoUrl)}" alt="">` : ""}<div class="chy-txt">`
       + (c.name ? `<div class="chy-name"><span style="${nameCss};display:inline-block">${h(c.name)}</span></div>` : "")
       + (c.title ? `<div class="chy-title" style="font-size:${c.titleSize}px">${h(c.title)}</div>` : "") + `</div></div>` : "")
     + `</div>`;
@@ -3523,7 +3523,7 @@ function cyPreview(anim) {
 const cyScale = () => { const st = $("#cyStage"); if (st && st.clientWidth) $("#cyTv").style.transform = `scale(${st.clientWidth / 960})`; };
 if (window.ResizeObserver) new ResizeObserver(cyScale).observe($("#cyStage"));
 ["cyStatus", "cyPos", "cyAnim", "cyRunDir"].forEach((id) => $("#" + id).addEventListener("click", (e) => { const b = e.target.closest("[data-v]"); if (!b) return; setSeg(id, b.dataset.v); cyPreview(id !== "cyStatus"); }));
-$("#cyForm").addEventListener("input", () => { cyLabels(); cyPreview(false); });
+$("#cyForm").addEventListener("input", () => { $("#cyBg").disabled = $("#cyBgTr").checked; cyLabels(); cyPreview(false); });
 $("#cyReplay").addEventListener("click", () => cyPreview(true));
 $("#cyThemes").innerHTML = CY_THEMES.map(([n, bg, tx, ac]) => `<button type="button" class="chip" data-cyth="${esc(bg)}|${esc(tx)}|${esc(ac)}"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${ac};margin-right:6px;box-shadow:0 0 0 2px ${bg}"></span>${esc(t(n))}</button>`).join("");
 $("#cyThemes").addEventListener("click", (e) => { const b = e.target.closest("[data-cyth]"); if (!b) return; const [bg, tx, ac] = b.dataset.cyth.split("|"); $("#cyBg").value = bg.toLowerCase(); $("#cyText").value = tx.toLowerCase(); $("#cyAccent").value = ac.toLowerCase(); cyLabels(); cyPreview(true); });
@@ -4041,8 +4041,8 @@ const GX_DEF = { bug: { on: false, imageUrl: "", text: "", position: "top-right"
   weather: { on: false, showCity: true, city: "", scope: "all", cities: "", every: "8", rotate: true, mode: "rotate", flash: "3", unit: "C", auto: true, temp: 30, icon: "🌤️", position: "top-right" },
   countdown: { on: false, title: "", target: "", doneText: "", keepMin: 10, position: "top-center", style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false, box: true },
   ident: { on: false, imageUrl: "", text: "", tagline: "", everyMin: 30, durationSec: 5, onChannelChange: false },
-  bumper: { on: false, inText: "", outText: "", inUrl: "", outUrl: "", durationSec: 4, bgColor: "#0b1630", textColor: "#ffffff" },
-  snipe: { on: false, imageUrl: "", images: "", text: "", textColor: "#ffffff", bgColor: "#0b1630", from: "", to: "", position: "bottom-right", anim: "slide", size: 120, everyMin: 10, durationSec: 8, onChannelChange: false } };
+  bumper: { on: false, inText: "", outText: "", inUrl: "", outUrl: "", durationSec: 4, bgColor: "#0b1630", bgClear: false, textColor: "#ffffff" },
+  snipe: { on: false, imageUrl: "", images: "", text: "", textColor: "#ffffff", bgColor: "#0b1630", bgClear: false, from: "", to: "", position: "bottom-right", anim: "slide", size: 120, everyMin: 10, durationSec: 8, onChannelChange: false } };
 let gxWx = null, gxSaveT = null, gxTickT = null, gxFullT = null, gxWxT = null;
 const gxEls = () => $$('main[data-pane="gfx"] [data-g]');
 // ---- Preview yo: bouton "Agrandi" pou wè yo gwo ----
@@ -4138,8 +4138,8 @@ function gxNormalize(g) {
   const c = g.countdown; if (c.on && c.target) { const at = Math.floor(new Date(c.target).getTime() / 1000), now = Date.now() / 1000; if (at && now < at + (c.doneText ? n(c.keepMin, 10, 0, 1440) * 60 : 0)) out.countdown = { title: c.title, targetAt: at, doneText: c.doneText, position: c.position, style: c.style, font: c.font, color: c.color, color2: c.color2, italic: !!c.italic, box: c.box !== false }; }
   const i = g.ident; if (i.on && (url(i.imageUrl) || i.text)) out.ident = { imageUrl: url(i.imageUrl), text: i.text, tagline: i.tagline, everyMin: n(i.everyMin, 30, 0, 240), durationSec: n(i.durationSec, 5, 2, 15) };
   const sn = g.snipe; const snImgs = sn ? [sn.imageUrl, ...String(sn.images || "").split(/[\n\s,]+/)].map(url).filter(Boolean) : [];
-  if (sn && sn.on && (snImgs.length || sn.text)) out.snipe = { imageUrl: snImgs[0] || null, images: snImgs, text: sn.text, textColor: sn.textColor, bgColor: sn.bgColor, position: sn.position, anim: sn.anim, size: n(sn.size, 120, 40, 300), everyMin: n(sn.everyMin, 10, 0, 240), durationSec: n(sn.durationSec, 8, 3, 30) };
-  const u = g.bumper; if (u.on && (url(u.inUrl) || u.inText || url(u.outUrl) || u.outText)) out.bumper = { inUrl: url(u.inUrl), inText: u.inText, outUrl: url(u.outUrl), outText: u.outText, durationSec: n(u.durationSec, 4, 2, 15), bgColor: u.bgColor, textColor: u.textColor };
+  if (sn && sn.on && (snImgs.length || sn.text)) out.snipe = { imageUrl: snImgs[0] || null, images: snImgs, text: sn.text, textColor: sn.textColor, bgColor: sn.bgClear ? "#00000000" : sn.bgColor, position: sn.position, anim: sn.anim, size: n(sn.size, 120, 40, 300), everyMin: n(sn.everyMin, 10, 0, 240), durationSec: n(sn.durationSec, 8, 3, 30) };
+  const u = g.bumper; if (u.on && (url(u.inUrl) || u.inText || url(u.outUrl) || u.outText)) out.bumper = { inUrl: url(u.inUrl), inText: u.inText, outUrl: url(u.outUrl), outText: u.outText, durationSec: n(u.durationSec, 4, 2, 15), bgColor: u.bgClear ? "#00000000" : u.bgColor, textColor: u.textColor };
   return out;
 }
 const gxScale = () => { const st = $("#gxStage"); if (st && st.clientWidth) $("#gxTv").style.transform = `scale(${st.clientWidth / 960})`; };

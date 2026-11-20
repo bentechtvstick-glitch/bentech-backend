@@ -333,7 +333,7 @@ export function buildGraphics(g, ctx) {
     if (snFrom && now < snFrom) edge = Math.min(edge, snFrom - now + 1);
     else if (!(snTo && now >= snTo)) {
       if (snTo) edge = Math.min(edge, snTo - now + 1);
-      out.snipe = { imageUrl: snImgs[0] || null, images: snImgs, text: snText, textColor: hex(sn.textColor, "#FFFFFF"), bgColor: hex(sn.bgColor, "#0B1630"),
+      out.snipe = { imageUrl: snImgs[0] || null, images: snImgs, text: snText, textColor: hex(sn.textColor, "#FFFFFF"), bgColor: sn.bgClear ? "#00000000" : hex(sn.bgColor, "#0B1630"),
         position: ["bottom-left", "bottom-center", "bottom-right"].includes(sn.position) ? sn.position : "bottom-right",
         size: num(sn.size, 120, 40, 300), everyMin: num(sn.everyMin, 10, 0, 240), durationSec: num(sn.durationSec, 8, 3, 30),
         anim: ["slide", "rise", "fade", "pop", "bounce", "flip", "wipe", "zoom", "shake", "shine", "roll", "swing", "elastic", "pulse", "float", "glitch", "blink"].includes(sn.anim) ? sn.anim : "slide",
@@ -345,7 +345,7 @@ export function buildGraphics(g, ctx) {
   const u = g.bumper || {};
   if (u.on && (isUrl(u.inUrl) || str(u.inText) || isUrl(u.outUrl) || str(u.outText))) {
     out.bumper = { inUrl: isUrl(u.inUrl) ? str(u.inUrl, 500) : null, inText: str(u.inText, 60), outUrl: isUrl(u.outUrl) ? str(u.outUrl, 500) : null, outText: str(u.outText, 60),
-      durationSec: num(u.durationSec, 4, 2, 15), bgColor: hex(u.bgColor, "#0B1630"), textColor: hex(u.textColor, "#FFFFFF") };
+      durationSec: num(u.durationSec, 4, 2, 15), bgColor: u.bgClear ? "#00000000" : hex(u.bgColor, "#0B1630"), textColor: hex(u.textColor, "#FFFFFF") };
   }
 
   return { graphics: out, edge };
