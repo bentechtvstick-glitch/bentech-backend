@@ -129,7 +129,11 @@ class GraphicsView @JvmOverloads constructor(
         if (ss != snipeSig) {
             snipeSig = ss
             if (g?.snipe == null) { hideSnipe(); snipePreviewAt = 0L }
-            else { lastSnipeAt = SystemClock.elapsedRealtime(); snipePreviewAt = SystemClock.elapsedRealtime() + 3_000L }
+            else {
+                lastSnipeAt = SystemClock.elapsedRealtime(); snipePreviewAt = SystemClock.elapsedRealtime() + 3_000L
+                // Chaje imaj yo davans (GIF yo ka lou): lè snipe la dwe parèt, li parèt touswit
+                g.snipe.images.forEach { u -> runCatching { coil.Coil.imageLoader(context).enqueue(coil.request.ImageRequest.Builder(context).data(u).build()) } }
+            }
         }
         val tc = topClock
         val sig = (if (g == null) "" else listOf(g.bug, g.watermark, g.scoreboard, g.weather, g.countdown).toString()) +
