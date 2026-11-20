@@ -81,7 +81,7 @@
 @keyframes gxSnUp{0%{opacity:0;translate:0 140%}8%{opacity:1;translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:0 140%}}
 @keyframes gxSnPop{0%{opacity:0;transform:scale(.5)}8%{opacity:1;transform:scale(1)}90%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.5)}}
 .gx-wb{position:absolute;left:0;right:0;height:78px;display:flex;align-items:center;gap:0;z-index:5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;animation:gxWbIn .5s ease-out both;box-shadow:0 -2px 10px rgba(0,0,0,.3)}
-.gx-wb-tag{width:150px;margin:0 8px 0 16px;padding:6px 14px;border-radius:6px;font-weight:800;font-size:15px;line-height:1.15;text-align:center;color:#fff}
+.gx-wb-tag{width:150px;margin:0 8px 0 16px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;color:#fff}.gx-wb-tag b{font-size:24px;font-weight:900;font-style:italic;letter-spacing:.02em;line-height:1;text-shadow:0 2px 0 rgba(0,0,0,.25)}.gx-wb-tag i{font-style:normal;font-size:13px;font-weight:800;padding:2px 8px;border-radius:4px;line-height:1.2}
 .gx-wb-c{flex:1;display:flex;align-items:center;gap:10px;padding:0 10px 0 14px;min-width:0}
 .gx-wb-c b{display:block;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gx-wb-i{font-size:30px}
@@ -207,7 +207,9 @@
     const list = (w.items || []).slice(0, w.perPage || 3);
     const unit = w.unit === "C" ? "C" : "F";
     const cell = (x) => `<div class="gx-wb-c"><span class="gx-wb-i">${esc(x.icon || "")}</span><div><b>${esc(x.city)}</b><div class="gx-wb-t"><i class="lo">${x.min == null ? "–" : esc(x.min) + "°"}</i><i class="hi">${x.max == null ? "–" : esc(x.max) + "°"}</i>${w.showNow !== false && x.now != null ? `<small>${esc(x.now)}°${unit}</small>` : ""}</div></div></div>`;
-    return `<div class="gx-wb" style="${w.position === "top" ? "top:0" : `bottom:${bottom || 60}px`};background:${esc(w.bgColor || "#1D4ED8")};color:${esc(w.textColor || "#fff")}"><span class="gx-wb-tag" style="background:${esc(w.accentColor || "#F59E0B")}">${esc(String(w.title || "METEYO JODI A").toUpperCase())}</span>${list.map((x, i) => (i ? `<span class="gx-wb-sep" style="background:${esc(w.accentColor || "#F59E0B")}"></span>` : "") + cell(x)).join("")}</div>`;
+    const off = Number(w.offset) || 0;
+    const tag = `<span class="gx-wb-tag"><b>${esc(String(w.title || "METEYO").toUpperCase())}</b>${w.subtitle !== "" ? `<i style="background:${esc(w.accentColor || "#F59E0B")}">${esc(String(w.subtitle ?? "JODI A").toUpperCase())}</i>` : ""}</span>`;
+    return `<div class="gx-wb" style="${w.position === "top" ? `top:${Math.max(0, off)}px` : `bottom:${Math.max(0, (bottom || 60) + off)}px`};background:${esc(w.bgColor || "#1D4ED8")};color:${esc(w.textColor || "#fff")}">${tag}${list.map((x, i) => (i ? `<span class="gx-wb-sep" style="background:${esc(w.accentColor || "#F59E0B")}"></span>` : "") + cell(x)).join("")}</div>`;
   }
 
   window.GalaxyGfx = { html, tick, identHtml, bumperHtml, snipeHtml, weatherBarHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
