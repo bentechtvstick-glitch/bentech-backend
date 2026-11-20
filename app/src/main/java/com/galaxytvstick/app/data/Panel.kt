@@ -256,7 +256,8 @@ data class GfxSnipe(val images: List<String>, val position: String, val size: In
 /** Bann meteyo (tankou BFM «Météo aujourd'hui»): plizyè vil ansanm, ti ak gwo tanperati jodi a. */
 data class WxItem(val city: String, val icon: String, val now: Int?, val min: Int?, val max: Int?)
 data class GfxWeatherBar(val title: String, val items: List<WxItem>, val unit: String, val perPage: Int, val pageSec: Int,
-    val everyMin: Int, val durationSec: Int, val position: String, val bgColor: String, val accentColor: String, val textColor: String, val showNow: Boolean)
+    val everyMin: Int, val durationSec: Int, val position: String, val bgColor: String, val accentColor: String, val textColor: String, val showNow: Boolean,
+    val subtitle: String = "JODI A", val offset: Int = 0)
 data class Graphics(
     val bug: GfxBug? = null, val watermark: GfxWatermark? = null, val scoreboard: GfxScoreboard? = null,
     val weather: GfxWeather? = null, val countdown: GfxCountdown? = null, val ident: GfxIdent? = null, val bumper: GfxBumper? = null,
@@ -481,7 +482,8 @@ data class PanelConfig(
                         if (items.isEmpty()) null else GfxWeatherBar(w.optString("title", "METEYO JODI A"), items, w.optString("unit", "F"),
                             w.optInt("perPage", 3).coerceIn(2, 5), w.optInt("pageSec", 6).coerceIn(3, 30), w.optInt("everyMin", 10).coerceIn(0, 240),
                             w.optInt("durationSec", 20).coerceIn(5, 120), w.optString("position", "bottom"), w.optString("bgColor", "#1D4ED8"),
-                            w.optString("accentColor", "#F59E0B"), w.optString("textColor", "#FFFFFF"), w.optBoolean("showNow", true))
+                            w.optString("accentColor", "#F59E0B"), w.optString("textColor", "#FFFFFF"), w.optBoolean("showNow", true),
+                            w.optString("subtitle", "JODI A"), w.optInt("offset", 0).coerceIn(-200, 600))
                     },
                     snipe = g.optJSONObject("snipe")?.let {
                         val imgs = (it.optJSONArray("images")?.let { a -> (0 until a.length()).mapNotNull { i -> a.optString(i).takeIf { u -> u.startsWith("http") } } }

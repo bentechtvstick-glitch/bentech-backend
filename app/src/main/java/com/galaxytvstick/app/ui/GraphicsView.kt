@@ -118,7 +118,7 @@ class GraphicsView @JvmOverloads constructor(
         gfx = g
         if (g?.ident != null && !hadIdent) lastIdentAt = SystemClock.elapsedRealtime()
         // Bann meteyo: chanjman nan reglaj yo → montre l nan 3 s; done (tanperati) ki chanje sèlman → mete l ajou san rekòmanse
-        val wbs = g?.weatherBar?.let { "${it.title}|${it.perPage}|${it.position}|${it.bgColor}|${it.accentColor}|${it.textColor}|${it.everyMin}|${it.durationSec}|${it.unit}" } ?: ""
+        val wbs = g?.weatherBar?.let { "${it.title}|${it.subtitle}|${it.offset}|${it.perPage}|${it.position}|${it.bgColor}|${it.accentColor}|${it.textColor}|${it.everyMin}|${it.durationSec}|${it.unit}" } ?: ""
         if (wbs != wbSig) {
             wbSig = wbs
             hideWeatherBar(false)
@@ -444,19 +444,24 @@ class GraphicsView @JvmOverloads constructor(
             elevation = dp(5f).toFloat()
             importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
         }
-        // Etikèt agoch (tankou "MÉTÉO AUJOURD'HUI")
-        val tag = label(wb.title.uppercase(), 15f, Color.WHITE, bold = true).apply {
-            maxLines = 2; gravity = Gravity.CENTER
-            setPadding(dp(14f), dp(6f), dp(14f), dp(6f))
-            background = GradientDrawable().apply { cornerRadius = dp(6f).toFloat(); setColor(parse(wb.accentColor, 0xFFF59E0B.toInt())) }
-        }
+        // Etikèt agoch tankou BFM: gwo tit italik ("METEYO") + yon ti bwat koulè anba l ("JODI A")
+        val tag = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.START or Gravity.CENTER_VERTICAL }
+        tag.addView(label(wb.title.uppercase(), 24f, Color.WHITE, bold = true).apply {
+            setTypeface(Typeface.DEFAULT_BOLD, Typeface.BOLD_ITALIC)
+            setShadowLayer(0f, 0f, dp(2f).toFloat(), 0x40000000)
+        })
+        if (wb.subtitle.isNotBlank()) tag.addView(label(wb.subtitle.uppercase(), 13f, Color.WHITE, bold = true).apply {
+            setPadding(dp(8f), dp(2f), dp(8f), dp(2f))
+            background = GradientDrawable().apply { cornerRadius = dp(4f).toFloat(); setColor(parse(wb.accentColor, 0xFFF59E0B.toInt())) }
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(2f) })
         bar.addView(tag, LinearLayout.LayoutParams(dp(150f), ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(16f); marginEnd = dp(8f) })
         val cells = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         bar.addView(cells, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
         fillWbCells(cells, wb, txt)
         val top = wb.position == "top"
         addView(bar, LayoutParams(LayoutParams.MATCH_PARENT, dp(78f), if (top) Gravity.TOP else Gravity.BOTTOM).apply {
-            if (top) topMargin = dp(0f) else bottomMargin = bottomInset
+            // Admin nan ka monte/desann bann nan (offset an px)
+            if (top) topMargin = dp(wb.offset.toFloat()).coerceAtLeast(0) else bottomMargin = (bottomInset + dp(wb.offset.toFloat())).coerceAtLeast(0)
         })
         wbView = bar; wbCells = cells
         bar.translationY = if (top) -dp(90f).toFloat() else (dp(90f) + bottomInset).toFloat()
