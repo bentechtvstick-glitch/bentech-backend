@@ -440,8 +440,9 @@ class GraphicsView @JvmOverloads constructor(
         val bar = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setBackgroundColor(parse(wb.bgColor, 0xFF1D4ED8.toInt()))
-            elevation = dp(5f).toFloat()
+            val bg = parse(wb.bgColor, 0xFF1D4ED8.toInt())
+            setBackgroundColor(bg)
+            elevation = if (Color.alpha(bg) == 0) 0f else dp(5f).toFloat() // transparan: pa gen lonbraj bwat
             importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
         }
         // Etikèt agoch tankou BFM: gwo tit italik ("METEYO") + yon ti bwat koulè anba l ("JODI A")
@@ -470,6 +471,9 @@ class GraphicsView @JvmOverloads constructor(
 
     private fun fillWbCells(cells: LinearLayout, wb: GfxWeatherBar, txt: Int) {
         cells.removeAllViews()
+        // Fon transparan: lonbraj sou tèks yo pou yo rete lizib sou videyo a
+        val clear = Color.alpha(parse(wb.bgColor, 0xFF1D4ED8.toInt())) == 0
+        fun TextView.sh() = apply { if (clear) setShadowLayer(dp(3f).toFloat(), 0f, dp(1f).toFloat(), 0xD9000000.toInt()) }
         val pages = (wb.items.size + wb.perPage - 1) / wb.perPage
         val start = (wbPage % pages.coerceAtLeast(1)) * wb.perPage
         val list = wb.items.drop(start).take(wb.perPage)
@@ -479,7 +483,7 @@ class GraphicsView @JvmOverloads constructor(
             val cell = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(14f), 0, dp(10f), 0) }
             cell.addView(label(it.icon, 30f, txt, bold = false), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginEnd = dp(10f) })
             val col = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-            col.addView(label(it.city, 18f, txt, bold = true).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END })
+            col.addView(label(it.city, 18f, txt, bold = true).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }.sh())
             val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
             fun chip(v: Int?, c: Int) = label(if (v == null) "–" else "$v°", 17f, Color.WHITE, bold = true).apply {
                 setPadding(dp(8f), dp(1f), dp(8f), dp(1f))
@@ -487,7 +491,7 @@ class GraphicsView @JvmOverloads constructor(
             }
             row.addView(chip(it.min, 0xFF2563EB.toInt()))
             row.addView(chip(it.max, 0xFFF97316.toInt()), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(6f) })
-            if (wb.showNow && it.now != null) row.addView(label("  ${it.now}°${wb.unit}", 14f, txt, bold = false).apply { alpha = 0.85f })
+            if (wb.showNow && it.now != null) row.addView(label("  ${it.now}°${wb.unit}", 14f, txt, bold = false).apply { alpha = if (clear) 1f else 0.85f }.sh())
             col.addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(3f) })
             cell.addView(col)
             cells.addView(cell, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
