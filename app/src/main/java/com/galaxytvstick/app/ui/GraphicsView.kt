@@ -445,8 +445,6 @@ class GraphicsView @JvmOverloads constructor(
             elevation = if (Color.alpha(bg) == 0) 0f else dp(5f).toFloat() // transparan: pa gen lonbraj bwat
             importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
         }
-        // Etikèt agoch tankou BFM: gwo tit italik ("METEYO") + yon ti bwat koulè anba l ("JODI A")
-        val tag = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.START or Gravity.CENTER_VERTICAL }
         // Etikèt la: polis, gwosè, italik ak pozisyon chak liy (panel la chwazi yo)
         val face = TextFx.typeface(context, wb.titleFont, italic = false)
         val tag = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.START or Gravity.CENTER_VERTICAL; clipChildren = false; clipToPadding = false }
