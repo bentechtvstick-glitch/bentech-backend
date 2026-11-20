@@ -294,6 +294,21 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     res.status(201).json({ ok: true, spots: ads.length, targets: targets.length, delivered });
   });
 
+  /** "▶ Montre l sou TV yo kounye a": snipe la parèt touswit sou tout TV ki konekte (oswa yon sèl, ak mac). */
+  app.post("/api/galaxy/snipe/now", authenticate, (req, res) => {
+    const b = req.body || {};
+    const targets = b.mac ? [normMac(b.mac)] : [...waiters.keys()].filter((m) => waiters.get(m)?.size);
+    let delivered = 0;
+    for (const mac of targets) {
+      // Lè w sove, panel la deja voye nouvo snipe la bay TV yo; isit la nou jis di yo montre l
+      const q = pendingFor(mac);
+      q.push({ id: Math.random().toString(36).slice(2, 10), type: "snipe", createdAt: Date.now() });
+      if (flush(mac)) delivered++;
+    }
+    auditLog("snipe-now", `snipe → ${targets.length} TV`, req.user?.sub || "admin");
+    res.status(201).json({ ok: true, targets: targets.length, delivered });
+  });
+
   /** TV a di yon spot kòmanse / fini (pou konte konbyen fwa chak pub pase). */
   let statsTimer = null;
   app.post("/api/devices/:mac/ad-events", (req, res) => {
