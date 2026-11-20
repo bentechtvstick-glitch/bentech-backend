@@ -89,6 +89,11 @@
 .gx-wb-t i{font-style:normal;font-weight:800;font-size:17px;color:#fff;padding:1px 8px;border-radius:4px}.gx-wb-t .lo{background:#2563EB}.gx-wb-t .hi{background:#F97316}
 .gx-wb-t small{font-size:14px;opacity:.85;margin-left:4px}
 .gx-wb-sep{width:2px;height:44px;flex:none}
+.gx-wb-cond{font-family:"Roboto Condensed","Arial Narrow","Helvetica Neue Condensed",sans-serif;font-stretch:condensed}
+.gx-wb-cond .gx-wb-tag b{font-size:30px;font-weight:900;letter-spacing:-.01em;-webkit-text-stroke:.5px rgba(0,0,0,.15)}
+.gx-wb-cond .gx-wb-tag i{font-size:14px;font-weight:900}
+.gx-wb-cond .gx-wb-c b{font-size:20px;font-weight:800}
+.gx-wb-cond .gx-wb-t i{font-size:19px;font-weight:900}
 @keyframes gxWbIn{from{transform:translateY(120%)}to{transform:none}}
 @keyframes gxIdent{0%{opacity:0}12%{opacity:1}85%{opacity:1}100%{opacity:0}}
 @keyframes gxPop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
@@ -208,8 +213,8 @@
     const unit = w.unit === "C" ? "C" : "F";
     const cell = (x) => `<div class="gx-wb-c"><span class="gx-wb-i">${esc(x.icon || "")}</span><div><b>${esc(x.city)}</b><div class="gx-wb-t"><i class="lo">${x.min == null ? "–" : esc(x.min) + "°"}</i><i class="hi">${x.max == null ? "–" : esc(x.max) + "°"}</i>${w.showNow !== false && x.now != null ? `<small>${esc(x.now)}°${unit}</small>` : ""}</div></div></div>`;
     const off = Number(w.offset) || 0;
-    const tag = `<span class="gx-wb-tag"><b>${esc(String(w.title || "METEYO").toUpperCase())}</b>${w.subtitle !== "" ? `<i style="background:${esc(w.accentColor || "#F59E0B")}">${esc(String(w.subtitle ?? "JODI A").toUpperCase())}</i>` : ""}</span>`;
-    return `<div class="gx-wb" style="${w.position === "top" ? `top:${Math.max(0, off)}px` : `bottom:${Math.max(0, (bottom || 60) + off)}px`};background:${w.bgClear ? "transparent" : esc(w.bgColor || "#1D4ED8")};color:${esc(w.textColor || "#fff")}${w.bgClear ? ";box-shadow:none;text-shadow:0 1px 3px rgba(0,0,0,.85)" : ""}">${tag}${list.map((x, i) => (i ? `<span class="gx-wb-sep" style="background:${esc(w.accentColor || "#F59E0B")}"></span>` : "") + cell(x)).join("")}</div>`;
+    const tag = `<span class="gx-wb-tag"><b>${esc(String(w.title || "METEYO").toUpperCase())}</b>${w.subtitle !== "" ? `<i style="background:${esc(w.accentColor || "#F59E0B")};color:${esc(w.subColor || "#0B1630")}">${esc(String(w.subtitle ?? "JODI A").toUpperCase())}</i>` : ""}</span>`;
+    return `<div class="gx-wb${w.font === "normal" ? "" : " gx-wb-cond"}" style="${w.position === "top" ? `top:${Math.max(0, off)}px` : `bottom:${Math.max(0, (bottom || 60) + off)}px`};background:${w.bgClear ? "transparent" : esc(w.bgColor || "#1D4ED8")};color:${esc(w.textColor || "#fff")}${w.bgClear ? ";box-shadow:none;text-shadow:0 1px 3px rgba(0,0,0,.85)" : ""}">${tag}${list.map((x, i) => (i ? `<span class="gx-wb-sep" style="background:${esc(w.accentColor || "#F59E0B")}"></span>` : "") + cell(x)).join("")}</div>`;
   }
 
   window.GalaxyGfx = { html, tick, identHtml, bumperHtml, snipeHtml, weatherBarHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
