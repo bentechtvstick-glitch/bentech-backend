@@ -685,6 +685,10 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <p class="note" style="margin:8px 0">Kole kle API Anthropic ou a (li kòmanse ak sk-ant-). Li sove sou sèvè a sèlman, panel la pa janm montre l ankò.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="aiKeyIn" type="password" autocomplete="off" placeholder="sk-ant-…" style="flex:1;min-width:220px"><button class="btn primary" id="aiKeySave" type="button">Sove kle a</button><button class="btn" id="aiKeyDel" type="button" hidden>Retire kle a</button></div>
           <span class="msg" id="aiKeyMsg"></span>
+          <p class="note" style="margin:12px 0 6px"><b>Kle rezèv (opsyonèl):</b> yon dezyèm kle. Si premye a sispann mache, panel la sèvi ak sa a otomatikman, konsa AI a pa janm kanpe.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="aiKey2In" type="password" autocomplete="off" placeholder="sk-ant-…" style="flex:1;min-width:220px"><button class="btn" id="aiKey2Save" type="button">Sove kle rezèv la</button><button class="btn" id="aiKey2Del" type="button" hidden>Retire l</button></div>
+          <span class="msg" id="aiKey2Msg"></span>
+          <p class="note" style="margin:10px 0 0">Panel la tcheke kle yo chak 6 èdtan, epi l avèti w (Dashboard + notifikasyon) depi youn pa mache ankò. Nan console.anthropic.com → Billing, limen <b>auto-reload</b> pou kredi a pa janm fini.</p>
         </details>
       </div>
       <div class="card" id="guideCard" style="margin-bottom:16px">
@@ -2575,12 +2579,25 @@ async function loadAi() {
   $("#aiUsage").textContent = y.configured ? t("Mwa sa a: ${0} sou ${1}", y.cost.toFixed(2), y.limit) : t("Poko konfigire (kle AI a manke sou sèvè a)");
   $("#aiAsk").disabled = !y.configured;
   if (!$("#aiKeyBox").hidden) { try { const k = await api("GET", "/galaxy/ai-key"); $("#aiKeyDel").hidden = !k.set || k.fromEnv;
-    setMsg($("#aiKeyMsg"), k.set ? t("Kle a mete ✓ (…{0})", k.last4) : "", true); if (!k.set) $("#aiKeyBox").open = true; } catch {} }
+    const hm = k.health?.main, hb = k.health?.backup;
+    setMsg($("#aiKeyMsg"), k.set ? (hm && hm.ok === false ? "⚠ " + t("Kle sa a pa mache ankò (…{0}). Mete yon nouvo kle.", k.last4) : t("Kle a mete ✓ (…{0})", k.last4)) : "", !(hm && hm.ok === false));
+    $("#aiKey2Del").hidden = !k.backupSet;
+    setMsg($("#aiKey2Msg"), k.backupSet ? (hb && hb.ok === false ? "⚠ " + t("Kle rezèv la pa mache ankò (…{0}).", k.last4b) : t("Kle rezèv la mete ✓ (…{0})", k.last4b)) : "", !(hb && hb.ok === false));
+    if (!k.set || (hm && hm.ok === false)) $("#aiKeyBox").open = true; } catch {} }
 }
 $("#aiKeySave").addEventListener("click", async () => {
   const key = $("#aiKeyIn").value.trim(); if (!key) return;
   setMsg($("#aiKeyMsg"), "Ap tcheke kle a…", true);
   try { await api("PUT", "/galaxy/ai-key", { key }); $("#aiKeyIn").value = ""; await loadAi(); } catch (e) { setMsg($("#aiKeyMsg"), e.message); }
+});
+$("#aiKey2Save").addEventListener("click", async () => {
+  const key = $("#aiKey2In").value.trim(); if (!key) return;
+  setMsg($("#aiKey2Msg"), t("Ap tcheke kle a…"), true);
+  try { await api("PUT", "/galaxy/ai-key", { key, slot: 2 }); $("#aiKey2In").value = ""; await loadAi(); } catch (e) { setMsg($("#aiKey2Msg"), e.message); }
+});
+$("#aiKey2Del").addEventListener("click", async () => {
+  if (!confirm(t("Retire kle rezèv la?"))) return;
+  try { await api("PUT", "/galaxy/ai-key", { key: "", slot: 2 }); await loadAi(); } catch (e) { setMsg($("#aiKey2Msg"), e.message); }
 });
 $("#aiKeyDel").addEventListener("click", async () => {
   if (!confirm(t("Retire kle AI a?"))) return;
@@ -2642,6 +2659,7 @@ const WT_TEXT = {
   bill_due: (i) => [t("💳 Peman {0}", i.name) + (i.amount ? " (" + i.amount + ")" : ""), i.days > 0 ? t("Pou peye nan {0} jou ({1}).", i.days, fmtExp(i.date)) : i.days === 0 ? t("Pou peye jodi a ({0}).", fmtExp(i.date)) : t("Dat la pase depi {0} jou ({1}).", -i.days, fmtExp(i.date))],
   weak_password: () => [t("🔑 Modpas login panel la twò fèb"), t("Chanje l nan Sistèm → 🔑 Login pwopriyetè a (12 karaktè oswa plis, ak lèt ak chif).")],
   ai_budget: (i) => [t("🤖 AI a deja itilize ${0} sou ${1} mwa sa a", i.cost, i.limit), t("Lè limit lan rive, AI a kanpe jiska mwa pwochen.")],
+  ai_key_bad: (i) => [i.slot === "backup" ? t("🔑 Kle AI rezèv la pa mache ankò") : t("🔑 Kle AI a pa mache ankò"), i.why === "credit" ? t("Kont Anthropic la pa gen kredi ankò. Ajoute kredi nan console.anthropic.com → Billing, epi limen «auto-reload».") : t("Kreye yon nouvo kle nan console.anthropic.com → API Keys, epi kole l nan Dashboard → 🔑 Kle AI a.") + (i.backupOk ? " " + t("Kle rezèv la ap travay pou kounye a.") : "")],
 };
 const WT_ACT = {
   goto_device: () => t("Louvri aparèy la"), goto_channels: () => t("Louvri Channels pou TV sa a"), force_update: () => t("Fè mizajou a obligatwa"), send_tip: () => t("Voye konsèy bay kliyan an"), reload_tv: () => t("Rechaje TV a"), push_update: () => t("Voye mizajou a bay TV yo"),

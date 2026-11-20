@@ -9,17 +9,48 @@ import path from "node:path";
 const MODEL = process.env.AI_MODEL || "claude-haiku-4-5";
 // Kle AI a: ANTHROPIC_API_KEY nan /etc/galaxy.env, OSWA kle pwopriyetè a kole nan panel la
 // (sove nan yon fichye prive bò kote baz done a, mode 600, PA nan db.json ni nan kopi done yo).
-const KEY_FILE = path.join(path.dirname(path.resolve(process.env.DB_FILE || "./db.json")), ".anthropic-key");
-let keyCache;
-export function aiKey() {
+const KEY_DIR = path.dirname(path.resolve(process.env.DB_FILE || "./db.json"));
+const KEY_FILE = path.join(KEY_DIR, ".anthropic-key"), KEY_FILE2 = path.join(KEY_DIR, ".anthropic-key-2");
+let keyCache, key2Cache;
+const readKey = (f) => { try { return fs.readFileSync(f, "utf8").trim(); } catch { return ""; } };
+/** Kle prensipal la (oswa sa ki nan /etc/galaxy.env). */
+function mainKey() {
   if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
-  if (keyCache === undefined) { try { keyCache = fs.readFileSync(KEY_FILE, "utf8").trim(); } catch { keyCache = ""; } }
+  if (keyCache === undefined) keyCache = readKey(KEY_FILE);
   return keyCache;
 }
-function saveKey(k) {
-  if (k) fs.writeFileSync(KEY_FILE, k, { mode: 0o600 }); else { try { fs.unlinkSync(KEY_FILE); } catch {} }
-  keyCache = k || "";
+/** Kle rezèv la: panel la sèvi avè l otomatikman si kle prensipal la refize. */
+function backupKey() { if (key2Cache === undefined) key2Cache = readKey(KEY_FILE2); return key2Cache; }
+/** Tout kle yo, nan lòd: prensipal, answit rezèv. */
+const allKeys = () => [mainKey(), backupKey()].filter(Boolean);
+export function aiKey() { return allKeys()[0] || ""; }
+function saveKey(k, slot = 1) {
+  const f = slot === 2 ? KEY_FILE2 : KEY_FILE;
+  if (k) fs.writeFileSync(f, k, { mode: 0o600 }); else { try { fs.unlinkSync(f); } catch {} }
+  if (slot === 2) key2Cache = k || ""; else keyCache = k || "";
+  keyHealth[slot === 2 ? "backup" : "main"] = k ? { ok: true, at: Date.now(), why: "" } : null;
 }
+/** Eta chak kle (panel la tcheke yo chak 6 è): { main: {ok, at, why}, backup: {…} } */
+const keyHealth = { main: null, backup: null };
+export const aiKeyHealth = () => ({ main: mainKey() ? keyHealth.main : null, backup: backupKey() ? keyHealth.backup : null, hasBackup: !!backupKey() });
+/** Tcheke yon kle san depanse anyen (lis modèl yo). */
+async function testKey(k) {
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/models?limit=1", { headers: { "x-api-key": k, "anthropic-version": "2023-06-01" }, signal: AbortSignal.timeout(15000) });
+    if (r.status === 401) return { ok: false, why: "refused" };
+    if (r.status === 403) return { ok: false, why: "forbidden" };
+    return { ok: true, why: "" };
+  } catch { return { ok: true, why: "network" }; } // rezo a pa reponn: pa di kle a move
+}
+async function checkKeys() {
+  for (const [slot, k] of [["main", mainKey()], ["backup", backupKey()]]) {
+    if (!k) { keyHealth[slot] = null; continue; }
+    const t = await testKey(k);
+    keyHealth[slot] = { ok: t.ok, at: Date.now(), why: t.why };
+  }
+}
+setTimeout(() => checkKeys().catch(() => {}), 60_000).unref?.();
+setInterval(() => checkKeys().catch(() => {}), 6 * 3600_000).unref?.();
 // Pri pa milyon token (Haiku 4.5): $1 antre, $5 sòti
 const PRICE_IN = Number(process.env.AI_PRICE_IN || 1), PRICE_OUT = Number(process.env.AI_PRICE_OUT || 5);
 const LANG_NAMES = { ht: "Haitian Creole (Kreyòl ayisyen)", en: "English", fr: "French", es: "Spanish" };
@@ -36,25 +67,35 @@ export const aiBudget = (db) => { const u = usageOf(db); return { cost: u.cost, 
 
 /** Yon sèl apèl Claude (konte depans lan, respekte limit mwa a). Voye tèks repons lan, oswa jete yon erè. */
 export async function aiComplete(db, { system, user, maxTokens = 600 }) {
-  const key = aiKey();
-  if (!key) throw new Error("AI is not set up yet: paste the AI key in Dashboard → 🔑 AI key.");
+  const keys = allKeys();
+  if (!keys.length) throw new Error("AI is not set up yet: paste the AI key in Dashboard → 🔑 AI key.");
   const u = usageOf(db);
   if (u.cost >= limit()) throw Object.assign(new Error(`Monthly AI limit reached ($${limit()}).`), { status: 429 });
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }] }),
-    signal: AbortSignal.timeout(60000),
-  });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) {
+  let r, j, lastErr = null;
+  // Si kle prensipal la refize (efase, dezaktive, pa gen kredi), eseye kle rezèv la otomatikman
+  for (let i = 0; i < keys.length; i++) {
+    r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": keys[i], "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }] }),
+      signal: AbortSignal.timeout(60000),
+    });
+    j = await r.json().catch(() => ({}));
+    const slot = keys[i] === mainKey() ? "main" : "backup";
+    const credit = /credit|balance|billing/i.test(j?.error?.message || "");
+    if (r.ok) { keyHealth[slot] = { ok: true, at: Date.now(), why: "" }; lastErr = null; break; }
+    if (r.status === 401 || r.status === 403 || credit) { keyHealth[slot] = { ok: false, at: Date.now(), why: credit ? "credit" : r.status === 401 ? "refused" : "forbidden" }; lastErr = { status: r.status, credit, msg: j?.error?.message }; continue; }
+    lastErr = { status: r.status, credit, msg: j?.error?.message };
+    break;
+  }
+  if (lastErr) {
     // Mesaj klè pou admin nan olye de mesaj teknik Anthropic la
-    const msg = r.status === 401 ? "The AI key no longer works (Anthropic refused it): it was deleted, disabled or mistyped. Create a new key at console.anthropic.com → API Keys and paste it in Dashboard → 🔑 AI key."
-      : r.status === 403 ? "Anthropic refused access with this AI key. Check the account at console.anthropic.com."
-      : /credit|balance|billing/i.test(j?.error?.message || "") ? "The Anthropic account has no credit left. Add credit at console.anthropic.com → Billing."
-      : r.status === 429 ? "AI is busy right now (too many requests). Try again in a minute."
-      : r.status >= 500 ? "Anthropic's AI is down right now. Try again in a few minutes."
-      : j?.error?.message || `AI error HTTP ${r.status}`;
+    const msg = lastErr.credit ? "The Anthropic account has no credit left. Add credit at console.anthropic.com → Billing (turn on auto-reload so it never runs out)."
+      : lastErr.status === 401 ? "The AI key no longer works (Anthropic refused it): it was deleted, disabled or mistyped. Create a new key at console.anthropic.com → API Keys and paste it in Dashboard → 🔑 AI key."
+      : lastErr.status === 403 ? "Anthropic refused access with this AI key. Check the account at console.anthropic.com."
+      : lastErr.status === 429 ? "AI is busy right now (too many requests). Try again in a minute."
+      : lastErr.status >= 500 ? "Anthropic's AI is down right now. Try again in a few minutes."
+      : lastErr.msg || `AI error HTTP ${lastErr.status}`;
     throw Object.assign(new Error(msg), { status: 502 });
   }
   const inTok = j.usage?.input_tokens || 0, outTok = j.usage?.output_tokens || 0;
@@ -106,19 +147,21 @@ export function mountAi(app, db, { authenticate, isOnline }) {
 
   // Pwopriyetè a kole kle AI a nan panel la (li pa janm voye kle a tounen, sèlman 4 dènye karaktè yo)
   app.get("/api/galaxy/ai-key", authenticate, (req, res) => {
-    const k = aiKey();
-    res.json({ set: !!k, fromEnv: !!process.env.ANTHROPIC_API_KEY, last4: k ? k.slice(-4) : "" });
+    const k = mainKey(), k2 = backupKey();
+    res.json({ set: !!k, fromEnv: !!process.env.ANTHROPIC_API_KEY, last4: k ? k.slice(-4) : "", backupSet: !!k2, last4b: k2 ? k2.slice(-4) : "", health: aiKeyHealth() });
   });
   app.put("/api/galaxy/ai-key", authenticate, async (req, res) => {
-    if (process.env.ANTHROPIC_API_KEY) return res.status(400).json({ error: "The key is set in /etc/galaxy.env on the server: remove it there first." });
+    const slot = Number(req.body?.slot) === 2 ? 2 : 1;
+    if (slot === 1 && process.env.ANTHROPIC_API_KEY) return res.status(400).json({ error: "The key is set in /etc/galaxy.env on the server: remove it there first." });
     const k = String(req.body?.key || "").trim();
-    if (!k) { saveKey(""); return res.json({ ok: true, set: false }); }
+    if (!k) { saveKey("", slot); return res.json({ ok: true, set: false }); }
+    if (slot === 2 && k === mainKey()) return res.status(400).json({ error: "This is the same key as the main one. Create a second key in console.anthropic.com → API Keys." });
     if (!/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(k)) return res.status(400).json({ error: "This doesn't look like an Anthropic API key (it starts with sk-ant-)." });
     try {
       const r = await fetch("https://api.anthropic.com/v1/models?limit=1", { headers: { "x-api-key": k, "anthropic-version": "2023-06-01" }, signal: AbortSignal.timeout(15000) });
       if (r.status === 401 || r.status === 403) return res.status(400).json({ error: "Anthropic refused this key. Check that you copied all of it." });
     } catch { /* rezo a pa reponn: sove l kanmenm */ }
-    saveKey(k);
+    saveKey(k, slot);
     res.json({ ok: true, set: true, last4: k.slice(-4) });
   });
 

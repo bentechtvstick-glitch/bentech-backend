@@ -4,7 +4,7 @@
 // AI a (Claude Haiku) ekri yon ti rezime sèlman lè lis pwoblèm yo chanje (pou depans lan rete piti).
 import fs from "node:fs";
 import path from "node:path";
-import { aiComplete, aiBudget, aiLangName, aiKey } from "./ai.js";
+import { aiComplete, aiBudget, aiLangName, aiKey, aiKeyHealth } from "./ai.js";
 import { createNotifier, mountNotify } from "./notify.js";
 
 const H = 3600000;
@@ -212,6 +212,12 @@ export function mountWatch(app, db, h) {
         out.push({ id: `bill:${b.id}:${key(y, m)}`, kind: "bill_due", level: days <= 1 ? "crit" : "warn", name: b.name, amount: b.amount || "", days,
           date: new Date(dueOf(y, m)).toISOString().slice(0, 10), actions: [{ type: "bill_paid", id: b.id, month: key(y, m) }] });
       }
+    }
+
+    // 5b) Kle AI a: avèti admin nan ANVAN AI a sispann (kle efase/dezaktive, pa gen kredi)
+    const kh = aiKeyHealth();
+    for (const [slot, hh] of [["main", kh.main], ["backup", kh.backup]]) {
+      if (hh && hh.ok === false) out.push({ id: `aikey:${slot}:${hh.why}`, kind: "ai_key_bad", level: slot === "main" && !(kh.backup?.ok) ? "crit" : "warn", slot, why: hh.why, backupOk: !!kh.backup?.ok, actions: [] });
     }
 
     // 6) Bidjè AI a
