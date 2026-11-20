@@ -82,7 +82,7 @@ export async function aiComplete(db, { system, user, maxTokens = 600 }) {
     });
     j = await r.json().catch(() => ({}));
     const slot = keys[i] === mainKey() ? "main" : "backup";
-    const credit = /credit|balance|billing/i.test(j?.error?.message || "");
+    const credit = /credit|balance|billing|usage limit/i.test(j?.error?.message || "");
     if (r.ok) { keyHealth[slot] = { ok: true, at: Date.now(), why: "" }; lastErr = null; break; }
     if (r.status === 401 || r.status === 403 || credit) { keyHealth[slot] = { ok: false, at: Date.now(), why: credit ? "credit" : r.status === 401 ? "refused" : "forbidden" }; lastErr = { status: r.status, credit, msg: j?.error?.message }; continue; }
     lastErr = { status: r.status, credit, msg: j?.error?.message };
@@ -90,7 +90,8 @@ export async function aiComplete(db, { system, user, maxTokens = 600 }) {
   }
   if (lastErr) {
     // Mesaj klè pou admin nan olye de mesaj teknik Anthropic la
-    const msg = lastErr.credit ? "The Anthropic account has no credit left. Add credit at console.anthropic.com → Billing (turn on auto-reload so it never runs out)."
+    const msg = lastErr.credit && /usage limit/i.test(lastErr.msg || "") ? "The Anthropic account reached its monthly spend limit. Raise it at console.anthropic.com → Settings → Limits."
+      : lastErr.credit ? "The Anthropic account has no credit left. Add credit at console.anthropic.com → Billing (turn on auto-reload so it never runs out)."
       : lastErr.status === 401 ? "The AI key no longer works (Anthropic refused it): it was deleted, disabled or mistyped. Create a new key at console.anthropic.com → API Keys and paste it in Dashboard → 🔑 AI key."
       : lastErr.status === 403 ? "Anthropic refused access with this AI key. Check the account at console.anthropic.com."
       : lastErr.status === 429 ? "AI is busy right now (too many requests). Try again in a minute."
