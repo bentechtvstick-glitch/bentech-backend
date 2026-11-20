@@ -970,6 +970,15 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="row2"><div class="field"><label for="g_weather_temp">Tanperati alamen (si otomatik etenn)</label><input type="number" id="g_weather_temp" data-g="weather.temp" min="-60" max="140" value="30"></div><div class="field"><label for="g_weather_icon">Ikòn alamen</label><select id="g_weather_icon" data-g="weather.icon"><option>☀️</option><option>🌤️</option><option>☁️</option><option>🌧️</option><option>⛈️</option><option>🌦️</option><option>🌫️</option><option>🌨️</option><option>🌙</option></select></div></div>
             <div class="field"><label for="g_weather_position">Pozisyon</label><select id="g_weather_position" data-g="weather.position"><option value="top-left">Anlè agoch</option><option value="top-center">Anlè nan mitan</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div>
           </div>
+          <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="weatherBar.on" id="g_weatherBar_on"><i></i></label><div class="grow"><label for="g_weatherBar_on"><b>Bann meteyo (bandeau météo)</b></label><p class="note" style="margin:2px 0 0">Tankou BFM «Météo aujourd'hui»: yon bann anba ekran an ak plizyè vil ansanm, ti tanperati (ble) ak gwo tanperati (oranj) jodi a. Paj vil yo chanje poukont yo.</p></div><button class="btn small purple" type="button" data-gxplay="weatherBar">▶ Gade</button></div>
+            <div class="row2"><div class="field"><label for="g_weatherBar_title">Tit</label><input type="text" id="g_weatherBar_title" data-g="weatherBar.title" maxlength="30" placeholder="METEYO JODI A"></div><div class="field"><label for="g_weatherBar_unit">Inite</label><select id="g_weatherBar_unit" data-g="weatherBar.unit"><option value="F">°F</option><option value="C">°C</option></select></div></div>
+            <div class="field"><label for="g_weatherBar_scope">Ki vil</label><select id="g_weatherBar_scope" data-g="weatherBar.scope"><option value="haiti">🇭🇹 Depatman Ayiti yo</option><option value="haiti_arr">🇭🇹 42 awondisman Ayiti yo</option><option value="world">🌍 Gran vil nan mond lan</option><option value="list">📝 Pwòp lis vil mwen</option></select></div>
+            <div class="field" id="gxWbListBox" hidden><label for="g_weatherBar_cities">Vil yo (youn pa liy, jiska 24)</label><textarea id="g_weatherBar_cities" data-g="weatherBar.cities" rows="4" placeholder="Port-au-Prince&#10;Jacmel&#10;Miami&#10;Montréal"></textarea></div>
+            <div class="row3"><div class="field"><label for="g_weatherBar_perPage">Vil pa paj</label><select id="g_weatherBar_perPage" data-g="weatherBar.perPage"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div><div class="field"><label for="g_weatherBar_pageSec">Chanje paj chak (segonn)</label><input type="number" id="g_weatherBar_pageSec" data-g="weatherBar.pageSec" min="3" max="30" value="6"></div><div class="field"><label for="g_weatherBar_position">Pozisyon</label><select id="g_weatherBar_position" data-g="weatherBar.position"><option value="bottom">Anba</option><option value="top">Anlè</option></select></div></div>
+            <div class="row2"><div class="field"><label for="g_weatherBar_everyMin">Parèt chak (minit, 0 = tout tan)</label><input type="number" id="g_weatherBar_everyMin" data-g="weatherBar.everyMin" min="0" max="240" value="10"></div><div class="field"><label for="g_weatherBar_durationSec">Rete (segonn)</label><input type="number" id="g_weatherBar_durationSec" data-g="weatherBar.durationSec" min="5" max="120" value="20"></div></div>
+            <div class="row3"><label class="swatch"><input type="color" data-g="weatherBar.bgColor" value="#1d4ed8"><span><b>Fon</b></span></label><label class="swatch"><input type="color" data-g="weatherBar.accentColor" value="#f59e0b"><span><b>Etikèt</b></span></label><label class="swatch"><input type="color" data-g="weatherBar.textColor" value="#ffffff"><span><b>Tèks</b></span></label></div>
+            <div class="inline"><label class="sw"><input type="checkbox" data-g="weatherBar.showNow" id="g_weatherBar_showNow" checked><i></i></label><label for="g_weatherBar_showNow">Montre tanperati kounye a tou</label></div>
+          </div>
           <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="countdown.on" id="g_countdown_on"><i></i></label><div class="grow"><label for="g_countdown_on"><b>Countdown</b></label><p class="note" style="margin:2px 0 0">Konte jiska yon evènman (match, fim, pwomosyon).</p></div></div>
             <div class="row2"><div class="field"><label for="g_countdown_title">Tit</label><input type="text" id="g_countdown_title" data-g="countdown.title" maxlength="40" placeholder="Egz: Gwo match la kòmanse nan"></div><div class="field"><label for="g_countdown_target">Dat ak lè evènman an</label><input type="datetime-local" id="g_countdown_target" data-g="countdown.target"></div></div>
             <div class="row2"><div class="field"><label for="g_countdown_doneText">Mesaj lè l fini (opsyonèl)</label><input type="text" id="g_countdown_doneText" data-g="countdown.doneText" maxlength="40" placeholder="Egz: KOUNYE A!"></div><div class="field"><label for="g_countdown_keepMin">Kenbe mesaj la (minit)</label><input type="number" id="g_countdown_keepMin" data-g="countdown.keepMin" min="0" max="1440" value="10"></div></div>
@@ -4056,6 +4065,7 @@ async function loadAds() {
 const GX_DEF = { bug: { on: false, imageUrl: "", text: "", position: "top-right", size: 44, opacity: 85, style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false, caps: true },
   watermark: { on: false, text: "{mac}", position: "bottom-right", size: 16, opacity: 25, move: false, style: "plain", font: "sans", color: "#ffffff", color2: "#000000", italic: false },
   scoreboard: { on: false, league: "", clock: "", home: "", homeScore: "0", homeColor: "#1d4ed8", away: "", awayScore: "0", awayColor: "#dc2626", position: "top-left" },
+  weatherBar: { on: false, title: "METEYO JODI A", unit: "F", scope: "haiti", cities: "", perPage: "3", pageSec: 6, position: "bottom", everyMin: 10, durationSec: 20, bgColor: "#1d4ed8", accentColor: "#f59e0b", textColor: "#ffffff", showNow: true },
   weather: { on: false, showCity: true, city: "", scope: "all", cities: "", every: "8", rotate: true, mode: "rotate", flash: "3", unit: "C", auto: true, temp: 30, icon: "🌤️", position: "top-right" },
   countdown: { on: false, title: "", target: "", doneText: "", keepMin: 10, position: "top-center", style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false, box: true },
   ident: { on: false, imageUrl: "", text: "", tagline: "", everyMin: 30, durationSec: 5, onChannelChange: false },
@@ -4136,7 +4146,7 @@ function sbOpenFlags(btn) {
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-flagfor]"); if (b) { e.preventDefault(); return sbFlagPop ? sbCloseFlags() : sbOpenFlags(b); } if (sbFlagPop && !e.target.closest(".flagpop")) sbCloseFlags(); });
 function gxRead() { const g = {}; gxEls().forEach((el) => { const [k, f] = el.dataset.g.split("."); (g[k] ??= {})[f] = el.type === "checkbox" ? el.checked : el.type === "number" || el.type === "range" ? (el.value === "" ? "" : +el.value) : el.value.trim(); }); return g; }
-function gxFill(g) { gxEls().forEach((el) => { const [k, f] = el.dataset.g.split("."); const v = g?.[k]?.[f] ?? GX_DEF[k][f]; if (el.type === "checkbox") el.checked = !!v; else el.value = v; }); gxLabels(); }
+function gxFill(g) { gxEls().forEach((el) => { const [k, f] = el.dataset.g.split("."); const v = g?.[k]?.[f] ?? GX_DEF[k][f]; if (el.type === "checkbox") el.checked = !!v; else el.value = v; }); gxLabels(); gxWbList(); }
 function gxLabels() { const wxs = $('[data-g="weather.scope"]').value; $("#gxWxScopeNote").hidden = wxs !== "client"; const wxm = ["haiti", "haiti_arr", "world", "list"].includes(wxs), wxr = $('[data-g="weather.rotate"]').checked; $("#gxWxRotBox").hidden = !wxm; $("#gxWxListBox").hidden = wxs !== "list" || !wxr; $("#gxWxEveryBox").hidden = !wxm || !wxr; const wxf = $('[data-g="weather.mode"]').value === "flash"; $("#gxWxModeBox").hidden = !wxm || !wxr; $("#gxWxFlashBox").hidden = $("#gxWxFlashNote").hidden = !wxm || !wxr || !wxf; $('label[for="g_weather_every"]').textContent = t(wxf ? "Yon lòt vil parèt chak" : "Chanje vil chak"); $$('main[data-pane="gfx"] [data-gv]').forEach((b) => { const el = $(`[data-g="${b.dataset.gv}"]`); b.textContent = el.value; });
   $$('main[data-pane="gfx"] .anibox').forEach((box) => { const on = box.querySelector('.gxhead input[type="checkbox"]'); if (on) box.classList.toggle("gxbox-off", !on.checked); }); }
 /** Menm règ ak sèvè a (src/graphics.js), pou preview a montre egzakteman sa TV a ap resevwa. */
@@ -4155,6 +4165,7 @@ function gxNormalize(g) {
   if (out.weather && g.weather.showCity === false) out.weather = { ...out.weather, city: "" };
   const c = g.countdown; if (c.on && c.target) { const at = Math.floor(new Date(c.target).getTime() / 1000), now = Date.now() / 1000; if (at && now < at + (c.doneText ? n(c.keepMin, 10, 0, 1440) * 60 : 0)) out.countdown = { title: c.title, targetAt: at, doneText: c.doneText, position: c.position, style: c.style, font: c.font, color: c.color, color2: c.color2, italic: !!c.italic, box: c.box !== false }; }
   const i = g.ident; if (i.on && (url(i.imageUrl) || i.text)) out.ident = { imageUrl: url(i.imageUrl), text: i.text, tagline: i.tagline, everyMin: n(i.everyMin, 30, 0, 240), durationSec: n(i.durationSec, 5, 2, 15) };
+  const wb = g.weatherBar; if (wb && wb.on) out.weatherBar = { ...wb };
   const sn = g.snipe; const snImgs = sn ? [sn.imageUrl, ...String(sn.images || "").split(/[\n\s,]+/)].map(url).filter(Boolean) : [];
   if (sn && sn.on && (snImgs.length || sn.text)) out.snipe = { imageUrl: snImgs[0] || null, images: snImgs, text: sn.text, textColor: sn.textColor, bgColor: sn.bgClear ? "#00000000" : sn.bgColor, position: sn.position, anim: sn.anim, size: n(sn.size, 120, 40, 300), everyMin: n(sn.everyMin, 10, 0, 240), durationSec: n(sn.durationSec, 8, 3, 30) };
   const u = g.bumper; if (u.on && (url(u.inUrl) || u.inText || url(u.outUrl) || u.outText)) out.bumper = { inUrl: url(u.inUrl), inText: u.inText, outUrl: url(u.outUrl), outText: u.outText, durationSec: n(u.durationSec, 4, 2, 15), bgColor: u.bgClear ? "#00000000" : u.bgColor, textColor: u.textColor };
@@ -4176,7 +4187,24 @@ $("#gxSnipeNow").addEventListener("click", async () => {
   try { const r = await api("POST", "/galaxy/snipe/now", {}); toast(t("Snipe la ap parèt sou {0} TV.", r.delivered)); }
   catch (e) { toast(e.message); }
 });
+const WB_PREVIEW = { haiti: ["Port-au-Prince", "Cap-Haïtien", "Jacmel", "Les Cayes", "Gonaïves"], haiti_arr: ["Port-au-Prince", "Jacmel", "Saint-Marc", "Hinche", "Jérémie"], world: ["New York", "Paris", "Montréal", "Miami", "Santo Domingo"] };
+async function gxWeatherBarPreview() {
+  const wb = gxRead().weatherBar;
+  const names = (wb.scope === "list" ? String(wb.cities || "").split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean) : WB_PREVIEW[wb.scope] || WB_PREVIEW.haiti).slice(0, 5);
+  if (!names.length) return toast(t("Mete omwen yon vil."));
+  const f = wb.unit === "C" ? (c) => Math.round(c) : (c) => Math.round((c * 9) / 5 + 32);
+  const items = (await Promise.all(names.map((c) => api("GET", "/galaxy/weather?city=" + encodeURIComponent(c)).catch(() => null))))
+    .map((r, i) => r && { city: r.city || names[i], icon: r.dayIcon || r.icon, now: f(r.tempC), min: r.minC == null ? null : f(r.minC), max: r.maxC == null ? null : f(r.maxC) }).filter(Boolean);
+  if (!items.length) return toast(t("Sèvis meteyo a pa reponn. Eseye ankò."));
+  clearTimeout(gxFullT);
+  $("#gxFull").innerHTML = GalaxyGfx.weatherBarHtml({ ...wb, items, perPage: +wb.perPage || 3 }, 60);
+  $("#gxStage").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  gxFullT = setTimeout(() => ($("#gxFull").innerHTML = ""), 15000);
+}
+const gxWbList = () => { $("#gxWbListBox").hidden = $("#g_weatherBar_scope").value !== "list"; };
+$("#g_weatherBar_scope").addEventListener("change", gxWbList);
 function gxPlay(which) {
+  if (which === "weatherBar") return gxWeatherBarPreview();
   if (which === "snipe") {
     const o = gxNormalize({ ...gxRead(), snipe: { ...gxRead().snipe, on: true } });
     if (!o.snipe) return toast(t("Mete yon imaj, yon GIF oswa yon tèks pou snipe la an premye."));

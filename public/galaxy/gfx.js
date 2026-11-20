@@ -80,6 +80,16 @@
 @keyframes gxSnL{0%{opacity:0;translate:-120% 0}8%{opacity:1;translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:-120% 0}}
 @keyframes gxSnUp{0%{opacity:0;translate:0 140%}8%{opacity:1;translate:0 0}90%{opacity:1;translate:0 0}100%{opacity:0;translate:0 140%}}
 @keyframes gxSnPop{0%{opacity:0;transform:scale(.5)}8%{opacity:1;transform:scale(1)}90%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.5)}}
+.gx-wb{position:absolute;left:0;right:0;height:78px;display:flex;align-items:center;gap:0;z-index:5;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;animation:gxWbIn .5s ease-out both;box-shadow:0 -2px 10px rgba(0,0,0,.3)}
+.gx-wb-tag{width:150px;margin:0 8px 0 16px;padding:6px 14px;border-radius:6px;font-weight:800;font-size:15px;line-height:1.15;text-align:center;color:#fff}
+.gx-wb-c{flex:1;display:flex;align-items:center;gap:10px;padding:0 10px 0 14px;min-width:0}
+.gx-wb-c b{display:block;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gx-wb-i{font-size:30px}
+.gx-wb-t{display:flex;align-items:center;gap:6px;margin-top:3px}
+.gx-wb-t i{font-style:normal;font-weight:800;font-size:17px;color:#fff;padding:1px 8px;border-radius:4px}.gx-wb-t .lo{background:#2563EB}.gx-wb-t .hi{background:#F97316}
+.gx-wb-t small{font-size:14px;opacity:.85;margin-left:4px}
+.gx-wb-sep{width:2px;height:44px;flex:none}
+@keyframes gxWbIn{from{transform:translateY(120%)}to{transform:none}}
 @keyframes gxIdent{0%{opacity:0}12%{opacity:1}85%{opacity:1}100%{opacity:0}}
 @keyframes gxPop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
 @keyframes gxUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
@@ -192,5 +202,13 @@
     return `<div class="gx-snipe gx-sn-${esc(n.anim || "slide")} gx-sn-${esc(n.position || "bottom-right")}" style="bottom:${(bottom || 60) + 16}px;${side};--gx-dur:${n.durationSec || 8}s"><div class="gx-sn-in">${img ? `<img src="${esc(img)}" alt="" style="height:${n.size || 120}px">` : ""}${txt}</div></div>`;
   }
 
-  window.GalaxyGfx = { html, tick, identHtml, bumperHtml, snipeHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
+  /** Bann meteyo (tankou BFM): etikèt + premye paj vil yo. */
+  function weatherBarHtml(w, bottom) {
+    const list = (w.items || []).slice(0, w.perPage || 3);
+    const unit = w.unit === "C" ? "C" : "F";
+    const cell = (x) => `<div class="gx-wb-c"><span class="gx-wb-i">${esc(x.icon || "")}</span><div><b>${esc(x.city)}</b><div class="gx-wb-t"><i class="lo">${x.min == null ? "–" : esc(x.min) + "°"}</i><i class="hi">${x.max == null ? "–" : esc(x.max) + "°"}</i>${w.showNow !== false && x.now != null ? `<small>${esc(x.now)}°${unit}</small>` : ""}</div></div></div>`;
+    return `<div class="gx-wb" style="${w.position === "top" ? "top:0" : `bottom:${bottom || 60}px`};background:${esc(w.bgColor || "#1D4ED8")};color:${esc(w.textColor || "#fff")}"><span class="gx-wb-tag" style="background:${esc(w.accentColor || "#F59E0B")}">${esc(String(w.title || "METEYO JODI A").toUpperCase())}</span>${list.map((x, i) => (i ? `<span class="gx-wb-sep" style="background:${esc(w.accentColor || "#F59E0B")}"></span>` : "") + cell(x)).join("")}</div>`;
+  }
+
+  window.GalaxyGfx = { html, tick, identHtml, bumperHtml, snipeHtml, weatherBarHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
 })();

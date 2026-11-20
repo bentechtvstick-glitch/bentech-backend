@@ -91,7 +91,7 @@ export async function fetchWeather(place) {
     at = { name: p.name, country: p.country_code || "", lat: p.latitude, lon: p.longitude };
   }
   // Modèl meteyo (Open-Meteo) + lapli nan 30 dènye minit yo (pa tranch 15 minit)
-  const f = await getJson(`${API_URL}?latitude=${at.lat}&longitude=${at.lon}&current=temperature_2m,weather_code,is_day,precipitation,rain,showers&minutely_15=precipitation,rain&past_minutely_15=2&forecast_minutely_15=1&models=best_match`);
+  const f = await getJson(`${API_URL}?latitude=${at.lat}&longitude=${at.lon}&current=temperature_2m,weather_code,is_day,precipitation,rain,showers&minutely_15=precipitation,rain&past_minutely_15=2&forecast_minutely_15=1&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=1&timezone=auto&models=best_match`);
   const cur = f?.current;
   if (!cur || !Number.isFinite(Number(cur.temperature_2m))) throw new Error("Sèvis meteyo a pa reponn byen");
   let code = Number(cur.weather_code) || 0, tempC = Number(cur.temperature_2m), source = "model";
@@ -110,8 +110,12 @@ export async function fetchWeather(place) {
   }
   // Lapli ki ap tonbe kounye a (mm): si kòd la di "nyaj" men gen lapli, montre lapli
   if (wet >= 0.1 && code < 51) code = wet >= 2 ? 81 : 61;
+  // Jodi a: tanperati ki pi ba ak ki pi wo (pou bann meteyo a, tankou BFM)
+  const dmin = Number(f?.daily?.temperature_2m_min?.[0]), dmax = Number(f?.daily?.temperature_2m_max?.[0]), dcode = Number(f?.daily?.weather_code?.[0]);
   const data = { city: at.name, country: at.country, tempC, code, rainMm: wet, isDay: cur.is_day !== 0, source,
-    icon: weatherIcon(code, cur.is_day !== 0), at: Date.now() };
+    icon: weatherIcon(code, cur.is_day !== 0), at: Date.now(),
+    minC: Number.isFinite(dmin) ? Math.min(dmin, tempC) : null, maxC: Number.isFinite(dmax) ? Math.max(dmax, tempC) : null,
+    dayIcon: Number.isFinite(dcode) ? weatherIcon(dcode, true) : null };
   weatherCache.set(key, { at: Date.now(), data, place: at, error: "" });
   return data;
 }
@@ -301,6 +305,25 @@ export function buildGraphics(g, ctx) {
   if (out.weather && m.showCity === false) {
     out.weather = { ...out.weather, city: "" };
     if (Array.isArray(out.weather.list)) out.weather.list = out.weather.list.map((x) => ({ ...x, city: "" }));
+  }
+
+  // Bann meteyo (tankou BFM «Météo aujourd'hui»): plizyè vil ansanm anba ekran an, ak ti ak gwo tanperati jodi a
+  const wb = g.weatherBar || {};
+  if (wb.on) {
+    const places = wb.scope === "haiti_arr" ? WX_HAITI_ARR : wb.scope === "world" ? WX_WORLD
+      : wb.scope === "list" ? String(wb.cities || "").split(/[\n,;]+/).map((c) => str(c, 40)).filter(Boolean).slice(0, 24) : WX_HAITI;
+    const unit = wb.unit === "C" ? "C" : "F";
+    const cv = (c) => (c == null || !Number.isFinite(c) ? null : Math.round(unit === "F" ? (c * 9) / 5 + 32 : c));
+    const items = [];
+    for (const place of places) {
+      const live = weatherNow(place); if (!live || !Number.isFinite(live.tempC)) continue;
+      items.push({ city: str(typeof place === "string" ? live.city || place : place.name, 24), icon: live.dayIcon || live.icon,
+        now: cv(live.tempC), min: cv(live.minC), max: cv(live.maxC) });
+    }
+    if (items.length) out.weatherBar = { title: str(wb.title, 30) || "METEYO JODI A", items, unit, perPage: num(wb.perPage, 3, 2, 5),
+      pageSec: num(wb.pageSec, 6, 3, 30), everyMin: num(wb.everyMin, 10, 0, 240), durationSec: num(wb.durationSec, 20, 5, 120),
+      position: wb.position === "top" ? "top" : "bottom", bgColor: hex(wb.bgColor, "#1D4ED8"), accentColor: hex(wb.accentColor, "#F59E0B"),
+      textColor: hex(wb.textColor, "#FFFFFF"), showNow: wb.showNow !== false };
   }
 
   // Countdown: konte jiska yon dat/lè
