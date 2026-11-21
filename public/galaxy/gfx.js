@@ -94,6 +94,14 @@
 .gx-wb-cond .gx-wb-tag i{font-size:14px;font-weight:900}
 .gx-wb-cond .gx-wb-c b{font-size:20px;font-weight:800}
 .gx-wb-cond .gx-wb-t i{font-size:19px;font-weight:900}
+.gx-lb{position:absolute;left:0;right:0;z-index:5;animation:gxWbIn .5s ease-out both}
+.gx-lb-row{display:flex;align-items:flex-end;justify-content:space-between;height:calc(34px*var(--k));padding:0 calc(200px*var(--k)) 0 40px}
+.gx-lb-tab{position:relative;height:calc(30px*var(--k));display:flex;align-items:center;padding:0 calc(18px*var(--k));font-weight:800;font-size:calc(20px*var(--k));transform:skewX(-12deg);box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.gx-lb-tab i{position:absolute;right:calc(-14px*var(--k));top:0;width:calc(6px*var(--k));height:100%;opacity:.7}
+.gx-lb-info{height:calc(28px*var(--k));display:flex;align-items:center;padding:0 calc(14px*var(--k));font-weight:700;font-size:calc(15px*var(--k));clip-path:polygon(calc(14px*var(--k)) 0,100% 0,100% 100%,0 100%)}
+.gx-lb-bar{height:calc(32px*var(--k));display:flex;align-items:center;justify-content:flex-end;padding:0 calc(200px*var(--k)) 0 calc(28px*var(--k))}
+.gx-lb-bar b{font-weight:800;font-size:calc(18px*var(--k));text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.gx-lb-logo{position:absolute;right:calc(24px*var(--k));bottom:calc(4px*var(--k));height:calc(66px*var(--k));max-width:calc(170px*var(--k));object-fit:contain;width:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 @keyframes gxWbIn{from{transform:translateY(120%)}to{transform:none}}
 @keyframes gxIdent{0%{opacity:0}12%{opacity:1}85%{opacity:1}100%{opacity:0}}
 @keyframes gxPop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
@@ -218,5 +226,18 @@
     return `<div class="gx-wb${w.font === "normal" ? "" : " gx-wb-cond"}" style="${w.position === "top" ? `top:${Math.max(0, off)}px` : `bottom:${Math.max(0, (bottom || 60) + off)}px`};background:${w.bgClear ? "transparent" : esc(w.bgColor || "#1D4ED8")};color:${esc(w.textColor || "#fff")}${w.bgClear ? ";box-shadow:none;text-shadow:0 1px 3px rgba(0,0,0,.85)" : ""}">${tag}${list.map((x, i) => (i ? `<span class="gx-wb-sep" style="background:${esc(w.accentColor || "#F59E0B")}"></span>` : "") + cell(x)).join("")}</div>`;
   }
 
-  window.GalaxyGfx = { html, tick, identHtml, bumperHtml, snipeHtml, weatherBarHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
+  /** Bandeau chèn (tankou Kajou TV). [bottom] = espas anba (ticker). */
+  function lowerBarHtml(b, bottom) {
+    const k = (Number(b.size) || 100) / 100, off = Number(b.offset) || 0;
+    const fam = FONT_CSS[b.font || "condensed"] || FONT_CSS.condensed;
+    const now = new Date(), clock = b.showClock === false ? "" : now.toLocaleTimeString("en-US", b.clock12 === false ? { hour: "2-digit", minute: "2-digit", hour12: false } : { hour: "numeric", minute: "2-digit" });
+    const infoBg = /^#0{8}$/.test(b.infoBg || "") ? "transparent" : esc(b.infoBg || "#fff");
+    return `<div class="gx-lb" style="bottom:${Math.max(0, (bottom || 30) + off)}px;font-family:${fam};--k:${k}">
+      <div class="gx-lb-row">${b.tab ? `<span class="gx-lb-tab" style="background:${esc(b.tabBg)};color:${esc(b.tabColor)}">${esc(b.tab)}<i style="background:${esc(b.tabBg)}"></i></span>` : "<span></span>"}
+        ${b.info ? `<span class="gx-lb-info" style="background:${infoBg};color:${esc(b.infoColor)}">${esc(b.info)}</span>` : ""}</div>
+      <div class="gx-lb-bar" style="background:${esc(b.barColor)}">${clock ? `<b style="color:${esc(b.clockColor)}">${esc(clock)}</b>` : ""}</div>
+      ${b.logoUrl ? `<img class="gx-lb-logo" src="${esc(b.logoUrl)}" alt="">` : ""}</div>`;
+  }
+
+  window.GalaxyGfx = { html, tick, identHtml, bumperHtml, snipeHtml, weatherBarHtml, lowerBarHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
 })();
