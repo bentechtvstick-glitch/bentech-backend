@@ -1148,8 +1148,10 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="field"><label for="tkLabelColor">Koulè tèks etikèt</label><input type="color" id="tkLabelColor"></div>
           </div>
           <div class="inline" style="margin-top:8px"><label class="sw"><input type="checkbox" id="tkLabelTr"><i></i></label><label for="tkLabelTr">Fon etikèt transparan</label></div>
+          <div class="field"><label for="tkLabelImg">GIF nan etikèt la (opsyonèl): parèt anvan tèks etikèt la, oswa poukont li si tèks la vid</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="url" id="tkLabelImg" maxlength="500" placeholder="https://…/logo.gif" style="flex:1;min-width:200px"><button class="btn small" type="button" data-upload="tkLabelImg">📤 Chwazi yon GIF</button><button class="btn small" type="button" data-clear="tkLabelImg">✕</button></div><span class="note" data-upmsg="tkLabelImg"></span></div>
           </div>
           <div class="field"><label>Separatè ant mesaj yo</label><div class="chips" id="tkSeps"></div></div>
+          <div class="field"><label for="tkSepImg">GIF kòm separatè (opsyonèl): ranplase separatè a ant chak mesaj</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="url" id="tkSepImg" maxlength="500" placeholder="https://…/separator.gif" style="flex:1;min-width:200px"><button class="btn small" type="button" data-upload="tkSepImg">📤 Chwazi yon GIF</button><button class="btn small" type="button" data-clear="tkSepImg">✕</button></div><span class="note" data-upmsg="tkSepImg"></span></div>
           <div class="inline" style="justify-content:space-between;flex-wrap:wrap;gap:10px"><div class="inline"><label class="sw"><input type="checkbox" id="tkClock"><i></i></label><label for="tkClock">Montre lè a <span class="note">(li rete sou ekran an menm si ticker a etenn, tankou logo a ak meteyo a)</span></label></div>
             <select id="tkClockPos" aria-label="Kote lè a" style="width:auto"><option value="right">Nan ba a, adwat</option><option value="left">Nan ba a, agoch</option><option value="top-left">Anlè ekran an, agoch</option><option value="top-center">Anlè ekran an, nan mitan</option><option value="top-right">Anlè ekran an, adwat</option></select>
             <div class="seg" id="tkClockFmt" role="radiogroup" aria-label="Fòma lè a"><button type="button" data-v="12">12h · 8:45 PM</button><button type="button" data-v="24" class="on">24h · 20:45</button></div></div>
@@ -1177,6 +1179,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
               <div class="field"><label for="tkRunSpeed">Vitès li <b id="tkRunSpeedV"></b></label><input type="range" id="tkRunSpeed" min="1" max="10"></div>
             </div>
             <div class="inline"><label class="sw"><input type="checkbox" id="tkRunFlip"><i></i></label><label for="tkRunFlip">Vire l (miwa) si l ap gade move bò</label></div>
+            <div class="field"><label for="tkRunImg">GIF kòm kourè (opsyonèl): ranplase imoji a</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="url" id="tkRunImg" maxlength="500" placeholder="https://…/runner.gif" style="flex:1;min-width:200px"><button class="btn small" type="button" data-upload="tkRunImg">📤 Chwazi yon GIF</button><button class="btn small" type="button" data-clear="tkRunImg">✕</button></div><span class="note" data-upmsg="tkRunImg"></span></div>
           </div>
         </div>
       </div>
@@ -3377,6 +3380,7 @@ function fillTickerStyle() {
   $("#tkLabelOn").checked = s.tickerLabelOn !== false; $("#tkSize").value = s.tickerTextSize || 20;
   $("#tkFont").value = s.tickerFont || "sans"; $("#tkStyle").value = s.tickerTextStyle || "classic"; $("#tkFx").value = hex6(s.tickerFxColor || "#1D4ED8"); $("#tkItalic").checked = !!s.tickerItalic;
   $("#tkBgTr").checked = !!s.tickerBgTransparent; $("#tkLabelTr").checked = !!s.tickerLabelBgTransparent;
+  $("#tkLabelImg").value = s.tickerLabelImg || ""; $("#tkSepImg").value = s.tickerSepImg || ""; $("#tkRunImg").value = s.tickerRunnerImg || "";
   $("#tkAnim").checked = s.tickerAnimEmoji !== false; $("#tkRunOn").checked = !!s.tickerRunnerOn; $("#tkRun").value = s.tickerRunner ?? "🏎️💨";
   $("#tkRunSpeed").value = s.tickerRunnerSpeed || 6; $("#tkRunFlip").checked = !!s.tickerRunnerFlip;
   $("#tkHideOn").value = s.tickerHideOn || ""; $("#tkTopOn").value = s.tickerTopOn || "";
@@ -3398,10 +3402,12 @@ $("#tkSeps").addEventListener("click", (e) => { const b = e.target.closest("[dat
 $("#tkSeps").addEventListener("input", (e) => { if (e.target.id !== "tkSepCustom") return; tkSep = e.target.value || "•"; $$("#tkSeps .chip").forEach((c) => c.classList.toggle("on", c.contains(e.target))); renderTkPreview(); scheduleTkSave(); });
 const setSegTk = (v) => $$("#tkClockFmt [data-v]").forEach((b) => { b.classList.toggle("on", b.dataset.v === v); b.setAttribute("role", "radio"); b.setAttribute("aria-checked", String(b.dataset.v === v)); });
 $("#tkClockFmt").addEventListener("click", (e) => { const b = e.target.closest("[data-v]"); if (!b) return; setSegTk(b.dataset.v); if (!$("#tkClock").checked) { $("#tkClock").checked = true; } renderTkPreview(); scheduleTkSave(); });
-["#tkClockPos", "#tkFont", "#tkStyle", "#tkFx", "#tkItalic", "#tkRepeat", "#tkDir", "#tkSpeed", "#tkColor", "#tkBg", "#tkBgA", "#tkLabel", "#tkLabelBg", "#tkLabelColor", "#tkClock", "#tkActive", "#tkSize", "#tkBgTr", "#tkLabelOn", "#tkLabelTr", "#tkAnim", "#tkRunOn", "#tkRun", "#tkRunSpeed", "#tkRunFlip"].forEach((sel) => $(sel).addEventListener("input", () => {
+["#tkLabelImg", "#tkSepImg", "#tkRunImg", "#tkClockPos", "#tkFont", "#tkStyle", "#tkFx", "#tkItalic", "#tkRepeat", "#tkDir", "#tkSpeed", "#tkColor", "#tkBg", "#tkBgA", "#tkLabel", "#tkLabelBg", "#tkLabelColor", "#tkClock", "#tkActive", "#tkSize", "#tkBgTr", "#tkLabelOn", "#tkLabelTr", "#tkAnim", "#tkRunOn", "#tkRun", "#tkRunSpeed", "#tkRunFlip"].forEach((sel) => $(sel).addEventListener("input", () => {
   // Ekri yon etikèt = limen switch etikèt la otomatikman
   if (sel === "#tkLabel" && $("#tkLabel").value.trim() && !$("#tkLabelOn").checked) $("#tkLabelOn").checked = true;
   if (sel === "#tkRun" && $("#tkRun").value.trim() && !$("#tkRunOn").checked) $("#tkRunOn").checked = true;
+  if (sel === "#tkRunImg" && $("#tkRunImg").value.trim() && !$("#tkRunOn").checked) $("#tkRunOn").checked = true;
+  if (sel === "#tkLabelImg" && $("#tkLabelImg").value.trim() && !$("#tkLabelOn").checked) $("#tkLabelOn").checked = true;
   updateTkLabels(); renderTkPreview(); if (sel !== "#tkActive") scheduleTkSave();
 }));
 $("#tkActive").addEventListener("change", () => putSettings({ tickerActive: $("#tkActive").checked }, $("#tkActive").checked ? "Ticker aktive" : "Ticker dezaktive"));
@@ -3421,7 +3427,9 @@ function renderTkPreview() {
   if (!items.length) { box.innerHTML = `<div class="empty">${t("Pa gen mesaj aktif. Ajoute youn pou w wè preview a.")}</div>`; return; }
   const anim = $("#tkAnim").checked, FX = window.GalaxyFx;
   const rep = $("#tkRepeat").checked;
-  const one = items.map((x, i) => `<span style="color:${esc(x.color)}">${FX ? FX.html(x.text, anim) : esc(x.text)}</span>${!rep && i === items.length - 1 ? "" : `<span style="color:${esc(gc)}">     ${FX ? FX.html(tkSep, anim) : esc(tkSep)}     </span>`}`).join("");
+  const sepImg = $("#tkSepImg").value.trim();
+  const sepHtml = sepImg ? `<img src="${esc(sepImg)}" alt="" style="height:1.3em;vertical-align:middle">` : (FX ? FX.html(tkSep, anim) : esc(tkSep));
+  const one = items.map((x, i) => `<span style="color:${esc(x.color)}">${FX ? FX.html(x.text, anim) : esc(x.text)}</span>${!rep && i === items.length - 1 ? "" : `<span style="color:${esc(gc)}">     ${sepHtml}     </span>`}`).join("");
   const half = rep ? `<span>${one.repeat(3)}</span>` : `<span>${one}</span>`;
   const label = $("#tkLabelOn").checked ? $("#tkLabel").value.trim() : "";
   const bgTr = $("#tkBgTr").checked, size = +$("#tkSize").value || 20, bgA = bgTr ? 0 : +$("#tkBgA").value;
@@ -3431,7 +3439,7 @@ function renderTkPreview() {
   const clkTop = `<div class="tkclk-top ${cpos}" style="font-size:${Math.round(size * 1.1)}px;${tkTextCss(Math.round(size * 1.1))};color:${esc($("#tkColor").value)}">${clkTxt}</div>`;
   const clk = `<div class="clk"${bgTr ? ' style="background:transparent"' : ""}>${new Date().toLocaleTimeString(h12 ? "en-US" : [], { hour: h12 ? "numeric" : "2-digit", minute: "2-digit", hour12: h12 })}</div>`;
   box.innerHTML = `<div class="tkprev${$("#tkActive").checked ? "" : " off"}${bgA < 43 ? " shadow" : ""}" style="background:${rgba($("#tkBg").value, bgA)};font-size:${size}px;height:${size * 2}px">
-    ${$("#tkClock").checked && cpos === "left" ? clk : ""}${label ? `<div class="lab" style="background:${$("#tkLabelTr").checked ? "transparent" : esc($("#tkLabelBg").value)};color:${esc($("#tkLabelColor").value)}">${esc(label)}</div>` : ""}
+    ${$("#tkClock").checked && cpos === "left" ? clk : ""}${label || ($("#tkLabelOn").checked && $("#tkLabelImg").value.trim()) ? `<div class="lab" style="background:${$("#tkLabelTr").checked ? "transparent" : esc($("#tkLabelBg").value)};color:${esc($("#tkLabelColor").value)}">${$("#tkLabelImg").value.trim() ? `<img src="${esc($("#tkLabelImg").value.trim())}" alt="" style="height:1.5em;vertical-align:middle;${label ? "margin-right:.4em" : ""}">` : ""}${esc(label)}</div>` : ""}
     <div class="run"><div class="track${["gradient", "metal", "fire"].includes($("#tkStyle").value) ? " fxclip" : ""}" style="${tkTextCss(size)}">${rep ? half + half : half}</div></div>
     ${$("#tkClock").checked && cpos === "right" ? clk : ""}</div>${$("#tkClock").checked && cpos.startsWith("top") ? clkTop : ""}`;
   tkScale();
@@ -3449,7 +3457,7 @@ function renderTkPreview() {
   }
   // Animasyon k ap kouri a (egz: 🏎️💨): 2.2× pi vit pase tèks la nan vitès 5
   const run = $(".run", box);
-  if (window.GalaxyFx && run) GalaxyFx.runner(run, $("#tkRunOn").checked ? { emoji: $("#tkRun").value.trim(), flip: $("#tkRunFlip").checked } : null, $("#tkDir").value, (+$("#tkRunSpeed").value || 6) * 36);
+  if (window.GalaxyFx && run) GalaxyFx.runner(run, $("#tkRunOn").checked ? { emoji: $("#tkRun").value.trim(), img: $("#tkRunImg").value.trim(), flip: $("#tkRunFlip").checked } : null, $("#tkDir").value, (+$("#tkRunSpeed").value || 6) * 36);
 }
 function tickerStylePatch() {
   return {
@@ -3461,6 +3469,7 @@ function tickerStylePatch() {
     tickerFont: $("#tkFont").value || "sans", tickerTextStyle: $("#tkStyle").value || "classic", tickerFxColor: $("#tkFx").value.toUpperCase(), tickerItalic: $("#tkItalic").checked,
     tickerAnimEmoji: $("#tkAnim").checked, tickerRunnerOn: $("#tkRunOn").checked, tickerRunner: $("#tkRun").value.trim(),
     tickerRunnerSpeed: +$("#tkRunSpeed").value || 6, tickerRunnerFlip: $("#tkRunFlip").checked,
+    tickerLabelImg: $("#tkLabelImg").value.trim(), tickerSepImg: $("#tkSepImg").value.trim(), tickerRunnerImg: $("#tkRunImg").value.trim(),
     tickerBgTransparent: $("#tkBgTr").checked, tickerLabelBgTransparent: $("#tkLabelTr").checked,
     tickerHideOn: $("#tkHideOn").value.trim(), tickerTopOn: $("#tkTopOn").value.trim(),
   };
@@ -4387,6 +4396,7 @@ $("#forceRefresh").addEventListener("click", () => putSettings({ forceRefreshAt:
 // Telechaje yon imaj / videyo piblisite dirèk nan panel la: lyen an mete tèt li nan bwat URL la
 const upInput = Object.assign(document.createElement("input"), { type: "file", accept: "image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/quicktime,video/x-m4v,.mov,.m4v,.mp4", hidden: true });
 document.body.appendChild(upInput); let upTarget = null;
+document.addEventListener("click", (e) => { const c = e.target.closest("[data-clear]"); if (!c) return; const f = document.getElementById(c.dataset.clear); if (f) { f.value = ""; f.dispatchEvent(new Event("input", { bubbles: true })); } });
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-upload]"); if (!b) return; upTarget = b.dataset.upload; upInput.value = ""; upInput.click(); });
 upInput.addEventListener("change", async () => {
   const f = upInput.files[0], id = upTarget; if (!f || !id) return;
@@ -4409,7 +4419,7 @@ upInput.addEventListener("change", async () => {
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || t("Erè {0}", r.status));
-    const inp = $("#" + id); inp.value = d.url; inp.dispatchEvent(new Event("input", { bubbles: true })); inp.dispatchEvent(new Event("change", { bubbles: true })); msg.textContent = "✓ " + t(inp.dataset.g ? "Imaj la monte epi li sove. TV yo mete yo ajou touswit." : id === "rbBugUrl" ? "Imaj la monte. Peze Sove anba a." : "Fichye a sou panel la. Peze bouton Ajoute a.");
+    const inp = $("#" + id); inp.value = d.url; inp.dispatchEvent(new Event("input", { bubbles: true })); inp.dispatchEvent(new Event("change", { bubbles: true })); msg.textContent = "✓ " + t(inp.dataset.g || /^tk/.test(id) ? "Imaj la monte epi li sove. TV yo mete yo ajou touswit." : id === "rbBugUrl" ? "Imaj la monte. Peze Sove anba a." : "Fichye a sou panel la. Peze bouton Ajoute a.");
   } catch (err) { msg.textContent = err.message; }
   btn.disabled = false;
 });

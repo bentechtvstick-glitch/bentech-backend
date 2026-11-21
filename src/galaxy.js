@@ -397,9 +397,13 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
           fxColor: /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(s.tickerFxColor || "") ? s.tickerFxColor : "#1D4ED8",
           italic: !!s.tickerItalic,
           // Animasyon k ap kouri sou ba ticker a (egz: 🏎️💨)
-          runner: s.tickerRunnerOn && String(s.tickerRunner || "").trim()
-            ? { emoji: String(s.tickerRunner).trim().slice(0, 32), speed: Math.min(10, Math.max(1, Number(s.tickerRunnerSpeed) || 6)), flip: !!s.tickerRunnerFlip }
+          runner: s.tickerRunnerOn && (String(s.tickerRunner || "").trim() || isUrl(s.tickerRunnerImg))
+            ? { emoji: String(s.tickerRunner || "").trim().slice(0, 32), speed: Math.min(10, Math.max(1, Number(s.tickerRunnerSpeed) || 6)), flip: !!s.tickerRunnerFlip }
             : null,
+          // GIF/imaj anime: nan etikèt la, ant mesaj yo (separatè), ak kòm kourè
+          labelImg: s.tickerLabelOn !== false && isUrl(s.tickerLabelImg) ? String(s.tickerLabelImg).slice(0, 500) : "",
+          sepImg: isUrl(s.tickerSepImg) ? String(s.tickerSepImg).slice(0, 500) : "",
+          runnerImg: s.tickerRunnerOn && isUrl(s.tickerRunnerImg) ? String(s.tickerRunnerImg).slice(0, 500) : "",
         }
       : null;
 

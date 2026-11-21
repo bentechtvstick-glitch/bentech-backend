@@ -107,14 +107,16 @@
   /** Mete yon "runner" (egz: 🏎️💨) k ap travèse ba a. dir = "left" (dwat → gòch) oswa "right". */
   function runner(box, r, dir, pxPerSec) {
     box.querySelector(".gfx-runner")?.remove();
-    if (!r || !r.emoji) return;
+    if (!r || (!r.emoji && !r.img)) return;
     const el = document.createElement("div");
     el.className = "gfx-runner";
     const toRight = dir === "right";
     // Imoji machin yo gade agoch: nou vire yo lè yo kouri adwat (flip envèse sa)
     const flip = toRight !== !!r.flip;
     const car = vehOf(r.emoji);
-    el.innerHTML = car ? `<span class="${flip ? "flip" : ""}">${vehSvg(car.type, car.color)}</span>`
+    // GIF: yon imaj anime (pa vire otomatikman: sèlman si admin nan mande "flip")
+    el.innerHTML = r.img ? `<span class="${r.flip ? "flip" : ""}"><img src="${esc(r.img)}" alt="" style="height:1.6em;vertical-align:middle;display:inline-block;transform:translateY(-50%)"></span>`
+      : car ? `<span class="${flip ? "flip" : ""}">${vehSvg(car.type, car.color)}</span>`
       : `<span class="${flip ? "flip" : ""}"><span class="fx fx-${first(r.emoji)}">${esc(r.emoji)}</span></span>`;
     box.appendChild(el);
     const W = box.clientWidth, w = el.offsetWidth || 40;
