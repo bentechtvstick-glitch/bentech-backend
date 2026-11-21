@@ -255,6 +255,10 @@ data class GfxBumper(
 data class GfxSnipe(val images: List<String>, val position: String, val size: Int, val everyMin: Int, val durationSec: Int, val anim: String, val onChannelChange: Boolean,
     /** Tèks (opsyonèl) bò kote imaj la, oswa poukont li. */
     val text: String = "", val textColor: String = "#FFFFFF", val bgColor: String = "#CC0B1630")
+/** Bandeau chèn (tankou Kajou TV): onglè non emisyon an, tèks fiks, gwo bann koulè, logo ak lè a. */
+data class GfxLowerBar(val tab: String, val info: String, val logoUrl: String, val barColor: String, val tabBg: String, val tabColor: String,
+    val infoBg: String, val infoColor: String, val showClock: Boolean, val clock12: Boolean, val clockColor: String, val font: String,
+    val size: Int, val offset: Int, val everyMin: Int, val durationSec: Int)
 /** Bann meteyo (tankou BFM «Météo aujourd'hui»): plizyè vil ansanm, ti ak gwo tanperati jodi a. */
 data class WxItem(val city: String, val icon: String, val now: Int?, val min: Int?, val max: Int?)
 data class GfxWeatherBar(val title: String, val items: List<WxItem>, val unit: String, val perPage: Int, val pageSec: Int,
@@ -265,7 +269,8 @@ data class Graphics(
     val bug: GfxBug? = null, val watermark: GfxWatermark? = null, val scoreboard: GfxScoreboard? = null,
     val weather: GfxWeather? = null, val countdown: GfxCountdown? = null, val ident: GfxIdent? = null, val bumper: GfxBumper? = null,
     val snipe: GfxSnipe? = null,
-    val weatherBar: GfxWeatherBar? = null
+    val weatherBar: GfxWeatherBar? = null,
+    val lowerBar: GfxLowerBar? = null
 )
 
 /** Avètisman ekspirasyon: tèks la, konbyen jou ki rete, chak konbyen minit pou repete l, konbyen segonn li rete. */
@@ -477,6 +482,15 @@ data class PanelConfig(
                         GfxIdent(it.optStringOrNull("imageUrl"), it.optString("text"), it.optString("tagline"),
                             it.optInt("everyMin", 30).coerceIn(0, 240), it.optInt("durationSec", 5).coerceIn(2, 15), it.optBoolean("onChannelChange", false))
                     }?.takeIf { it.imageUrl != null || it.text.isNotBlank() },
+                    lowerBar = g.optJSONObject("lowerBar")?.let { b ->
+                        val tab = b.optString("tab").trim(); val info = b.optString("info").trim(); val logo = b.optString("logoUrl").takeIf { u -> u.startsWith("http") } ?: ""
+                        if (tab.isEmpty() && info.isEmpty() && logo.isEmpty()) null else GfxLowerBar(tab, info, logo,
+                            b.optString("barColor", "#F0511E"), b.optString("tabBg", "#E11D2E"), b.optString("tabColor", "#FFFFFF"),
+                            b.optString("infoBg", "#FFFFFF"), b.optString("infoColor", "#111111"), b.optBoolean("showClock", true),
+                            b.optBoolean("clock12", true), b.optString("clockColor", "#FFFFFF"), b.optString("font", "condensed"),
+                            b.optInt("size", 100).coerceIn(60, 160), b.optInt("offset", 0).coerceIn(-200, 600),
+                            b.optInt("everyMin", 0).coerceIn(0, 240), b.optInt("durationSec", 30).coerceIn(5, 600))
+                    },
                     weatherBar = g.optJSONObject("weatherBar")?.let { w ->
                         fun JSONObject.intOrNull(k: String) = if (has(k) && !isNull(k)) optInt(k) else null
                         val items = w.optJSONArray("items").objects().map { x ->

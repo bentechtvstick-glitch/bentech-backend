@@ -25,6 +25,7 @@ import com.galaxytvstick.app.data.GfxCountdown
 import com.galaxytvstick.app.data.GfxIdent
 import com.galaxytvstick.app.data.GfxSnipe
 import com.galaxytvstick.app.data.GfxWeatherBar
+import com.galaxytvstick.app.data.GfxLowerBar
 import com.galaxytvstick.app.data.GfxScoreboard
 import com.galaxytvstick.app.data.GfxWatermark
 import com.galaxytvstick.app.data.GfxWeather
@@ -70,6 +71,14 @@ class GraphicsView @JvmOverloads constructor(
     private var snipeSig = ""
     /** Lè pou montre snipe la yon fwa apre panel la fin chanje l (0 = non). */
     private var snipePreviewAt = 0L
+    /** Bandeau chèn nan (tankou Kajou TV). */
+    private var lbView: FrameLayout? = null
+    private var lbClock: TextView? = null
+    private var lbShowing = false
+    private var lbShownAt = 0L
+    private var lastLbAt = SystemClock.elapsedRealtime()
+    private var lbSig = ""
+    private var lbPreviewAt = 0L
     /** Bann meteyo a (anba oswa anlè ekran an). */
     private var wbView: LinearLayout? = null
     private var wbCells: LinearLayout? = null
@@ -117,6 +126,13 @@ class GraphicsView @JvmOverloads constructor(
         val hadIdent = gfx?.ident != null
         gfx = g
         if (g?.ident != null && !hadIdent) lastIdentAt = SystemClock.elapsedRealtime()
+        // Bandeau chèn: reglaj la chanje → rekonstwi l (parèt nan 1-3 s)
+        val lbs = g?.lowerBar?.toString() ?: ""
+        if (lbs != lbSig) {
+            lbSig = lbs
+            hideLowerBar(false)
+            if (g?.lowerBar != null) { lastLbAt = SystemClock.elapsedRealtime(); lbPreviewAt = SystemClock.elapsedRealtime() + (if (g.lowerBar.everyMin == 0) 500L else 3_000L) }
+        }
         // Bann meteyo: chanjman nan reglaj yo → montre l nan 3 s; done (tanperati) ki chanje sèlman → mete l ajou san rekòmanse
         val wbs = g?.weatherBar?.let { "${it.title}|${it.subtitle}|${it.offset}|${it.condensed}|${it.subColor}|${it.titleFont}|${it.titleSize}|${it.subSize}|${it.titleItalic}|${it.titleY}|${it.subY}|${it.perPage}|${it.position}|${it.bgColor}|${it.accentColor}|${it.textColor}|${it.everyMin}|${it.durationSec}|${it.unit}" } ?: ""
         if (wbs != wbSig) {
@@ -139,7 +155,7 @@ class GraphicsView @JvmOverloads constructor(
         val sig = (if (g == null) "" else listOf(g.bug, g.watermark, g.scoreboard, g.weather, g.countdown).toString()) +
             (tc?.let { listOf(it.clockPos, it.clockFormat, it.font, it.textStyle, it.fxColor, it.italic, it.textColor, it.textSize).toString() } ?: "")
         if (sig != signature) { signature = sig; rebuild(g) }
-        val needTick = (g != null && (g.countdown != null || g.watermark?.move == true || (g.ident?.everyMin ?: 0) > 0 || g.snipe != null || g.weatherBar != null)) || tc != null
+        val needTick = (g != null && (g.countdown != null || g.watermark?.move == true || (g.ident?.everyMin ?: 0) > 0 || g.snipe != null || g.weatherBar != null || g.lowerBar != null)) || tc != null
         if (needTick && !ticking) { ticking = true; ui.post(tick) }
         if (!needTick && ticking) { ticking = false; ui.removeCallbacks(tick) }
         visibility = if (g == null && tc == null && !bumperShowing) GONE else VISIBLE
@@ -150,6 +166,7 @@ class GraphicsView @JvmOverloads constructor(
         ui.removeCallbacksAndMessages(null)
         hideSnipe(); snipeSig = ""
         hideWeatherBar(false); wbSig = ""
+        hideLowerBar(false); lbSig = ""
         wxRotate = null; signature = "" // pwochen setGraphics rekonstwi l (epi relanse vil k ap vire yo)
         hideFull()
     }
@@ -418,6 +435,16 @@ class GraphicsView @JvmOverloads constructor(
             val auto = sn.everyMin > 0 && now - lastSnipeAt >= sn.everyMin * 60_000L
             if (preview || auto) { snipePreviewAt = 0L; showSnipe() }
         }
+        val lb = g.lowerBar
+        if (lb != null) {
+            val now = SystemClock.elapsedRealtime()
+            if (suppressed || bumperShowing) { if (lbShowing) hideLowerBar(false) }
+            else if (!lbShowing) {
+                val preview = lbPreviewAt in 1..now
+                if ((lb.everyMin == 0 && (lbPreviewAt == 0L || preview)) || preview || (lb.everyMin > 0 && now - lastLbAt >= lb.everyMin * 60_000L)) { lbPreviewAt = 0L; showLowerBar(lb) }
+            } else if (lb.everyMin > 0 && now - lbShownAt >= lb.durationSec * 1000L) hideLowerBar(true)
+            lbClock?.text = lbTime(lb)
+        }
         val wb = g.weatherBar
         if (wb != null) {
             val now = SystemClock.elapsedRealtime()
@@ -516,6 +543,93 @@ class GraphicsView @JvmOverloads constructor(
             cells.translationY = dp(12f).toFloat()
             cells.animate().alpha(1f).translationY(0f).setDuration(300).start()
         }.start()
+    }
+
+    // ------------------------------------------------------------ Bandeau chèn (lower third tankou Kajou TV)
+    /** Fòm paralelogram (onglè a: 2 bò panche; tèks fiks la: sèlman bò gòch la koupe). */
+    private class Slant(private val color: Int, private val left: Float, private val right: Float) : android.graphics.drawable.Drawable() {
+        private val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { this.color = this@Slant.color }
+        override fun draw(c: android.graphics.Canvas) {
+            val b = bounds; val path = android.graphics.Path()
+            path.moveTo(b.left + left, b.top.toFloat()); path.lineTo(b.right.toFloat(), b.top.toFloat())
+            path.lineTo(b.right - right, b.bottom.toFloat()); path.lineTo(b.left.toFloat(), b.bottom.toFloat()); path.close()
+            c.drawPath(path, p)
+        }
+        override fun setAlpha(a: Int) { p.alpha = a }
+        override fun setColorFilter(cf: android.graphics.ColorFilter?) { p.colorFilter = cf }
+        @Deprecated("Deprecated in Java") override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
+    }
+
+    private fun lbTime(lb: GfxLowerBar): String =
+        java.text.SimpleDateFormat(if (lb.clock12) "h:mm a" else "HH:mm", java.util.Locale.US).format(java.util.Date())
+
+    private fun showLowerBar(lb: GfxLowerBar) {
+        hideLowerBar(false)
+        lbShowing = true
+        val now = SystemClock.elapsedRealtime(); lbShownAt = now; lastLbAt = now
+        val k = lb.size / 100f
+        fun d(v: Float) = dp(v * k)
+        val face = TextFx.typeface(context, lb.font, false)
+        val hasLogo = lb.logoUrl.isNotBlank()
+        val root = FrameLayout(context).apply { importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO }
+        val col = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+        // Liy anlè a: onglè (agoch) ak tèks fiks (adwat, kole sou gwo bann nan)
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.BOTTOM
+            setPadding(dp(40f), 0, if (hasLogo) d(200f) else d(28f), 0)
+        }
+        if (lb.tab.isNotBlank()) {
+            val tv = label(lb.tab, 20f * k, parse(lb.tabColor, Color.WHITE), bold = true).apply {
+                typeface = TextFx.typeface(context, lb.font, true)
+                gravity = Gravity.CENTER_VERTICAL; maxLines = 1
+                setPadding(d(22f), 0, d(22f), 0)
+                background = Slant(parse(lb.tabBg, 0xFFE11D2E.toInt()), d(8f).toFloat(), d(8f).toFloat())
+                elevation = dp(3f).toFloat()
+            }
+            row.addView(tv, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, d(30f)).apply { bottomMargin = d(4f) })
+        }
+        row.addView(View(context), LinearLayout.LayoutParams(0, 1, 1f))
+        if (lb.info.isNotBlank()) {
+            val ibg = parse(lb.infoBg, Color.WHITE)
+            val it = label(lb.info, 15f * k, parse(lb.infoColor, 0xFF111111.toInt()), bold = true).apply {
+                typeface = face; gravity = Gravity.CENTER_VERTICAL; maxLines = 1; ellipsize = TextUtils.TruncateAt.END
+                setPadding(d(20f), 0, d(14f), 0)
+                if (Color.alpha(ibg) != 0) background = Slant(ibg, d(14f).toFloat(), 0f)
+                else setShadowLayer(dp(3f).toFloat(), 0f, dp(1f).toFloat(), 0xD9000000.toInt())
+            }
+            row.addView(it, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, d(28f)))
+        }
+        col.addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, d(34f)))
+        // Gwo bann koulè a, ak lè a adwat
+        val bar = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            setBackgroundColor(parse(lb.barColor, 0xFFF0511E.toInt()))
+            setPadding(d(28f), 0, if (hasLogo) d(200f) else d(28f), 0)
+        }
+        lbClock = if (lb.showClock) label(lbTime(lb), 18f * k, parse(lb.clockColor, Color.WHITE), bold = true).apply {
+            typeface = face; setShadowLayer(dp(2f).toFloat(), 0f, dp(1f).toFloat(), 0x66000000)
+        }.also { bar.addView(it) } else null
+        col.addView(bar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, d(32f)))
+        root.addView(col, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM))
+        if (hasLogo) {
+            val logo = ImageView(context).apply { adjustViewBounds = true; maxWidth = d(170f); maxHeight = d(66f); scaleType = ImageView.ScaleType.FIT_CENTER }
+            root.addView(logo, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, d(66f), Gravity.END or Gravity.BOTTOM).apply { marginEnd = d(24f); bottomMargin = d(4f) })
+            logo.load(lb.logoUrl)
+        }
+        addView(root, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.BOTTOM).apply {
+            bottomMargin = (bottomInset + dp(lb.offset.toFloat())).coerceAtLeast(0)
+        })
+        lbView = root
+        root.translationY = (d(90f) + bottomInset).toFloat()
+        root.animate().translationY(0f).setDuration(500).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+    }
+
+    private fun hideLowerBar(animated: Boolean) {
+        val v = lbView ?: run { lbShowing = false; lbClock = null; return }
+        lbView = null; lbClock = null; lbShowing = false
+        if (!animated) { v.animate().cancel(); removeView(v); return }
+        v.animate().translationY((v.height + bottomInset).toFloat()).setDuration(450)
+            .setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction { removeView(v) }.start()
     }
 
     private fun hideWeatherBar(animated: Boolean) {
