@@ -320,7 +320,7 @@ export function buildGraphics(g, ctx) {
     out.lowerBar = { tab: str(lb.tab, 40), info: str(lb.info, 120), logoUrl: isUrl(lb.logoUrl) ? str(lb.logoUrl, 500) : "",
       barColor: hex(lb.barColor, "#F0511E"), tabBg: hex(lb.tabBg, "#E11D2E"), tabColor: hex(lb.tabColor, "#FFFFFF"),
       infoBg: lb.infoClear ? "#00000000" : hex(lb.infoBg, "#FFFFFF"), infoColor: hex(lb.infoColor, "#111111"),
-      showClock: lb.showClock !== false, clock12: lb.clock12 !== false, clockColor: hex(lb.clockColor, "#FFFFFF"),
+      showClock: false, clock12: true, clockColor: "#FFFFFF", // lè a deja nan ticker a
       font: TEXT_FONTS.includes(lb.font) ? lb.font : "condensed", size: num(lb.size, 100, 60, 160), offset: num(lb.offset, 0, -200, 600),
       everyMin: num(lb.everyMin, 0, 0, 240), durationSec: num(lb.durationSec, 30, 5, 600) };
   }
