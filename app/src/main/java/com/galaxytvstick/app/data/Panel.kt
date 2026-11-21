@@ -54,6 +54,8 @@ data class Ticker(
     val animateEmoji: Boolean = true,
     /** Animasyon k ap kouri sou ba a (egz: 🏎️💨); null = pa gen. */
     val runner: TickerRunner? = null,
+    /** GIF/imaj (opsyonèl): nan etikèt la, ant chak mesaj (separatè), ak kòm kourè. */
+    val labelImg: String = "", val sepImg: String = "", val runnerImg: String = "",
     /** "left" = tèks la ale sou bò gòch (dwat → gòch, tankou chèn TV yo); "right" = gòch → dwat. */
     val direction: String = "left",
     /** true = mesaj yo repete san rete (ba a toujou plen); false = chak mesaj pase yon sèl fwa epi rekòmanse. */
@@ -795,9 +797,12 @@ private fun parseTicker(it: JSONObject) = Ticker(
         textSize = it.optInt("textSize", 20).coerceIn(12, 40),
         transparent = it.optBoolean("transparent", false),
         animateEmoji = it.optBoolean("animateEmoji", true),
+        labelImg = it.optString("labelImg").takeIf { u -> u.startsWith("http") } ?: "",
+        sepImg = it.optString("sepImg").takeIf { u -> u.startsWith("http") } ?: "",
+        runnerImg = it.optString("runnerImg").takeIf { u -> u.startsWith("http") } ?: "",
         runner = it.optJSONObject("runner")?.let { r ->
             TickerRunner(r.optString("emoji").trim(), r.optInt("speed", 6).coerceIn(1, 10), r.optBoolean("flip", false))
-        }?.takeIf { r -> r.emoji.isNotBlank() },
+        }?.takeIf { r -> r.emoji.isNotBlank() || it.optString("runnerImg").startsWith("http") },
         direction = it.optString("direction", "left"),
         repeat = it.optBoolean("repeat", false),
         hideOn = it.optJSONArray("hideOn").strings(),

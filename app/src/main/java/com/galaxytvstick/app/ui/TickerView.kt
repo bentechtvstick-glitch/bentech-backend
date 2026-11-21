@@ -57,6 +57,43 @@ class TickerView @JvmOverloads constructor(
     private var pxPerFrame = 3f
     private var signature = ""
 
+    // ---- GIF/imaj nan ticker a (etikèt, separatè, kourè) ----
+    private var labelImg: android.graphics.drawable.Drawable? = null
+    private var sepImg: android.graphics.drawable.Drawable? = null
+    private var runnerImg: android.graphics.drawable.Drawable? = null
+    private var imgUrls = Triple("", "", "")
+    /** Kote separatè imaj yo tonbe nan tèks la (pozisyon karaktè). */
+    private var sepOffsets: List<Int> = emptyList()
+    private var sepXs: FloatArray = FloatArray(0)
+
+    private fun loadImg(url: String, set: (android.graphics.drawable.Drawable?) -> Unit) {
+        if (url.isBlank()) { set(null); return }
+        runCatching {
+            coil.Coil.imageLoader(context).enqueue(coil.request.ImageRequest.Builder(context).data(url)
+                .target(onSuccess = { d ->
+                    d.callback = this
+                    (d as? android.graphics.drawable.Animatable)?.start()
+                    set(d); signature = ""; rebuild()
+                }, onError = { set(null) }).build())
+        }
+    }
+
+    override fun verifyDrawable(who: android.graphics.drawable.Drawable): Boolean =
+        who === labelImg || who === sepImg || who === runnerImg || super.verifyDrawable(who)
+
+    /** Desine yon imaj nan wotè [hh], kòmanse nan (x, y); retounen lajè l. */
+    private fun drawImg(canvas: Canvas, d: android.graphics.drawable.Drawable, x: Float, y: Float, hh: Float): Float {
+        val iw = d.intrinsicWidth.takeIf { it > 0 } ?: 1; val ih = d.intrinsicHeight.takeIf { it > 0 } ?: 1
+        val ww = hh * iw / ih
+        d.setBounds(x.toInt(), y.toInt(), (x + ww).toInt(), (y + hh).toInt())
+        d.draw(canvas)
+        return ww
+    }
+    private fun imgW(d: android.graphics.drawable.Drawable, hh: Float): Float {
+        val iw = d.intrinsicWidth.takeIf { it > 0 } ?: 1; val ih = d.intrinsicHeight.takeIf { it > 0 } ?: 1
+        return hh * iw / ih
+    }
+
     init {
         // Lè font imoji a fin chaje, rekonstwi tèks la pou imoji yo parèt
         if (runCatching { EmojiCompat.get().loadState }.getOrNull() != EmojiCompat.LOAD_STATE_SUCCEEDED) {
@@ -84,6 +121,13 @@ class TickerView @JvmOverloads constructor(
     private var runnerPx = 3f
 
     fun setTicker(t: Ticker, parseColor: (String, Int) -> Int) {
+        val urls = Triple(t.labelImg, t.sepImg, t.runnerImg)
+        if (urls != imgUrls) {
+            imgUrls = urls
+            loadImg(t.labelImg) { labelImg = it }
+            loadImg(t.sepImg) { sepImg = it }
+            loadImg(t.runnerImg) { runnerImg = it }
+        }
         ticker = t
         colorOf = parseColor
         // Lè a: 12h (8:45 PM) oswa 24h (20:45), jan panel la chwazi
@@ -137,13 +181,17 @@ class TickerView @JvmOverloads constructor(
         val t = ticker ?: return
         val baseColor = colorOf(t.textColor, Color.WHITE)
         val items = t.items.ifEmpty { listOf(com.galaxytvstick.app.data.TickerItem(t.text, "")) }
-        val sig = listOf(items, t.separator, t.label, t.labelColor, baseColor, t.showClock, t.direction, t.animateEmoji, t.runner, textPaint.textSize, t.repeat).toString()
+        val sig = listOf(items, t.separator, t.label, t.labelColor, baseColor, t.showClock, t.direction, t.animateEmoji, t.runner, textPaint.textSize, t.repeat,
+            labelImg != null, sepImg != null, runnerImg != null).toString()
         if (sig != signature) {
             signature = sig
             val sb = SpannableStringBuilder()
             val sep = t.separator.ifBlank { "•" }
             textPaint.color = baseColor
             val glyphs = ArrayList<AnimGlyph>()
+            val sepAt = ArrayList<Int>()
+            val sImg = sepImg
+            val imgH = textPaint.textSize * 1.3f
             items.forEachIndexed { idx, item ->
                 val start = sb.length
                 appendAnimated(sb, item.text.trim(), textPaint, glyphs, t.animateEmoji)
@@ -152,13 +200,21 @@ class TickerView @JvmOverloads constructor(
                 // Mòd "yon sèl fwa": pa gen separatè apre dènye mesaj la
                 if (t.repeat || idx < items.lastIndex) {
                     val s2 = sb.length
-                    sb.append("     "); appendAnimated(sb, sep, textPaint, glyphs, t.animateEmoji); sb.append("     ")
+                    sb.append("     ")
+                    if (sImg != null) {
+                        // Separatè = GIF: yon plas vid nan tèks la, imaj la desine sou li
+                        sepAt += sb.length
+                        sb.append('\uFFFC')
+                        sb.setSpan(GapSpan(imgW(sImg, imgH).toInt()), sb.length - 1, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    } else appendAnimated(sb, sep, textPaint, glyphs, t.animateEmoji)
+                    sb.append("     ")
                     sb.setSpan(ForegroundColorSpan(baseColor), s2, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
             }
             val scroll = layoutOf(emoji(sb), textPaint)
             glyphs.forEach { it.x = scroll.getPrimaryHorizontal(it.offset) }
             scrollLayout = scroll; scrollGlyphs = glyphs
+            sepOffsets = sepAt; sepXs = FloatArray(sepAt.size) { i -> scroll.getPrimaryHorizontal(sepAt[i]) }
             labelPaint.color = colorOf(t.labelColor, Color.WHITE)
             val lg = ArrayList<AnimGlyph>()
             labelLayout = t.label.takeIf { it.isNotBlank() }?.let {
@@ -199,11 +255,18 @@ class TickerView @JvmOverloads constructor(
         }
 
         // --- Etikèt agoch (egz: 🔴 LIVE, BREAKING NEWS) ---
-        labelLayout?.let { lab ->
-            val boxW = lab.width + pad * 2
+        val lImg = labelImg
+        if (labelLayout != null || lImg != null) {
+            val lab = labelLayout
+            val ih = h * 0.84f
+            val iw = if (lImg != null) imgW(lImg, ih) else 0f
+            val gap = if (lImg != null && lab != null) pad * 0.6f else 0f
+            val boxW = iw + gap + (lab?.width ?: 0) + pad * 2
             boxPaint.color = colorOf(t.labelBg, 0xFFE50914.toInt())
             canvas.drawRect(left, 0f, left + boxW, h, boxPaint)
-            canvas.save(); canvas.translate(left + pad, (h - lab.height) / 2f); lab.draw(canvas); drawGlyphs(canvas, labelGlyphs, lab.height); canvas.restore()
+            // GIF etikèt la (egz: logo k ap vire, 🔴 LIVE k ap klere) anvan tèks la
+            if (lImg != null) drawImg(canvas, lImg, left + pad, (h - ih) / 2f, ih)
+            if (lab != null) { canvas.save(); canvas.translate(left + pad + iw + gap, (h - lab.height) / 2f); lab.draw(canvas); drawGlyphs(canvas, labelGlyphs, lab.height); canvas.restore() }
             left += boxW
         }
 
@@ -232,18 +295,33 @@ class TickerView @JvmOverloads constructor(
         canvas.clipRect(RectF(left, 0f, right, h))
         if (once) {
             // Yon sèl kopi: li antre sou yon bò, travèse tout ba a, epi li soti anvan l rekòmanse
-            canvas.save(); canvas.translate(left + offset, (h - scroll.height) / 2f); scroll.draw(canvas); drawGlyphs(canvas, scrollGlyphs, scroll.height); canvas.restore()
+            canvas.save(); canvas.translate(left + offset, (h - scroll.height) / 2f); scroll.draw(canvas); drawGlyphs(canvas, scrollGlyphs, scroll.height); drawSeps(canvas, scroll.height); canvas.restore()
         } else {
             // Premye kopi a kòmanse anvan kwen gòch la pou bann lan toujou plen
             var x = offset % w
             if (x > 0f) x -= w
             while (x < areaW) {
-                canvas.save(); canvas.translate(left + x, (h - scroll.height) / 2f); scroll.draw(canvas); drawGlyphs(canvas, scrollGlyphs, scroll.height); canvas.restore()
+                canvas.save(); canvas.translate(left + x, (h - scroll.height) / 2f); scroll.draw(canvas); drawGlyphs(canvas, scrollGlyphs, scroll.height); drawSeps(canvas, scroll.height); canvas.restore()
                 x += w
             }
         }
-        // Runner: machin desine (wou k ap vire) ki travèse ba a
+        // Kourè GIF: yon imaj anime (machin, balon, logo…) ki travèse ba a
+        val rImg = runnerImg
         val car = runnerCar
+        if (rImg != null) {
+            val ch = minOf(textPaint.textSize * 1.6f, h * 0.92f)
+            val rw = imgW(rImg, ch)
+            val toRight = t.direction == "right"
+            if (runnerX.isNaN()) runnerX = if (toRight) -rw else areaW
+            canvas.save()
+            if (t.runner?.flip == true) canvas.scale(-1f, 1f, left + runnerX + rw / 2f, 0f)
+            drawImg(canvas, rImg, left + runnerX, (h - ch) / 2f, ch)
+            canvas.restore()
+            runnerX += if (toRight) runnerPx else -runnerPx
+            if (toRight && runnerX > areaW) runnerX = -rw
+            if (!toRight && runnerX < -rw) runnerX = areaW
+        } else
+        // Runner: machin desine (wou k ap vire) ki travèse ba a
         if (car != null) {
             val ch = minOf(runnerPaint.textSize * 1.2f, h * 0.92f)
             val rw = ch * car.ratio
@@ -281,6 +359,14 @@ class TickerView @JvmOverloads constructor(
             if (goRight && offset > areaW) offset = -w
         } else offset = (if (goRight) offset + pxPerFrame else offset - pxPerFrame) % w
         if (visibility == VISIBLE) postInvalidateOnAnimation()
+    }
+
+    /** Desine GIF separatè yo (canvas la deja deplase sou kòmansman liy lan). */
+    private fun drawSeps(canvas: Canvas, lineH: Int) {
+        val d = sepImg ?: return
+        if (sepXs.isEmpty()) return
+        val ih = textPaint.textSize * 1.3f
+        for (x in sepXs) drawImg(canvas, d, x, (lineH - ih) / 2f, ih)
     }
 
     /** Ajoute tèks la; chak imoji ki gen yon efè vin yon plas vid (GapSpan) ki desine apa. */
