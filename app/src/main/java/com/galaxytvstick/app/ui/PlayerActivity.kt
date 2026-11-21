@@ -141,6 +141,10 @@ class PlayerActivity : AppCompatActivity() {
     private var numberBuffer = ""
 
     private val handler = Handler(Looper.getMainLooper())
+    /** AFR tankou TiviMate: tann 3 s sou yon chanèl anvan n chanje vitès ekran an,
+     *  konsa lè kliyan an ap chanje chanèl youn dèyè lòt, TV a pa fè ekran nwa chak fwa. */
+    private val afrRun = Runnable { player?.videoFormat?.frameRate?.let { Afr.apply(this, it, prefs.afr) } }
+    private fun scheduleAfr() { handler.removeCallbacks(afrRun); handler.postDelayed(afrRun, 3_000) }
     private val hideInfo = Runnable { b.infoPanel.visibility = View.GONE }
     private val commitNumber = Runnable { jumpToNumber() }
     private val adTick = object : Runnable {
@@ -337,7 +341,7 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         override fun onPlaybackStateChanged(state: Int) {
-            if (state == Player.STATE_READY) player?.videoFormat?.frameRate?.let { Afr.apply(this@PlayerActivity, it, prefs.afr) }
+            if (state == Player.STATE_READY) scheduleAfr()
             b.loading.visibility = View.GONE // pa gen sèk k ap vire: dènye imaj la rete sou ekran an jiskaske nouvo chanèl la kòmanse
             val nowBuffering = state == Player.STATE_BUFFERING
             if (nowBuffering != buffering) { buffering = nowBuffering; reportStatus() }
@@ -573,6 +577,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun playChannel(i: Int, mode: Int = preferredMode, attempt: Int = 0, alt: Boolean = XtreamApi.preferAlt, stage: Int = 0, adopt: Boolean = false) {
+        handler.removeCallbacks(afrRun) // nouvo chanèl: anile chanjman ekran ki t ap tann lan
         val p = player ?: return
         // Nouvo chanèl (pa yon re-eseye): kontè rekoneksyon an rekòmanse
         if (attempt == 0 && stage == 0) { playedOk = false; reconnects = 0; readyAt = 0L; frozenShown = false; freezeRestarts = 0; healthBegin(channels[i]) }

@@ -15,7 +15,10 @@ object Afr {
     fun apply(act: Activity, fps: Float, enabled: Boolean) {
         if (Build.VERSION.SDK_INT < 23 || act.isFinishing) return
         val win = act.window ?: return
-        if (!enabled || fps !in 10f..70f) { setMode(act, 0); return }
+        if (!enabled) { setMode(act, 0); return }
+        // Vitès videyo a pa konnen (anpil chanèl live pa di l): kite ekran an jan l ye.
+        // Avan, nou te remete mòd nòmal la → yon dezyèm chanjman HDMI → ekran nwa lè w chanje chanèl.
+        if (fps !in 10f..70f) return
         @Suppress("DEPRECATION")
         val d: Display = act.windowManager.defaultDisplay
         val cur = d.mode
