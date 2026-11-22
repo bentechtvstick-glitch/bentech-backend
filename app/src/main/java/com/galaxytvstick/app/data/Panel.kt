@@ -255,6 +255,10 @@ data class GfxBumper(
 data class GfxSnipe(val images: List<String>, val position: String, val size: Int, val everyMin: Int, val durationSec: Int, val anim: String, val onChannelChange: Boolean,
     /** Tèks (opsyonèl) bò kote imaj la, oswa poukont li. */
     val text: String = "", val textColor: String = "#FFFFFF", val bgColor: String = "#CC0B1630")
+/** Rezo sosyal / WhatsApp: youn apre lòt nan kwen ekran an. */
+data class SocialItem(val net: String, val handle: String)
+data class GfxSocial(val items: List<SocialItem>, val title: String, val position: String, val everyMin: Int, val durationSec: Int, val perSec: Int,
+    val size: Int, val offset: Int, val bgColor: String, val textColor: String, val font: String)
 /** Bandeau chèn (tankou Kajou TV): onglè non emisyon an, tèks fiks, gwo bann koulè, logo ak lè a. */
 data class GfxLowerBar(val tab: String, val info: String, val logoUrl: String, val barColor: String, val tabBg: String, val tabColor: String,
     val infoBg: String, val infoColor: String, val showClock: Boolean, val clock12: Boolean, val clockColor: String, val font: String,
@@ -270,7 +274,8 @@ data class Graphics(
     val weather: GfxWeather? = null, val countdown: GfxCountdown? = null, val ident: GfxIdent? = null, val bumper: GfxBumper? = null,
     val snipe: GfxSnipe? = null,
     val weatherBar: GfxWeatherBar? = null,
-    val lowerBar: GfxLowerBar? = null
+    val lowerBar: GfxLowerBar? = null,
+    val social: GfxSocial? = null
 )
 
 /** Avètisman ekspirasyon: tèks la, konbyen jou ki rete, chak konbyen minit pou repete l, konbyen segonn li rete. */
@@ -482,6 +487,13 @@ data class PanelConfig(
                         GfxIdent(it.optStringOrNull("imageUrl"), it.optString("text"), it.optString("tagline"),
                             it.optInt("everyMin", 30).coerceIn(0, 240), it.optInt("durationSec", 5).coerceIn(2, 15), it.optBoolean("onChannelChange", false))
                     }?.takeIf { it.imageUrl != null || it.text.isNotBlank() },
+                    social = g.optJSONObject("social")?.let { so ->
+                        val items = so.optJSONArray("items").objects().map { x -> SocialItem(x.optString("net"), x.optString("handle")) }.filter { it.handle.isNotBlank() }
+                        if (items.isEmpty()) null else GfxSocial(items, so.optString("title"), so.optString("position", "bottom-left"),
+                            so.optInt("everyMin", 5).coerceIn(0, 240), so.optInt("durationSec", 20).coerceIn(5, 300), so.optInt("perSec", 5).coerceIn(2, 30),
+                            so.optInt("size", 100).coerceIn(60, 160), so.optInt("offset", 0).coerceIn(-200, 600), so.optString("bgColor", "#0B1630"),
+                            so.optString("textColor", "#FFFFFF"), so.optString("font", "condensed"))
+                    },
                     lowerBar = g.optJSONObject("lowerBar")?.let { b ->
                         val tab = b.optString("tab").trim(); val info = b.optString("info").trim(); val logo = b.optString("logoUrl").takeIf { u -> u.startsWith("http") } ?: ""
                         if (tab.isEmpty() && info.isEmpty() && logo.isEmpty()) null else GfxLowerBar(tab, info, logo,

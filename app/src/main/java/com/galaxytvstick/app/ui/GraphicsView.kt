@@ -26,6 +26,7 @@ import com.galaxytvstick.app.data.GfxIdent
 import com.galaxytvstick.app.data.GfxSnipe
 import com.galaxytvstick.app.data.GfxWeatherBar
 import com.galaxytvstick.app.data.GfxLowerBar
+import com.galaxytvstick.app.data.GfxSocial
 import com.galaxytvstick.app.data.GfxScoreboard
 import com.galaxytvstick.app.data.GfxWatermark
 import com.galaxytvstick.app.data.GfxWeather
@@ -71,6 +72,15 @@ class GraphicsView @JvmOverloads constructor(
     private var snipeSig = ""
     /** Lè pou montre snipe la yon fwa apre panel la fin chanje l (0 = non). */
     private var snipePreviewAt = 0L
+    /** Rezo sosyal (WhatsApp, Facebook…): yon ti pilil nan kwen an, rezo yo chanje youn apre lòt. */
+    private var soView: LinearLayout? = null
+    private var soShowing = false
+    private var soShownAt = 0L
+    private var soItemAt = 0L
+    private var soIndex = 0
+    private var lastSoAt = SystemClock.elapsedRealtime()
+    private var soSig = ""
+    private var soPreviewAt = 0L
     /** Bandeau chèn nan (tankou Kajou TV). */
     private var lbView: FrameLayout? = null
     private var lbClock: TextView? = null
@@ -126,6 +136,12 @@ class GraphicsView @JvmOverloads constructor(
         val hadIdent = gfx?.ident != null
         gfx = g
         if (g?.ident != null && !hadIdent) lastIdentAt = SystemClock.elapsedRealtime()
+        val sos = g?.social?.toString() ?: ""
+        if (sos != soSig) {
+            soSig = sos
+            hideSocial(false)
+            if (g?.social != null) { lastSoAt = SystemClock.elapsedRealtime(); soPreviewAt = SystemClock.elapsedRealtime() + 3_000L }
+        }
         // Bandeau chèn: reglaj la chanje → rekonstwi l (parèt nan 1-3 s)
         val lbs = g?.lowerBar?.toString() ?: ""
         if (lbs != lbSig) {
@@ -155,7 +171,7 @@ class GraphicsView @JvmOverloads constructor(
         val sig = (if (g == null) "" else listOf(g.bug, g.watermark, g.scoreboard, g.weather, g.countdown).toString()) +
             (tc?.let { listOf(it.clockPos, it.clockFormat, it.font, it.textStyle, it.fxColor, it.italic, it.textColor, it.textSize).toString() } ?: "")
         if (sig != signature) { signature = sig; rebuild(g) }
-        val needTick = (g != null && (g.countdown != null || g.watermark?.move == true || (g.ident?.everyMin ?: 0) > 0 || g.snipe != null || g.weatherBar != null || g.lowerBar != null)) || tc != null
+        val needTick = (g != null && (g.countdown != null || g.watermark?.move == true || (g.ident?.everyMin ?: 0) > 0 || g.snipe != null || g.weatherBar != null || g.lowerBar != null || g.social != null)) || tc != null
         if (needTick && !ticking) { ticking = true; ui.post(tick) }
         if (!needTick && ticking) { ticking = false; ui.removeCallbacks(tick) }
         visibility = if (g == null && tc == null && !bumperShowing) GONE else VISIBLE
@@ -167,6 +183,7 @@ class GraphicsView @JvmOverloads constructor(
         hideSnipe(); snipeSig = ""
         hideWeatherBar(false); wbSig = ""
         hideLowerBar(false); lbSig = ""
+        hideSocial(false); soSig = ""
         wxRotate = null; signature = "" // pwochen setGraphics rekonstwi l (epi relanse vil k ap vire yo)
         hideFull()
     }
@@ -435,6 +452,16 @@ class GraphicsView @JvmOverloads constructor(
             val auto = sn.everyMin > 0 && now - lastSnipeAt >= sn.everyMin * 60_000L
             if (preview || auto) { snipePreviewAt = 0L; showSnipe() }
         }
+        val so = g.social
+        if (so != null) {
+            val now = SystemClock.elapsedRealtime()
+            if (suppressed || bumperShowing) { if (soShowing) hideSocial(false) }
+            else if (!soShowing) {
+                val preview = soPreviewAt in 1..now
+                if (preview || (so.everyMin == 0 && soPreviewAt == 0L) || (so.everyMin > 0 && now - lastSoAt >= so.everyMin * 60_000L)) { soPreviewAt = 0L; showSocial(so) }
+            } else if (so.everyMin > 0 && now - soShownAt >= so.durationSec * 1000L) hideSocial(true)
+            else if (so.items.size > 1 && now - soItemAt >= so.perSec * 1000L) nextSocial(so)
+        }
         val lb = g.lowerBar
         if (lb != null) {
             val now = SystemClock.elapsedRealtime()
@@ -543,6 +570,79 @@ class GraphicsView @JvmOverloads constructor(
             cells.translationY = dp(12f).toFloat()
             cells.animate().alpha(1f).translationY(0f).setDuration(300).start()
         }.start()
+    }
+
+    // ------------------------------------------------------------ Rezo sosyal / WhatsApp
+    /** Koulè ak ti ikòn jeneral pou chak rezo (non rezo a ekri an tèks; pa gen logo mak). */
+    private fun socialMeta(net: String): Triple<String, Int, String> = when (net) {
+        "whatsapp" -> Triple("WhatsApp", 0xFF25D366.toInt(), "\u260E")
+        "facebook" -> Triple("Facebook", 0xFF1877F2.toInt(), "f")
+        "instagram" -> Triple("Instagram", 0xFFE1306C.toInt(), "\u25CE")
+        "tiktok" -> Triple("TikTok", 0xFF111111.toInt(), "\u266A")
+        "youtube" -> Triple("YouTube", 0xFFFF0000.toInt(), "\u25B6")
+        "x" -> Triple("X", 0xFF000000.toInt(), "\u2715")
+        else -> Triple("Web", 0xFF2563EB.toInt(), "\uD83C\uDF10")
+    }
+
+    private fun fillSocial(box: LinearLayout, so: GfxSocial) {
+        box.removeAllViews()
+        val it = so.items[soIndex % so.items.size]
+        val (name, color, glyph) = socialMeta(it.net)
+        val k = so.size / 100f
+        val face = TextFx.typeface(context, so.font, false)
+        val txt = parse(so.textColor, Color.WHITE)
+        val ic = label(glyph, 24f * k, Color.WHITE, bold = true).apply {
+            gravity = Gravity.CENTER
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(color) }
+        }
+        box.addView(ic, LinearLayout.LayoutParams(dp(46f * k), dp(46f * k)))
+        val col = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12f * k), 0, 0, 0) }
+        val clear = Color.alpha(parse(so.bgColor, 0xFF0B1630.toInt())) == 0
+        fun TextView.sh() = apply { typeface = face; if (clear) setShadowLayer(dp(3f).toFloat(), 0f, dp(1f).toFloat(), 0xD9000000.toInt()) }
+        if (so.title.isNotBlank()) col.addView(label(so.title.uppercase(), 12f * k, txt, bold = false).apply { alpha = 0.8f }.sh())
+        col.addView(label(name, 14f * k, txt, bold = true).apply { alpha = 0.85f }.sh())
+        col.addView(label(it.handle, 22f * k, txt, bold = true).apply { maxLines = 1 }.sh())
+        box.addView(col)
+    }
+
+    private fun showSocial(so: GfxSocial) {
+        hideSocial(false)
+        soShowing = true; soIndex = 0
+        val now = SystemClock.elapsedRealtime(); soShownAt = now; soItemAt = now; lastSoAt = now
+        val k = so.size / 100f
+        val bg = parse(so.bgColor, 0xFF0B1630.toInt())
+        val box = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(8f * k), dp(8f * k), dp(18f * k), dp(8f * k))
+            if (Color.alpha(bg) != 0) { background = GradientDrawable().apply { cornerRadius = dp(40f * k).toFloat(); setColor(bg) }; elevation = dp(5f).toFloat() }
+            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+        fillSocial(box, so)
+        val top = so.position.startsWith("top"); val right = so.position.endsWith("right")
+        addView(box, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, (if (top) Gravity.TOP else Gravity.BOTTOM) or (if (right) Gravity.END else Gravity.START)).apply {
+            marginStart = dp(48f); marginEnd = dp(48f)
+            if (top) topMargin = (dp(30f) + dp(so.offset.toFloat())).coerceAtLeast(0) else bottomMargin = (bottomInset + dp(16f) + dp(so.offset.toFloat())).coerceAtLeast(0)
+        })
+        soView = box
+        box.alpha = 0f; box.translationY = dp(20f).toFloat(); box.scaleX = 0.9f; box.scaleY = 0.9f
+        box.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f).setDuration(450).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+    }
+
+    private fun nextSocial(so: GfxSocial) {
+        val box = soView ?: return
+        soItemAt = SystemClock.elapsedRealtime()
+        box.animate().alpha(0f).translationY(-dp(10f).toFloat()).setDuration(250).withEndAction {
+            soIndex++; fillSocial(box, so)
+            box.translationY = dp(10f).toFloat()
+            box.animate().alpha(1f).translationY(0f).setDuration(300).start()
+        }.start()
+    }
+
+    private fun hideSocial(animated: Boolean) {
+        val v = soView ?: run { soShowing = false; return }
+        soView = null; soShowing = false
+        if (!animated) { v.animate().cancel(); removeView(v); return }
+        v.animate().alpha(0f).translationY(dp(20f).toFloat()).setDuration(400).withEndAction { removeView(v) }.start()
     }
 
     // ------------------------------------------------------------ Bandeau chèn (lower third tankou Kajou TV)
