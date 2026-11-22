@@ -31,12 +31,14 @@ class UpdateReceiver : BroadcastReceiver() {
                 val confirm = if (Build.VERSION.SDK_INT >= 33) intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
                 else intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
                 confirm?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                runCatching { context.startActivity(confirm) }
+                com.galaxytvstick.app.ui.Updater.setState("confirm")
+                runCatching { context.startActivity(confirm) }.onFailure { com.galaxytvstick.app.ui.Updater.setState("failed: confirm blocked") }
             }
             PackageInstaller.STATUS_SUCCESS -> {}
-            PackageInstaller.STATUS_FAILURE_ABORTED -> {} // kliyan an peze "Cancel"
+            PackageInstaller.STATUS_FAILURE_ABORTED -> com.galaxytvstick.app.ui.Updater.setState("cancelled") // kliyan an peze "Cancel"
             else -> {
                 val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE).orEmpty()
+                com.galaxytvstick.app.ui.Updater.setState("failed: $msg")
                 Toast.makeText(context, context.getString(R.string.update_failed, msg), Toast.LENGTH_LONG).show()
             }
         }

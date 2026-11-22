@@ -30,6 +30,7 @@ class GalaxyApp : Application(), coil.ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        com.galaxytvstick.app.ui.Updater.init(this)
         Lang.restore(this) // lang kliyan an sou tout ekran yo, menm premye a
         // Si app la fèmen sibitman, sove rezon an pou montre l pwochen fwa (ede jwenn pwoblèm nan)
         val previous = Thread.getDefaultUncaughtExceptionHandler()

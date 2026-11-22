@@ -24,6 +24,24 @@ import java.io.File
  */
 object Updater {
     @Volatile private var showing = false
+
+    // ---------------------------------------------------------------- Eta mizajou a (pou panel la)
+    /** Kote mizajou a ye sou TV sa a; app la voye l nan chak demann konfig (X-Update-State) → panel la montre l. */
+    @Volatile var state: String = ""
+        private set
+    private var sp: android.content.SharedPreferences? = null
+    fun init(ctx: android.content.Context) {
+        sp = ctx.getSharedPreferences("galaxy_update", android.content.Context.MODE_PRIVATE)
+        val s = sp?.getString("state", "").orEmpty(); val b = sp?.getInt("stateBuild", 0) ?: 0
+        // Vèsyon an chanje depi dènye eta a → mizajou a fèt
+        state = if (s.isNotEmpty() && b > 0 && b <= BuildConfig.VERSION_CODE) "updated" else s
+    }
+    /** [s] eta a (ASCII sèlman, li ale nan yon header HTTP), [build] vèsyon l ap eseye enstale a. */
+    fun setState(s: String, build: Int = 0) {
+        val clean = s.replace(Regex("[^\\x20-\\x7E]"), "?").take(120)
+        state = clean
+        sp?.edit()?.putString("state", clean)?.apply { if (build > 0) putInt("stateBuild", build) }?.apply()
+    }
     @Volatile private var downloading = false
     /** Mizajou ki te deja parèt pandan app la louvri a (pa repete l chak minit). */
     @Volatile private var promptedPush: String? = null
@@ -60,7 +78,7 @@ object Updater {
                         if (f.length() < 1_000_000) error("file too small")
                     }
             }.isSuccess
-            if (ok) { readyFile = f; readyBuild = build } else f.delete()
+            if (ok) { readyFile = f; readyBuild = build; setState("silent-ready", build) } else { f.delete(); setState("failed: download", build) }
             preparing = false
         }
     }
@@ -70,7 +88,8 @@ object Updater {
         val f = readyFile ?: return
         if (!f.exists() || readyBuild <= BuildConfig.VERSION_CODE || !canSilent(ctx)) return
         readyFile = null
-        GalaxyApp.scope.launch { installSession(ctx.applicationContext, f) }
+        setState("silent-installing", readyBuild)
+        GalaxyApp.scope.launch { if (!installSession(ctx.applicationContext, f)) setState("failed: silent install", readyBuild) }
     }
 
     /** Retounen true si yon mesaj mizajou parèt (oswa deja sou ekran an). */
@@ -176,7 +195,8 @@ object Updater {
         v.upVersion.text = activity.getString(R.string.update_version_fmt, u.version, BuildConfig.VERSION_NAME)
         v.upNotes.text = u.notes.ifBlank { activity.getString(R.string.update_default_notes) }
         v.upLater.visibility = if (u.force) android.view.View.GONE else android.view.View.VISIBLE
-        v.upLater.setOnClickListener { dialog.dismiss() }
+        setState("shown", u.build)
+        v.upLater.setOnClickListener { setState("later", u.build); dialog.dismiss() }
         v.upNow.setOnClickListener {
             v.upButtons.visibility = android.view.View.GONE
             v.upProgressBox.visibility = android.view.View.VISIBLE
@@ -199,6 +219,7 @@ object Updater {
     private fun download(activity: Activity, u: AppUpdate, onProgress: (Int) -> Unit, onDone: (Boolean) -> Unit) {
         if (downloading) return
         downloading = true
+        setState("downloading", u.build)
         val app = activity.applicationContext
         GalaxyApp.scope.launch {
             val file = File(app.externalCacheDir ?: app.cacheDir, "GalaxyTvStick-update.apk")
@@ -232,7 +253,8 @@ object Updater {
                 downloading = false
                 runCatching { onDone(ok.isSuccess) }
                 if (ok.isSuccess) install(activity, file)
-                else Toast.makeText(app, app.getString(R.string.update_failed, ok.exceptionOrNull()?.message ?: ""), Toast.LENGTH_LONG).show()
+                else setState("failed: download " + (ok.exceptionOrNull()?.message ?: ""), u.build)
+                if (!ok.isSuccess) Toast.makeText(app, app.getString(R.string.update_failed, ok.exceptionOrNull()?.message ?: ""), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -260,6 +282,7 @@ object Updater {
         // Louvri paj otorizasyon an dirèkteman; lè kliyan an tounen, enstalasyon an kontinye poukont li.
         if (Build.VERSION.SDK_INT >= 26 && !ctx.packageManager.canRequestPackageInstalls()) {
             pendingFile = file
+            setState("permission")
             Toast.makeText(ctx, R.string.update_allow, Toast.LENGTH_LONG).show()
             val opened = runCatching {
                 activity.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + ctx.packageName)))
@@ -273,6 +296,7 @@ object Updater {
         //    Android 12+: enstalatè sistèm nan dirèkteman. Apre premye fwa sa a, app la vin "enstalatè" pa l,
         //    epi tout lòt mizajou yo fèt an silans (an aryè plan, lè kliyan an pa sou app la).
         //    Android 11 oswa mwens: ekran enstalasyon Android la, ak bouton "Open" a lafen.
+        setState("installing")
         val useSession = Build.VERSION.SDK_INT >= 31
         if (useSession && installSession(ctx, file)) return
         // 2) Si sa pa mache: ansyen fason an (ekran enstalasyon Android la)
