@@ -1701,7 +1701,8 @@ function openTab(name) {
   if (name === "ev") loadEvents();
   if (name === "sys") loadSystem();
   if (name === "ads") loadAds();
-  if (name === "promo") loadPromos();
+  if (name === "promo") { loadPromos(); verWarn("promo", 250); }
+  if (name === "gfx") verWarn("gfx", 250);
   if (name === "gfx") loadGfx();
   $("#brandBox").hidden = !BRAND_TABS.includes(name);
   $("#brandAllBox").hidden = !BRAND_TABS.includes(name) || name === "gfx";
@@ -2603,6 +2604,19 @@ function prState(p) {
   if (a && a > now) return ["🕒", t("Ap tann")];
   if (b && b < now) return ["✓", t("Fini")];
   return ["🟢", t("Ap pase kounye a")];
+}
+// Avètisman: TV ki gen yon app twò ansyen pou nouvo grafik yo (yo resevwa reglaj la, men yo pa konn montre l)
+async function verWarn(pane, min) {
+  const host = $(`main[data-pane="${pane}"] .pagehead`); if (!host) return;
+  let box = host.parentElement.querySelector(".verwarn");
+  if (!box) { box = document.createElement("div"); box.className = "card verwarn"; box.style.cssText = "margin-bottom:16px;border-left:4px solid #d97706"; host.after(box); }
+  box.hidden = true;
+  let y; try { y = await api("GET", "/galaxy/app-update"); } catch { return; }
+  const old = (y.tvs || []).filter((x) => x.build && x.build < min);
+  if (!old.length) return;
+  const names = old.slice(0, 8).map((x) => `${esc(x.name || "TV")} <span class="note">(${esc(x.version)})</span>`).join(", ") + (old.length > 8 ? " …" : "");
+  box.innerHTML = `<b>⚠ ${esc(t("{0} TV gen yon app ki twò ansyen pou paj sa a.", old.length))}</b><p class="note" style="margin:4px 0 0">${esc(t("Yo resevwa reglaj yo (panel la di «aplike»), men yo pa konn montre yo. Fòk yo gen app 1.0.{0} oswa plis: Sistèm → 📲 Mizajou app la.", min))}</p><p class="note" style="margin:4px 0 0">${names}</p>`;
+  box.hidden = false;
 }
 async function loadPromos() {
   let r, reach = {};
