@@ -290,7 +290,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const s0 = settings();
     const bs = brand === "galaxy" ? null : ((s0.brandSettings || {})[brand] || {});
     // Yon lòt mak ki poko gen grafik pa l: li pa janm montre logo/watermark/ident Galaxy a
-    const s = !bs ? s0 : { ...s0, ...bs, ...(bs.gfx ? {} : { gfx: { ...(s0.gfx || {}), bug: {}, watermark: {}, ident: {}, bumper: {}, snipe: {} } }) };
+    const s = !bs ? s0 : { ...s0, ...bs, ...(bs.gfx ? {} : { gfx: { ...(s0.gfx || {}), bug: {}, watermark: {}, ident: {}, bumper: {}, snipe: {}, social: {}, lowerBar: {} } }) };
     const forBrand = (it) => { const b = String(it?.brand || "galaxy"); return b === "all" || b === brand; };
     // TV yo resevwa chanjman panel la touswit pa siyal "sync" la (long-poll); demann konfig sa a se sèlman yon sekou.
     // 120 s olye 30 s: 4 fwa mwens trafik sou Render (bandwidth la peye), san okenn reta pou kliyan an.
@@ -361,6 +361,29 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       .filter((t) => { const a = toEpochSec(t.start, zone), b = toEpochSec(t.end, zone, true); return (!a || a <= now) && (!b || b >= now); })
       .map((t) => ({ text: String(t.message || "").trim(), color: /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(t.color || "") ? t.color : "" }))
       .filter((t) => t.text);
+    // ---- Promo Manager: pwomosyon ki konsène TV sa a (mak, revandè, kliyan ki pral ekspire / ki ekspire) ----
+    const custExp = customer?.expiry ? toEpochSec(customer.expiry, zone, true) : Number(device.providerExp) > 0 ? Number(device.providerExp) : 0;
+    const promoEdges = [];
+    const promos = (data().promos || []).filter((p) => p && p.active !== false).filter((p) => {
+      const a = toEpochSec(p.start, zone), b = toEpochSec(p.end, zone, true);
+      if (a > now) promoEdges.push(a); else if (b && b >= now) promoEdges.push(b + 1);
+      if ((a && a > now) || (b && b < now)) return false;
+      const pb = String(p.brand || "all"); if (pb !== "all" && pb !== brand) return false;
+      const po = String(p.owner || "").toLowerCase(); if (po && po !== String(device.owner || "").toLowerCase()) return false;
+      const aud = String(p.audience || "all"), days = Math.max(1, Math.min(60, Number(p.days) || 7));
+      if (aud === "expiring") return !!custExp && custExp >= now && custExp - now <= days * 86400;
+      if (aud === "expired") return !!custExp && custExp < now;
+      return true;
+    });
+    if (promos.length) {
+      const reach = (data().promoReach ??= {});
+      for (const p of promos) { const r = (reach[p.id] ??= {}); if (!r[device.mac] || now - r[device.mac] > 3600) r[device.mac] = now; }
+      for (const p of promos) if (p.kind === "ticker" || p.kind === "both") {
+        const txt = String(p.text || "").trim().slice(0, 300);
+        if (txt && !rb) tickerItems.push({ text: txt, color: /^#[0-9a-f]{6}$/i.test(p.color || "") ? p.color : "" });
+      }
+    }
+
     // Pwochen lè yon mesaj kòmanse oswa fini: TV a rechaje konfig la jis lè sa a
     const tickerEdge = (data().tickers || []).filter(isActive).filter(forBrand)
       .flatMap((t) => [toEpochSec(t.start, zone), toEpochSec(t.end, zone, true) + 1])
@@ -537,7 +560,18 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     // Sa TV a montre kounye a pou meteyo (panel la montre l nan lis TV yo)
     { const w = gfx.graphics?.weather; const f = w ? (Array.isArray(w.list) && w.list.length ? w.list[0] : w) : null;
       device.lastWx = f && f.temp ? { temp: String(f.temp), icon: String(f.icon || ""), city: String(f.city || ""), rotating: Array.isArray(w.list) && w.list.length > 1, at: Date.now() } : null; }
-    const nextEdge = Math.min(tickerEdge, gfx.edge);
+    // Promo kalite "snipe": li parèt kòm snipe (imaj/GIF + tèks), avan snipe nòmal la
+    const promoSnipes = promos.filter((p) => (p.kind === "snipe" || p.kind === "both") && (/^https?:\/\//i.test(p.imageUrl || "") || String(p.text || "").trim()));
+    if (promoSnipes.length) {
+      gfx.graphics ??= {};
+      const p0 = promoSnipes[0], base = gfx.graphics.snipe;
+      const imgs = promoSnipes.map((p) => String(p.imageUrl || "")).filter((u) => /^https?:\/\//i.test(u)).slice(0, 10);
+      gfx.graphics.snipe = { ...(base || {}), imageUrl: imgs[0] || null, images: imgs, text: imgs.length ? String(p0.imageText || "").slice(0, 80) : String(p0.text || "").trim().slice(0, 80),
+        textColor: base?.textColor || "#FFFFFF", bgColor: base?.bgColor || "#E11D2E", position: ["bottom-left", "bottom-center", "bottom-right"].includes(p0.position) ? p0.position : base?.position || "bottom-right",
+        size: base?.size || 120, everyMin: Math.max(0, Math.min(240, Number(p0.everyMin) || 5)), durationSec: Math.max(3, Math.min(30, Number(p0.durationSec) || 8)),
+        anim: p0.anim || base?.anim || "slide", onChannelChange: false };
+    }
+    const nextEdge = Math.min(tickerEdge, gfx.edge, ...promoEdges.filter((x) => x > now).map((x) => x - now));
 
     const payload = {
       known: true,
@@ -973,6 +1007,16 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (!d) return res.status(404).json({ ok: false });
     res.set("Cache-Control", "no-store");
     res.json({ ok: true, ...lineupOf(d) });
+  });
+
+  // Promo: konbyen TV ki resevwa chak pwomosyon (24 è / 7 jou)
+  app.get("/api/galaxy/promos/reach", authenticate, (req, res) => {
+    const now = Math.floor(Date.now() / 1000), out = {};
+    for (const [id, r] of Object.entries(data().promoReach || {})) {
+      const v = Object.values(r || {});
+      out[id] = { day: v.filter((t) => now - t < 86400).length, week: v.filter((t) => now - t < 7 * 86400).length };
+    }
+    res.json(out);
   });
 
   // Lyen kout pou WhatsApp: /l/<tokèn> → paj la (tokèn nan rete apre "#", li pa ale nan jounal sèvè yo)

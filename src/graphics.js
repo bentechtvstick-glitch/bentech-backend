@@ -314,6 +314,16 @@ export function buildGraphics(g, ctx) {
     if (Array.isArray(out.weather.list)) out.weather.list = out.weather.list.map((x) => ({ ...x, city: "" }));
   }
 
+  // Rezo sosyal: WhatsApp, Facebook, Instagram, TikTok, YouTube, sit entènèt — youn apre lòt nan kwen ekran an
+  const so = g.social || {};
+  if (so.on) {
+    const NETS = ["whatsapp", "facebook", "instagram", "tiktok", "youtube", "x", "website"];
+    const items = NETS.map((n) => ({ net: n, handle: str(so[n], 60) })).filter((x) => x.handle);
+    if (items.length) out.social = { items, title: str(so.title, 30), position: ["bottom-left", "bottom-right", "top-left", "top-right"].includes(so.position) ? so.position : "bottom-left",
+      everyMin: num(so.everyMin, 5, 0, 240), durationSec: num(so.durationSec, 20, 5, 300), perSec: num(so.perSec, 5, 2, 30), size: num(so.size, 100, 60, 160),
+      offset: num(so.offset, 0, -200, 600), bgColor: so.bgClear ? "#00000000" : hex(so.bgColor, "#0B1630"), textColor: hex(so.textColor, "#FFFFFF"), font: TEXT_FONTS.includes(so.font) ? so.font : "condensed" };
+  }
+
   // Bandeau chèn (tankou Kajou TV): gwo bann koulè anba, onglè non emisyon an, tèks fiks, logo ak lè a
   const lb = g.lowerBar || {};
   if (lb.on && (str(lb.tab, 40) || str(lb.info, 120) || isUrl(lb.logoUrl))) {

@@ -614,6 +614,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <button class="tab navlink" role="tab" data-tab="ev" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/></svg><span>Live Events</span></button>
       <button class="tab navlink" role="tab" data-tab="bc" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4M9 10.5l2 2 4-4"/></svg><span>Broadcast</span></button>
       <button class="tab navlink" role="tab" data-tab="ads" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg><span>Media Ads</span></button>
+      <button class="tab navlink" role="tab" data-tab="promo" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span>Promo</span></button>
       <button class="tab navlink" role="tab" data-tab="tk" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h13"/><path d="M4 4v16"/></svg><span>Ticker</span></button>
       <button class="tab navlink" role="tab" data-tab="cy" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15h18M7 18h6"/></svg><span>Chyron / Lower Third</span></button>
       <button class="tab navlink" role="tab" data-tab="gfx" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 8h3M6 8h4M6 16h5M16 14l2 2-2 2"/></svg><span>Grafik TV</span></button>
@@ -970,6 +971,14 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
             <div class="row2"><div class="field"><label for="g_weather_temp">Tanperati alamen (si otomatik etenn)</label><input type="number" id="g_weather_temp" data-g="weather.temp" min="-60" max="140" value="30"></div><div class="field"><label for="g_weather_icon">Ikòn alamen</label><select id="g_weather_icon" data-g="weather.icon"><option>☀️</option><option>🌤️</option><option>☁️</option><option>🌧️</option><option>⛈️</option><option>🌦️</option><option>🌫️</option><option>🌨️</option><option>🌙</option></select></div></div>
             <div class="field"><label for="g_weather_position">Pozisyon</label><select id="g_weather_position" data-g="weather.position"><option value="top-left">Anlè agoch</option><option value="top-center">Anlè nan mitan</option><option value="top-right">Anlè adwat</option><option value="bottom-left">Anba agoch</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-right">Anba adwat</option></select></div>
           </div>
+          <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="social.on" id="g_social_on"><i></i></label><div class="grow"><label for="g_social_on"><b>Rezo sosyal / WhatsApp</b></label><p class="note" style="margin:2px 0 0">Ekri nimewo WhatsApp ou ak non paj ou yo: TV a montre yo youn apre lòt nan kwen ekran an, ak koulè chak rezo. Kite vid sa ou pa genyen.</p></div><button class="btn small purple" type="button" data-gxplay="social">▶ Gade</button></div>
+            <div class="row3"><div class="field"><label for="g_social_whatsapp">WhatsApp</label><input type="text" id="g_social_whatsapp" data-g="social.whatsapp" maxlength="60" placeholder="+509 3840 9090"></div><div class="field"><label for="g_social_facebook">Facebook</label><input type="text" id="g_social_facebook" data-g="social.facebook" maxlength="60" placeholder="Galaxy TV Stick"></div><div class="field"><label for="g_social_instagram">Instagram</label><input type="text" id="g_social_instagram" data-g="social.instagram" maxlength="60" placeholder="@galaxytvstick"></div></div>
+            <div class="row3"><div class="field"><label for="g_social_tiktok">TikTok</label><input type="text" id="g_social_tiktok" data-g="social.tiktok" maxlength="60" placeholder="@galaxytvstick"></div><div class="field"><label for="g_social_youtube">YouTube</label><input type="text" id="g_social_youtube" data-g="social.youtube" maxlength="60" placeholder="Galaxy TV"></div><div class="field"><label for="g_social_website">Sit entènèt</label><input type="text" id="g_social_website" data-g="social.website" maxlength="60" placeholder="www.galaxytvstick.net"></div></div>
+            <div class="row3"><div class="field"><label for="g_social_title">Tit (opsyonèl)</label><input type="text" id="g_social_title" data-g="social.title" maxlength="30" placeholder="Kontakte nou"></div><div class="field"><label for="g_social_position">Pozisyon</label><select id="g_social_position" data-g="social.position"><option value="bottom-left">Anba agoch</option><option value="bottom-right">Anba adwat</option><option value="top-left">Anlè agoch</option><option value="top-right">Anlè adwat</option></select></div><div class="field"><label for="g_social_font">Lèt yo</label><select id="g_social_font" data-g="social.font" data-fx-font></select></div></div>
+            <div class="row3"><div class="field"><label for="g_social_perSec">Chak rezo rete (segonn)</label><input type="number" id="g_social_perSec" data-g="social.perSec" min="2" max="30" value="5"></div><div class="field"><label for="g_social_everyMin">Parèt chak (minit, 0 = tout tan)</label><input type="number" id="g_social_everyMin" data-g="social.everyMin" min="0" max="240" value="5"></div><div class="field"><label for="g_social_durationSec">Rete (segonn)</label><input type="number" id="g_social_durationSec" data-g="social.durationSec" min="5" max="300" value="20"></div></div>
+            <div class="row3"><div><label class="swatch"><input type="color" data-g="social.bgColor" value="#0b1630"><span><b>Fon</b></span></label><label class="inline" style="gap:6px;margin-top:4px"><input type="checkbox" data-g="social.bgClear" id="g_social_bgClear"> <span>Transparan</span></label></div><label class="swatch"><input type="color" data-g="social.textColor" value="#ffffff"><span><b>Tèks</b></span></label><div class="field"><label for="g_social_size">Gwosè: <b id="gxSoSizeV"></b>%</label><input type="range" id="g_social_size" data-g="social.size" min="60" max="160" step="5" value="100" style="width:100%"></div></div>
+            <div class="field"><label for="g_social_offset">Monte / desann: <b id="gxSoOffV"></b> px</label><input type="range" id="g_social_offset" data-g="social.offset" min="-200" max="600" step="10" value="0" style="width:100%"></div>
+          </div>
           <div class="anibox"><div class="gxhead"><label class="sw"><input type="checkbox" data-g="lowerBar.on" id="g_lowerBar_on"><i></i></label><div class="grow"><label for="g_lowerBar_on"><b>Bandeau chèn (lower third)</b></label><p class="note" style="margin:2px 0 0">Tankou Kajou TV: yon gwo bann koulè anba ekran an, yon onglè ak non emisyon an, yon tèks fiks (sit, WhatsApp) ak logo ou. Ticker a (ak lè a) defile anba l.</p></div><button class="btn small purple" type="button" data-gxplay="lowerBar">▶ Gade</button></div>
             <div class="row2"><div class="field"><label for="g_lowerBar_tab">Onglè (non emisyon an)</label><input type="text" id="g_lowerBar_tab" data-g="lowerBar.tab" maxlength="40" placeholder="Egz: ChakJou TV"></div><div class="field"><label for="g_lowerBar_info">Tèks fiks</label><input type="text" id="g_lowerBar_info" data-g="lowerBar.info" maxlength="120" placeholder="Egz: WhatsApp: +509 … · www.…"></div></div>
             <div class="field"><label for="g_lowerBar_logoUrl">Logo adwat (opsyonèl, PNG/GIF transparan)</label><input type="url" id="g_lowerBar_logoUrl" data-g="lowerBar.logoUrl" maxlength="500" placeholder="https://…/logo.png"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="g_lowerBar_logoUrl">📤 Chwazi yon imaj</button><span class="note" data-upmsg="g_lowerBar_logoUrl"></span></div></div>
@@ -1299,6 +1308,22 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
     </main>
 
     <!-- Pop-ups -->
+    <main data-pane="promo" hidden>
+      <div class="pagehead"><div><h1>Promo &amp; Advertisement Manager</h1><p>Chak pwomosyon gen dat li, kiyès ki wè l, ak kote l parèt (snipe, ticker oswa tou de). Li sispann poukont li lè dat la fini.</p></div></div>
+      <div class="card"><div class="list" id="promoList"></div></div>
+      <div class="card" style="margin-top:16px"><div class="cardhead"><div><h2 id="promoFormTitle">➕ Nouvo pwomosyon</h2></div></div>
+        <form id="promoForm" style="display:flex;flex-direction:column;gap:12px">
+          <input type="hidden" id="prId">
+          <div class="row2"><div class="field"><label for="prName">Non (pou ou sèlman)</label><input type="text" id="prName" maxlength="60" required placeholder="Egz: Rabè Nwèl"></div><div class="field"><label for="prKind">Kote l parèt</label><select id="prKind"><option value="snipe">Snipe (imaj/GIF anba ekran an)</option><option value="ticker">Ticker (mesaj k ap defile)</option><option value="both">Tou de</option></select></div></div>
+          <div class="field"><label for="prText">Tèks</label><input type="text" id="prText" maxlength="300" data-emoji placeholder="Egz: 🎄 Renouvle kounye a: 10% rabè! WhatsApp +509 …"></div>
+          <div class="field" id="prImgBox"><label for="prImg">Imaj oswa GIF (pou snipe la)</label><input type="url" id="prImg" maxlength="500" placeholder="https://…/promo.gif"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="prImg">📤 Chwazi yon imaj</button><span class="note" data-upmsg="prImg"></span></div></div>
+          <div class="row3"><div class="field"><label for="prPos">Pozisyon snipe</label><select id="prPos"><option value="bottom-right">Anba adwat</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-left">Anba agoch</option></select></div><div class="field"><label for="prEvery">Parèt chak (minit)</label><input type="number" id="prEvery" min="1" max="240" value="5"></div><div class="field"><label for="prDur">Rete (segonn)</label><input type="number" id="prDur" min="3" max="30" value="8"></div></div>
+          <div class="row3"><div class="field"><label for="prBrand">Ki TV</label><select id="prBrand"><option value="all">Tout (Galaxy + Ben Tech)</option><option value="galaxy">Galaxy sèlman</option><option value="bentech">Ben Tech sèlman</option></select></div><div class="field"><label for="prOwner">Revandè (opsyonèl)</label><input type="text" id="prOwner" maxlength="60" placeholder="Non itilizatè revandè a"></div><div class="field"><label for="prColor">Koulè mesaj ticker</label><input type="color" id="prColor" value="#ffd400"></div></div>
+          <div class="row3"><div class="field"><label for="prAud">Kliyan</label><select id="prAud"><option value="all">Tout kliyan</option><option value="expiring">Kliyan ki pral ekspire</option><option value="expired">Kliyan ki ekspire deja</option></select></div><div class="field" id="prDaysBox"><label for="prDays">Nan konbyen jou</label><input type="number" id="prDays" min="1" max="60" value="7"></div><div class="field"><label class="inline" style="gap:8px;margin-top:24px"><input type="checkbox" id="prActive" checked> <span>Aktif</span></label></div></div>
+          <div class="row2"><div class="field"><label for="prStart">Kòmanse</label><input type="datetime-local" id="prStart"></div><div class="field"><label for="prEnd">Fini</label><input type="datetime-local" id="prEnd"></div></div>
+          <div class="btns"><button class="btn" type="button" id="prCancel" hidden>Anile</button><button class="btn primary" type="submit" id="prSave">Ajoute pwomosyon an</button><span class="msg" id="prMsg"></span></div>
+        </form></div>
+    </main>
     <main data-pane="pp" hidden>
       <div class="pagehead"><div><h1>Pop-ups</h1><p>Parèt yon fwa sou chak TV ant de dat yo.</p></div></div>
       <div class="card"><div class="list" id="popupList"></div>
@@ -1587,7 +1612,7 @@ const BRAND_KEY = (k) => k === "gfx" || /^(ticker|banner|popup|adBreak|chyron|ep
 let brand = "galaxy"; try { brand = localStorage.getItem("gxBrand") === "bentech" ? "bentech" : "galaxy"; } catch {}
 const brandOf = (it) => String((it && it.brand) || "galaxy");
 const brandNow = () => { try { return BRAND_TABS.includes(tab) ? brand : "galaxy"; } catch { return "galaxy"; } };
-const brandOver = (s, b) => { if (!s || typeof s !== "object") return s; const o = (s.brandSettings || {})[b] || {}; return { ...s, ...o, ...(o.gfx ? {} : { gfx: { ...(s.gfx || {}), bug: {}, watermark: {}, ident: {}, bumper: {}, snipe: {} } }) }; };
+const brandOver = (s, b) => { if (!s || typeof s !== "object") return s; const o = (s.brandSettings || {})[b] || {}; return { ...s, ...o, ...(o.gfx ? {} : { gfx: { ...(s.gfx || {}), bug: {}, watermark: {}, ident: {}, bumper: {}, snipe: {}, social: {}, lowerBar: {} } }) }; };
 async function api(method, path, body) {
   const brand = brandNow();
   if (path.startsWith("/settings") && brand !== "galaxy") {
@@ -1675,6 +1700,7 @@ function openTab(name) {
   if (name === "ev") loadEvents();
   if (name === "sys") loadSystem();
   if (name === "ads") loadAds();
+  if (name === "promo") loadPromos();
   if (name === "gfx") loadGfx();
   $("#brandBox").hidden = !BRAND_TABS.includes(name);
   $("#brandAllBox").hidden = !BRAND_TABS.includes(name) || name === "gfx";
@@ -2566,6 +2592,63 @@ function fillFxSelects() {
   $$("select[data-fx-style]").forEach((sel) => { const v = sel.value; sel.innerHTML = G.STYLES.map(([k, label]) => `<option value="${k}">${esc(t(label))}</option>`).join(""); if (v) sel.value = v; });
 }
 fillFxSelects();
+// ------------------------------------------------------------ Promo & Advertisement Manager
+let promoItems = [];
+const prAudName = (p) => p.audience === "expiring" ? t("Kliyan ki pral ekspire nan {0} jou", p.days || 7) : p.audience === "expired" ? t("Kliyan ki ekspire") : t("Tout kliyan");
+const prKindName = (k) => k === "ticker" ? "Ticker" : k === "both" ? "Snipe + Ticker" : "Snipe";
+function prState(p) {
+  const now = Date.now(), a = p.start ? Date.parse(p.start) : 0, b = p.end ? Date.parse(p.end) : 0;
+  if (p.active === false) return ["⏸", t("Sispann")];
+  if (a && a > now) return ["🕒", t("Ap tann")];
+  if (b && b < now) return ["✓", t("Fini")];
+  return ["🟢", t("Ap pase kounye a")];
+}
+async function loadPromos() {
+  let r, reach = {};
+  try { r = await api("GET", "/promos?limit=500"); reach = await api("GET", "/galaxy/promos/reach").catch(() => ({})); } catch (e) { $("#promoList").innerHTML = `<div class="note">⚠ ${esc(e.message)}</div>`; return; }
+  promoItems = r.data || [];
+  $("#promoList").innerHTML = promoItems.length ? promoItems.map((p) => {
+    const [ic, st] = prState(p), rc = reach[p.id] || { day: 0, week: 0 };
+    return `<div class="row" style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">
+      ${p.imageUrl ? `<img src="${esc(p.imageUrl)}" alt="" style="height:44px;max-width:90px;object-fit:contain;border-radius:6px">` : `<span style="font-size:26px">📣</span>`}
+      <div style="flex:1;min-width:200px"><b>${esc(p.name || "—")}</b> <span class="note">${ic} ${esc(st)}</span>
+        <div class="note">${esc(prKindName(p.kind))} · ${esc(prAudName(p))} · ${esc(p.brand === "galaxy" ? "Galaxy" : p.brand === "bentech" ? "Ben Tech" : t("Tout TV"))}${p.owner ? " · " + esc(p.owner) : ""}</div>
+        <div class="note">${p.start ? esc(fmtExp(p.start)) : "…"} → ${p.end ? esc(fmtExp(p.end)) : "…"} · 📺 ${esc(t("{0} TV jodi a · {1} TV 7 jou", rc.day, rc.week))}</div>
+        ${p.text ? `<div class="note" style="color:var(--text)">“${esc(p.text)}”</div>` : ""}</div>
+      <button class="btn small" type="button" data-pr-toggle="${esc(p.id)}">${p.active === false ? "▶ " + esc(t("Aktive")) : "⏸ " + esc(t("Sispann"))}</button>
+      <button class="btn small" type="button" data-pr-edit="${esc(p.id)}">✏️</button>
+      <button class="btn small danger" type="button" data-pr-del="${esc(p.id)}">🗑</button></div>`;
+  }).join("") : `<div class="note">${esc(t("Poko gen pwomosyon. Kreye youn anba a."))}</div>`;
+}
+function prFill(p) {
+  $("#prId").value = p?.id || ""; $("#prName").value = p?.name || ""; $("#prKind").value = p?.kind || "snipe"; $("#prText").value = p?.text || "";
+  $("#prImg").value = p?.imageUrl || ""; $("#prPos").value = p?.position || "bottom-right"; $("#prEvery").value = p?.everyMin || 5; $("#prDur").value = p?.durationSec || 8;
+  $("#prBrand").value = p?.brand || "all"; $("#prOwner").value = p?.owner || ""; $("#prColor").value = p?.color || "#ffd400";
+  $("#prAud").value = p?.audience || "all"; $("#prDays").value = p?.days || 7; $("#prActive").checked = p?.active !== false;
+  $("#prStart").value = p?.start || ""; $("#prEnd").value = p?.end || "";
+  $("#promoFormTitle").textContent = p ? "✏️ " + t("Modifye pwomosyon an") : "➕ " + t("Nouvo pwomosyon");
+  $("#prSave").textContent = p ? t("Sove") : t("Ajoute pwomosyon an"); $("#prCancel").hidden = !p; prVis();
+}
+function prVis() { $("#prDaysBox").hidden = $("#prAud").value !== "expiring"; const k = $("#prKind").value; $("#prImgBox").hidden = k === "ticker"; $("#prPos").closest(".row3").hidden = k === "ticker"; }
+$("#prAud").addEventListener("change", prVis); $("#prKind").addEventListener("change", prVis);
+$("#prCancel").addEventListener("click", () => prFill(null));
+$("#promoForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = { name: $("#prName").value.trim(), kind: $("#prKind").value, text: $("#prText").value.trim(), imageUrl: $("#prImg").value.trim(),
+    position: $("#prPos").value, everyMin: +$("#prEvery").value || 5, durationSec: +$("#prDur").value || 8, brand: $("#prBrand").value,
+    owner: $("#prOwner").value.trim(), color: $("#prColor").value, audience: $("#prAud").value, days: +$("#prDays").value || 7,
+    active: $("#prActive").checked, start: $("#prStart").value, end: $("#prEnd").value };
+  if (body.kind !== "ticker" && !body.imageUrl && !body.text) return setMsg($("#prMsg"), t("Mete yon tèks oswa yon imaj."));
+  if (body.kind === "ticker" && !body.text) return setMsg($("#prMsg"), t("Mete tèks mesaj ticker a."));
+  try { const id = $("#prId").value; await api(id ? "PUT" : "POST", id ? `/promos/${encodeURIComponent(id)}` : "/promos", body); setMsg($("#prMsg"), t("Sove ✓"), true); prFill(null); loadPromos(); }
+  catch (err) { setMsg($("#prMsg"), err.message); }
+});
+document.addEventListener("click", async (e) => {
+  const ed = e.target.closest("[data-pr-edit]"), tg = e.target.closest("[data-pr-toggle]"), dl = e.target.closest("[data-pr-del]");
+  if (ed) { prFill(promoItems.find((p) => p.id === ed.dataset.prEdit)); $("#promoForm").scrollIntoView({ behavior: "smooth" }); }
+  if (tg) { const p = promoItems.find((x) => x.id === tg.dataset.prToggle); if (p) { await api("PUT", `/promos/${encodeURIComponent(p.id)}`, { active: p.active === false }).catch((err) => toast(err.message)); loadPromos(); } }
+  if (dl && confirm(t("Efase pwomosyon sa a?"))) { await api("DELETE", `/promos/${encodeURIComponent(dl.dataset.prDel)}`).catch((err) => toast(err.message)); loadPromos(); }
+});
 // ------------------------------------------------------------ Gid TV a: ki chanèl k ap bay yon pwogram
 function guideStatus(g) {
   const n = (g.sources || []).reduce((a, x) => a + (x.programmes || 0), 0);
@@ -4087,6 +4170,7 @@ async function loadAds() {
 const GX_DEF = { bug: { on: false, imageUrl: "", text: "", position: "top-right", size: 44, opacity: 85, style: "classic", font: "sans", color: "#ffffff", color2: "#1d4ed8", italic: false, caps: true },
   watermark: { on: false, text: "{mac}", position: "bottom-right", size: 16, opacity: 25, move: false, style: "plain", font: "sans", color: "#ffffff", color2: "#000000", italic: false },
   scoreboard: { on: false, league: "", clock: "", home: "", homeScore: "0", homeColor: "#1d4ed8", away: "", awayScore: "0", awayColor: "#dc2626", position: "top-left" },
+  social: { on: false, whatsapp: "", facebook: "", instagram: "", tiktok: "", youtube: "", x: "", website: "", title: "", position: "bottom-left", font: "condensed", perSec: 5, everyMin: 5, durationSec: 20, bgColor: "#0b1630", bgClear: false, textColor: "#ffffff", size: 100, offset: 0 },
   lowerBar: { on: false, tab: "", info: "", logoUrl: "", barColor: "#f0511e", tabBg: "#e11d2e", tabColor: "#ffffff", infoBg: "#ffffff", infoClear: false, infoColor: "#111111", clockColor: "#ffffff", showClock: true, clock12: true, font: "condensed", size: 100, offset: 0, everyMin: 0, durationSec: 30 },
   weatherBar: { on: false, title: "METEYO", subtitle: "JODI A", font: "condensed", subColor: "#0b1630", titleFont: "condensed", titleSize: 30, subSize: 14, titleY: 0, subY: 0, titleItalic: true, offset: 0, bgClear: false, unit: "F", scope: "haiti", cities: "", perPage: "3", pageSec: 6, position: "bottom", everyMin: 10, durationSec: 20, bgColor: "#1d4ed8", accentColor: "#f59e0b", textColor: "#ffffff", showNow: true },
   weather: { on: false, showCity: true, city: "", scope: "all", cities: "", every: "8", rotate: true, mode: "rotate", flash: "3", unit: "C", auto: true, temp: 30, icon: "🌤️", position: "top-right" },
@@ -4169,7 +4253,7 @@ function sbOpenFlags(btn) {
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-flagfor]"); if (b) { e.preventDefault(); return sbFlagPop ? sbCloseFlags() : sbOpenFlags(b); } if (sbFlagPop && !e.target.closest(".flagpop")) sbCloseFlags(); });
 function gxRead() { const g = {}; gxEls().forEach((el) => { const [k, f] = el.dataset.g.split("."); (g[k] ??= {})[f] = el.type === "checkbox" ? el.checked : el.type === "number" || el.type === "range" ? (el.value === "" ? "" : +el.value) : el.value.trim(); }); return g; }
-function gxFill(g) { gxEls().forEach((el) => { const [k, f] = el.dataset.g.split("."); const v = g?.[k]?.[f] ?? GX_DEF[k][f]; if (el.type === "checkbox") el.checked = !!v; else el.value = v; }); gxLabels(); gxWbList(); gxLbLabels(); }
+function gxFill(g) { gxEls().forEach((el) => { const [k, f] = el.dataset.g.split("."); const v = g?.[k]?.[f] ?? GX_DEF[k][f]; if (el.type === "checkbox") el.checked = !!v; else el.value = v; }); gxLabels(); gxWbList(); gxLbLabels(); gxSoLabels(); }
 function gxLabels() { const wxs = $('[data-g="weather.scope"]').value; $("#gxWxScopeNote").hidden = wxs !== "client"; const wxm = ["haiti", "haiti_arr", "world", "list"].includes(wxs), wxr = $('[data-g="weather.rotate"]').checked; $("#gxWxRotBox").hidden = !wxm; $("#gxWxListBox").hidden = wxs !== "list" || !wxr; $("#gxWxEveryBox").hidden = !wxm || !wxr; const wxf = $('[data-g="weather.mode"]').value === "flash"; $("#gxWxModeBox").hidden = !wxm || !wxr; $("#gxWxFlashBox").hidden = $("#gxWxFlashNote").hidden = !wxm || !wxr || !wxf; $('label[for="g_weather_every"]').textContent = t(wxf ? "Yon lòt vil parèt chak" : "Chanje vil chak"); $$('main[data-pane="gfx"] [data-gv]').forEach((b) => { const el = $(`[data-g="${b.dataset.gv}"]`); b.textContent = el.value; });
   $$('main[data-pane="gfx"] .anibox').forEach((box) => { const on = box.querySelector('.gxhead input[type="checkbox"]'); if (on) box.classList.toggle("gxbox-off", !on.checked); }); }
 /** Menm règ ak sèvè a (src/graphics.js), pou preview a montre egzakteman sa TV a ap resevwa. */
@@ -4189,6 +4273,7 @@ function gxNormalize(g) {
   const c = g.countdown; if (c.on && c.target) { const at = Math.floor(new Date(c.target).getTime() / 1000), now = Date.now() / 1000; if (at && now < at + (c.doneText ? n(c.keepMin, 10, 0, 1440) * 60 : 0)) out.countdown = { title: c.title, targetAt: at, doneText: c.doneText, position: c.position, style: c.style, font: c.font, color: c.color, color2: c.color2, italic: !!c.italic, box: c.box !== false }; }
   const i = g.ident; if (i.on && (url(i.imageUrl) || i.text)) out.ident = { imageUrl: url(i.imageUrl), text: i.text, tagline: i.tagline, everyMin: n(i.everyMin, 30, 0, 240), durationSec: n(i.durationSec, 5, 2, 15) };
   const wb = g.weatherBar; if (wb && wb.on) out.weatherBar = { ...wb };
+  const so = g.social; if (so && so.on) { const items = ["whatsapp", "facebook", "instagram", "tiktok", "youtube", "x", "website"].map((net) => ({ net, handle: String(so[net] || "").trim() })).filter((x) => x.handle); if (items.length) out.social = { ...so, items }; }
   const lb = g.lowerBar; if (lb && lb.on && (lb.tab || lb.info || url(lb.logoUrl))) out.lowerBar = { ...lb, showClock: false, logoUrl: url(lb.logoUrl), infoBg: lb.infoClear ? "#00000000" : lb.infoBg };
   const sn = g.snipe; const snImgs = sn ? [sn.imageUrl, ...String(sn.images || "").split(/[\n\s,]+/)].map(url).filter(Boolean) : [];
   if (sn && sn.on && (snImgs.length || sn.text)) out.snipe = { imageUrl: snImgs[0] || null, images: snImgs, text: sn.text, textColor: sn.textColor, bgColor: sn.bgClear ? "#00000000" : sn.bgColor, position: sn.position, anim: sn.anim, size: n(sn.size, 120, 40, 300), everyMin: n(sn.everyMin, 10, 0, 240), durationSec: n(sn.durationSec, 8, 3, 30) };
@@ -4226,6 +4311,9 @@ async function gxWeatherBarPreview() {
   $("#gxStage").scrollIntoView({ block: "nearest", behavior: "smooth" });
   gxFullT = setTimeout(() => ($("#gxFull").innerHTML = ""), 15000);
 }
+let gxSoT = 0;
+const gxSoLabels = () => { $("#gxSoSizeV").textContent = $("#g_social_size").value; $("#gxSoOffV").textContent = $("#g_social_offset").value; };
+["#g_social_size", "#g_social_offset"].forEach((sel) => $(sel).addEventListener("input", gxSoLabels));
 const gxLbLabels = () => { $("#gxLbSizeV").textContent = $("#g_lowerBar_size").value; $("#gxLbOffV").textContent = $("#g_lowerBar_offset").value; };
 ["#g_lowerBar_size", "#g_lowerBar_offset", "#g_lowerBar_tab", "#g_lowerBar_info", "#g_lowerBar_font"].forEach((sel) =>
   $(sel).addEventListener("input", () => { gxLbLabels(); if ($("#gxFull .gx-lb")) gxPlay("lowerBar"); }));
@@ -4242,6 +4330,16 @@ let gxWbItems = null;
 $("#g_weatherBar_scope").addEventListener("change", gxWbList);
 function gxPlay(which) {
   if (which === "weatherBar") return gxWeatherBarPreview();
+  if (which === "social") {
+    const so = gxNormalize({ ...gxRead(), social: { ...gxRead().social, on: true } }).social;
+    if (!so) return toast(t("Ekri omwen yon rezo (WhatsApp, Facebook…)."));
+    clearTimeout(gxFullT); clearInterval(gxSoT); let i = 0;
+    const draw = () => { $("#gxFull").innerHTML = GalaxyGfx.socialHtml(so, i++ % so.items.length, 60); };
+    draw(); if (so.items.length > 1) gxSoT = setInterval(draw, (+so.perSec || 5) * 1000);
+    $("#gxStage").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    gxFullT = setTimeout(() => { clearInterval(gxSoT); $("#gxFull").innerHTML = ""; }, Math.max(10, +so.durationSec || 20) * 1000);
+    return;
+  }
   if (which === "lowerBar") {
     const lb = gxNormalize({ ...gxRead(), lowerBar: { ...gxRead().lowerBar, on: true } }).lowerBar;
     if (!lb) return toast(t("Mete yon onglè, yon tèks oswa yon logo an premye."));

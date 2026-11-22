@@ -343,7 +343,7 @@ const guard =
 
 // Koleksyon ki parèt sou TV yo: lè yo chanje, TV ki konekte yo mete yo ajou touswit
 let syncTvs = () => {};
-const TV_COLLECTIONS = new Set(["tickers", "chyrons", "banners", "popups", "liveEvents", "mediaAds"]);
+const TV_COLLECTIONS = new Set(["tickers", "chyrons", "banners", "popups", "liveEvents", "mediaAds", "promos"]);
 
 function mountCollection(path, key, idField = "id", opts = {}) {
   const tvSync = () => { if (TV_COLLECTIONS.has(key)) syncTvs(); };
@@ -443,6 +443,8 @@ mountCollection("channels", "channels", "name");
 mountCollection("programs", "programs", "id");
 mountCollection("banners", "banners", "content");
 mountCollection("popups", "popups", "title");
+// Promo & Advertisement Manager: pwomosyon ak dat, sib (mak, revandè, kliyan ki pral ekspire) ak kote yo parèt
+mountCollection("promos", "promos", "id");
 mountCollection("tickers", "tickers", "message");
 mountCollection("admin-users", "adminUsers", "email", {
   present: ({ passwordHash, password, ...x }) => ({ ...x, hasPassword: !!passwordHash }),
