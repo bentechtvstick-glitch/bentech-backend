@@ -23,7 +23,17 @@ import java.io.File
  * kliyan an wè yon mesaj, app la telechaje APK a epi li louvri enstalatè Fire Stick la.
  */
 object Updater {
-    @Volatile private var showing = false
+    @Volatile private var showingRaw = false
+    /** Fenèt mizajou ki sou ekran an kounye a. */
+    private var dlg: android.app.Dialog? = null
+    /**
+     * "Fenèt la sou ekran an". Si ekran ki te genyen l lan fèmen (kliyan an peze Back, chanèl la chanje),
+     * Android pa rele onDismiss → avan, drapo a te rete bloke sou true epi mizajou a pa t janm parèt ankò
+     * jiskaske TV a redemare. Kounye a nou tcheke si fenèt la vrèman la toujou.
+     */
+    private var showing: Boolean
+        get() { if (showingRaw && dlg?.isShowing != true && dlg != null) { showingRaw = false; dlg = null }; return showingRaw }
+        set(v) { showingRaw = v; dlg = null }
 
     // ---------------------------------------------------------------- Eta mizajou a (pou panel la)
     /** Kote mizajou a ye sou TV sa a; app la voye l nan chak demann konfig (X-Update-State) → panel la montre l. */
@@ -192,6 +202,7 @@ object Updater {
         dialog.setContentView(v.root)
         dialog.setCancelable(!u.force)
         dialog.setOnDismissListener { showing = false }
+        dlg = dialog
         v.upVersion.text = activity.getString(R.string.update_version_fmt, u.version, BuildConfig.VERSION_NAME)
         v.upNotes.text = u.notes.ifBlank { activity.getString(R.string.update_default_notes) }
         v.upLater.visibility = if (u.force) android.view.View.GONE else android.view.View.VISIBLE
