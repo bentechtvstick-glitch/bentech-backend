@@ -309,6 +309,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     // App 1.0.89+ voye vèsyon li nan chak demann konfig
     const av = String(req.get("X-App-Version") || "").trim().slice(0, 20);
     if (/^\d+\.\d+\.\d+/.test(av)) device.appVersion = av;
+    // Kote mizajou app la ye sou TV sa a (app 1.0.251+)
+    const us = String(req.get("X-Update-State") || "").trim().slice(0, 120);
+    if (us && us !== device.updateState) { device.updateState = us; device.updateStateAt = new Date().toISOString(); }
+    const sdk = Number(req.get("X-Android-Sdk")) || 0; if (sdk) device.androidSdk = sdk;
     if (device.brand !== brand) device.brand = brand;
     touchWrite();
 
@@ -2046,8 +2050,17 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   app.get("/api/galaxy/app-update", authenticate, async (req, res) => {
     const l = await latestBuild(req.query.fresh === "1");
     const s = settings();
+    // Chak TV ki te konekte nan 7 dènye jou yo: ki vèsyon li genyen ak kote mizajou a ye
+    const target = Number(s.updatePushBuild) || l.build || 0, nowMs = Date.now();
+    const tvs = (data().devices || []).filter((d) => d.lastSeenAt && nowMs - Date.parse(d.lastSeenAt) < 7 * 86400000).map((d) => {
+      const b = Number(String(d.appVersion || "").split(".")[2]) || 0;
+      const cust = d.customer ? { name: d.customer } : null;
+      return { mac: d.mac, name: d.name || cust?.name || d.type || d.model || "", build: b, version: d.appVersion || "", brand: d.brand || "galaxy",
+        sdk: Number(d.androidSdk) || 0, android: d.androidVersion || "", state: d.updateState || "", stateAt: d.updateStateAt || "",
+        online: nowMs - Date.parse(d.lastSeenAt) < 3 * 60000, lastSeenAt: d.lastSeenAt, upToDate: !!target && b >= target };
+    }).sort((a, b) => a.upToDate - b.upToDate || b.online - a.online);
     res.json({ latestBuild: l.build, latestVersion: l.build ? `1.0.${l.build}` : "", publishedAt: l.publishedAt,
-      pushedBuild: Number(s.updatePushBuild) || 0, pushedAt: s.updatePushAt || "", force: !!s.updateForce });
+      pushedBuild: Number(s.updatePushBuild) || 0, pushedAt: s.updatePushAt || "", force: !!s.updateForce, target, tvs });
   });
 
   // Voye dènye vèsyon an bay tout TV yo (oswa { cancel: true } pou sispann pwopoze l)

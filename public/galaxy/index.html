@@ -1372,6 +1372,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <div class="card">
         <div class="cardhead"><div><h2>📲 Mizajou app la</h2><p class="sub">Voye dènye vèsyon app la bay TV yo. Kliyan an wè yon mesaj epi li peze "Mete ajou".</p><p class="note" style="margin:4px 0 0">🔄 Otomatik: TV yo tcheke poukont yo chak 6 è (ak lè app la louvri) si gen yon nouvo vèsyon. Bouton anba a se pou voye l touswit (manyèl).</p></div><button class="btn small" id="upRefresh" type="button">Rafrechi</button></div>
         <div class="kpis" id="upKpis"></div>
+        <div id="upTvs" style="margin-top:12px"></div>
         <div class="field" style="margin-top:12px"><label for="upNotes">Sa ki nouvo (kliyan an ap wè l sou TV a)</label><textarea id="upNotes" rows="3" maxlength="600" placeholder="Egz: Chanèl yo chanje pi vit. Gid TV a pi rapid."></textarea></div>
         <div class="inline" style="margin-top:12px"><label class="sw"><input type="checkbox" id="upForce"><i></i></label><label for="upForce">Obligatwa: kliyan an pa ka kontinye san l pa mete ajou</label></div>
         <div class="btns" style="justify-content:flex-start;margin-top:12px"><button class="btn primary" id="upSend" type="button">Voye mizajou bay tout TV</button><button class="btn" id="upCancel" type="button">Sispann pwopoze l</button><span class="msg" id="upMsg"></span></div>
@@ -3892,6 +3893,34 @@ async function loadAppUpdate(fresh) {
   $("#upKpis").innerHTML = k("Dènye vèsyon ki disponib", y.latestVersion || "—", y.publishedAt ? fmtWhen(y.publishedAt) : "")
     + k("Vèsyon ki voye bay TV yo", y.pushedBuild ? "1.0." + y.pushedBuild : t("Okenn"), y.pushedBuild ? fmtWhen(y.pushedAt) + (y.force ? " · " + t("Obligatwa") : "") : "");
   $("#upForce").checked = !!y.force; $("#upCancel").hidden = !y.pushedBuild;
+  upRenderTvs(y);
+}
+// Kote chak TV ye nan mizajou a: an ajou, ap tann kliyan an, an silans, pèmisyon, echèk…
+function upStateText(tv) {
+  const st = String(tv.state || "");
+  if (tv.upToDate) return ["ok", t("✅ An ajou")];
+  if (!tv.build || tv.build < 251) return ["muted", t("Ansyen app: li p ap di panel la kote mizajou a ye. Mizajou a parèt lè kliyan an louvri app la.")];
+  if (st === "shown") return ["warn", t("Mesaj la parèt sou TV a. Ap tann kliyan an peze «Mete ajou».")];
+  if (st === "later") return ["warn", t("Kliyan an peze «Pita». Mesaj la ap tounen lè l relouvri app la.")];
+  if (st === "downloading") return ["warn", t("Ap telechaje…")];
+  if (st === "permission") return ["bad", t("Fire Stick la bloke enstalasyon an: fòk kliyan an aktive «Install unknown apps» pou app la (yon sèl fwa).")];
+  if (st === "installing" || st === "confirm") return ["warn", t("Ekran enstalasyon an louvri. Ap tann kliyan an peze «Install».")];
+  if (st === "silent-ready") return ["warn", t("Telechaje an silans. L ap enstale poukont li lè kliyan an kite app la (Home oswa TV etenn).")];
+  if (st === "silent-installing") return ["warn", t("Ap enstale an silans…")];
+  if (st === "cancelled") return ["bad", t("Kliyan an peze «Cancel» sou ekran enstalasyon an.")];
+  if (st.startsWith("failed")) return ["bad", t("Echèk:") + " " + st.replace(/^failed:?\s*/, "")];
+  return ["muted", tv.online ? t("Poko resevwa l: app la pa louvri sou yon chanèl, oswa l ap tann pwochen fwa kliyan an louvri l.") : t("TV a pa konekte kounye a. L ap resevwa l lè l limen.")];
+}
+function upRenderTvs(y) {
+  const box = $("#upTvs"), tvs = y.tvs || [];
+  if (!tvs.length) { box.innerHTML = ""; return; }
+  const ok = tvs.filter((x) => x.upToDate).length;
+  const col = { ok: "var(--ok,#16a34a)", warn: "var(--warn,#d97706)", bad: "var(--bad,#dc2626)", muted: "var(--muted,#888)" };
+  box.innerHTML = `<p class="note" style="margin:0 0 6px"><b>${esc(t("TV ki an ajou: {0} sou {1}", ok, tvs.length))}</b> · ${esc(t("vèsyon 1.0.{0}", y.target))} · ${esc(t("7 dènye jou yo"))}</p>
+    <div style="max-height:340px;overflow:auto;border:1px solid var(--line,#ddd);border-radius:10px">${tvs.map((tv) => { const [k, txt] = upStateText(tv);
+      return `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-bottom:1px solid var(--line,#eee)"><span style="width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none;background:${tv.online ? "#16a34a" : "#9ca3af"}" title="${esc(tv.online ? "Online" : "Offline")}"></span>
+        <div style="flex:1;min-width:0"><b>${esc(tv.name || "TV")}</b> <span class="note">· ${esc(tv.version || "?")}${tv.brand === "bentech" ? " · Ben Tech" : ""}${tv.android ? " · Android " + esc(tv.android) : ""}</span>
+        <div style="color:${col[k]};font-size:13px">${esc(txt)}${tv.stateAt && !tv.upToDate && tv.build >= 251 ? ` <span class="note">(${esc(fmtWhen(tv.stateAt))})</span>` : ""}</div></div></div>`; }).join("")}</div>`;
 }
 $("#upRefresh").addEventListener("click", async () => {
   const b = $("#upRefresh"); if (b.disabled) return; b.disabled = true; b.textContent = t("Ap rafrechi…");
