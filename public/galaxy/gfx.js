@@ -245,8 +245,8 @@
   }
 
   /** Rezo sosyal: koulè ak ti ikòn jeneral pou chak rezo (non rezo a ekri an tèks; pa gen logo mak). */
-  const SOCIAL = { whatsapp: ["WhatsApp", "#25D366", "☎"], facebook: ["Facebook", "#1877F2", "f"], instagram: ["Instagram", "#E1306C", "◎"],
-    tiktok: ["TikTok", "#111111", "♪"], youtube: ["YouTube", "#FF0000", "▶"], x: ["X", "#000000", "✕"], website: ["Web", "#2563EB", "🌐"] };
+  const SOCIAL = { whatsapp: ["WhatsApp", "#25D366", "\u260E"], facebook: ["Facebook", "#1877F2", "f"], instagram: ["Instagram", "#E1306C", "\u25CE"],
+    tiktok: ["TikTok", "#111111", "\u266A"], youtube: ["YouTube", "#FF0000", "\u25B6"], x: ["X", "#000000", "\u2715"], website: ["Web", "#2563EB", "\uD83C\uDF10"] };
   function socialHtml(so, i, bottom) {
     const it = so.items[i % so.items.length], m = SOCIAL[it.net] || ["", "#444", "•"];
     const k = (Number(so.size) || 100) / 100, off = Number(so.offset) || 0, top = String(so.position || "").startsWith("top");
