@@ -115,8 +115,8 @@ export function mountAi(app, db, { authenticate, isOnline }) {
     // Tout lè yo nan lè lokal panel la (pa UTC), pou AI a pa di "23 nov" lè se toujou 22 nov swa isit la
     const zone = (d.settings || {}).timezone || process.env.PANEL_TZ || "America/New_York";
     const loc = (v) => { const ms = typeof v === "number" ? v : Date.parse(v || ""); if (!ms) return v || "";
-      const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: zone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", weekday: "short" }).formatToParts(new Date(ms)).map((x) => [x.type, x.value]));
-      return `${p.weekday} ${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`; };
+      const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: zone, hour12: true, year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", weekday: "short" }).formatToParts(new Date(ms)).map((x) => [x.type, x.value]));
+      return `${p.weekday} ${p.month} ${p.day} ${p.year}, ${p.hour}:${p.minute} ${p.dayPeriod}`; };
     const devices = visibleDevices(d).filter((x) => x.mac);
     const online = devices.filter((x) => isOnline(x.mac));
     const versions = {};
@@ -201,6 +201,7 @@ export function mountAi(app, db, { authenticate, isOnline }) {
     if (!question) return res.status(400).json({ error: "Empty question." });
     const lang = LANG_NAMES[req.body?.lang] || "English";
     const system = "You are the assistant inside the Galaxy TV Stick admin panel (an IPTV app for Android TV / Fire TV, managed by a non-technical owner). " +
+      "Always write times in 12-hour format with AM/PM (e.g. 10:31 PM), never 24-hour, and use the panel's local time zone. " +
       "You get a JSON snapshot of the panel: TVs, customers, and channel/video problems reported by the TVs. Video streams come straight from the customer's IPTV provider, not from this panel. " +
       "Common causes: HTTP 401/403/429 = provider account refused or too many screens; HTTP 5xx or empty reply = provider/channel down; many channels failing on one provider at once = provider outage; one TV only = that TV's internet/router. " +
       "You can ALSO answer general support questions (installing the app, which TVs work, setup, troubleshooting) using these facts and your general knowledge, even if they are not about the snapshot. " +
@@ -216,7 +217,7 @@ export function mountAi(app, db, { authenticate, isOnline }) {
       if (req.body?.lang && LANG_NAMES[req.body.lang]) { (db.data.watch ??= {}).lang = req.body.lang; }
       const G = globalThis.galaxyGuide;
       const guideRule = G ? " TV GUIDE: the panel can search the providers' TV guide (EPG) for the next 2 days. If the question asks which channel shows, or when, any programme (a match, team, league, news, show, series, movie, event, person…), reply with ONLY one line: GUIDE_SEARCH: term1 | term2 | … — up to 8 short search terms in the forms a TV guide may use (English, French, Spanish, Portuguese, and the original name; e.g. Brazil | Brasil | Brésil). Nothing else on that reply." : "";
-      const userMsg = `Panel snapshot (all dates and times are LOCAL panel time in the snapshot timeZone, not UTC; "now" is today):\n${JSON.stringify(snapshot())}\n\nQuestion: ${question}`;
+      const userMsg = `Panel snapshot (all dates and times are LOCAL panel time in the snapshot timeZone, not UTC; "now" is today. Always write times in 12-hour format with AM/PM, e.g. 10:31 PM, never 22:31):\n${JSON.stringify(snapshot())}\n\nQuestion: ${question}`;
       let r = await aiComplete(db, { system: system + guideRule, user: userMsg, maxTokens: 700 });
       let cost = r.cost;
       const gm = G && r.text.trim().match(/^GUIDE_SEARCH:\s*(.+)$/im);
