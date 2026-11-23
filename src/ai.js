@@ -112,6 +112,11 @@ export function mountAi(app, db, { authenticate, isOnline }) {
   /** Ti rezime eta panel la (san modpas, san kle, san lyen playlist). */
   function snapshot() {
     const d = db.data, now = Date.now();
+    // Tout lè yo nan lè lokal panel la (pa UTC), pou AI a pa di "23 nov" lè se toujou 22 nov swa isit la
+    const zone = (d.settings || {}).timezone || process.env.PANEL_TZ || "America/New_York";
+    const loc = (v) => { const ms = typeof v === "number" ? v : Date.parse(v || ""); if (!ms) return v || "";
+      const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: zone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", weekday: "short" }).formatToParts(new Date(ms)).map((x) => [x.type, x.value]));
+      return `${p.weekday} ${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`; };
     const devices = visibleDevices(d).filter((x) => x.mac);
     const online = devices.filter((x) => isOnline(x.mac));
     const versions = {};
@@ -119,7 +124,7 @@ export function mountAi(app, db, { authenticate, isOnline }) {
     const customers = (d.customers || []).map((c) => ({ name: c.name || "", status: c.status || "", plan: c.plan || "", expiry: c.expiry || "" }));
     const soon = customers.filter((c) => c.expiry && Date.parse(c.expiry) - now < 14 * 86400000).slice(0, 30);
     const alerts = (d.channelAlerts || []).filter((a) => now - a.at < 2 * 86400000).sort((a, b) => b.at - a.at).slice(0, 40)
-      .map((a) => ({ when: new Date(a.at).toISOString().slice(0, 16), type: a.type || "live", title: a.channel, tv: a.mac, times: a.count || 1, detail: a.detail }));
+      .map((a) => ({ when: loc(a.at), type: a.type || "live", title: a.channel, tv: a.mac, times: a.count || 1, detail: a.detail }));
     // Chanèl ki pi fèb yo (sante)
     const weak = [];
     for (const [host, byId] of Object.entries(d.channelHealth || {})) {
@@ -127,10 +132,10 @@ export function mountAi(app, db, { authenticate, isOnline }) {
     }
     weak.sort((a, b) => b.failPct - a.failPct);
     return {
-      now: new Date().toISOString().slice(0, 16),
+      now: loc(now), timeZone: zone,
       tvs: { total: devices.length, online: online.length, appVersions: versions,
         list: devices.slice(0, 50).map((x) => { const L = globalThis.galaxyLive?.get(x.mac);
-          return { mac: x.mac, customer: x.customer || "", online: isOnline(x.mac), app: x.appVersion || "", lastSeen: x.lastSeenAt || "",
+          return { mac: x.mac, customer: x.customer || "", online: isOnline(x.mac), app: x.appVersion || "", lastSeen: loc(x.lastSeenAt),
             screen: L?.screen || "", providerError: L?.screen === "activation" && L?.error ? L.error : "",
             panelKeyRejected: !!(x.keyConflictAt && Date.parse(x.keyConflictAt) > (Date.parse(x.lastSeenAt || "") || 0)) }; }) },
       customers: { total: customers.length, expiringWithin14Days: soon },
@@ -211,7 +216,7 @@ export function mountAi(app, db, { authenticate, isOnline }) {
       if (req.body?.lang && LANG_NAMES[req.body.lang]) { (db.data.watch ??= {}).lang = req.body.lang; }
       const G = globalThis.galaxyGuide;
       const guideRule = G ? " TV GUIDE: the panel can search the providers' TV guide (EPG) for the next 2 days. If the question asks which channel shows, or when, any programme (a match, team, league, news, show, series, movie, event, person…), reply with ONLY one line: GUIDE_SEARCH: term1 | term2 | … — up to 8 short search terms in the forms a TV guide may use (English, French, Spanish, Portuguese, and the original name; e.g. Brazil | Brasil | Brésil). Nothing else on that reply." : "";
-      const userMsg = `Panel snapshot:\n${JSON.stringify(snapshot())}\n\nQuestion: ${question}`;
+      const userMsg = `Panel snapshot (all dates and times are LOCAL panel time in the snapshot timeZone, not UTC; "now" is today):\n${JSON.stringify(snapshot())}\n\nQuestion: ${question}`;
       let r = await aiComplete(db, { system: system + guideRule, user: userMsg, maxTokens: 700 });
       let cost = r.cost;
       const gm = G && r.text.trim().match(/^GUIDE_SEARCH:\s*(.+)$/im);
