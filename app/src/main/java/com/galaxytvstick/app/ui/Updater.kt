@@ -145,6 +145,8 @@ object Updater {
      * menm si admin nan poko peze "Voye mizajou" nan panel la. Li montre mesaj la yon fwa pa vèsyon pandan app la louvri.
      */
     fun autoCheck(activity: Activity) {
+        // Magic TV Stick: mizajou yo fèt APA, sèlman lè panel la voye yo pou Magic (pa chak fwa yon nouvo vèsyon soti)
+        if (Brand.isMagic) return
         if (showing || downloading) return
         val now = System.currentTimeMillis()
         if (now - lastAutoCheck < 6 * 3600_000L) return
