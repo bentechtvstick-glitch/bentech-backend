@@ -286,7 +286,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const mac = normMac(req.params.mac);
     const device = findDevice(mac);
     // Mak app la (Galaxy oswa Ben Tech): chak mak gen pwòp logo, meteyo, ticker ak piblisite li
-    const brand = /^bentech$/i.test(String(req.get("X-App-Brand") || "")) ? "bentech" : "galaxy";
+    const brand = (String(req.get("X-App-Brand") || "").toLowerCase().match(/^(bentech|magic)$/) || [])[1] || "galaxy";
     const s0 = settings();
     const bs = brand === "galaxy" ? null : ((s0.brandSettings || {})[brand] || {});
     // Yon lòt mak ki poko gen grafik pa l: li pa janm montre logo/watermark/ident Galaxy a
@@ -983,7 +983,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const vod = (k) => [...new Set(device.vodCats?.[k] || [])].filter((n) => !hid(k).has(nkey(n)) && adultOk(n));
     const c = customerOf(device);
     return {
-      brand: device.brand === "bentech" ? "Ben Tech TV" : "Galaxy TV",
+      brand: device.brand === "bentech" ? "Ben Tech TV" : device.brand === "magic" ? "Magic TV" : "Galaxy TV",
       expiry: c?.providerExp > 0 ? Number(c.providerExp) : Number(device.providerExp) > 0 ? Number(device.providerExp) : 0,
       expiryTz: c?.providerTz || device.providerTz || tz(),
       channels: [...groups].map(([name, list]) => ({ name, channels: list })),
