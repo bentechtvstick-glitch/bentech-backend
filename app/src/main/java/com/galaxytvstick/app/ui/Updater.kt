@@ -99,6 +99,9 @@ object Updater {
         if (!f.exists() || readyBuild <= BuildConfig.VERSION_CODE || !canSilent(ctx)) return
         readyFile = null
         setState("silent-installing", readyBuild)
+        // Mizajou an silans lè kliyan an fin soti: PA relouvri app la apre (kliyan an te vle fèmen l).
+        // Avan, yon ansyen "relaunch" ki te rete (kliyan an te peze "Mete ajou" epi "Cancel") te fè app la relouvri poukont li.
+        ctx.getSharedPreferences("galaxy_update", android.content.Context.MODE_PRIVATE).edit().putBoolean("relaunch", false).apply()
         GalaxyApp.scope.launch { if (!installSession(ctx.applicationContext, f)) setState("failed: silent install", readyBuild) }
     }
 

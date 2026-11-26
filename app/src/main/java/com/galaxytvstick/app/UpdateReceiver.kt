@@ -35,7 +35,10 @@ class UpdateReceiver : BroadcastReceiver() {
                 runCatching { context.startActivity(confirm) }.onFailure { com.galaxytvstick.app.ui.Updater.setState("failed: confirm blocked") }
             }
             PackageInstaller.STATUS_SUCCESS -> {}
-            PackageInstaller.STATUS_FAILURE_ABORTED -> com.galaxytvstick.app.ui.Updater.setState("cancelled") // kliyan an peze "Cancel"
+            PackageInstaller.STATUS_FAILURE_ABORTED -> { // kliyan an peze "Cancel"
+                com.galaxytvstick.app.ui.Updater.setState("cancelled")
+                context.getSharedPreferences("galaxy_update", Context.MODE_PRIVATE).edit().putBoolean("relaunch", false).apply()
+            }
             else -> {
                 val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE).orEmpty()
                 com.galaxytvstick.app.ui.Updater.setState("failed: $msg")
