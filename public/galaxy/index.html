@@ -640,7 +640,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <label class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="text" id="gSearch" placeholder="Chèche MAC, aparèy, kliyan…" autocomplete="off"></label>
       <div class="right">
         <button class="btn small" id="ttvBtn" type="button" hidden>📺 Customer TV</button>
-        <label class="inline" id="brandBox" hidden style="flex-wrap:nowrap;gap:6px"><span class="note" style="margin:0">🏷️ App:</span><select id="brandSel" class="langsel" aria-label="App"><option value="galaxy">Galaxy TV Stick</option><option value="bentech">Ben Tech TV Stick</option><option value="magic">Magic TV Stick</option></select></label>
+        <label class="inline" id="brandBox" hidden style="flex-wrap:nowrap;gap:6px"><span class="note" style="margin:0">🏷️ App:</span><select id="brandSel" class="langsel" aria-label="App"><option value="galaxy">Galaxy TV Stick</option><option value="bentech">Ben Tech TV Stick</option></select></label>
         <label class="inline" id="brandAllBox" hidden style="flex-wrap:nowrap;gap:4px;cursor:pointer" title="Mesaj/piblisite ou ajoute oswa modifye yo ap parèt sou tout app yo"><input type="checkbox" id="brandAll"><span class="note" style="margin:0">Toude app yo</span></label>
         <span class="inline" style="flex-wrap:nowrap"><svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><select class="langsel" data-lang-select aria-label="Lang"></select></span>
         <div class="rel"><button class="iconbtn" id="bellBtn" type="button" aria-label="Notifikasyon"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/></svg><span class="count" id="bellCount" hidden></span></button>
@@ -661,7 +661,6 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       <div class="confirm" id="dlForm" hidden style="flex-wrap:wrap;margin:-6px 0 16px">
         <label class="inline note" style="gap:6px">Galaxy TV Stick <input type="text" id="dlGalaxy" inputmode="numeric" maxlength="12" style="width:120px"></label>
         <label class="inline note" style="gap:6px">Ben Tech TV Stick <input type="text" id="dlBentech" inputmode="numeric" maxlength="12" style="width:120px"></label>
-        <label class="inline note" style="gap:6px">Magic TV Stick <input type="text" id="dlMagic" inputmode="numeric" maxlength="12" style="width:120px"></label>
         <label class="inline note" style="gap:6px">Galaxy Home <input type="text" id="dlHome" inputmode="numeric" maxlength="12" style="width:120px"></label>
         <label class="inline note" style="gap:6px">Ben Tech Home <input type="text" id="dlHomeBt" inputmode="numeric" maxlength="12" style="width:120px"></label>
         <button class="btn small" id="dlCancel" type="button">Anile</button><button class="btn small primary" id="dlSave" type="button">Sove</button>
@@ -1319,7 +1318,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="field"><label for="prText">Tèks</label><input type="text" id="prText" maxlength="300" data-emoji placeholder="Egz: 🎄 Renouvle kounye a: 10% rabè! WhatsApp +509 …"></div>
           <div class="field" id="prImgBox"><label for="prImg">Imaj oswa GIF (pou snipe la)</label><input type="url" id="prImg" maxlength="500" placeholder="https://…/promo.gif"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="prImg">📤 Chwazi yon imaj</button><span class="note" data-upmsg="prImg"></span></div></div>
           <div class="row3"><div class="field"><label for="prPos">Pozisyon snipe</label><select id="prPos"><option value="bottom-right">Anba adwat</option><option value="bottom-center">Anba nan mitan</option><option value="bottom-left">Anba agoch</option></select></div><div class="field"><label for="prEvery">Parèt chak (minit)</label><input type="number" id="prEvery" min="1" max="240" value="5"></div><div class="field"><label for="prDur">Rete (segonn)</label><input type="number" id="prDur" min="3" max="30" value="8"></div></div>
-          <div class="row3"><div class="field"><label for="prBrand">Ki TV</label><select id="prBrand"><option value="all">Tout TV yo</option><option value="galaxy">Galaxy sèlman</option><option value="bentech">Ben Tech sèlman</option><option value="magic">Magic sèlman</option></select></div><div class="field"><label for="prOwner">Revandè (opsyonèl)</label><input type="text" id="prOwner" maxlength="60" placeholder="Non itilizatè revandè a"></div><div class="field"><label for="prColor">Koulè mesaj ticker</label><input type="color" id="prColor" value="#ffd400"></div></div>
+          <div class="row3"><div class="field"><label for="prBrand">Ki TV</label><select id="prBrand"><option value="all">Tout TV yo</option><option value="galaxy">Galaxy sèlman</option><option value="bentech">Ben Tech sèlman</option></select></div><div class="field"><label for="prOwner">Revandè (opsyonèl)</label><input type="text" id="prOwner" maxlength="60" placeholder="Non itilizatè revandè a"></div><div class="field"><label for="prColor">Koulè mesaj ticker</label><input type="color" id="prColor" value="#ffd400"></div></div>
           <div class="row3"><div class="field"><label for="prAud">Kliyan</label><select id="prAud"><option value="all">Tout kliyan</option><option value="expiring">Kliyan ki pral ekspire</option><option value="expired">Kliyan ki ekspire deja</option></select></div><div class="field" id="prDaysBox"><label for="prDays">Nan konbyen jou</label><input type="number" id="prDays" min="1" max="60" value="7"></div><div class="field"><label class="inline" style="gap:8px;margin-top:24px"><input type="checkbox" id="prActive" checked> <span>Aktif</span></label></div></div>
           <div class="row2"><div class="field"><label for="prStart">Kòmanse</label><input type="datetime-local" id="prStart"></div><div class="field"><label for="prEnd">Fini</label><input type="datetime-local" id="prEnd"></div></div>
           <div class="btns"><button class="btn" type="button" id="prCancel" hidden>Anile</button><button class="btn primary" type="submit" id="prSave">Ajoute pwomosyon an</button><span class="msg" id="prMsg"></span></div>
@@ -1372,7 +1371,6 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       </div>
       <div class="card">
         <div class="cardhead"><div><h2>📲 Mizajou app la</h2><p class="sub">Voye dènye vèsyon app la bay TV yo. Kliyan an wè yon mesaj epi li peze "Mete ajou".</p><p class="note" style="margin:4px 0 0">🔄 Otomatik: TV yo tcheke poukont yo chak 6 è (ak lè app la louvri) si gen yon nouvo vèsyon. Bouton anba a se pou voye l touswit (manyèl).</p></div><button class="btn small" id="upRefresh" type="button">Rafrechi</button></div>
-        <div class="seg" id="upApp" role="radiogroup" aria-label="App" style="margin-bottom:12px"><button type="button" data-v="main" class="on">Galaxy + Ben Tech</button><button type="button" data-v="magic">Magic TV Stick</button></div>
         <div class="kpis" id="upKpis"></div>
         <div id="upTvs" style="margin-top:12px"></div>
         <div class="field" style="margin-top:12px"><label for="upNotes">Sa ki nouvo (kliyan an ap wè l sou TV a)</label><textarea id="upNotes" rows="3" maxlength="600" placeholder="Egz: Chanèl yo chanje pi vit. Gid TV a pi rapid."></textarea></div>
@@ -1612,7 +1610,7 @@ async function waitApplied(mac, msgEl, base) {
 const BRAND_TABS = ["tk", "cy", "bn", "pp", "ads", "gfx", "bc"];
 const BRAND_COLS = /^\/(tickers|banners|popups|media-ads|chyrons)(\/|\?|$)/;
 const BRAND_KEY = (k) => k === "gfx" || /^(ticker|banner|popup|adBreak|chyron|epgNoInfo)/.test(k);
-const BRANDS = { galaxy: "Galaxy TV Stick", bentech: "Ben Tech TV Stick", magic: "Magic TV Stick" };
+const BRANDS = { galaxy: "Galaxy TV Stick", bentech: "Ben Tech TV Stick" };
 let brand = "galaxy"; try { const b = localStorage.getItem("gxBrand"); brand = BRANDS[b] ? b : "galaxy"; } catch {}
 const brandOf = (it) => String((it && it.brand) || "galaxy");
 const brandNow = () => { try { return BRAND_TABS.includes(tab) ? brand : "galaxy"; } catch { return "galaxy"; } };
@@ -2297,8 +2295,8 @@ function devExpHtml(d) {
 async function loadDlBar() {
   const s = await api("GET", "/settings").catch(() => ({}));
   const d = s.downloaderCodes || {};
-  const items = [["Galaxy TV Stick", d.galaxy], ["Ben Tech TV Stick", d.bentech], ["Magic TV Stick", d.magic], ["Galaxy Home", d.home], ["Ben Tech Home", d.homeBt]].filter(([, v]) => v);
-  $("#dlGalaxy").value = d.galaxy || ""; $("#dlBentech").value = d.bentech || ""; $("#dlMagic").value = d.magic || ""; $("#dlHome").value = d.home || ""; $("#dlHomeBt").value = d.homeBt || "";
+  const items = [["Galaxy TV Stick", d.galaxy], ["Ben Tech TV Stick", d.bentech], ["Galaxy Home", d.home], ["Ben Tech Home", d.homeBt]].filter(([, v]) => v);
+  $("#dlGalaxy").value = d.galaxy || ""; $("#dlBentech").value = d.bentech || ""; $("#dlHome").value = d.home || ""; $("#dlHomeBt").value = d.homeBt || "";
   const html = items.length ? items.map(([n, v]) => `<span>${esc(n)}: <b>${esc(v)}</b></span>`).join("") : `<span class="note">${esc(t("Peze ✏️ pou mete kòd Downloader app yo."))}</span>`;
   $("#dlTrack").innerHTML = html + (items.length ? html : ""); // 2 fwa: defilman an pa janm vid
 }
@@ -2306,7 +2304,7 @@ $("#dlEdit").addEventListener("click", () => { $("#dlForm").hidden = !$("#dlForm
 $("#dlCancel").addEventListener("click", () => { $("#dlForm").hidden = true; });
 $("#dlSave").addEventListener("click", async () => {
   const clean = (v) => v.replace(/[^0-9a-z]/gi, "").slice(0, 12);
-  try { await api("PUT", "/settings", { downloaderCodes: { galaxy: clean($("#dlGalaxy").value), bentech: clean($("#dlBentech").value), magic: clean($("#dlMagic").value), home: clean($("#dlHome").value), homeBt: clean($("#dlHomeBt").value) } });
+  try { await api("PUT", "/settings", { downloaderCodes: { galaxy: clean($("#dlGalaxy").value), bentech: clean($("#dlBentech").value), home: clean($("#dlHome").value), homeBt: clean($("#dlHomeBt").value) } });
     $("#dlForm").hidden = true; toast(t("Sove")); loadDlBar(); }
   catch (err) { toast(err.message); }
 });
@@ -3904,10 +3902,8 @@ $("#bkFile").addEventListener("change", async (ev) => {
   } catch (err) { setMsg($("#bkMsg"), err.message); }
 });
 // ---- Mizajou app la: voye dènye APK a bay TV yo ----
-// Ki app mizajou a ye pou: Galaxy + Ben Tech ansanm, oswa Magic TV Stick APA
-let upApp = "main";
-$("#upApp").addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (!b) return; upApp = b.dataset.v;
-  $$("#upApp button").forEach((x) => x.classList.toggle("on", x === b)); setMsg($("#upMsg"), ""); loadAppUpdate(); });
+// Mizajou a ale bay TV Galaxy ak Ben Tech yo
+const upApp = "main";
 const upAppName = () => upApp === "magic" ? "Magic TV Stick" : "Galaxy + Ben Tech";
 async function loadAppUpdate(fresh) {
   let y; try { y = await api("GET", "/galaxy/app-update?app=" + upApp + (fresh ? "&fresh=1" : "")); } catch (err) { $("#upKpis").innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
