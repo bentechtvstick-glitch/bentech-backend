@@ -62,9 +62,11 @@ import java.util.Locale
 class MagicHomeActivity : AppCompatActivity() {
 
     companion object {
-        private const val BG_TOP = 0xFF0C1440.toInt()
-        private const val BG_BOTTOM = 0xFF060B24.toInt()
-        private const val CARD = 0xFF141D4D.toInt()
+        private const val BG_TOP = 0xFF0B1230.toInt()
+        private const val BG_BOTTOM = 0xFF02040C.toInt()
+        private const val CARD = 0xFF151B33.toInt()
+        private const val CARD2 = 0xFF0D1226.toInt()
+        private const val FOCUS_BLUE = 0xFF4F86FF.toInt()
         private const val ACCENT = 0xFF2F6BFF.toInt()
         private const val LIVE_GREEN = 0xFF22C38E.toInt()
         private const val DIM = 0xFFC9CFEA.toInt()
@@ -130,7 +132,7 @@ class MagicHomeActivity : AppCompatActivity() {
         refreshAll(PanelState.config)
         val first = ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId } ?: ChannelStore.all.first()
         showTile(first)
-        recentList.post { recentList.getChildAt(0)?.requestFocus() }
+        focusFirst(0)
 
         // Gid TV a (pou non pwogram yo): disk la an premye, apre sa sèvè a
         lifecycleScope.launch {
@@ -170,6 +172,25 @@ class MagicHomeActivity : AppCompatActivity() {
         playerView.player = null
     }
 
+    /** Remòt la kòmanse sou premye chanèl la (pa sou ray agoch la), menm si lis la poko fin dessine. */
+    private fun focusFirst(tries: Int) {
+        val v = recentList.getChildAt(0)
+        if (v != null) { v.requestFocus(); return }
+        if (tries < 20) handler.postDelayed({ focusFirst(tries + 1) }, 100)
+    }
+
+    /** Non chanèl la san prefiks founisè a («24/7 AR| », «US: »…), tankou yon vrè sèvis TV. */
+    private fun clean(name: String) = name.replace(Regex("^\\s*[^|:]{1,14}[|:]\\s*"), "").replace(Regex("[◆●♦★✦]+"), "").trim().ifBlank { name }
+
+    /** Chanèl ki "bèl" pou akèy la: gen logo, gen pwogram nan gid la, pa yon chanèl 24/7 san gid. */
+    private fun score(c: Channel): Int {
+        var s = 0
+        if (!c.icon.isNullOrBlank()) s += 2
+        if (EpgRepository.nowFor(c) != null) s += 3
+        if (Regex("24\\s*/\\s*7", RegexOption.IGNORE_CASE).containsMatchIn(c.name)) s -= 3
+        return s
+    }
+
     private fun go(cls: Class<*>) {
         startActivity(Intent(this, cls).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
         finish()
@@ -201,6 +222,17 @@ class MagicHomeActivity : AppCompatActivity() {
         }
     }
 
+    /** Kat chanèl: degrade fonse (pa yon gwo blòk ble), kad blan lè remòt la sou li. */
+    private fun gradBg(): StateListDrawable {
+        fun shape(stroke: Boolean) = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(CARD, CARD2)).apply {
+            cornerRadius = dpf(6f); if (stroke) setStroke(dp(3), Color.WHITE)
+        }
+        return StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_focused), shape(true))
+            addState(intArrayOf(), shape(false))
+        }
+    }
+
     private fun sectionTitle(t: String) = text(14f, Color.WHITE, true).apply {
         text = t; letterSpacing = 0.04f
         layoutParams = LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(16); bottomMargin = dp(8) }
@@ -215,7 +247,7 @@ class MagicHomeActivity : AppCompatActivity() {
 
     private fun buildUi() {
         val root = FrameLayout(this).apply {
-            background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(BG_TOP, 0xFF081033.toInt(), BG_BOTTOM))
+            background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(BG_TOP, 0xFF060A1C.toInt(), BG_BOTTOM))
         }
 
         // Ray ikòn agoch
@@ -349,12 +381,13 @@ class MagicHomeActivity : AppCompatActivity() {
         if (all.isEmpty()) return
         // Dènye chanèl yo (oswa premye chanèl yo pou yon kliyan tou nèf)
         val recent = prefs.recentChannels.mapNotNull { channelById(it) }
-        recentAdapter.items = (recent + all.filter { c -> recent.none { it.streamId == c.streamId } }).take(12)
+        val ranked = all.take(3000).sortedByDescending { score(it) }
+        recentAdapter.items = (recent + ranked.filter { c -> recent.none { it.streamId == c.streamId } }).take(12)
         recentAdapter.notifyDataSetChanged()
         // Chanèl an dirèk: favori yo an premye, apre sa yon chanèl nan chak kategori
         val fav = prefs.favorites
         val favCh = all.filter { it.streamId in fav }
-        val oneEach = all.groupBy { it.categoryId }.values.mapNotNull { it.firstOrNull() }
+        val oneEach = all.groupBy { it.categoryId }.values.mapNotNull { g -> g.take(200).maxByOrNull { score(it) } }.sortedByDescending { score(it) }
         liveAdapter.items = (favCh + oneEach).distinctBy { it.streamId }.take(20)
         liveAdapter.notifyDataSetChanged()
         refreshMore()
@@ -365,8 +398,8 @@ class MagicHomeActivity : AppCompatActivity() {
 
     private fun refreshMore() {
         val c = previewCh ?: return
-        moreTitle.text = getString(R.string.mg_more_like_fmt, EpgRepository.nowFor(c)?.title ?: c.name)
-        moreAdapter.items = ChannelStore.all.filter { it.categoryId == c.categoryId && it.streamId != c.streamId }.take(12)
+        moreTitle.text = getString(R.string.mg_more_like_fmt, EpgRepository.nowFor(c)?.title ?: clean(c.name))
+        moreAdapter.items = ChannelStore.all.filter { it.categoryId == c.categoryId && it.streamId != c.streamId }.take(300).sortedByDescending { score(it) }.take(12)
         moreAdapter.notifyDataSetChanged()
     }
 
@@ -381,8 +414,8 @@ class MagicHomeActivity : AppCompatActivity() {
 
     private fun fillTile(c: Channel) {
         val p = EpgRepository.nowFor(c)
-        tileTitle.text = p?.title?.ifBlank { null } ?: c.name
-        tileMeta.text = listOf(c.name, categoryName(c)).filter { it.isNotBlank() }.joinToString(" · ")
+        tileTitle.text = p?.title?.ifBlank { null } ?: clean(c.name)
+        tileMeta.text = listOf(clean(c.name), clean(categoryName(c))).filter { it.isNotBlank() }.joinToString(" · ")
         if (p != null) {
             val min = ((p.end - System.currentTimeMillis()) / 60_000).coerceAtLeast(0)
             tileLeft.text = getString(R.string.mg_min_left_fmt, min.toInt())
@@ -532,34 +565,41 @@ class MagicHomeActivity : AppCompatActivity() {
             val logo = ImageView(parent.context).apply { scaleType = ImageView.ScaleType.FIT_CENTER }
             return when (style) {
                 Style.LOGO -> {
-                    root.background = focusBg(0x22FFFFFF, 6f)
-                    root.layoutParams = RecyclerView.LayoutParams(dp(88), dp(44)).apply { rightMargin = dp(8) }
-                    root.addView(logo, FrameLayout.LayoutParams(-1, -1).apply { setMargins(dp(10), dp(6), dp(10), dp(6)) })
+                    root.background = StateListDrawable().apply {
+                        addState(intArrayOf(android.R.attr.state_focused), GradientDrawable().apply { setColor(0x402F6BFF); cornerRadius = dpf(5f); setStroke(dp(2), FOCUS_BLUE) })
+                        addState(intArrayOf(), GradientDrawable().apply { setColor(Color.TRANSPARENT) })
+                    }
+                    root.layoutParams = RecyclerView.LayoutParams(dp(98), dp(46)).apply { rightMargin = dp(6) }
+                    root.addView(logo, FrameLayout.LayoutParams(-1, -1).apply { setMargins(dp(12), dp(7), dp(12), dp(7)) })
                     val name = text(11f, Color.WHITE, true).apply { gravity = Gravity.CENTER }
                     root.addView(name, FrameLayout.LayoutParams(-1, -1).apply { setMargins(dp(6), 0, dp(6), 0) })
                     VH(root, logo, name, null, null)
                 }
                 Style.PORTRAIT -> {
-                    root.background = focusBg(CARD, 6f)
+                    root.background = gradBg()
                     root.layoutParams = RecyclerView.LayoutParams(dp(106), dp(188)).apply { rightMargin = dp(10) }
                     root.addView(badge(getString(R.string.mg_live_badge), LIVE_GREEN, 0xFF04241A.toInt()), FrameLayout.LayoutParams(-2, -2).apply { leftMargin = dp(7); topMargin = dp(7) })
-                    root.addView(logo, FrameLayout.LayoutParams(-1, dp(70), Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(36); setMargins(dp(12), dp(36), dp(12), 0) })
-                    val prog = text(12f, Color.WHITE, true).apply { maxLines = 3; gravity = Gravity.CENTER_HORIZONTAL }
+                    root.addView(logo, FrameLayout.LayoutParams(-1, dp(74), Gravity.CENTER_HORIZONTAL).apply { setMargins(dp(10), dp(34), dp(10), 0) })
+                    val nm = text(15f, Color.WHITE, true).apply { maxLines = 3; gravity = Gravity.CENTER }
+                    root.addView(nm, FrameLayout.LayoutParams(-1, dp(74)).apply { setMargins(dp(8), dp(34), dp(8), 0) })
+                    val prog = text(11f, DIM, false).apply { maxLines = 2; gravity = Gravity.CENTER_HORIZONTAL }
                     root.addView(prog, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { setMargins(dp(8), 0, dp(8), dp(22)) })
                     val bar = bar(LIVE_GREEN)
                     root.addView(bar, FrameLayout.LayoutParams(-1, dp(3), Gravity.BOTTOM).apply { setMargins(dp(8), 0, dp(8), dp(10)) })
-                    VH(root, logo, null, prog, bar)
+                    VH(root, logo, nm, prog, bar)
                 }
                 Style.WIDE -> {
-                    root.background = focusBg(CARD, 6f)
+                    root.background = gradBg()
                     root.layoutParams = RecyclerView.LayoutParams(dp(172), dp(112)).apply { rightMargin = dp(10) }
-                    root.addView(logo, FrameLayout.LayoutParams(-1, dp(46)).apply { setMargins(dp(14), dp(12), dp(14), 0) })
-                    val prog = text(11f, Color.WHITE, true)
+                    root.addView(logo, FrameLayout.LayoutParams(-1, dp(50)).apply { setMargins(dp(14), dp(10), dp(14), 0) })
+                    val nm = text(14f, Color.WHITE, true).apply { maxLines = 2; gravity = Gravity.CENTER }
+                    root.addView(nm, FrameLayout.LayoutParams(-1, dp(50)).apply { setMargins(dp(10), dp(10), dp(10), 0) })
+                    val prog = text(11f, DIM, false)
                     root.addView(prog, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { setMargins(dp(10), 0, dp(10), dp(24)) })
                     root.addView(badge(getString(R.string.mg_live_badge), LIVE_GREEN, 0xFF04241A.toInt()), FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.END).apply { setMargins(0, 0, dp(8), dp(24)) })
                     val bar = bar(LIVE_GREEN)
                     root.addView(bar, FrameLayout.LayoutParams(-1, dp(3), Gravity.BOTTOM).apply { setMargins(dp(10), 0, dp(10), dp(10)) })
-                    VH(root, logo, null, prog, bar)
+                    VH(root, logo, nm, prog, bar)
                 }
             }
         }
@@ -567,9 +607,11 @@ class MagicHomeActivity : AppCompatActivity() {
         override fun onBindViewHolder(h: VH, position: Int) {
             val c = items[position]
             val now = EpgRepository.nowFor(c)
-            h.name?.text = if (c.icon.isNullOrBlank()) c.name else ""
-            h.logo.load(c.icon) { listener(onError = { _, _ -> h.name?.text = c.name }) }
-            h.prog?.text = now?.title?.ifBlank { null } ?: c.name
+            val nice = clean(c.name)
+            h.name?.text = if (c.icon.isNullOrBlank()) nice else ""
+            h.logo.setImageDrawable(null)
+            if (!c.icon.isNullOrBlank()) h.logo.load(c.icon) { listener(onError = { _, _ -> h.name?.text = nice }) }
+            h.prog?.text = now?.title?.ifBlank { null } ?: if (c.icon.isNullOrBlank()) "" else nice
             h.bar?.let { if (now != null) { it.progress = now.progress(); it.visibility = View.VISIBLE } else it.visibility = View.INVISIBLE }
             h.root.contentDescription = c.name
             h.root.setOnClickListener { openFull(c) }
