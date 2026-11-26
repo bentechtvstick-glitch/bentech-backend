@@ -1346,7 +1346,7 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun goHome() {
         handOffToGuide()
-        if (isTaskRoot) startActivity(Intent(this, EpgActivity::class.java))
+        if (isTaskRoot) startActivity(Intent(this, Brand.home))
         finish()
     }
 

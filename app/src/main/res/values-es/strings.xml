@@ -227,4 +227,22 @@
     <string name="vod_new_releases">🆕 Estrenos</string>
     <string name="set_afr">Movimiento fluido (AFR, frecuencia automática): %1$s</string>
     <string name="press_back_exit">Pulsa Atrás otra vez para salir</string>
+    <!-- Ekran akèy Magic TV Stick -->
+    <string name="mg_your_tv_fmt">Tu TV a las %1$s</string>
+    <string name="mg_go_guide">⌃ Ir a la guía</string>
+    <string name="mg_search">Buscar</string>
+    <string name="mg_home">Inicio</string>
+    <string name="mg_guide">Guía de TV</string>
+    <string name="mg_movies">Películas</string>
+    <string name="mg_series">Series</string>
+    <string name="mg_live">En vivo</string>
+    <string name="mg_settings">Ajustes</string>
+    <string name="mg_new">NUEVO</string>
+    <string name="mg_live_badge">EN VIVO</string>
+    <string name="mg_min_left_fmt">quedan %1$d min</string>
+    <string name="mg_more_like_fmt">Más como «%1$s»</string>
+    <string name="mg_live_you_like">TV EN VIVO QUE TE PUEDE GUSTAR</string>
+    <string name="mg_continue">Seguir viendo</string>
+    <string name="mg_new_movies">Películas nuevas</string>
+    <string name="mg_new_series">Series nuevas</string>
 </resources>

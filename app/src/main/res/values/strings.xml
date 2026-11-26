@@ -250,4 +250,22 @@
     <string name="vod_new_releases">🆕 Dènye ane yo</string>
     <string name="set_afr">Mouvman lis (AFR, vitès ekran otomatik): %1$s</string>
     <string name="press_back_exit">Peze Back ankò pou soti</string>
+    <!-- Ekran akèy Magic TV Stick -->
+    <string name="mg_your_tv_fmt">TV ou a, a %1$s</string>
+    <string name="mg_go_guide">⌃ Ale nan Gid la</string>
+    <string name="mg_search">Chèche</string>
+    <string name="mg_home">Akèy</string>
+    <string name="mg_guide">Gid TV</string>
+    <string name="mg_movies">Fim</string>
+    <string name="mg_series">Seri</string>
+    <string name="mg_live">An dirèk</string>
+    <string name="mg_settings">Paramèt</string>
+    <string name="mg_new">NOUVO</string>
+    <string name="mg_live_badge">AN DIRÈK</string>
+    <string name="mg_min_left_fmt">%1$d min ki rete</string>
+    <string name="mg_more_like_fmt">Plis tankou «%1$s»</string>
+    <string name="mg_live_you_like">TV AN DIRÈK OU KA RENMEN</string>
+    <string name="mg_continue">Kontinye gade</string>
+    <string name="mg_new_movies">Nouvo fim</string>
+    <string name="mg_new_series">Nouvo seri</string>
 </resources>

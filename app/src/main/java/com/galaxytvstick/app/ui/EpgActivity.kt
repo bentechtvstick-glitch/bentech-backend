@@ -404,7 +404,7 @@ class EpgActivity : AppCompatActivity() {
         b.rows.post { focusCellInRow(0, first = false); ensureArchive(0) }
     }
 
-    private fun confirmExit() = BackToExit.press(this)
+    private fun confirmExit() { if (Brand.isMagic && !isTaskRoot) finish() else BackToExit.press(this) }
 
     private fun applyCategory(id: String) {
         selectedCat = id

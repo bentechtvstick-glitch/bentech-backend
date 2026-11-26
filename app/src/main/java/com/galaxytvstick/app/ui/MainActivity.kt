@@ -144,7 +144,7 @@ class MainActivity : AppCompatActivity() {
         // Ekran akèy la (meni, Kontinye gade, Live TV, fim, seri, kategori)
         val last = if (prefs.startLastChannel) all.firstOrNull { it.streamId == prefs.lastChannelId } else null
         if (last != null) startActivity(Intent(this, PlayerActivity::class.java).putExtra(PlayerActivity.EXTRA_STREAM_ID, last.streamId))
-        else startActivity(Intent(this, EpgActivity::class.java))
+        else startActivity(Intent(this, Brand.home))
         finish()
     }
 

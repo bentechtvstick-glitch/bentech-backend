@@ -48,6 +48,13 @@ android {
             buildConfigField("String", "APK_NAME", "\"BenTechTvStick.apk\"")
             buildConfigField("String", "VERSION_FILE", "\"version-bentech.json\"")
         }
+        create("magic") {
+            dimension = "brand"
+            applicationId = "net.magictvstick.tv"
+            buildConfigField("String", "BRAND", "\"magic\"")
+            buildConfigField("String", "APK_NAME", "\"MagicTvStick.apk\"")
+            buildConfigField("String", "VERSION_FILE", "\"version-magic.json\"")
+        }
     }
 
     // Menm kle siyati pou tout bati yo (san sa, Fire Stick la refize mete yon nouvo vèsyon sou ansyen an)
