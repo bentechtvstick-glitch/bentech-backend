@@ -199,6 +199,9 @@ class MagicHomeActivity : AppCompatActivity() {
     // ------------------------------------------------------------ Konstriksyon ekran an
 
     private lateinit var overlayBinding: OverlayPanelBinding
+    private lateinit var rail: LinearLayout
+    /** Dènye kat remòt la te sou li nan kontni an (pou retounen sou li apre ray agoch la). */
+    private var lastContent: View? = null
 
     private fun text(size: Float, color: Int = Color.WHITE, bold: Boolean = false) = TextView(this).apply {
         textSize = size; setTextColor(color); maxLines = 1; ellipsize = TextUtils.TruncateAt.END
@@ -251,7 +254,7 @@ class MagicHomeActivity : AppCompatActivity() {
         }
 
         // Ray ikòn agoch
-        val rail = LinearLayout(this).apply {
+        rail = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL
             setPadding(0, dp(16), 0, 0)
         }
@@ -360,6 +363,7 @@ class MagicHomeActivity : AppCompatActivity() {
         overlayBinding = OverlayPanelBinding.inflate(layoutInflater, root, false)
         root.addView(overlayBinding.root, FrameLayout.LayoutParams(-1, -1))
         setContentView(root)
+        root.viewTreeObserver.addOnGlobalFocusChangeListener { _, now -> if (now != null && now.parent !== rail && now.isFocusable) lastContent = now }
     }
 
     private fun bar(color: Int) = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
@@ -382,14 +386,12 @@ class MagicHomeActivity : AppCompatActivity() {
         // Dènye chanèl yo (oswa premye chanèl yo pou yon kliyan tou nèf)
         val recent = prefs.recentChannels.mapNotNull { channelById(it) }
         val ranked = all.take(3000).sortedByDescending { score(it) }
-        recentAdapter.items = (recent + ranked.filter { c -> recent.none { it.streamId == c.streamId } }).take(12)
-        recentAdapter.notifyDataSetChanged()
+        recentAdapter.set((recent + ranked.filter { c -> recent.none { it.streamId == c.streamId } }).take(12))
         // Chanèl an dirèk: favori yo an premye, apre sa yon chanèl nan chak kategori
         val fav = prefs.favorites
         val favCh = all.filter { it.streamId in fav }
         val oneEach = all.groupBy { it.categoryId }.values.mapNotNull { g -> g.take(200).maxByOrNull { score(it) } }.sortedByDescending { score(it) }
-        liveAdapter.items = (favCh + oneEach).distinctBy { it.streamId }.take(20)
-        liveAdapter.notifyDataSetChanged()
+        liveAdapter.set((favCh + oneEach).distinctBy { it.streamId }.take(20))
         refreshMore()
         // Bann pwomosyon: premye banner ki gen yon imaj nan panel la
         val b = cfg.banners.firstOrNull { it.imageUrl.isNotBlank() }
@@ -399,15 +401,13 @@ class MagicHomeActivity : AppCompatActivity() {
     private fun refreshMore() {
         val c = previewCh ?: return
         moreTitle.text = getString(R.string.mg_more_like_fmt, EpgRepository.nowFor(c)?.title ?: clean(c.name))
-        moreAdapter.items = ChannelStore.all.filter { it.categoryId == c.categoryId && it.streamId != c.streamId }.take(300).sortedByDescending { score(it) }.take(12)
-        moreAdapter.notifyDataSetChanged()
+        moreAdapter.set(ChannelStore.all.filter { it.categoryId == c.categoryId && it.streamId != c.streamId }.take(300).sortedByDescending { score(it) }.take(12))
     }
 
     private fun refreshEpgViews() {
         previewCh?.let { fillTile(it) }
-        recentAdapter.notifyDataSetChanged()
-        moreAdapter.notifyDataSetChanged()
-        liveAdapter.notifyDataSetChanged()
+        // Rafrechi kat yo SAN rekreye yo: remòt la rete kote l te ye (avan, fokis la te sote chak 20 s)
+        recentAdapter.rebind(); moreAdapter.rebind(); liveAdapter.rebind()
     }
 
     private fun categoryName(c: Channel) = ChannelStore.categories.firstOrNull { it.id == c.categoryId }?.name ?: ""
@@ -537,6 +537,12 @@ class MagicHomeActivity : AppCompatActivity() {
                     startActivity(Intent(this, EpgActivity::class.java)); return true
                 }
                 KeyEvent.KEYCODE_GUIDE -> { startActivity(Intent(this, EpgActivity::class.java)); return true }
+                // Ray agoch → adwat: retounen sou kat ou te ye a (pa yon kat o aza)
+                KeyEvent.KEYCODE_DPAD_RIGHT -> if (currentFocus?.parent === rail) {
+                    val back = lastContent?.takeIf { it.isAttachedToWindow && it.isShown }
+                    if (back != null) back.requestFocus() else focusFirst(0)
+                    return true
+                }
             }
         }
         return super.dispatchKeyEvent(event)
@@ -555,6 +561,16 @@ class MagicHomeActivity : AppCompatActivity() {
 
     private inner class ChannelAdapter(val style: Style) : RecyclerView.Adapter<ChannelAdapter.VH>() {
         var items: List<Channel> = emptyList()
+
+        init { setHasStableIds(true) }
+        override fun getItemId(position: Int) = items[position].streamId.toLong()
+
+        /** Menm lis la → jis mete kat yo ajou (fokis la pa bouje); lis diferan → ranplase l. */
+        fun set(list: List<Channel>) {
+            if (list.map { it.streamId } == items.map { it.streamId }) { items = list; rebind(); return }
+            items = list; notifyDataSetChanged()
+        }
+        fun rebind() { if (items.isNotEmpty()) notifyItemRangeChanged(0, items.size, "epg") }
 
         inner class VH(val root: FrameLayout, val logo: ImageView, val name: TextView?, val prog: TextView?, val bar: ProgressBar?) : RecyclerView.ViewHolder(root)
 
