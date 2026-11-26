@@ -584,7 +584,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       deviceName: device.deviceName || "",
       maxChannels,
       // Mizajou app la: panel la "voye" yon vèsyon (bouton nan paj Sistèm); app la pwopoze l si l pi ansyen
-      update: appUpdate(),
+      update: appUpdate(brand),
       // Kont kliyan an, pou ekran akèy app la (non, plan, ekspirasyon)
       account: customer ? { name: customer.name || "", plan: customer.plan || "", expiry: customer.expiry || "" } : null,
       // Avètisman: plan kliyan an prèske fini (TV a montre l dousman, li rete kèk segonn, li disparèt)
@@ -2040,19 +2040,27 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
   }
 
   /** Sa app la resevwa nan /config: null toutotan admin nan pa voye okenn mizajou. */
-  function appUpdate() {
-    const s = settings();
-    const build = Number(s.updatePushBuild) || 0;
-    if (!build) return null;
-    return { build, version: `1.0.${build}`, url: APK_LINK, force: !!s.updateForce, pushAt: String(s.updatePushAt || ""), notes: String(s.updateNotes || "") };
+  /**
+   * Mizajou ki voye pou yon mak. Galaxy ak Ben Tech pataje menm mizajou a (jan l te ye toujou);
+   * Magic TV Stick gen pa l APA (settings.updatePushMagic), voye sèlman lè admin nan chwazi Magic.
+   */
+  const pushOf = (s, app) => app === "magic"
+    ? { build: Number(s.updatePushMagic?.build) || 0, at: s.updatePushMagic?.at || "", force: !!s.updatePushMagic?.force, notes: String(s.updatePushMagic?.notes || "") }
+    : { build: Number(s.updatePushBuild) || 0, at: s.updatePushAt || "", force: !!s.updateForce, notes: String(s.updateNotes || "") };
+  function appUpdate(brand) {
+    const p = pushOf(settings(), brand === "magic" ? "magic" : "main");
+    if (!p.build) return null;
+    return { build: p.build, version: `1.0.${p.build}`, url: APK_LINK, force: p.force, pushAt: String(p.at), notes: p.notes };
   }
 
   app.get("/api/galaxy/app-update", authenticate, async (req, res) => {
     const l = await latestBuild(req.query.fresh === "1");
     const s = settings();
-    // Chak TV ki te konekte nan 7 dènye jou yo: ki vèsyon li genyen ak kote mizajou a ye
-    const target = Number(s.updatePushBuild) || l.build || 0, nowMs = Date.now();
-    const tvs = (data().devices || []).filter((d) => d.lastSeenAt && nowMs - Date.parse(d.lastSeenAt) < 7 * 86400000).map((d) => {
+    const appSel = req.query.app === "magic" ? "magic" : "main", push = pushOf(s, appSel);
+    // Chak TV ki te konekte nan 7 dènye jou yo (pou app ki chwazi a): ki vèsyon li genyen ak kote mizajou a ye
+    const target = push.build || l.build || 0, nowMs = Date.now();
+    const tvs = (data().devices || []).filter((d) => d.lastSeenAt && nowMs - Date.parse(d.lastSeenAt) < 7 * 86400000)
+      .filter((d) => (d.brand === "magic") === (appSel === "magic")).map((d) => {
       const b = Number(String(d.appVersion || "").split(".")[2]) || 0;
       const cust = d.customer ? { name: d.customer } : null;
       return { mac: d.mac, name: d.name || cust?.name || d.type || d.model || "", build: b, version: d.appVersion || "", brand: d.brand || "galaxy",
@@ -2060,23 +2068,28 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
         online: nowMs - Date.parse(d.lastSeenAt) < 3 * 60000, lastSeenAt: d.lastSeenAt, upToDate: !!target && b >= target };
     }).sort((a, b) => a.upToDate - b.upToDate || b.online - a.online);
     res.json({ latestBuild: l.build, latestVersion: l.build ? `1.0.${l.build}` : "", publishedAt: l.publishedAt,
-      pushedBuild: Number(s.updatePushBuild) || 0, pushedAt: s.updatePushAt || "", force: !!s.updateForce, target, tvs });
+      app: appSel, pushedBuild: push.build, pushedAt: push.at, force: push.force, target, tvs });
   });
 
   // Voye dènye vèsyon an bay tout TV yo (oswa { cancel: true } pou sispann pwopoze l)
   app.post("/api/galaxy/app-update", authenticate, async (req, res) => {
     ensure();
     const s = (data().settings ||= {});
-    if (req.body?.cancel) { s.updatePushBuild = 0; s.updatePushAt = ""; s.updateForce = false; }
-    else {
+    const magic = req.body?.app === "magic";
+    let build = 0;
+    if (!req.body?.cancel) {
       const l = await latestBuild(true);
       if (!l.build) return res.status(502).json({ error: "Pa ka jwenn dènye vèsyon app la kounye a. Eseye ankò nan yon ti moman." });
-      s.updatePushBuild = l.build; s.updatePushAt = new Date().toISOString(); s.updateForce = !!req.body?.force; s.updateNotes = String(req.body?.notes || "").slice(0, 600);
+      build = l.build;
     }
+    const at = build ? new Date().toISOString() : "", force = !!build && !!req.body?.force, notes = build ? String(req.body?.notes || "").slice(0, 600) : "";
+    if (magic) s.updatePushMagic = { build, at, force, notes };
+    else { s.updatePushBuild = build; s.updatePushAt = at; s.updateForce = force; s.updateNotes = notes; }
     await db.write();
     syncTvs();
-    auditLog("app-update", req.body?.cancel ? "App update push cancelled" : `App update 1.0.${s.updatePushBuild} sent to every TV${s.updateForce ? " (forced)" : ""}`, admin(req));
-    res.json({ ok: true, pushedBuild: s.updatePushBuild, pushedAt: s.updatePushAt, force: s.updateForce });
+    const who = magic ? "every Magic TV Stick" : "every Galaxy / Ben Tech TV";
+    auditLog("app-update", req.body?.cancel ? `App update push cancelled (${who})` : `App update 1.0.${build} sent to ${who}${force ? " (forced)" : ""}`, admin(req));
+    res.json({ ok: true, app: magic ? "magic" : "main", pushedBuild: build, pushedAt: at, force });
   });
 
   /** Pakè yon TV: konbyen non gwoup/chanèl pakè a jwenn nan lis TV sa a (si 0: pakè a pa ka chanje anyen). */

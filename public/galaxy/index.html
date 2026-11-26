@@ -1372,6 +1372,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
       </div>
       <div class="card">
         <div class="cardhead"><div><h2>📲 Mizajou app la</h2><p class="sub">Voye dènye vèsyon app la bay TV yo. Kliyan an wè yon mesaj epi li peze "Mete ajou".</p><p class="note" style="margin:4px 0 0">🔄 Otomatik: TV yo tcheke poukont yo chak 6 è (ak lè app la louvri) si gen yon nouvo vèsyon. Bouton anba a se pou voye l touswit (manyèl).</p></div><button class="btn small" id="upRefresh" type="button">Rafrechi</button></div>
+        <div class="seg" id="upApp" role="radiogroup" aria-label="App" style="margin-bottom:12px"><button type="button" data-v="main" class="on">Galaxy + Ben Tech</button><button type="button" data-v="magic">Magic TV Stick</button></div>
         <div class="kpis" id="upKpis"></div>
         <div id="upTvs" style="margin-top:12px"></div>
         <div class="field" style="margin-top:12px"><label for="upNotes">Sa ki nouvo (kliyan an ap wè l sou TV a)</label><textarea id="upNotes" rows="3" maxlength="600" placeholder="Egz: Chanèl yo chanje pi vit. Gid TV a pi rapid."></textarea></div>
@@ -3903,8 +3904,13 @@ $("#bkFile").addEventListener("change", async (ev) => {
   } catch (err) { setMsg($("#bkMsg"), err.message); }
 });
 // ---- Mizajou app la: voye dènye APK a bay TV yo ----
+// Ki app mizajou a ye pou: Galaxy + Ben Tech ansanm, oswa Magic TV Stick APA
+let upApp = "main";
+$("#upApp").addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (!b) return; upApp = b.dataset.v;
+  $$("#upApp button").forEach((x) => x.classList.toggle("on", x === b)); setMsg($("#upMsg"), ""); loadAppUpdate(); });
+const upAppName = () => upApp === "magic" ? "Magic TV Stick" : "Galaxy + Ben Tech";
 async function loadAppUpdate(fresh) {
-  let y; try { y = await api("GET", "/galaxy/app-update" + (fresh ? "?fresh=1" : "")); } catch (err) { $("#upKpis").innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
+  let y; try { y = await api("GET", "/galaxy/app-update?app=" + upApp + (fresh ? "&fresh=1" : "")); } catch (err) { $("#upKpis").innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
   const k = (label, v, sub) => `<div class="kpi"><span class="k">${esc(t(label))}</span><span class="v">${esc(v)}</span>${sub ? `<span class="note">${esc(sub)}</span>` : ""}</div>`;
   $("#upKpis").innerHTML = k("Dènye vèsyon ki disponib", y.latestVersion || "—", y.publishedAt ? fmtWhen(y.publishedAt) : "")
     + k("Vèsyon ki voye bay TV yo", y.pushedBuild ? "1.0." + y.pushedBuild : t("Okenn"), y.pushedBuild ? fmtWhen(y.pushedAt) + (y.force ? " · " + t("Obligatwa") : "") : "");
@@ -3944,11 +3950,11 @@ $("#upRefresh").addEventListener("click", async () => {
   finally { b.disabled = false; b.textContent = t("Rafrechi"); }
 });
 $("#upSend").addEventListener("click", async () => {
-  if (!confirm(t("Voye dènye vèsyon app la bay tout TV yo?"))) return;
-  try { const r = await api("POST", "/galaxy/app-update", { force: $("#upForce").checked, notes: $("#upNotes").value.trim() }); setMsg($("#upMsg"), t("Vèsyon 1.0.{0} voye bay tout TV yo.", r.pushedBuild), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
+  if (!confirm(t("Voye dènye vèsyon an bay tout TV {0} yo?", upAppName()))) return;
+  try { const r = await api("POST", "/galaxy/app-update", { app: upApp, force: $("#upForce").checked, notes: $("#upNotes").value.trim() }); setMsg($("#upMsg"), t("Vèsyon 1.0.{0} voye bay tout TV {1} yo.", r.pushedBuild, upAppName()), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
 });
 $("#upCancel").addEventListener("click", async () => {
-  try { await api("POST", "/galaxy/app-update", { cancel: true }); setMsg($("#upMsg"), t("TV yo p ap pwopoze mizajou a ankò."), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
+  try { await api("POST", "/galaxy/app-update", { app: upApp, cancel: true }); setMsg($("#upMsg"), t("TV yo p ap pwopoze mizajou a ankò."), true); loadAppUpdate(); } catch (err) { setMsg($("#upMsg"), err.message); }
 });
 // ---- Kisa ki pran plas nan baz done a + TV ki pral efase otomatikman ----
 const STORE_LABELS = { channelLists: "Lis chanèl yo", devices: "Aparèy", deviceChannels: "Lyen aparèy → lis chanèl", devicePlaylists: "Playlist", customers: "Kliyan yo", auditLogs: "Jounal aksyon yo", channelProfiles: "Pakè chanèl", tickers: "Ticker", banners: "Banner", popups: "Pop-up", mediaAds: "Piblisite", liveEvents: "Evènman dirèk", chyrons: "Chyron", settings: "Reglaj panel la", users: "Kont admin yo", deletedDevices: "Aparèy ki efase", channelHealth: "Sante chanèl yo", adminNotes: "Nòt mwen yo", notify: "Notifikasyon telefòn", watch: "Siveyans (AI)", bills: "Peman pou sonje", customGroups: "Gwoup pa m", ownerAuth: "Login pwopriyetè a", channelAlerts: "Alèt chanèl yo", deviceStats: "Estatistik TV yo", aiUsage: "Depans AI a", launcher: "Launcher" };
