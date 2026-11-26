@@ -279,7 +279,7 @@ class EpgActivity : AppCompatActivity() {
             .setBandwidthMeter(Renderers.bandwidth(this))
             .setLoadControl(PlayerActivity.loadControl())
             .setMediaSourceFactory(
-                DefaultMediaSourceFactory(OkHttpDataSource.Factory(XtreamApi.http).setUserAgent(XtreamApi.USER_AGENT).also { previewFactory = it })
+                DefaultMediaSourceFactory(OkHttpDataSource.Factory(XtreamApi.http).setUserAgent(XtreamApi.USER_AGENT).also { previewFactory = it }, PlayerActivity.extractors())
             )
             .build().also {
                 player = it

@@ -66,6 +66,13 @@ class PlayerActivity : AppCompatActivity() {
          * epi 3.5 s apre yon koupi (pou l pa koupe ankò touswit). Rès tanpon an (20–60 s) pa chanje, pou imaj la pa kole.
          * Gid la (ti fenèt videyo a) sèvi ak menm reglaj la.
          */
+        /**
+         * Chanèl live (.ts): kòmanse sou PREMYE imaj konplè ki rive (I-frame), pa tann yon "IDR".
+         * Anpil sèvè IPTV voye yon IDR chak 2–10 s sèlman: avan, ExoPlayer te tann li → chanjman chanèl lan te pran plizyè segonn.
+         */
+        fun extractors() = androidx.media3.extractor.DefaultExtractorsFactory()
+            .setTsExtractorFlags(androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES)
+
         fun loadControl(): DefaultLoadControl = DefaultLoadControl.Builder()
             // Plis rezèv videyo (30 s) pou entènèt fèb: ti koupi yo pa rive sou ekran an.
             // 0,7 s avan l kòmanse (chanje chanèl pi vit), 4 s apre yon koupi (pou l pa rebloke touswit).
@@ -301,7 +308,7 @@ class PlayerActivity : AppCompatActivity() {
         player = ExoPlayer.Builder(this, Renderers.factory(this))
             .setTrackSelector(Renderers.trackSelector(this))
             .setBandwidthMeter(Renderers.bandwidth(this))
-            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSource))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSource, extractors()))
             .setLoadControl(loadControl())
             .build().also { p ->
                 b.playerView.player = p
