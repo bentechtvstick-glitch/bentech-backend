@@ -328,6 +328,8 @@ data class PanelConfig(
     val ads: List<Ad>,
     /** Koupi piblisite otomatik (null = pa gen spot). */
     val adBreak: AdBreak? = null,
+    /** Etikèt "PIBLISITE · 1/2 · 0:15" pandan piblisite yo (panel la: Show AD label; OFF pa defo). */
+    val adShowLabel: Boolean = false,
     /** Grafik TV: logo bug, watermark, scoreboard, meteyo, countdown, ident, bumper. */
     val graphics: Graphics? = null,
     val broadcast: Broadcast?,
@@ -443,6 +445,7 @@ data class PanelConfig(
                     it.optInt("skipAfterSec", 5), it.optString("name")
                 )
             }.filter { it.url.isNotBlank() },
+            adShowLabel = o.optBoolean("adShowLabel", false),
             adBreak = o.optJSONObject("adBreak")?.let { ab ->
                 AdBreak(
                     auto = ab.optBoolean("auto", false),

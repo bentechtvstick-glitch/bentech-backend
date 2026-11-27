@@ -711,7 +711,7 @@ class PlayerActivity : AppCompatActivity() {
         val p = player ?: return
         adPlaying = true
         adSecondsLeftToSkip = ad.skipAfterSec.coerceAtLeast(0)
-        b.adBox.visibility = View.VISIBLE
+        showAdBox(true)
         handler.post(adTick)
         val adItem = MediaItem.Builder().setMediaId("ad").setUri(ad.url).build()
         curMode = preferredMode; attempts = 0; curAlt = XtreamApi.preferAlt; repairStage = 0
@@ -752,17 +752,30 @@ class PlayerActivity : AppCompatActivity() {
                        else ad.durationSec - spotElapsed
             val total = breakQueue.count { it.type != BUMPER }
             val n = breakQueue.take(breakPos + 1).count { it.type != BUMPER }
-            var text = "$n/$total   ·   %d:%02d".format(left.coerceAtLeast(0) / 60, left.coerceAtLeast(0) % 60)
+            val lines = mutableListOf<String>()
+            if (adLabelOn()) lines += "$n/$total   ·   %d:%02d".format(left.coerceAtLeast(0) / 60, left.coerceAtLeast(0) % 60)
             if (breakSkipAfter > 0) {
                 val wait = breakSkipAfter - breakElapsed
-                text += "\n" + if (wait > 0) getString(R.string.ad_skip_in, wait) else getString(R.string.ad_skip_now)
+                lines += if (wait > 0) getString(R.string.ad_skip_in, wait) else getString(R.string.ad_skip_now)
             }
-            b.adSkip.text = text
+            b.adSkip.text = lines.joinToString("\n")
+            showAdBox(breakSkipAfter > 0)
             // Imaj: pase sou pwochen spot la lè dire a fini
             if (ad.type != "video" && spotElapsed >= ad.durationSec.coerceAtLeast(3)) { nextBreakAd(); return }
             breakElapsed++; spotElapsed++
             handler.postDelayed(this, 1000)
         }
+    }
+
+    /**
+     * Etikèt piblisite a (PIBLISITE · 1/2 · 0:15). Panel la ka etenn li (OFF pa defo): videyo a jwe nòmal san anyen sou li.
+     * Si kliyan an gen dwa sote, se sèlman mesaj "sote" a ki rete.
+     */
+    private fun adLabelOn() = PanelState.config.adShowLabel
+    private fun showAdBox(skipLine: Boolean) {
+        val on = adLabelOn()
+        b.adLabel.visibility = if (on) View.VISIBLE else View.GONE
+        b.adBox.visibility = if (on || skipLine) View.VISIBLE else View.GONE
     }
 
     /** Lanse yon koupi piblisite: spot yo pase youn apre lòt plen ekran, epi TV a tounen sou chanèl la. */
@@ -807,7 +820,7 @@ class PlayerActivity : AppCompatActivity() {
             return
         }
         b.overlay.gfx.hideBumper()
-        b.adBox.visibility = View.VISIBLE
+        showAdBox(breakSkipAfter > 0)
         lifecycleScope.launch { runCatching { PanelApi(prefs).adEvent(ad.id, "start") } }
         if (ad.type == "video") {
             b.fullAd.visibility = View.GONE
