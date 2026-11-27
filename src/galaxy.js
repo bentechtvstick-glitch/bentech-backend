@@ -484,6 +484,9 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
         }
       : null;
 
+    // Etikèt "PIBLISITE · 1/2 · 0:15" sou TV a pandan piblisite yo: OFF pa defo
+    const adShowLabel = s.adBreakShowLabel === true;
+
     // ---- Broadcast: mesaj ijans nan Settings ----
     const broadcast = s.emergencyActive && s.emergencyText
       ? {
@@ -628,6 +631,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       popupStyle: textSpec(s.popupStyle, "plain", "#FFFFFF", "#1D4ED8"),
       ads,
       adBreak,
+      adShowLabel,
       graphics: gfx.graphics,
       broadcast,
       liveEvents,

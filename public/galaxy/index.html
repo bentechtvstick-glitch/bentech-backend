@@ -1079,6 +1079,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
               </div>
               <div class="field"><label for="brTimes">Lè fiks (opsyonèl)</label><input type="text" id="brTimes" placeholder="19:00, 20:30, 21:15"></div>
               <div class="field"><label for="brSkip">Kliyan an ka sote apre (segonn)</label><input type="number" id="brSkip" min="0" max="120" value="0"></div>
+              <div class="inline"><label class="sw"><input type="checkbox" id="brLabel"><i></i></label><label for="brLabel"><b>Show AD label</b> <span class="note">— etikèt «PIBLISITE · 1/2 · 0:15» ak ba a sou videyo a (OFF: videyo a jwe pwòp)</span></label></div>
               <p class="note" style="margin:0">"Chak" = 0: sèlman nan lè fiks yo. "Sote" = 0: kliyan an pa ka sote piblisite a (tankou sou TV). Lè fiks yo se lè TV kliyan an.</p>
               <div class="msg" id="brAutoMsg"></div>
             </div>
@@ -4462,7 +4463,7 @@ function renderBreakTargets() {
 function fillBreakSettings() {
   const s = settings;
   $("#brAuto").checked = !!s.adBreakAuto; $("#brEvery").value = s.adBreakEveryMin === undefined || s.adBreakEveryMin === "" ? 15 : s.adBreakEveryMin;
-  $("#brSpots").value = s.adBreakSpots || 2; $("#brTimes").value = s.adBreakTimes || ""; $("#brSkip").value = s.adBreakSkipSec || 0;
+  $("#brSpots").value = s.adBreakSpots || 2; $("#brTimes").value = s.adBreakTimes || ""; $("#brSkip").value = s.adBreakSkipSec || 0; $("#brLabel").checked = s.adBreakShowLabel === true;
 }
 async function sendBreak(adIds) {
   const mac = $("#brTarget").value; setMsg($("#brMsg"), "");
@@ -4499,7 +4500,8 @@ function brPvSpot() {
   const p = brPv, a = p.q[p.i]; p.spotEl = 0; p.failed = false; p.video = null;
   const m = (window.__adPreviewMedia && window.__adPreviewMedia(a)) || { url: a.url, video: brPvIsVideo(a) };
   $("#brTv").innerHTML = `<div class="brpv-ad">${m.video ? `<video src="${esc(m.url)}" autoplay playsinline></video>` : `<img class="m" src="${esc(m.url)}" alt="">`}
-    <div class="brpv-tag"><b>${esc(t("PIBLISITE"))}</b><span id="brPvTag"></span></div><div class="brpv-bar"><i id="brPvBar"></i></div></div>`;
+    ${$("#brLabel").checked ? `<div class="brpv-tag"><b>${esc(t("PIBLISITE"))}</b><span id="brPvTag"></span></div><div class="brpv-bar"><i id="brPvBar"></i></div>`
+      : p.skip > 0 ? `<div class="brpv-tag"><span id="brPvSkip"></span></div>` : ""}</div>`;
   const el = $("#brTv .brpv-ad").firstElementChild, fail = () => { if (brPv !== p || p.q[p.i] !== a || p.failed) return; p.failed = true; p.video = null;
     el.outerHTML = brPvPh(a, t("Medya a pa chaje nan preview a. Verifye URL la — lyen .m3u8 ak http:// pa jwe nan navigatè a, men yo jwe sou TV a.")); };
   el.addEventListener("error", fail);
@@ -4516,7 +4518,9 @@ function brPvTick() {
   const pos = v && isFinite(v.duration) && v.duration > 0 ? v.currentTime : p.spotEl;
   if (!(v && !p.failed) && p.spotEl >= dur) return brPvNext();
   const wait = p.skip - p.el, tag = $("#brPvTag"), bar = $("#brPvBar");
-  if (tag) tag.textContent = `${p.i + 1}/${p.q.length}   ·   ${mmss(dur - pos)}` + (p.skip > 0 ? "\n" + (wait > 0 ? t("Ou ka sote nan {0} s", Math.ceil(wait)) : t("Peze OK pou sote ▶")) : "");
+  const skipTxt = p.skip > 0 ? (wait > 0 ? t("Ou ka sote nan {0} s", Math.ceil(wait)) : t("Peze OK pou sote ▶")) : "";
+  if (tag) tag.textContent = `${p.i + 1}/${p.q.length}   ·   ${mmss(dur - pos)}` + (skipTxt ? "\n" + skipTxt : "");
+  const sk = $("#brPvSkip"); if (sk) sk.textContent = skipTxt;
   if (bar) bar.style.width = Math.min(100, (pos / dur) * 100) + "%";
 }
 function brPvNext() { const p = brPv; if (!p) return; if (p.i + 1 < p.q.length) { p.i++; brPvSpot(); } else { brPvStop(true); brPvIdle(t("↩ Tounen sou chanèl la")); setTimeout(() => brPvIdle(), 1800); } }
@@ -4547,11 +4551,11 @@ $("#brList").addEventListener("click", async (e) => {
 });
 $("#brList").addEventListener("change", () => setTimeout(loadAds, 300));
 let brSaveT = null;
-["#brAuto", "#brEvery", "#brSpots", "#brTimes", "#brSkip"].forEach((sel) => $(sel).addEventListener("input", () => {
+["#brAuto", "#brEvery", "#brSpots", "#brTimes", "#brSkip", "#brLabel"].forEach((sel) => $(sel).addEventListener("input", () => {
   clearTimeout(brSaveT); setMsg($("#brAutoMsg"), "Ap sove…", true);
   brSaveT = setTimeout(async () => {
     try { settings = await api("PUT", "/settings", { adBreakAuto: $("#brAuto").checked, adBreakEveryMin: Math.max(0, Math.min(240, parseInt($("#brEvery").value, 10) || 0)),
-        adBreakSpots: Math.max(1, Math.min(10, parseInt($("#brSpots").value, 10) || 2)), adBreakTimes: $("#brTimes").value.trim(), adBreakSkipSec: Math.max(0, Math.min(120, parseInt($("#brSkip").value, 10) || 0)) });
+        adBreakSpots: Math.max(1, Math.min(10, parseInt($("#brSpots").value, 10) || 2)), adBreakTimes: $("#brTimes").value.trim(), adBreakSkipSec: Math.max(0, Math.min(120, parseInt($("#brSkip").value, 10) || 0)), adBreakShowLabel: $("#brLabel").checked });
       setMsg($("#brAutoMsg"), "✓ Sove otomatikman — TV yo mete yo ajou touswit.", true); }
     catch (err) { setMsg($("#brAutoMsg"), err.message); }
   }, 700);

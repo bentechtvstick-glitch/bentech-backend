@@ -278,7 +278,8 @@
       dev("POST", `/${M}/ad-events`, { adId: a.id, event: "start" }).catch(() => {});
       const spots = b.q.filter((x) => x.type !== "bumper");
       box.innerHTML = `${isVideo(a) ? `<video src="${esc(a.url)}" autoplay muted playsinline></video>` : `<img class="m" src="${esc(a.url)}" alt="">`}
-        <div class="brpv-tag"><b>${esc(t("PIBLISITE"))}</b><span data-n="${spots.indexOf(a) + 1}/${spots.length}"></span></div><div class="brpv-bar"><i></i></div>`;
+        ${T.cfg?.adShowLabel ? `<div class="brpv-tag"><b>${esc(t("PIBLISITE"))}</b><span data-n="${spots.indexOf(a) + 1}/${spots.length}"></span></div><div class="brpv-bar"><i></i></div>`
+          : b.skip > 0 ? `<div class="brpv-tag"><span data-skip></span></div>` : ""}`;
       const m = box.firstElementChild, fail = () => { if (T.brk !== b || b.q[b.i] !== a || b.failed === a) return; b.failed = a; b.video = null;
         m.outerHTML = `<div class="brpv-ph" style="background:linear-gradient(135deg,#2a1552,#0b3b4a)"><div class="big">${isVideo(a) ? "▶" : "🖼"}</div><div class="n">${esc(a.name || (a.url || "").split("/").pop())}</div></div>`; };
       m.addEventListener("error", fail);
@@ -290,7 +291,9 @@
       const v = b.video, known = v && isFinite(v.duration) && v.duration > 0, dur = known ? v.duration : Math.max(a.type === "bumper" ? 2 : 3, +a.durationSec || 10), pos = known ? v.currentTime : b.spotEl;
       if (!v && b.spotEl >= dur) return nextSpot();
       const tag = el.querySelector(".ttv-ad [data-n]"), bar = el.querySelector(".ttv-ad .brpv-bar i");
-      if (tag) tag.textContent = `${tag.dataset.n}   ·   ${mmss(dur - pos)}` + (b.skip > 0 ? "\n" + (b.skip - b.el > 0 ? t("Ou ka sote nan {0} s", Math.ceil(b.skip - b.el)) : t("Peze OK pou sote ▶")) : "");
+      const skipTxt = b.skip > 0 ? (b.skip - b.el > 0 ? t("Ou ka sote nan {0} s", Math.ceil(b.skip - b.el)) : t("Peze OK pou sote ▶")) : "";
+      if (tag) tag.textContent = `${tag.dataset.n}   ·   ${mmss(dur - pos)}` + (skipTxt ? "\n" + skipTxt : "");
+      const sk = el.querySelector(".ttv-ad [data-skip]"); if (sk) sk.textContent = skipTxt;
       if (bar) bar.style.width = Math.min(100, (pos / dur) * 100) + "%";
     }
     function scheduler() {
