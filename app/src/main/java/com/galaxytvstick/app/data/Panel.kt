@@ -295,6 +295,9 @@ data class PanelConfig(
     /** Non admin nan chanje nan panel la: ID kategori → non, ID chanèl → non. */
     val categoryNames: Map<String, String> = emptyMap(),
     val channelNames: Map<Int, String> = emptyMap(),
+    /** Nimewo chanèl panel la: "provider" oswa "list" (1, 2, 3…), ak nimewo fiks pa NON chanèl (majiskil). */
+    val chNumMode: String = "provider",
+    val chNumFixed: Map<String, Int> = emptyMap(),
     val pkgRules: PkgRules? = null,
     /** Panel la mande kache tout kontni granmoun (kliyan an pa ka retire sa nan Settings). */
     val forceHideAdult: Boolean = false,
@@ -382,6 +385,10 @@ data class PanelConfig(
                 ExpiryNotice(it.optString("text"), it.optInt("daysLeft"), it.optInt("repeatMin", 120).coerceIn(15, 1440), it.optInt("showSec", 12).coerceIn(4, 60))
             }?.takeIf { it.text.isNotBlank() },
             channelNames = o.optJSONObject("channelNames").stringMap().mapNotNull { (k, v) -> k.toIntOrNull()?.let { it to v } }.toMap(),
+            chNumMode = o.optJSONObject("channelNumbering")?.optString("mode", "provider") ?: "provider",
+            chNumFixed = o.optJSONObject("channelNumbering")?.optJSONObject("fixed")?.let { f ->
+                f.keys().asSequence().mapNotNull { k -> f.optInt(k, 0).takeIf { it in 1..99999 }?.let { k.trim().uppercase() to it } }.toMap()
+            } ?: emptyMap(),
             ticker = o.optJSONObject("ticker")?.takeIf { it.optBoolean("enabled", true) }?.let { parseTicker(it) }?.takeIf { it.text.isNotBlank() },
             // Lè a poukont li (ticker a etenn oswa pa gen mesaj): menm estil ak lè ticker a
             clock = o.optJSONObject("clock")?.let { parseTicker(it) },

@@ -74,7 +74,7 @@ object ChannelStore {
     fun applyPanel(cfg: PanelConfig) {
         // Panel la voye konfig la chak minit: si anyen ki chanje lis la pa chanje, pa refè travay la
         // (sou dè dizèn milye chanèl, sa te fè ekran an bloke yon ti moman chak minit).
-        val sig = listOf(cfg.hiddenChannels, cfg.hiddenCategories, cfg.maxChannels, cfg.channelNames, cfg.categoryNames, cfg.pkgRules,
+        val sig = listOf(cfg.hiddenChannels, cfg.hiddenCategories, cfg.maxChannels, cfg.channelNames, cfg.categoryNames, cfg.pkgRules, cfg.chNumMode, cfg.chNumFixed,
             cfg.forceHideAdult, cfg.blockedLive, hideAdult, sortAz, System.identityHashCode(rawChannels), System.identityHashCode(rawCategories), rawChannels.size).hashCode()
         if (sig == lastApplySig && all.isNotEmpty()) return
         lastApplySig = sig
@@ -101,16 +101,33 @@ object ChannelStore {
         // Nimewo chanèl yo (kalkile nan lòd founisè a, ANVAN triye A→Z, pou panel la ka montre menm nimewo yo):
         //  - si nimewo founisè a nòmal (pifò ant 1 ak kantite chanèl yo, san repete) → kenbe yo (7 rete 7);
         //  - sinon (gwo nimewo tankou 1391305, oswa nimewo ki pa fè sans) → 1, 2, 3… nan lòd lis la.
+        //  - panel la ka chwazi: nimewo FIKS pou kèk chanèl (pa non orijinal la, egz: TELE GINEN → 1), epi
+        //    "list" = 1, 2, 3… nan lòd lis la pou tout lòt yo (pa nimewo founisè a).
         run {
-            val limit = maxOf(999, all.size * 3)
+            val n = all.size
+            val out = IntArray(n)
+            val used = HashSet<Int>()
+            if (cfg.chNumFixed.isNotEmpty()) {
+                val rawName = rawChannels.associate { it.streamId to it.name.trim().uppercase() }
+                for (i in 0 until n) {
+                    val c = all[i]
+                    val f = cfg.chNumFixed[rawName[c.streamId] ?: c.name.trim().uppercase()] ?: continue
+                    if (used.add(f)) out[i] = f
+                }
+            }
+            val limit = maxOf(999, n * 3)
             val seen = HashSet<Int>()
-            val okCount = all.count { val n = it.num; n in 1..limit && seen.add(n) }
-            all = if (all.isNotEmpty() && okCount * 10 >= all.size * 9) {
-                val used = HashSet<Int>()
-                val keep = BooleanArray(all.size) { i -> val n = all[i].num; n in 1..limit && used.add(n) }
+            val okCount = all.count { val x = it.num; x in 1..limit && seen.add(x) }
+            if (cfg.chNumMode != "list" && n > 0 && okCount * 10 >= n * 9) {
+                // Nimewo founisè a: kenbe yo (sof sa yo ki deja pran), lòt yo apre pi gwo a
+                for (i in 0 until n) { if (out[i] == 0) { val x = all[i].num; if (x in 1..limit && used.add(x)) out[i] = x } }
                 var next = (used.maxOrNull() ?: 0) + 1
-                all.mapIndexed { i, c -> if (keep[i]) c else { while (!used.add(next)) next++; c.copy(num = next) } }
-            } else all.mapIndexed { i, c -> if (c.num == i + 1) c else c.copy(num = i + 1) }
+                for (i in 0 until n) if (out[i] == 0) { while (!used.add(next)) next++; out[i] = next }
+            } else {
+                var next = 1
+                for (i in 0 until n) if (out[i] == 0) { while (!used.add(next)) next++; out[i] = next }
+            }
+            all = all.mapIndexed { i, c -> if (c.num == out[i]) c else c.copy(num = out[i]) }
         }
         if (sortAz) {
             val col = java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
