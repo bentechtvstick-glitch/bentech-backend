@@ -598,6 +598,10 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       // Non admin nan chanje nan panel la (egz: gwoup "CARIBBEAN" → "HAITI")
       categoryNames: eff.categoryNames,
       channelNames: eff.channelNames,
+      // Nimewo chanèl panel la chwazi: "provider" (nimewo founisè a) oswa "list" (1, 2, 3… nan lòd lis la),
+      // + nimewo fiks pa NON chanèl (egz: TELE GINEN → 1) pou tout TV ki gen chanèl la
+      channelNumbering: { mode: s.chNumMode === "list" ? "list" : "provider",
+        fixed: Object.fromEntries(Object.entries(s.chNums || {}).filter(([k, v]) => k && Number(v) >= 1 && Number(v) <= 99999).map(([k, v]) => [String(k).trim().toUpperCase(), Math.floor(Number(v))])) },
       // Règ pakè a pa NON (app la aplike yo sou pwòp lis konplè li): konsa gwoup / chanèl panel la poko konnen yo kache tou
       pkgRules: pkgRules(device),
       // Gwoup pa admin nan (egz: "Miami", "Tampa"): chanèl ki gen mo kle yo nan non yo oswa nan non gwoup yo
