@@ -104,6 +104,12 @@ object ChannelStore {
         //  - panel la ka chwazi: nimewo FIKS pou kèk chanèl (pa non orijinal la, egz: TELE GINEN → 1), epi
         //    "list" = 1, 2, 3… nan lòd lis la pou tout lòt yo (pa nimewo founisè a).
         run {
+            if (cfg.chNumMode == "list") {
+                // 1, 2, 3… nan lòd kliyan an wè yo: gwoup pa gwoup (lòd gwoup yo), chanèl yo nan lòd yo nan chak gwoup.
+                // Avan, nimewo yo te swiv lòd brit founisè a → nan yon gwoup, nimewo yo te sote (12, 340, 87…).
+                val catIdx = HashMap<String, Int>(); rawCategories.forEachIndexed { i, c -> catIdx.putIfAbsent(c.id, i) }
+                all = all.withIndex().sortedWith(compareBy({ catIdx[it.value.categoryId] ?: Int.MAX_VALUE }, { it.index })).map { it.value }
+            }
             val n = all.size
             val out = IntArray(n)
             val used = HashSet<Int>()

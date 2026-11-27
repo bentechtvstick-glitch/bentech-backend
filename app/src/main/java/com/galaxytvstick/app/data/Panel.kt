@@ -687,6 +687,7 @@ class PanelApi(private val prefs: Prefs) {
     /** Voye lis chanèl yo bay panel la pou admin nan ka hide/show yo. */
     suspend fun uploadChannels(channels: List<Channel>, categories: List<Category>) {
         val catNames = categories.associate { it.id to it.name }
+        val catIdx = HashMap<String, Int>(); categories.forEachIndexed { i, c -> catIdx.putIfAbsent(c.id, i) }
         val arr = JSONArray()
         channels.forEach {
             arr.put(
@@ -696,6 +697,7 @@ class PanelApi(private val prefs: Prefs) {
                     .put("name", it.name)
                     .put("categoryId", it.categoryId)
                     .put("categoryName", catNames[it.categoryId] ?: "")
+                    .put("cat", catIdx[it.categoryId] ?: -1) // lòd gwoup la sou TV a (pou panel la montre menm nimewo yo)
             )
         }
         val body = JSONObject().put("channels", arr)
