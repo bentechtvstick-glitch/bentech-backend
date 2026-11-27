@@ -710,6 +710,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     const list = (Array.isArray(channels) ? channels : []).slice(0, 80000).map((c) => ({
       id: Number(c.id), num: Number(c.num) || 0, name: String(c.name || "").slice(0, 200),
       categoryId: String(c.categoryId || ""), categoryName: String(c.categoryName || "").slice(0, 200),
+      ...(Number.isInteger(Number(c.cat)) && Number(c.cat) >= 0 ? { cat: Number(c.cat) } : {}), // lòd gwoup la sou TV a
     }));
     const hash = crypto.createHash("sha1").update(JSON.stringify(list)).digest("hex");
     // Aparèy ki fèk ranplase yon lòt: chanèl/gwoup kache yo transfere pa NON sou nouvo lis la (ID yo ka diferan)
@@ -1099,9 +1100,11 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (!info?.user_info || Number(info.user_info.auth) === 0) throw new Error("Username oswa password la pa bon (sèvè a refize kont lan).");
     const [cats, live] = await Promise.all([cl.get("get_live_categories", 20000), cl.get("get_live_streams", 30000)]);
     const catName = new Map((Array.isArray(cats) ? cats : []).map((c) => [String(c.category_id), String(c.category_name || "")]));
+    const catPos = new Map([...catName.keys()].map((id, i) => [id, i]));
     const channels = (Array.isArray(live) ? live : []).slice(0, 80000).map((c, i) => ({
       id: Number(c.stream_id), num: Number(c.num) || i + 1, name: String(c.name || "").slice(0, 200),
       categoryId: String(c.category_id || ""), categoryName: (catName.get(String(c.category_id)) || "").slice(0, 200),
+      ...(catPos.has(String(c.category_id)) ? { cat: catPos.get(String(c.category_id)) } : {}),
       icon: isUrl(c.stream_icon) ? String(c.stream_icon).slice(0, 500) : "",
     })).filter((c) => Number.isFinite(c.id));
     const out = { ok: true, playlist: pl.name || pl.username, categories: [...catName].map(([id, name]) => ({ id, name })), channels };

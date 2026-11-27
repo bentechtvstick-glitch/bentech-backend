@@ -1883,7 +1883,13 @@ function tvNumbers(list) {
     for (const c of list) { if (out.has(c.id)) continue; const n = +c.num; if (n >= 1 && n <= limit && !used.has(n)) { used.add(n); out.set(c.id, n); } }
     let next = Math.max(0, ...used) + 1;
     for (const c of list) if (!out.has(c.id)) { while (used.has(next)) next++; used.add(next); out.set(c.id, next); }
-  } else { let next = 1; for (const c of list) if (!out.has(c.id)) { while (used.has(next)) next++; used.add(next); out.set(c.id, next); } }
+  } else {
+    // 1, 2, 3… gwoup pa gwoup nan lòd gwoup yo sou TV a (menm jan ak app la)
+    const first = new Map(); list.forEach((c, i) => { if (!first.has(c.categoryId)) first.set(c.categoryId, i); });
+    const pos = (c) => Number.isInteger(c.cat) && c.cat >= 0 ? c.cat : 1e6 + first.get(c.categoryId);
+    const ordered = list.map((c, i) => [c, i]).sort((a, b) => pos(a[0]) - pos(b[0]) || a[1] - b[1]).map((x) => x[0]);
+    let next = 1; for (const c of ordered) if (!out.has(c.id)) { while (used.has(next)) next++; used.add(next); out.set(c.id, next); }
+  }
   return out;
 }
 function renderRemoteChannels() {
