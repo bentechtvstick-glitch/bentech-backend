@@ -872,7 +872,7 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
         </details>
         <details id="chAllBox" style="margin-top:8px"><summary class="note" style="cursor:pointer">Wè tout lis la <span id="chAllN"></span></summary>
           <div class="inline" style="gap:8px;margin:6px 0 0;flex-wrap:wrap"><label for="chNumMode" class="note" style="margin:0"><b>Nimewo chanèl yo:</b></label>
-            <select id="chNumMode" style="width:auto"><option value="provider">Nimewo founisè a</option><option value="list">1, 2, 3… nan lòd lis la</option></select>
+            <select id="chNumMode" style="width:auto"><option value="list">1, 2, 3… nan lòd lis la</option><option value="provider">Nimewo founisè a</option></select>
             <span class="note">Klike sou nimewo yon chanèl pou w chwazi nimewo pa l (pou tout TV yo).</span></div>
           <input type="text" id="chSearch" placeholder="Chèche yon chanèl" style="margin:6px 0">
           <div class="chlist" id="chList"></div>
@@ -1874,7 +1874,7 @@ function providerInfoHtml(d) {
 // epi swa nimewo founisè a, swa 1, 2, 3… nan lòd lis la (Paramèt «Nimewo chanèl»)
 function tvNumbers(list) {
   const out = new Map(); if (!list.length) return out;
-  const fixed = settings?.chNums || {}, mode = settings?.chNumMode === "list" ? "list" : "provider";
+  const fixed = settings?.chNums || {}, mode = settings?.chNumMode === "provider" ? "provider" : "list";
   const used = new Set();
   for (const c of list) { const f = +fixed[String(c.name || "").trim().toUpperCase()]; if (f >= 1 && !used.has(f)) { used.add(f); out.set(c.id, f); } }
   const limit = Math.max(999, list.length * 3), seen = new Set();
@@ -3193,7 +3193,7 @@ function chChanged(n, hide) {
 function renderChList() {
   const { chs, hid, hidC } = chState; const q = $("#chSearch").value.trim().toLowerCase();
   if (!chs.length) { $("#chTop").innerHTML = ""; $("#chList").innerHTML = `<div class="empty">${t((dev.playlists || []).length ? "Panel la pa rive jwenn lis chanèl playlist sa a kay founisè a. Peze \"Teste\" sou playlist la nan paj Aparèy la pou wè rezon an." : "Aparèy sa a poko gen playlist. Ajoute youn nan paj Aparèy la an premye.")}</div>`; $("#chCount").textContent = ""; return; }
-  $("#chNumMode").value = settings?.chNumMode === "list" ? "list" : "provider";
+  $("#chNumMode").value = settings?.chNumMode === "provider" ? "provider" : "list";
   const shown = chs.filter((c) => !hid.has(c.id) && !hidC.has(c.categoryId)).length;
   $("#chCount").textContent = t("{0} sou {1} chanèl vizib (anvan limit Channel Profile la).", shown, chs.length);
   const byCat = new Map(); for (const c of chs) { if (!chMatch(c, q)) continue; if (chState.weakOnly && !(chState.health[c.id]?.s <= 2)) continue; if (!byCat.has(c.categoryId)) byCat.set(c.categoryId, { name: c.categoryName, items: [] }); byCat.get(c.categoryId).items.push(c); }
