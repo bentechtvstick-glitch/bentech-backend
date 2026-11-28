@@ -108,7 +108,15 @@ object ChannelStore {
                 // 1, 2, 3… nan lòd kliyan an wè yo: gwoup pa gwoup (lòd gwoup yo), chanèl yo nan lòd yo nan chak gwoup.
                 // Avan, nimewo yo te swiv lòd brit founisè a → nan yon gwoup, nimewo yo te sote (12, 340, 87…).
                 val catIdx = HashMap<String, Int>(); rawCategories.forEachIndexed { i, c -> catIdx.putIfAbsent(c.id, i) }
-                all = all.withIndex().sortedWith(compareBy({ catIdx[it.value.categoryId] ?: Int.MAX_VALUE }, { it.index })).map { it.value }
+                // A→Z (pa defo): nan chak gwoup, chanèl yo klase pa non ANVAN yo resevwa nimewo → 1, 2, 3… swiv A→Z
+                val col = java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
+                val keys = if (sortAz) all.associate { it.streamId to col.getCollationKey(sortKey(it.name)) } else emptyMap()
+                all = all.withIndex().sortedWith(Comparator { a, b ->
+                    val ca = catIdx[a.value.categoryId] ?: Int.MAX_VALUE; val cb = catIdx[b.value.categoryId] ?: Int.MAX_VALUE
+                    if (ca != cb) return@Comparator ca.compareTo(cb)
+                    if (sortAz) { val k = keys[a.value.streamId]!!.compareTo(keys[b.value.streamId]!!); if (k != 0) return@Comparator k }
+                    a.index.compareTo(b.index)
+                }).map { it.value }
             }
             val n = all.size
             val out = IntArray(n)
@@ -135,7 +143,8 @@ object ChannelStore {
             }
             all = all.mapIndexed { i, c -> if (c.num == out[i]) c else c.copy(num = out[i]) }
         }
-        if (sortAz) {
+        // Mòd "1, 2, 3…": lis la deja klase (gwoup pa gwoup, A→Z) nan lòd nimewo yo
+        if (sortAz && cfg.chNumMode != "list") {
             val col = java.text.Collator.getInstance().apply { strength = java.text.Collator.PRIMARY }
             all = all.sortedWith(Comparator { a, b -> col.compare(sortKey(a.name), sortKey(b.name)) })
         }
