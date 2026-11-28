@@ -7,7 +7,7 @@
   "use strict";
 
   var PANEL = "https://panel.galaxytvstick.net/api";
-  var VERSION = "1.0.1";
+  var VERSION = "1.0.2";
   var $ = function (id) { return document.getElementById(id); };
 
   // ------------------------------------------------------------ Idantite TV a (yon sèl fwa, sove sou TV a)
@@ -168,29 +168,64 @@
   // ------------------------------------------------------------ Gade chanèl
   var video = $("video"), osdT = null;
 
-  function play(i, asTs) {
+  /*
+   * Adrès pou eseye, youn apre lòt: sèvè playlist la ak sèvè videyo founisè a (server_info),
+   * an HLS (.m3u8) ak MPEG-TS (.ts), nan lòd fòma founisè a pèmèt yo.
+   */
+  var tries = [], tryI = 0, stallT = null, lastErr = "";
+  function candidates(c) {
+    var L = state.live, bases = [L.server], out = [], i, j;
+    if (L.alt && L.alt !== L.server) bases.push(L.alt);
+    var f = L.formats || [], exts = ["m3u8", "ts"];
+    if (f.length && f.indexOf("m3u8") < 0) exts = ["ts", "m3u8"];
+    for (i = 0; i < bases.length; i++) for (j = 0; j < exts.length; j++)
+      out.push({ url: bases[i] + "/live/" + encodeURIComponent(L.user) + "/" + encodeURIComponent(L.pass) + "/" + c.id + "." + exts[j], label: exts[j] + (i ? " (alt)" : "") });
+    return out;
+  }
+
+  function play(i) {
     var list = state.playList;
     if (!state.live || i < 0 || i >= list.length) return;
-    state.playI = i; state.triedTs = !!asTs;
-    var c = list[i], L = state.live;
-    video.src = L.server + "/live/" + encodeURIComponent(L.user) + "/" + encodeURIComponent(L.pass) + "/" + c.id + (asTs ? ".ts" : ".m3u8");
+    state.playI = i;
+    tries = candidates(list[i]); tryI = 0; lastErr = "";
     $("err").className = "hidden";
     state.focus = "video";
     show("video");
-    try { video.play(); } catch (e) {}
+    startTry();
     showOsd();
     sendStatus();
   }
 
-  video.addEventListener("error", function () {
+  function startTry() {
+    clearTimeout(stallT);
+    var t = tries[tryI]; if (!t) return;
+    video.src = t.url;
+    try { video.load(); } catch (e0) {}
+    try { var pr = video.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
+    // Si videyo a pa kòmanse nan 12 s, eseye pwochen adrès la
+    stallT = setTimeout(function () { nextTry("timeout"); }, 12000);
+  }
+
+  function nextTry(why) {
     if (state.focus !== "video") return;
-    if (!state.triedTs) { play(state.playI, true); return; } // kèk sèvè pa bay .m3u8
-    $("err").textContent = "This channel is not available right now. Try another channel.";
+    clearTimeout(stallT);
+    lastErr += (lastErr ? " · " : "") + (tries[tryI] ? tries[tryI].label : "?") + ": " + why;
+    tryI++;
+    if (tryI < tries.length) { startTry(); return; }
+    // Tout adrès yo echwe: montre rezon yo (pou n ka konprann pwoblèm nan)
+    $("err").innerHTML = "This channel is not available right now. Try another channel.<br><span style=\"font-size:24px;color:#C9CFEA\">" + esc(lastErr) + "</span>";
     $("err").className = "";
+  }
+
+  video.addEventListener("error", function () {
+    var e = video.error, code = e ? e.code : 0;
+    var names = { 1: "aborted", 2: "network", 3: "decode", 4: "format not supported" };
+    nextTry("error " + code + " " + (names[code] || "") + (e && e.message ? " " + e.message : ""));
   });
-  video.addEventListener("playing", function () { $("err").className = "hidden"; });
+  video.addEventListener("playing", function () { clearTimeout(stallT); $("err").className = "hidden"; });
 
   function stopVideo() {
+    clearTimeout(stallT);
     try { video.pause(); } catch (e) {}
     video.removeAttribute("src");
     try { video.load(); } catch (e2) {}
@@ -228,7 +263,7 @@
     if (state.focus === "video") {
       if (BACK) { backToList(); e.preventDefault(); return; }
       var n = state.playList.length;
-      if ((UP || DOWN) && n) { play((state.playI + (UP ? 1 : -1) + n) % n, false); e.preventDefault(); return; }
+      if ((UP || DOWN) && n) { play((state.playI + (UP ? 1 : -1) + n) % n); e.preventDefault(); return; }
       if (OK) { showOsd(); e.preventDefault(); }
       return;
     }
@@ -244,7 +279,7 @@
       if (UP && state.chI > 0) state.chI--;
       else if (DOWN && state.chI < list.length - 1) state.chI++;
       else if (LEFT || BACK) state.focus = "cats";
-      else if (OK && list.length) { state.playList = list; play(state.chI, false); e.preventDefault(); return; }
+      else if (OK && list.length) { state.playList = list; play(state.chI); e.preventDefault(); return; }
       else return;
     }
     e.preventDefault();

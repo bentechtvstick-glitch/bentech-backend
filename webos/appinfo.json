@@ -1,6 +1,6 @@
 {
   "id": "net.galaxytvstick.tv",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "vendor": "Galaxy TV Stick",
   "type": "web",
   "main": "index.html",
