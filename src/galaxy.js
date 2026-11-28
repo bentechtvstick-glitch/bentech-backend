@@ -649,6 +649,48 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     res.json(payload);
   });
 
+  /**
+   * Lis chanèl pou TV ki pa Android (Roku, LG webOS): sèvè a chèche l kay founisè a pou yo (sèvè IPTV yo pa pèmèt yon
+   * app web rele yo dirèkteman), aplike gwoup/chanèl kache yo, epi bay nimewo yo menm jan ak app Android la
+   * (nimewo fiks panel la, gwoup pa gwoup, A→Z). Repons kout: {cats:[{id,name}], chs:[{id,n,name,c,icon}], live:{server,user,pass}}.
+   */
+  app.get("/api/devices/:mac/live", async (req, res) => {
+    ensure();
+    const device = findDevice(normMac(req.params.mac));
+    if (!device) return res.status(404).json({ error: "TV a pa anrejistre" });
+    if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) return res.status(403).json({ error: "Device Key pa bon" });
+    if (device.blocked) return res.status(403).json({ error: "blocked" });
+    const pl = playlistsOf(device.mac).find((p) => plType(p) === "xtream");
+    if (!pl) return res.status(404).json({ error: "Pa gen playlist Xtream pou TV sa a" });
+    let live;
+    try { live = await fetchLive(pl, req.query.fresh === "1"); }
+    catch (e) { return res.status(502).json({ error: String(e.message || e) }); }
+    const eff = effectiveChannels(device), hidC = new Set(eff.hiddenCategories.map(String)), hid = new Set(eff.hiddenChannels.map(Number));
+    const catNames = eff.categoryNames || {}, chNames = eff.channelNames || {};
+    const cats = live.categories.filter((c) => !hidC.has(String(c.id))).map((c) => ({ id: String(c.id), name: catNames[c.id] || c.name }));
+    const catPos = new Map(cats.map((c, i) => [c.id, i]));
+    let chs = live.channels.filter((c) => !hid.has(c.id) && catPos.has(c.categoryId));
+    const st = settings(), fixed = st.chNums || {}, useProvider = st.chNumMode === "provider";
+    const coll = new Intl.Collator(undefined, { sensitivity: "base" });
+    const key = (c) => String(chNames[c.id] || c.name).replace(/^[^\p{L}\p{N}]+/u, "");
+    if (!useProvider) chs = chs.map((c, i) => [c, i]).sort((a, b) => catPos.get(a[0].categoryId) - catPos.get(b[0].categoryId) || coll.compare(key(a[0]), key(b[0])) || a[1] - b[1]).map((x) => x[0]);
+    const used = new Set(), num = new Map();
+    for (const c of chs) { const f = Number(fixed[nkey(c.name)]); if (f >= 1 && !used.has(f)) { used.add(f); num.set(c.id, f); } }
+    let next = 1;
+    for (const c of chs) {
+      if (num.has(c.id)) continue;
+      const pn = Number(c.num);
+      if (useProvider && pn >= 1 && !used.has(pn)) { used.add(pn); num.set(c.id, pn); continue; }
+      while (used.has(next)) next++; used.add(next); num.set(c.id, next);
+    }
+    res.set("Cache-Control", "no-store");
+    res.json({
+      cats,
+      chs: chs.map((c) => ({ id: c.id, n: num.get(c.id), name: chNames[c.id] || c.name, c: c.categoryId, icon: c.icon || "" })),
+      live: { server: String(pl.server || "").replace(/\/+$/, ""), user: pl.username, pass: pl.password },
+    });
+  });
+
   // ---- Gwoup pa m: kategori admin nan kreye pa mo kle (vil, tèm…), menm sou tout TV yo ----
   const cgClean = (list) => (Array.isArray(list) ? list : []).slice(0, 60).map((g) => ({
     id: String(g.id || crypto.randomUUID()).slice(0, 40),
