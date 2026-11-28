@@ -1,0 +1,34 @@
+# Fè pake LG webOS (.ipk) app Galaxy TV Stick la, epi pibliye l pou enstale l sou TV LG an mòd devlopè.
+name: Build LG webOS
+
+on:
+  push:
+    paths: ["webos/**", ".github/workflows/webos.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  webos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verifye JavaScript la
+        run: node --check webos/app.js
+      - name: Fè pake .ipk la
+        run: |
+          npm i -g @webos-tools/cli
+          mkdir -p out
+          ares-package webos -o out --no-minify
+          ls -la out
+          cp out/*.ipk GalaxyLG.ipk
+      - name: Pibliye l
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete lg-latest --yes --cleanup-tag || true
+          gh release create lg-latest GalaxyLG.ipk --title "Galaxy TV Stick — LG webOS (test)" --notes "Enstale .ipk sa a sou TV LG a an mòd devlopè (Developer Mode + webOS Dev Manager)." --target ${{ github.sha }}

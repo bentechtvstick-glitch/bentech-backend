@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Galaxy TV Stick</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #070B1F; color: #fff; font-family: "LG Smart UI", "Museo Sans", Arial, sans-serif; }
+  .hidden { display: none !important; }
+  /* Aktivasyon */
+  #act { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 110px; gap: 10px; }
+  #act img { width: 600px; height: 294px; object-fit: contain; margin-bottom: 40px; }
+  .lbl { color: #8F98C8; font-size: 26px; letter-spacing: 3px; }
+  .val { font-size: 56px; font-weight: 700; letter-spacing: 4px; margin-bottom: 30px; }
+  #actMsg { color: #C9CFEA; font-size: 30px; max-width: 1200px; text-align: center; margin-top: 30px; }
+  /* Gwoup + chanèl */
+  #browse { position: absolute; inset: 0; }
+  #browse > img { position: absolute; left: 60px; top: 30px; width: 260px; height: 128px; object-fit: contain; }
+  #clock { position: absolute; right: 60px; top: 70px; font-size: 32px; color: #C9CFEA; }
+  .colTitle { position: absolute; top: 180px; color: #8F98C8; font-size: 24px; letter-spacing: 3px; }
+  .list { position: absolute; top: 230px; height: 790px; overflow: hidden; }
+  #cats { left: 60px; width: 520px; }
+  #chans { left: 640px; width: 1220px; }
+  .row { height: 70px; display: flex; align-items: center; gap: 22px; padding: 0 24px; border-radius: 10px; font-size: 30px; color: #C9CFEA; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .n { width: 80px; color: #8F98C8; font-weight: 700; flex: none; }
+  .row img { width: 74px; height: 46px; object-fit: contain; flex: none; }
+  .row .t { overflow: hidden; text-overflow: ellipsis; }
+  .row.sel { background: rgba(255,255,255,0.10); color: #fff; }
+  .list.focus .row.sel { background: #fff; color: #070B1F; }
+  .list.focus .row.sel .n { color: #070B1F; }
+  #listMsg { position: absolute; left: 640px; top: 260px; width: 1200px; font-size: 30px; color: #C9CFEA; }
+  /* Plen ekran */
+  #video { position: absolute; inset: 0; width: 1920px; height: 1080px; background: #000; }
+  #osd { position: absolute; left: 0; right: 0; bottom: 0; height: 220px; background: rgba(6,11,36,0.88); display: flex; align-items: center; gap: 40px; padding: 0 80px; }
+  #osdNum { font-size: 56px; font-weight: 700; color: #8F98C8; }
+  #osdName { font-size: 52px; font-weight: 700; }
+  #osdHint { position: absolute; left: 80px; bottom: 26px; font-size: 24px; color: #C9CFEA; }
+  #err { position: absolute; left: 360px; top: 480px; width: 1200px; text-align: center; font-size: 36px; text-shadow: 0 2px 6px #000; }
+</style>
+</head>
+<body>
+  <div id="act">
+    <img src="logo.png" alt="Galaxy TV Stick">
+    <div class="lbl">MAC ADDRESS</div><div class="val" id="macLbl">…</div>
+    <div class="lbl">DEVICE KEY</div><div class="val" id="keyLbl">…</div>
+    <div id="actMsg">Connecting to the panel…</div>
+  </div>
+
+  <div id="browse" class="hidden">
+    <img src="logo.png" alt="">
+    <div id="clock"></div>
+    <div class="colTitle" style="left:84px">GROUPS</div>
+    <div class="colTitle" style="left:664px">CHANNELS</div>
+    <div id="cats" class="list"></div>
+    <div id="chans" class="list"></div>
+    <div id="listMsg"></div>
+  </div>
+
+  <video id="video" class="hidden" autoplay playsinline></video>
+  <div id="osd" class="hidden"><span id="osdNum"></span><span id="osdName"></span><span id="osdHint">▲▼ change channel · BACK channel list</span></div>
+  <div id="err" class="hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
