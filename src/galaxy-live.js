@@ -38,6 +38,16 @@ import { tvEvents } from "./tvevents.js";
 export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   const live = new Map();     // MAC → dènye estati
   globalThis.galaxyLive = live; // pou siveyans lan (watch.js): TV ki bloke sou ekran aktivasyon an
+  // Sa chak TV ap gade a siviv yon redemaraj sèvè a (chak mizajou panel): kopi sou disk chak 30 s, li remete l lè sèvè a limen.
+  // Avan, apre chak redemaraj, tout TV yo te parèt «p ap gade okenn chanèl» jiskaske kliyan an chanje chanèl.
+  const liveFile = path.join(process.env.DB_FILE ? path.dirname(process.env.DB_FILE) : ".", "live-status.json");
+  try {
+    const saved = JSON.parse(fs.readFileSync(liveFile, "utf8"));
+    for (const [mac, st] of Object.entries(saved || {})) if (st && Date.now() - (st.updatedAt || 0) < 15 * 60_000) live.set(mac, st);
+  } catch {}
+  const saveLive = () => { try { fs.writeFileSync(liveFile, JSON.stringify(Object.fromEntries(live))); } catch {} };
+  setInterval(saveLive, 30_000).unref();
+  for (const sig of ["SIGTERM", "SIGINT"]) process.prependOnceListener(sig, saveLive);
   const history = new Map();  // MAC → [ {id,num,name,at} ]
   const queues = new Map();   // MAC → [ kòmand ]
   const waiters = new Map();  // MAC → Set(fonksyon pou reponn long-poll la)
