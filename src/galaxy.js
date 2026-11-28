@@ -687,7 +687,7 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     res.json({
       cats,
       chs: chs.map((c) => ({ id: c.id, n: num.get(c.id), name: chNames[c.id] || c.name, c: c.categoryId, icon: c.icon || "" })),
-      live: { server: String(pl.server || "").replace(/\/+$/, ""), user: pl.username, pass: pl.password },
+      live: { server: String(pl.server || "").replace(/\/+$/, ""), alt: live.alt || "", formats: live.formats || [], user: pl.username, pass: pl.password },
     });
   });
 
@@ -1149,7 +1149,15 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
       ...(catPos.has(String(c.category_id)) ? { cat: catPos.get(String(c.category_id)) } : {}),
       icon: isUrl(c.stream_icon) ? String(c.stream_icon).slice(0, 500) : "",
     })).filter((c) => Number.isFinite(c.id));
-    const out = { ok: true, playlist: pl.name || pl.username, categories: [...catName].map(([id, name]) => ({ id, name })), channels };
+    // Kèk founisè bay videyo yo sou yon lòt adrès (server_info): menm jan ak app Android la
+    let alt = "";
+    try {
+      const si = info.server_info || {}, host = String(si.url || "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+      const https = String(si.server_protocol || "").toLowerCase() === "https", port = String((https ? si.https_port : si.port) || "").trim();
+      if (host) alt = (https ? "https://" : "http://") + host + (!port || host.includes(":") || port === (https ? "443" : "80") ? "" : ":" + port);
+    } catch {}
+    const out = { ok: true, playlist: pl.name || pl.username, categories: [...catName].map(([id, name]) => ({ id, name })), channels, alt,
+      formats: Array.isArray(info.user_info?.allowed_output_formats) ? info.user_info.allowed_output_formats.map(String) : [] };
     liveListCache.set(key, { at: Date.now(), data: out });
     if (liveListCache.size > 200) liveListCache.delete(liveListCache.keys().next().value);
     return out;
