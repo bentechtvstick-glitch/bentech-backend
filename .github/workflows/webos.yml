@@ -19,6 +19,13 @@ jobs:
           node-version: 20
       - name: Verifye JavaScript la
         run: node --check webos/app.js
+      - name: Mete lektè videyo yo (hls.js, mpegts.js)
+        run: |
+          mkdir -p webos/lib /tmp/pk && cd /tmp/pk
+          npm pack hls.js@1.5.17 mpegts.js@1.7.3
+          tar xzf hls.js-1.5.17.tgz && cp package/dist/hls.min.js $GITHUB_WORKSPACE/webos/lib/ && rm -rf package
+          tar xzf mpegts.js-1.7.3.tgz && cp package/dist/mpegts.js $GITHUB_WORKSPACE/webos/lib/ && rm -rf package
+          ls -la $GITHUB_WORKSPACE/webos/lib
       - name: Fè pake .ipk la
         run: |
           npm i -g @webos-tools/cli

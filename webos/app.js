@@ -7,7 +7,7 @@
   "use strict";
 
   var PANEL = "https://panel.galaxytvstick.net/api";
-  var VERSION = "1.0.2";
+  var VERSION = "1.0.3";
   var $ = function (id) { return document.getElementById(id); };
 
   // ------------------------------------------------------------ Idantite TV a (yon sèl fwa, sove sou TV a)
@@ -169,17 +169,26 @@
   var video = $("video"), osdT = null;
 
   /*
-   * Adrès pou eseye, youn apre lòt: sèvè playlist la ak sèvè videyo founisè a (server_info),
-   * an HLS (.m3u8) ak MPEG-TS (.ts), nan lòd fòma founisè a pèmèt yo.
+   * Fason pou jwe chanèl la, youn apre lòt (sou sèvè playlist la, epi sou sèvè videyo founisè a si l diferan):
+   *  1. HLS (.m3u8) ak lektè TV a, ak tip la endike (webOS bezwen l)
+   *  2. HLS ak hls.js (si TV a pa li HLS li menm)
+   *  3. MPEG-TS (.ts) ak mpegts.js (menm fòma ak Fire Stick yo)
+   *  4. MPEG-TS ak lektè TV a
+   * Si youn pa bay imaj nan 12 s oswa li bay yon erè, app la eseye pwochen an, epi l ekri rezon yo.
    */
-  var tries = [], tryI = 0, stallT = null, lastErr = "";
+  var tries = [], tryI = 0, stallT = null, lastErr = "", token = 0, hls = null, mp = null;
   function candidates(c) {
-    var L = state.live, bases = [L.server], out = [], i, j;
+    var L = state.live, bases = [L.server], out = [], i;
     if (L.alt && L.alt !== L.server) bases.push(L.alt);
-    var f = L.formats || [], exts = ["m3u8", "ts"];
-    if (f.length && f.indexOf("m3u8") < 0) exts = ["ts", "m3u8"];
-    for (i = 0; i < bases.length; i++) for (j = 0; j < exts.length; j++)
-      out.push({ url: bases[i] + "/live/" + encodeURIComponent(L.user) + "/" + encodeURIComponent(L.pass) + "/" + c.id + "." + exts[j], label: exts[j] + (i ? " (alt)" : "") });
+    var tsFirst = (L.formats || []).length && (L.formats || []).indexOf("m3u8") < 0;
+    for (i = 0; i < bases.length; i++) {
+      var u = bases[i] + "/live/" + encodeURIComponent(L.user) + "/" + encodeURIComponent(L.pass) + "/" + c.id, alt = i ? " alt" : "";
+      var hlsTries = [{ mode: "native", url: u + ".m3u8", type: "application/vnd.apple.mpegurl", label: "m3u8" + alt },
+                      { mode: "hlsjs", url: u + ".m3u8", label: "hls.js" + alt }];
+      var tsTries = [{ mode: "mpegts", url: u + ".ts", label: "mpegts.js" + alt },
+                     { mode: "native", url: u + ".ts", type: "video/mp2t", label: "ts" + alt }];
+      out = out.concat(tsFirst ? tsTries.concat(hlsTries) : hlsTries.concat(tsTries));
+    }
     return out;
   }
 
@@ -196,14 +205,46 @@
     sendStatus();
   }
 
+  function clearEngines() {
+    if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
+    if (mp) { try { mp.pause(); mp.unload(); mp.detachMediaElement(); mp.destroy(); } catch (e2) {} mp = null; }
+    try { video.pause(); } catch (e3) {}
+    while (video.firstChild) video.removeChild(video.firstChild);
+    video.removeAttribute("src");
+    try { video.load(); } catch (e4) {}
+  }
+
   function startTry() {
     clearTimeout(stallT);
+    clearEngines();
     var t = tries[tryI]; if (!t) return;
-    video.src = t.url;
-    try { video.load(); } catch (e0) {}
+    var my = ++token;
+    var fail = function (why) { if (my === token) nextTry(why); };
+    if (t.mode === "hlsjs") {
+      if (!(window.Hls && window.Hls.isSupported())) { fail("not available"); return; }
+      hls = new window.Hls({ enableWorker: true, lowLatencyMode: false });
+      hls.on(window.Hls.Events.ERROR, function (ev, d) {
+        if (d && d.fatal) fail(d.type + " " + d.details + (d.response && d.response.code ? " HTTP " + d.response.code : ""));
+      });
+      hls.loadSource(t.url);
+      hls.attachMedia(video);
+    } else if (t.mode === "mpegts") {
+      if (!(window.mpegts && window.mpegts.getFeatureList().mseLivePlayback)) { fail("not available"); return; }
+      mp = window.mpegts.createPlayer({ type: "mpegts", isLive: true, url: t.url }, { enableWorker: true, lazyLoad: false, liveBufferLatencyChasing: false });
+      mp.on(window.mpegts.Events.ERROR, function (type, detail, info) {
+        fail(type + " " + detail + (info && info.code ? " HTTP " + info.code : "") + (info && info.msg ? " " + info.msg : ""));
+      });
+      mp.attachMediaElement(video);
+      mp.load();
+    } else {
+      var src = document.createElement("source");
+      src.src = t.url; src.type = t.type;
+      src.addEventListener("error", function () { fail("source error"); });
+      video.appendChild(src);
+      try { video.load(); } catch (e0) {}
+    }
     try { var pr = video.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
-    // Si videyo a pa kòmanse nan 12 s, eseye pwochen adrès la
-    stallT = setTimeout(function () { nextTry("timeout"); }, 12000);
+    stallT = setTimeout(function () { fail("no picture after 12 s"); }, 12000);
   }
 
   function nextTry(why) {
@@ -212,23 +253,23 @@
     lastErr += (lastErr ? " · " : "") + (tries[tryI] ? tries[tryI].label : "?") + ": " + why;
     tryI++;
     if (tryI < tries.length) { startTry(); return; }
-    // Tout adrès yo echwe: montre rezon yo (pou n ka konprann pwoblèm nan)
-    $("err").innerHTML = "This channel is not available right now. Try another channel.<br><span style=\"font-size:24px;color:#C9CFEA\">" + esc(lastErr) + "</span>";
+    clearEngines();
+    $("err").innerHTML = "This channel is not available right now. Try another channel.<br><span style=\"font-size:22px;color:#C9CFEA\">" + esc(lastErr) + "</span>";
     $("err").className = "";
   }
 
   video.addEventListener("error", function () {
+    if (hls || mp || !tries[tryI] || video.firstChild) return; // hls.js / mpegts.js / <source> bay pwòp erè yo
     var e = video.error, code = e ? e.code : 0;
     var names = { 1: "aborted", 2: "network", 3: "decode", 4: "format not supported" };
-    nextTry("error " + code + " " + (names[code] || "") + (e && e.message ? " " + e.message : ""));
+    nextTry("error " + code + " " + (names[code] || ""));
   });
   video.addEventListener("playing", function () { clearTimeout(stallT); $("err").className = "hidden"; });
 
   function stopVideo() {
     clearTimeout(stallT);
-    try { video.pause(); } catch (e) {}
-    video.removeAttribute("src");
-    try { video.load(); } catch (e2) {}
+    token++;
+    clearEngines();
   }
 
   function showOsd() {
