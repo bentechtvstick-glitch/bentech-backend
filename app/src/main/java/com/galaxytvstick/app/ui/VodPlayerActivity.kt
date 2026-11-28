@@ -158,6 +158,7 @@ class VodPlayerActivity : AppCompatActivity() {
         resumeNext = true // si kliyan an soti epi l tounen, kontinye kote l te ye a
         handler.postDelayed(saveTick, 10_000)
         handler.post(uiTick)
+        handler.postDelayed(statusBeat, 60_000)
     }
 
     override fun onStop() {
@@ -404,6 +405,14 @@ class VodPlayerActivity : AppCompatActivity() {
     }
 
     // ------------------------------------------------------------ Panel
+
+    /**
+     * Repete estati a chak minit. Panel la kenbe "sa TV a ap gade" nan memwa: lè sèvè a redemare (chak mizajou panel),
+     * li te bliye l, epi TV a te parèt «p ap gade okenn chanèl» jiskaske kliyan an chanje chanèl oswa redemare app la.
+     */
+    private val statusBeat = object : Runnable {
+        override fun run() { reportStatus(); handler.postDelayed(this, 60_000) }
+    }
 
     private fun reportStatus() {
         val it = items.getOrNull(index) ?: return

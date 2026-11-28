@@ -238,6 +238,7 @@ class PlayerActivity : AppCompatActivity() {
         watchNetwork(true)
         initPlayer()
         overlay.start()
+        handler.removeCallbacks(statusBeat); handler.postDelayed(statusBeat, 60_000)
         // Chaje EPG a si ekran prensipal la poko fè l
         lifecycleScope.launch {
             val fresh = runCatching { EpgRepository.ensureLoaded(api, ChannelStore.all) }.getOrDefault(false)
@@ -268,6 +269,7 @@ class PlayerActivity : AppCompatActivity() {
     override fun onStop() {
         watchNetwork(false)
         super.onStop()
+        handler.removeCallbacks(statusBeat)
         healthFlush()
         overlay.stop()
         handler.removeCallbacksAndMessages(null)
@@ -1134,6 +1136,14 @@ class PlayerActivity : AppCompatActivity() {
             .put("appVersion", BuildConfig.VERSION_NAME)
         if (now != null) body.put("program", org.json.JSONObject().put("title", now.title).put("start", now.start).put("end", now.end))
         lifecycleScope.launch { runCatching { PanelApi(prefs).status(body) } }
+    }
+
+    /**
+     * Repete estati a chak minit. Panel la kenbe "sa TV a ap gade" nan memwa: lè sèvè a redemare (chak mizajou panel),
+     * li te bliye l, epi TV a te parèt «p ap gade okenn chanèl» jiskaske kliyan an chanje chanèl oswa redemare app la.
+     */
+    private val statusBeat = object : Runnable {
+        override fun run() { sendStatus.run(); handler.postDelayed(this, 60_000) }
     }
 
     /** Di panel la sa TV a ap montre (regroupe chanjman ki rive youn dèyè lòt). */

@@ -211,12 +211,25 @@ class EpgActivity : AppCompatActivity() {
             handler.postDelayed(startPreviewLater, if (firstStart) 150 else 700)
         }
         firstStart = false
-        // Di panel la kliyan an ap gade gid la
+        // Di panel la kliyan an ap gade gid la (epi repete l chak minit)
+        sendEpgStatus()
+        handler.removeCallbacks(statusBeat); handler.postDelayed(statusBeat, 60_000)
+    }
+
+    private fun sendEpgStatus() {
         val last = ChannelStore.all.firstOrNull { it.streamId == prefs.lastChannelId }
         val body = org.json.JSONObject().put("screen", "epg").put("playlistName", prefs.account?.name ?: "")
         if (last != null) body.put("channel", org.json.JSONObject().put("id", last.streamId).put("num", last.num).put("name", last.name))
         lifecycleScope.launch { runCatching { com.galaxytvstick.app.data.PanelApi(prefs).status(body) } }
     }
+    /**
+     * Repete estati a chak minit. Panel la kenbe "sa TV a ap gade" nan memwa: lè sèvè a redemare (chak mizajou panel),
+     * li te bliye l, epi TV a te parèt «p ap gade okenn chanèl» jiskaske kliyan an chanje chanèl oswa redemare app la.
+     */
+    private val statusBeat = object : Runnable {
+        override fun run() { sendEpgStatus(); handler.postDelayed(this, 60_000) }
+    }
+
 
     /**
      * Tankou TiviMate: si kliyan an kite gid la san manyen remòt la pandan 3 minit,
@@ -246,6 +259,7 @@ class EpgActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         overlay.stop()
+        handler.removeCallbacks(statusBeat)
         handler.removeCallbacks(idleFullscreen)
         handler.removeCallbacks(startPreviewLater)
         handler.removeCallbacks(applyPendingCat)
