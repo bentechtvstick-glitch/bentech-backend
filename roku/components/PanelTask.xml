@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Koneksyon ak panel la: anrejistre TV a, epi chèche konfig li chak 15 s (playlist, chanèl kache…). -->
+<component name="PanelTask" extends="Task">
+  <interface>
+    <field id="mac" type="string" />
+    <field id="key" type="string" />
+    <field id="config" type="assocarray" />
+    <field id="state" type="string" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/Net.brs" />
+  <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.top.functionName = "runLoop"
+    end sub
+
+    sub runLoop()
+        ids = deviceIds()
+        m.top.mac = ids.mac
+        m.top.key = ids.key
+        hdr = panelHeaders(ids.key)
+        di = CreateObject("roDeviceInfo")
+        registered = false
+        lastSig = ""
+        while true
+            if not registered
+                body = FormatJson({ deviceId: ids.mac, mac: ids.mac, deviceKey: ids.key, model: "Roku " + di.GetModelDisplayName(), androidVersion: "Roku OS " + di.GetOSVersion().major + "." + di.GetOSVersion().minor, appVersion: appVersion() })
+                r = httpReq(panelBase() + "/devices/register", "POST", body, hdr, 15000)
+                if r.code >= 200 and r.code < 300
+                    registered = true
+                else if r.code = 409
+                    m.top.state = "keyconflict"
+                end if
+            end if
+            r = httpReq(panelBase() + "/devices/" + ids.mac + "/config", "GET", "", hdr, 20000)
+            if r.code = 200
+                cfg = ParseJson(r.body)
+                if cfg <> invalid
+                    ' Sèlman lè sa ki enpòtan chanje: konsa lis la pa rechaje (epi remòt la pa pèdi plas li) chak 15 s
+                    sig = FormatJson(cfg.playlists) + FormatJson(cfg.hiddenCategories) + FormatJson(cfg.hiddenChannels) + FormatJson(cfg.blocked) + FormatJson(cfg.expired)
+                    if sig <> lastSig
+                        lastSig = sig
+                        m.top.config = cfg
+                    end if
+                    m.top.state = "ok"
+                end if
+            else
+                m.top.state = "offline"
+            end if
+            sleep(15000)
+        end while
+    end sub
+    ]]>
+  </script>
+</component>

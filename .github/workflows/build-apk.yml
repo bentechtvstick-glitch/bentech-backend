@@ -4,6 +4,7 @@ name: Build APK
 
 on:
   push:
+    paths-ignore: ["roku/**", ".github/workflows/roku.yml"]
   workflow_dispatch:
 
 permissions:

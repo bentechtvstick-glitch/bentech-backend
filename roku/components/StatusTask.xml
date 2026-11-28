@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Di panel la sa TV a ap gade (paj Live TV panel la). -->
+<component name="StatusTask" extends="Task">
+  <interface>
+    <field id="body" type="assocarray" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/Net.brs" />
+  <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.top.functionName = "send"
+    end sub
+
+    sub send()
+        ids = deviceIds()
+        httpReq(panelBase() + "/devices/" + ids.mac + "/status", "POST", FormatJson(m.top.body), panelHeaders(ids.key), 15000)
+    end sub
+    ]]>
+  </script>
+</component>

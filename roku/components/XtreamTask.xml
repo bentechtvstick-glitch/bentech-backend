@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Yon demann bay sèvè IPTV a (Xtream): lis gwoup yo, oswa chanèl yon gwoup. -->
+<component name="XtreamTask" extends="Task">
+  <interface>
+    <field id="job" type="assocarray" />
+    <field id="result" type="assocarray" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/Net.brs" />
+  <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.top.functionName = "runJob"
+    end sub
+
+    sub runJob()
+        j = m.top.job
+        url = j.server + "/player_api.php?username=" + urlEsc(j.user) + "&password=" + urlEsc(j.pass) + "&action=" + j.action
+        if j.catId <> invalid and j.catId <> "" then url = url + "&category_id=" + urlEsc(j.catId)
+        r = httpReq(url, "GET", "", invalid, 30000)
+        data = invalid
+        if r.code = 200 then data = ParseJson(r.body)
+        if data = invalid then data = []
+        m.top.result = { action: j.action, catId: j.catId, ok: (r.code = 200), code: r.code, data: data }
+    end sub
+    ]]>
+  </script>
+</component>

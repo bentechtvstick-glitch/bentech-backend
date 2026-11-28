@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Galaxy TV Stick pou Roku (vèsyon tès): aktivasyon ak panel la, gwoup + chanèl, gade chanèl an dirèk. -->
+<component name="MainScene" extends="Scene">
+  <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+  <children>
+    <Rectangle id="bg" width="1920" height="1080" color="0x070B1FFF" />
+
+    <!-- Ekran aktivasyon -->
+    <Group id="act">
+      <Poster id="actLogo" uri="pkg:/images/logo.png" translation="[660,110]" width="600" height="294" loadDisplayMode="scaleToFit" />
+      <Label text="MAC ADDRESS" translation="[0,470]" width="1920" horizAlign="center" color="0x8F98C8FF" />
+      <Label id="macLbl" translation="[0,510]" width="1920" horizAlign="center" color="0xFFFFFFFF" font="font:LargeBoldSystemFont" />
+      <Label text="DEVICE KEY" translation="[0,610]" width="1920" horizAlign="center" color="0x8F98C8FF" />
+      <Label id="keyLbl" translation="[0,650]" width="1920" horizAlign="center" color="0xFFFFFFFF" font="font:LargeBoldSystemFont" />
+      <Label id="actMsg" translation="[360,780]" width="1200" horizAlign="center" wrap="true" color="0xC9CFEAFF" text="Connecting to the panel…" />
+    </Group>
+
+    <!-- Gwoup ak chanèl yo -->
+    <Group id="browse" visible="false">
+      <Poster uri="pkg:/images/logo.png" translation="[60,30]" width="260" height="128" loadDisplayMode="scaleToFit" />
+      <Label id="clock" translation="[1460,70]" width="400" horizAlign="right" color="0xC9CFEAFF" font="font:MediumSystemFont" />
+      <Label id="catTitle" translation="[60,180]" width="520" color="0x8F98C8FF" text="GROUPS" />
+      <LabelList id="cats" translation="[60,230]" itemSize="[520,70]" numRows="11" vertFocusAnimationStyle="floatingFocus" color="0xC9CFEAFF" focusedColor="0x070B1FFF" />
+      <Label id="chTitle" translation="[640,180]" width="1200" color="0x8F98C8FF" text="CHANNELS" />
+      <LabelList id="chans" translation="[640,230]" itemSize="[1220,70]" numRows="11" vertFocusAnimationStyle="floatingFocus" color="0xFFFFFFFF" focusedColor="0x070B1FFF" />
+      <Label id="listMsg" translation="[640,260]" width="1200" wrap="true" color="0xC9CFEAFF" />
+    </Group>
+
+    <!-- Chanèl la plen ekran -->
+    <Video id="video" width="1920" height="1080" visible="false" enableUI="false" />
+    <Group id="osd" visible="false">
+      <Rectangle translation="[0,860]" width="1920" height="220" color="0x060B24DD" />
+      <Label id="osdNum" translation="[80,905]" width="200" color="0x8F98C8FF" font="font:LargeBoldSystemFont" />
+      <Label id="osdName" translation="[260,905]" width="1500" color="0xFFFFFFFF" font="font:LargeBoldSystemFont" />
+      <Label id="osdHint" translation="[260,975]" width="1500" color="0xC9CFEAFF" text="▲▼ change channel   ·   BACK channel list" />
+    </Group>
+    <Label id="err" translation="[360,500]" width="1200" horizAlign="center" wrap="true" color="0xFFFFFFFF" visible="false" />
+
+    <Timer id="catTimer" repeat="false" duration="0.4" />
+    <Timer id="osdTimer" repeat="false" duration="4" />
+    <Timer id="clockTimer" repeat="true" duration="20" />
+    <Timer id="statusTimer" repeat="true" duration="60" />
+  </children>
+</component>

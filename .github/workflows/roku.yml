@@ -1,0 +1,32 @@
+# Verifye app Roku a (BrighterScript) epi pibliye l kòm ZIP pou mete l sou yon TV Roku an mòd devlopè.
+name: Build Roku
+
+on:
+  push:
+    paths: ["roku/**", ".github/workflows/roku.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  roku:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verifye kòd BrightScript la
+        run: |
+          npm i -g brighterscript@0.65
+          cd roku && bsc --rootDir . --stagingDir ../roku-out --createPackage false --diagnosticLevel error
+      - name: Fè ZIP la
+        run: |
+          cd roku && zip -r ../GalaxyRoku.zip manifest source components images
+      - name: Pibliye l
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete roku-latest --yes --cleanup-tag || true
+          gh release create roku-latest GalaxyRoku.zip --title "Galaxy TV Stick — Roku (test)" --notes "Mete ZIP sa a sou TV Roku a an mòd devlopè (http://IP-TV-a)." --target ${{ github.sha }}
