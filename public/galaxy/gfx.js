@@ -103,6 +103,7 @@
 .gx-lb-bar b{font-weight:800;font-size:calc(18px*var(--k));text-shadow:0 1px 2px rgba(0,0,0,.4)}
 .gx-lb-logo{position:absolute;right:calc(24px*var(--k));bottom:calc(4px*var(--k));height:calc(66px*var(--k));max-width:calc(170px*var(--k));object-fit:contain;width:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 .gx-so{position:absolute;z-index:6;display:flex;align-items:center;gap:calc(12px*var(--k));padding:calc(8px*var(--k)) calc(18px*var(--k)) calc(8px*var(--k)) calc(8px*var(--k));border-radius:calc(40px*var(--k));animation:gxSoIn .45s cubic-bezier(.2,.8,.2,1) both;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.gx-so-img{width:calc(46px*var(--k));height:calc(46px*var(--k));object-fit:contain;flex:none}
 .gx-so-ic{width:calc(46px*var(--k));height:calc(46px*var(--k));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:calc(24px*var(--k));flex:none}
 .gx-so-tx{display:flex;flex-direction:column;line-height:1.1}.gx-so-tx small{font-size:calc(12px*var(--k));opacity:.8;text-transform:uppercase;letter-spacing:.05em}
 .gx-so-tx b{font-size:calc(14px*var(--k));opacity:.85}.gx-so-tx span{font-size:calc(22px*var(--k));font-weight:800}
@@ -254,7 +255,7 @@
     const fam = FONT_CSS[so.font || "condensed"] || FONT_CSS.condensed;
     const bg = /^#0{8}$/.test(so.bgColor || "") || so.bgClear ? "transparent" : esc(so.bgColor || "#0B1630");
     return `<div class="gx-so" style="${top ? `top:${30 + Math.max(0, off)}px` : `bottom:${Math.max(0, (bottom || 60) + 16 + off)}px`};${side};font-family:${fam};--k:${k};background:${bg};color:${esc(so.textColor || "#fff")}">
-      <span class="gx-so-ic" style="background:${m[1]}">${esc(m[2])}</span><span class="gx-so-tx">${so.title ? `<small>${esc(so.title)}</small>` : ""}<b>${esc(m[0])}</b><span>${esc(it.handle)}</span></span></div>`;
+      ${it.icon ? `<img class="gx-so-img" src="${esc(it.icon)}" alt="">` : `<span class="gx-so-ic" style="background:${m[1]}">${esc(m[2])}</span>`}<span class="gx-so-tx">${so.title ? `<small>${esc(so.title)}</small>` : ""}<b>${esc(m[0])}</b><span>${esc(it.handle)}</span></span></div>`;
   }
 
   window.GalaxyGfx = { html, tick, identHtml, bumperHtml, snipeHtml, weatherBarHtml, lowerBarHtml, socialHtml, fmtLeft, POS6, textCss, FONTS, STYLES };
