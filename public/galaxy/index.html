@@ -1882,7 +1882,10 @@ function tvNumbers(list) {
     // 1, 2, 3… gwoup pa gwoup nan lòd gwoup yo sou TV a (menm jan ak app la)
     const first = new Map(); list.forEach((c, i) => { if (!first.has(c.categoryId)) first.set(c.categoryId, i); });
     const pos = (c) => Number.isInteger(c.cat) && c.cat >= 0 ? c.cat : 1e6 + first.get(c.categoryId);
-    const ordered = list.map((c, i) => [c, i]).sort((a, b) => pos(a[0]) - pos(b[0]) || a[1] - b[1]).map((x) => x[0]);
+    // A→Z nan chak gwoup (pa defo sou TV yo), menm jan ak app la: nimewo yo swiv lòd alfabetik la
+    const az = (c) => String((chState?.chN?.[c.id]) || c.name || "").replace(/^[^\p{L}\p{N}]+/u, "");
+    const coll = new Intl.Collator(undefined, { sensitivity: "base", numeric: false });
+    const ordered = list.map((c, i) => [c, i]).sort((a, b) => pos(a[0]) - pos(b[0]) || coll.compare(az(a[0]), az(b[0])) || a[1] - b[1]).map((x) => x[0]);
     let next = 1; for (const c of ordered) if (!out.has(c.id)) { while (used.has(next)) next++; used.add(next); out.set(c.id, next); }
   }
   return out;
