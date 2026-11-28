@@ -1121,7 +1121,13 @@ export function mountGalaxy(app, db, { authenticate, auditLog, syncTvs = () => {
     if (device.deviceKey && req.get("X-Device-Key") !== device.deviceKey) return res.status(403).json({ ok: false, error: "Device Key pa bon" });
     const pl = playlistsOf(mac).find((p) => p.id === req.query.playlist) || playlistsOf(mac)[0];
     if (!pl) return res.status(404).json({ ok: false, error: "Pa gen playlist sou aparèy sa a" });
-    try { res.json(await fetchLive(pl, req.query.fresh === "1")); }
+    try {
+      const r = await fetchLive(pl, req.query.fresh === "1");
+      // App LG / Roku: sèlman gwoup yo (?cats=1) oswa chanèl yon sèl gwoup (?cat=ID), pou TV a pa telechaje dè milye chanèl an menm tan
+      if (req.query.cats === "1") return res.json({ ok: true, playlist: r.playlist, categories: r.categories });
+      if (req.query.cat != null) return res.json({ ok: true, playlist: r.playlist, channels: r.channels.filter((c) => c.categoryId === String(req.query.cat)) });
+      res.json(r);
+    }
     catch (e) { res.status(e.status || 502).json({ ok: false, error: e.message || "Sèvè IPTV a pa reponn." }); }
   });
 
