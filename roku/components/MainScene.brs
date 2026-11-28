@@ -73,13 +73,13 @@ sub onConfig()
     m.hidCats = {}
     if type(cfg.hiddenCategories) = "roArray"
         for each c in cfg.hiddenCategories
-            m.hidCats[str(c)] = true
+            m.hidCats[toText(c)] = true
         end for
     end if
     m.hidChans = {}
     if type(cfg.hiddenChannels) = "roArray"
         for each c in cfg.hiddenChannels
-            m.hidChans[str(c)] = true
+            m.hidChans[toText(c)] = true
         end for
     end if
 
@@ -97,12 +97,12 @@ sub onConfig()
         return
     end if
 
-    server = str(pl.server)
+    server = toText(pl.server)
     while Right(server, 1) = "/"
         server = Left(server, Len(server) - 1)
     end while
-    sig = server + "|" + str(pl.username) + "|" + str(pl.password)
-    m.pl = { server: server, user: str(pl.username), pass: str(pl.password), name: str(pl.name) }
+    sig = server + "|" + toText(pl.username) + "|" + toText(pl.password)
+    m.pl = { server: server, user: toText(pl.username), pass: toText(pl.password), name: toText(pl.name) }
     m.act.visible = false
     m.browse.visible = true
     if sig <> m.plSig
@@ -140,7 +140,7 @@ sub onXtream(ev as object)
         if type(r.data) = "roArray"
             for each c in r.data
                 if c <> invalid and c.category_id <> invalid
-                    m.catList.Push({ id: str(c.category_id), name: str(c.category_name) })
+                    m.catList.Push({ id: toText(c.category_id), name: toText(c.category_name) })
                 end if
             end for
         end if
@@ -155,9 +155,9 @@ sub onXtream(ev as object)
         if type(r.data) = "roArray"
             for each c in r.data
                 if c <> invalid and c.stream_id <> invalid
-                    id = str(c.stream_id)
+                    id = toText(c.stream_id)
                     if not m.hidChans.DoesExist(id)
-                        m.chList.Push({ id: id, name: str(c.name), num: m.chList.Count() + 1 })
+                        m.chList.Push({ id: id, name: toText(c.name), num: m.chList.Count() + 1 })
                     end if
                 end if
             end for
@@ -376,7 +376,7 @@ end function
 ' ------------------------------------------------------------ Zouti
 
 ' Nenpòt valè JSON → tèks (sèvè IPTV yo konn voye nimewo oswa tèks pou menm chan an)
-function str(v as dynamic) as string
+function toText(v as dynamic) as string
     if v = invalid then return ""
     t = type(v)
     if t = "String" or t = "roString" then return v
