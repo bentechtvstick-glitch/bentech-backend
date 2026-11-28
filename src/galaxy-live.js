@@ -81,13 +81,25 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
   };
 
   /** Voye kòmand ki ap tann yo bay TV a si l gen yon long-poll ouvè. */
+  // Kòmand TV a poko di l resevwa (app ki voye ?ack=): si yon koneksyon te mouri an wout, yo voye ankò nan pwochen demann lan.
+  // Avan, yon kòmand ki tonbe sou yon ansyen koneksyon mouri (TV a chanje ekran, WiFi koupe) te pèdi nèt:
+  // TV a te wè chanjman an sèlman lè l tcheke poukont li, yon minit oswa plis apre.
+  const unacked = new Map(); // MAC → [kòmand]
+  const sent = (mac, cmds) => {
+    const u = (unacked.get(mac) || []).filter((c) => Date.now() - c.createdAt < COMMAND_TTL_MS);
+    for (const c of cmds) if (!u.some((x) => x.id === c.id)) u.push(c);
+    unacked.set(mac, u.slice(-50));
+  };
   const flush = (mac) => {
     const set = waiters.get(mac);
     const q = pendingFor(mac);
     if (!set?.size || !q.length) return false;
+    // Dènye koneksyon ki louvri a (se li k ap viv): yon ansyen ka mouri san sèvè a poko konnen
+    const all = [...set].reverse();
+    const target = all.find((f) => f.alive?.()) || all[0];
     const cmds = q.splice(0);
-    const [first] = set;
-    first(cmds);
+    target(cmds);
+    sent(mac, cmds);
     tvEvents.delivered(findDevice(mac) || { mac }, cmds);
     return true;
   };
@@ -150,6 +162,13 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
     if (!device) return;
     const mac = device.mac;
     const q = pendingFor(mac);
+    // App ki konfime sa l resevwa (?ack=id1,id2 = dènye kòmand li te resevwa yo): sa ki pa konfime yo retounen nan file a
+    if (req.query.ack !== undefined) {
+      const got = new Set(String(req.query.ack || "").split(",").filter(Boolean));
+      const back = (unacked.get(mac) || []).filter((c) => !got.has(c.id) && Date.now() - c.createdAt < COMMAND_TTL_MS && !q.some((x) => x.id === c.id));
+      unacked.delete(mac);
+      if (back.length) q.unshift(...back);
+    }
     // Panel la pa gen lis chanèl TV sa a (egz: apre yon reenstalasyon): mande l an silans, maks yon fwa chak 10 minit
     const ref = db.data.deviceChannels?.[mac];
     const hasList = Array.isArray(ref) ? ref.length > 0 : !!(ref && db.data.channelLists?.[ref]?.length);
@@ -163,7 +182,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       askedVod.set(mac, Date.now());
       q.push({ id: Math.random().toString(36).slice(2, 10), type: "vodcats", createdAt: Date.now() });
     }
-    if (q.length) { const cmds = q.splice(0); tvEvents.delivered(device, cmds); return res.json({ commands: cmds }); }
+    if (q.length) { const cmds = q.splice(0); sent(mac, cmds); tvEvents.delivered(device, cmds); return res.json({ commands: cmds }); }
 
     const wait = Math.min(Math.max(parseInt(req.query.wait, 10) || 20, 0), MAX_WAIT_S);
     if (!wait) return res.json({ commands: [] });
@@ -178,6 +197,7 @@ export function mountGalaxyLive(app, db, { authenticate, auditLog }) {
       set.delete(finish);
       if (!res.headersSent) res.json({ commands });
     };
+    finish.alive = () => !done && !res.writableEnded && !res.destroyed && !res.socket?.destroyed;
     const timer = setTimeout(() => finish([]), wait * 1000);
     set.add(finish);
     // "close" sou res (pa sou req: nan Node resan, req fèmen touswit pou yon GET)
