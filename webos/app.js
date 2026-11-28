@@ -7,7 +7,7 @@
   "use strict";
 
   var PANEL = "https://panel.galaxytvstick.net/api";
-  var VERSION = "1.0.3";
+  var VERSION = "1.0.4";
   var $ = function (id) { return document.getElementById(id); };
 
   // ------------------------------------------------------------ Idantite TV a (yon sèl fwa, sove sou TV a)
@@ -82,15 +82,60 @@
     });
   }
 
+  // Konfig la: touswit lè panel la di gen chanjman (koneksyon dirèk la anba a), epi chak 30 s kòm sekou
+  var cfgBusy = false, cfgAgain = false, pollT = null;
+  function fetchConfig() {
+    if (cfgBusy) { cfgAgain = true; return; }
+    cfgBusy = true;
+    req("GET", "/devices/" + encodeURIComponent(me.mac) + "/config", null, function (code, cfg) {
+      cfgBusy = false;
+      if (code === 200 && cfg) onConfig(cfg);
+      else if (!state.live) $("actMsg").textContent = "Can't reach the panel. Retrying…";
+      if (cfgAgain) { cfgAgain = false; fetchConfig(); }
+    });
+  }
   function poll() {
+    clearTimeout(pollT);
     var go = function () {
-      req("GET", "/devices/" + encodeURIComponent(me.mac) + "/config", null, function (code, cfg) {
-        if (code === 200 && cfg) onConfig(cfg);
-        else if (!state.live) $("actMsg").textContent = "Can't reach the panel. Retrying…";
-        setTimeout(poll, 15000);
-      });
+      fetchConfig();
+      if (!listening) listen();
+      pollT = setTimeout(poll, state.live ? 30000 : 15000);
     };
     if (!state.registered) register(go); else go();
+  }
+
+  // ------------------------------------------------------------ Koneksyon dirèk ak panel la (menm jan ak Fire Stick yo)
+  // Panel la kenbe demann sa a louvri epi l reponn li touswit lè l gen yon chanjman oswa yon kòmand pou TV a.
+  // TV a konfime sa l resevwa (ack): si yon repons pèdi an wout, panel la voye l ankò.
+  var listening = false, lastAck = "", seen = [];
+  function listen() {
+    listening = true;
+    req("GET", "/devices/" + encodeURIComponent(me.mac) + "/commands?wait=20&ack=" + encodeURIComponent(lastAck), null, function (code, d) {
+      if (code !== 200 || !d) { setTimeout(listen, 2000); return; }
+      var cmds = d.commands || [], i, ids = [];
+      for (i = 0; i < cmds.length; i++) ids.push(cmds[i].id || "");
+      if (cmds.length) lastAck = ids.join(",");
+      for (i = 0; i < cmds.length; i++) {
+        var c = cmds[i];
+        if (c.id && seen.indexOf(c.id) >= 0) continue;
+        if (c.id) { seen.push(c.id); if (seen.length > 200) seen.shift(); }
+        try { onCommand(c); } catch (e) {}
+      }
+      listen();
+    }, 32000);
+  }
+  var msgT = null;
+  function onCommand(c) {
+    var t = c.type;
+    if (t === "sync" || t === "refresh") fetchConfig();
+    else if (t === "reload") { state.plSig = ""; fetchConfig(); }
+    else if (t === "restart") { setTimeout(function () { location.reload(); }, 300); }
+    else if (t === "logout") { state.plSig = ""; state.live = null; stopVideo(); show("act"); fetchConfig(); }
+    else if (t === "message" && c.text) {
+      var e = $("err");
+      e.textContent = c.text; e.className = "";
+      clearTimeout(msgT); msgT = setTimeout(function () { e.className = "hidden"; }, 12000);
+    }
   }
 
   function onConfig(cfg) {
