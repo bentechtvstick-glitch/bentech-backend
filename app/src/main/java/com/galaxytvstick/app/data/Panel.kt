@@ -256,7 +256,7 @@ data class GfxSnipe(val images: List<String>, val position: String, val size: In
     /** Tèks (opsyonèl) bò kote imaj la, oswa poukont li. */
     val text: String = "", val textColor: String = "#FFFFFF", val bgColor: String = "#CC0B1630")
 /** Rezo sosyal / WhatsApp: youn apre lòt nan kwen ekran an. */
-data class SocialItem(val net: String, val handle: String)
+data class SocialItem(val net: String, val handle: String, val icon: String = "")
 data class GfxSocial(val items: List<SocialItem>, val title: String, val position: String, val everyMin: Int, val durationSec: Int, val perSec: Int,
     val size: Int, val offset: Int, val bgColor: String, val textColor: String, val font: String)
 /** Bandeau chèn (tankou Kajou TV): onglè non emisyon an, tèks fiks, gwo bann koulè, logo ak lè a. */
@@ -498,7 +498,7 @@ data class PanelConfig(
                             it.optInt("everyMin", 30).coerceIn(0, 240), it.optInt("durationSec", 5).coerceIn(2, 15), it.optBoolean("onChannelChange", false))
                     }?.takeIf { it.imageUrl != null || it.text.isNotBlank() },
                     social = g.optJSONObject("social")?.let { so ->
-                        val items = so.optJSONArray("items").objects().map { x -> SocialItem(x.optString("net"), x.optString("handle")) }.filter { it.handle.isNotBlank() }
+                        val items = so.optJSONArray("items").objects().map { x -> SocialItem(x.optString("net"), x.optString("handle"), x.optString("icon").takeIf { u -> u.startsWith("http") } ?: "") }.filter { it.handle.isNotBlank() }
                         if (items.isEmpty()) null else GfxSocial(items, so.optString("title"), so.optString("position", "bottom-left"),
                             so.optInt("everyMin", 5).coerceIn(0, 240), so.optInt("durationSec", 20).coerceIn(5, 300), so.optInt("perSec", 5).coerceIn(2, 30),
                             so.optInt("size", 100).coerceIn(60, 160), so.optInt("offset", 0).coerceIn(-200, 600), so.optString("bgColor", "#0B1630"),

@@ -591,7 +591,9 @@ class GraphicsView @JvmOverloads constructor(
         val k = so.size / 100f
         val face = TextFx.typeface(context, so.font, false)
         val txt = parse(so.textColor, Color.WHITE)
-        val ic = label(glyph, 24f * k, Color.WHITE, bold = true).apply {
+        // Ikòn ofisyèl admin nan telechaje nan panel la; sinon ti ikòn jeneral la
+        val ic: View = if (it.icon.isNotBlank()) ImageView(context).apply { scaleType = ImageView.ScaleType.FIT_CENTER; load(it.icon) }
+        else label(glyph, 24f * k, Color.WHITE, bold = true).apply {
             gravity = Gravity.CENTER
             background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(color) }
         }
