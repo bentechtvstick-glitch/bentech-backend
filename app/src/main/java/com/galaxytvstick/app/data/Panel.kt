@@ -783,7 +783,7 @@ class PanelApi(private val prefs: Prefs) {
      * (pou yon lòt ekran ka pran relè a san kòmand pa pèdi).
      */
     suspend fun commands(waitSec: Int = 20): List<RemoteCommand> {
-        val req = Request.Builder().url("$base/devices/${enc(deviceId)}/commands?wait=$waitSec")
+        val req = Request.Builder().url("$base/devices/${enc(deviceId)}/commands?wait=$waitSec&ack=${enc(CommandAck.last)}")
             .header("X-Device-Key", prefs.deviceKey).get().build()
         val call = longPoll.newCall(req)
         val text = suspendCancellableCoroutine { cont ->
@@ -798,7 +798,11 @@ class PanelApi(private val prefs: Prefs) {
                 }
             })
         }
-        return JSONObject(text).optJSONArray("commands").objects().map {
+        val all = JSONObject(text).optJSONArray("commands").objects()
+        // Di panel la nan pwochen demann lan sa nou resevwa (sa l pa tande konfimasyon yo, li voye yo ankò),
+        // epi pa egzekite 2 fwa yon kòmand ki te deja rive (menm id).
+        if (all.isNotEmpty()) CommandAck.last = all.joinToString(",") { it.optString("id") }
+        return all.filter { CommandAck.fresh(it.optString("id")) }.map {
             RemoteCommand(
                 it.optString("id"), it.optString("type"), it.optString("text"), it.optInt("channelId", 0),
                 ads = it.optJSONArray("ads").objects().map { a -> parseAd(a, "break") }.filter { a -> a.url.isNotBlank() },
@@ -807,7 +811,8 @@ class PanelApi(private val prefs: Prefs) {
         }
     }
 
-    private val longPoll = XtreamApi.http.newBuilder().readTimeout(45, TimeUnit.SECONDS).build()
+    // Sèvè a reponn apre 20 s maks: si pa gen anyen apre 32 s, koneksyon an mouri, louvri yon lòt touswit
+    private val longPoll = XtreamApi.http.newBuilder().readTimeout(32, TimeUnit.SECONDS).build()
 
     /** MAC la gen ":" ladan l, kode l pou URL la. */
     private fun enc(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
@@ -874,4 +879,16 @@ private fun JSONObject?.stringMap(): Map<String, String> {
     val it = keys()
     while (it.hasNext()) { val k = it.next(); val v = optString(k).trim(); if (v.isNotEmpty()) out[k] = v }
     return out
+}
+
+/** Kòmand panel la TV a deja resevwa (pou tout ekran yo): konfimasyon pou panel la, epi pa egzekite youn 2 fwa. */
+object CommandAck {
+    @Volatile var last: String = ""
+    private val seen = LinkedHashSet<String>()
+    @Synchronized fun fresh(id: String): Boolean {
+        if (id.isBlank()) return true
+        if (!seen.add(id)) return false
+        while (seen.size > 200) seen.remove(seen.first())
+        return true
+    }
 }

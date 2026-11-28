@@ -126,7 +126,7 @@ class OverlayController(
         commandJob = scope.launch {
             while (isActive) {
                 val cmds = runCatching { api.commands(20) }.getOrNull()
-                if (cmds == null) { delay(5_000); continue }
+                if (cmds == null) { delay(2_000); continue }
                 cmds.forEach { handleCommand(it) }
             }
         }
