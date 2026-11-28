@@ -1098,17 +1098,12 @@ main[data-pane="gfx"],main[data-pane="tk"],main[data-pane="ads"]{container-type:
           <div class="list" id="adList"></div>
           <form id="adForm" style="display:flex;flex-direction:column;gap:12px">
             <div class="field"><label for="adUrl">URL</label><input type="text" id="adUrl" placeholder="https://…/ad.mp4 oswa .png"><div class="inline" style="margin-top:6px"><button class="btn small" type="button" data-upload="adUrl">📤 Chwazi yon imaj oswa videyo</button><span class="note" data-upmsg="adUrl"></span></div></div>
-            <div class="row2"><div class="field"><label for="adPlace">Plasman</label><select id="adPlace"><option>preroll</option><option>corner</option><option>fullscreen</option></select></div>
+            <div class="row2"><div class="field"><label for="adPlace">Plasman</label><select id="adPlace" aria-describedby="adPlaceHint"><option value="preroll" title="Videyo oswa imaj anvan chanèl la kòmanse. Kliyan an ka sote l apre 5 segonn.">preroll</option><option value="corner" title="Ti imaj nan kwen anlè adwat pandan kliyan an ap gade TV.">corner</option><option value="fullscreen" title="Imaj plen ekran lè kliyan an louvri yon chanèl.">fullscreen</option></select>
+                <p class="note" id="adPlaceHint" style="margin:6px 0 0"></p></div>
               <div class="field"><label for="adDur">Dire (segonn)</label><input type="number" id="adDur" value="10" min="3"></div></div>
             <div class="btns"><button class="btn primary" type="submit">Ajoute ad</button></div>
-          </form></div>
-        <div class="card"><h2>Kijan piblisite yo parèt sou TV a</h2>
-          <div class="list">
-            <div class="li"><span class="pill p-info">preroll</span><span class="grow">Videyo oswa imaj anvan chanèl la kòmanse. Kliyan an ka sote l apre 5 segonn.</span></div>
-            <div class="li"><span class="pill p-info">corner</span><span class="grow">Ti imaj nan kwen anlè adwat pandan kliyan an ap gade TV.</span></div>
-            <div class="li"><span class="pill p-info">fullscreen</span><span class="grow">Imaj plen ekran lè kliyan an louvri yon chanèl.</span></div>
-          </div>
-          <p class="note">Dezaktive yon ad ak switch la pou l sispann parèt san w pa efase l.</p></div>
+          </form>
+          <p class="note" style="margin:10px 0 0">Dezaktive yon ad ak switch la pou l sispann parèt san w pa efase l.</p></div>
       </div>
         </div>
         <div class="card gx-prevcard">
@@ -3401,6 +3396,16 @@ let settings = {};
 const isOn = (x) => ["active", "yes", "true", "on", "live", "upcoming"].includes(String(x ?? "Active").toLowerCase());
 const sw = (id, on) => `<label class="sw"><input type="checkbox" data-tg="${esc(id)}"${on ? " checked" : ""} aria-label="${t("Aktif")}"><i></i></label>`;
 const enc = encodeURIComponent;
+// Eksplikasyon plasman an: yon sèl liy anba «Plasman», li chanje selon sa w chwazi a (pa yon gwo kat apa ankò)
+const AD_PLACE_HINT = {
+  preroll: "Videyo oswa imaj anvan chanèl la kòmanse. Kliyan an ka sote l apre 5 segonn.",
+  corner: "Ti imaj nan kwen anlè adwat pandan kliyan an ap gade TV.",
+  fullscreen: "Imaj plen ekran lè kliyan an louvri yon chanèl.",
+};
+function adPlaceHint() { const v = $("#adPlace").value; $("#adPlaceHint").textContent = t(AD_PLACE_HINT[v] || ""); for (const o of $("#adPlace").options) o.title = t(AD_PLACE_HINT[o.value] || ""); }
+$("#adPlace").addEventListener("change", adPlaceHint);
+$("#adForm").addEventListener("reset", () => setTimeout(adPlaceHint));
+adPlaceHint();
 async function loadMessages() {
   const [tickers, banners, popups, s] = await Promise.all([list("tickers"), list("banners"), list("popups"), api("GET", "/settings")]).catch(() => [[], [], [], {}]);
   settings = s || {};
